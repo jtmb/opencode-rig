@@ -1,0 +1,15 @@
+# Generated runtime — never commit.
+browser/node_modules/
+browser/browsers/
+
+# Python caches.
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Editor and OS noise.
+*~
+.DS_Store
+
+# Local memory temp files (the real store lives outside the repo).
+.memory.*.tmp
