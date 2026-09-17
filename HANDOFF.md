@@ -166,6 +166,7 @@ Known live state (recorded 2026-09-17):
   - GitHub MCP runtime: official v1.12.1 native amd64 release via
     platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh
   - Memory: ~/Documents/computer-assistant/memory.json, owner-only
+  - Optional 3D: Blender 5.0.1 with python3-numpy for glTF (Draco unavailable)
   - Maintenance cron: runs the repository maintenance script
   - Superseded paths (do not use): the ~/scripts/ computer-use copies and
     ~/repos/opencode-browser-tools/
