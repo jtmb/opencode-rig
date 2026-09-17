@@ -118,10 +118,13 @@ per-request `chat.params` hook, so the key never reaches a provider API.
 
 1. **Proactive routing.** On each user message (`chat.message`), if the turn
    uses the OpenAI OAuth model and the cached Codex usage check reports the
-   limit reached (weekly window, overall bucket, or a short-window reached
-   type), the message model is rewritten to the first available chain tier
-   before dispatch. The primary model enters cooldown until the reported reset
-   time, or `sourceCooldownSeconds` when no reset time is available.
+   limit reached (a `reachedType`, or the overall bucket marked `limitReached`
+   or `allowed: false`), the message model is rewritten to the first available
+   chain tier before dispatch. The weekly window's ≥ 100 % usage counts only
+   when the overall bucket carries neither flag, so explicit `allowed: true`
+   reserve usage keeps the primary model. The primary model enters cooldown
+   until the reported reset time, or `sourceCooldownSeconds` when no reset time
+   is available.
 2. **Reactive switching.** The plugin subscribes to `session.status` retry,
    `session.error`, and `message.updated` events (and clears per-session
    bookkeeping on `session.deleted`). Quota signals (or any retryable failure

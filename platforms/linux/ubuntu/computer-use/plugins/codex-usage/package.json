@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "OpenCode TUI sidebar for the overall weekly ChatGPT Codex subscription limit.",
+  "description": "OpenCode TUI sidebar for ChatGPT Codex weekly and optional Luna Reserve usage.",
   "scripts": {
     "check": "npm run typecheck && npm test",
-    "check:usage": "node --experimental-strip-types scripts/check-usage.ts",
-    "test": "node --experimental-strip-types --test test/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "check:usage": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types scripts/check-usage.ts",
+    "test": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "bash ../../scripts/run-bounded-command.sh -- node_modules/.bin/tsc --noEmit"
   },
   "dependencies": {
     "@opencode-ai/plugin": "1.18.31",

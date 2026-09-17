@@ -23,7 +23,7 @@ OpenCode 1.18.31+, Node via fnm, `python3-pyatspi`, `ydotool`, and
 
 | Component | Path | What it gives you |
 |-----------|------|-------------------|
-| Computer use | [`platforms/linux/ubuntu/computer-use/`](platforms/linux/ubuntu/computer-use/) | 16 skills, desktop and browser control, local plugins, setup, memory, and maintenance |
+| Computer use | [`platforms/linux/ubuntu/computer-use/`](platforms/linux/ubuntu/computer-use/) | 16 skills, desktop and browser control, local plugins, typed desktop tools, setup, memory, and maintenance |
 | Browser tools | [`platforms/linux/ubuntu/browser-tools/`](platforms/linux/ubuntu/browser-tools/) | Pinned Playwright MCP runtime with a shared live Firefox and an isolated headless mode |
 | GitHub tools | [`platforms/linux/ubuntu/github-tools/`](platforms/linux/ubuntu/github-tools/) | Pinned official GitHub MCP, read-only and lockdown-protected |
 
@@ -58,11 +58,12 @@ automate, and keep the harness healthy.
 
 ### Local plugins that harden the harness
 
-The repo ships two local OpenCode plugins, both loaded directly from source:
+The repo ships three local OpenCode plugins, all loaded directly from source:
 
 - **`codex-usage`** — a TUI sidebar showing the remaining weekly ChatGPT Codex
-  subscription quota and its reset countdown, with refresh and details commands.
-  Short-window and model-specific counters are intentionally hidden.
+  subscription quota and optional Luna Reserve usage, with refresh and details
+  commands. Short-window and other model-specific counters are intentionally
+  hidden.
 - **`codex-fallback`** — a server-side failover router that keeps sessions alive
   when the Codex quota is exhausted:
   - proactive switching when the usage endpoint reports the limit reached, and
@@ -75,8 +76,14 @@ The repo ships two local OpenCode plugins, both loaded directly from source:
   - per-model cooldowns, automatic return to the primary model after the quota
     resets, persisted state, toasts, and fail-open behavior on check errors.
 
-Both plugins are user-registered (`~/.config/opencode/tui.json` and the global
-`opencode.jsonc`) and are not deployed by the setup scripts.
+- **`source-control`** — a TUI sidebar showing local working-tree changes and
+  the current branch's GitHub pull request and check state. It uses OpenCode's
+  built-in diff viewer, read-only GitHub MCP calls, and an adaptive memory
+  budget for its external MCP child.
+
+All three plugins are user-registered (`~/.config/opencode/tui.json` and the
+global `opencode.jsonc`) and are not deployed by the general setup scripts.
+Use `/deploy` or `deploy-plugins.sh` to register them.
 
 ### Browser automation, live and headless
 
@@ -105,7 +112,9 @@ first, documented keyboard navigation only as a fallback, a fresh screenshot
 after every mutation, and immediate deletion of every captured image. Input is
 delivered through `ydotool`'s user service on GNOME Mutter, and admin actions
 use `pkexec` so passwords are typed into the trusted PolicyKit dialog — never
-into chat.
+into chat. The same script is exposed to the model as typed custom tools
+(`desktop_apps`, `desktop_tree`, `desktop_find`, `desktop_act`) with validated
+arguments and the same preview-token apply flow.
 
 ### 3D, memory, maintenance, and more
 
@@ -129,6 +138,8 @@ into chat.
 - Never weaken Wayland, AppArmor, browser sandboxing, TLS validation, or device
   permissions to hide a failure.
 - Preserve unsaved work and user files; clean up screenshots and test state.
+- Resource-heavy plugin checks run through an adaptive, serialized memory guard
+  and fail closed when no limiter is available.
 
 ## Quick start
 
@@ -161,13 +172,14 @@ local plugins with the global config or a repository's `.opencode/` directory.
 | Document | Contents |
 |----------|----------|
 | [`docs/README.md`](docs/README.md) | Deep reference index for the local plugins and supporting scripts |
-| [`docs/plugins/`](docs/plugins/README.md) | How the local OpenCode plugins work: the quota sidebar and the fallback router |
+| [`docs/plugins/`](docs/plugins/README.md) | How the local OpenCode plugins work: quota, fallback, and source control |
 | [`docs/scripts/`](docs/scripts/README.md) | How each supporting script works: setup, MCP launchers, tools, and maintenance |
 | [`platforms/linux/ubuntu/README.md`](platforms/linux/ubuntu/README.md) | Platform overview and component layout |
 | [`platforms/linux/ubuntu/computer-use/README.md`](platforms/linux/ubuntu/computer-use/README.md) | Install, checks, scripts, config, and troubleshooting |
 | [`platforms/linux/ubuntu/computer-use/skills/README.md`](platforms/linux/ubuntu/computer-use/skills/README.md) | Skill catalog with trigger phrases and usage guides |
 | [`platforms/linux/ubuntu/computer-use/plugins/codex-usage/README.md`](platforms/linux/ubuntu/computer-use/plugins/codex-usage/README.md) | Quota sidebar configuration and security model |
 | [`platforms/linux/ubuntu/computer-use/plugins/codex-fallback/README.md`](platforms/linux/ubuntu/computer-use/plugins/codex-fallback/README.md) | Fallback chains, per-agent config, and troubleshooting |
+| [`platforms/linux/ubuntu/computer-use/plugins/source-control/README.md`](platforms/linux/ubuntu/computer-use/plugins/source-control/README.md) | Source-control sidebar, GitHub status, options, and adaptive MCP containment |
 | [`platforms/linux/ubuntu/browser-tools/README.md`](platforms/linux/ubuntu/browser-tools/README.md) | Pinned Playwright runtime and integration |
 | [`platforms/linux/ubuntu/github-tools/README.md`](platforms/linux/ubuntu/github-tools/README.md) | Pinned GitHub MCP runtime and policy |
 | [`AGENTS.md`](AGENTS.md) | Operating guide, source of truth, and required verification |

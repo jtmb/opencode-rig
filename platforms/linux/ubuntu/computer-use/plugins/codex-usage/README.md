@@ -1,8 +1,15 @@
 # Codex Usage Sidebar
 
-This local OpenCode TUI plugin shows only the remaining overall weekly ChatGPT
-Codex subscription quota in the session sidebar, along with its reset
-countdown. Short-window and model-specific counters are intentionally hidden.
+This local OpenCode TUI plugin shows the remaining overall weekly ChatGPT Codex
+subscription quota in the session sidebar, along with its reset countdown. When
+the backend supplies the optional Luna Reserve bucket, the sidebar adds one
+compact `Luna Reserve: NN% left` line. Short-window and other model-specific
+counters remain hidden.
+
+Luna Reserve is an optional backend-provided fallback allowance for selected
+personal Plus and Pro accounts. The backend may omit the reserve bucket even
+when the regular weekly window is exhausted; omission hides the row rather
+than displaying a guessed zero balance.
 
 When the quota runs out, the companion
 [`../codex-fallback/`](../codex-fallback/README.md) server plugin can continue
@@ -57,6 +64,11 @@ quota data to model context. OpenCode remains responsible for token renewal.
 The usage endpoint is a ChatGPT backend endpoint used by Codex clients, not a
 versioned public REST API. Response validation and stale-data handling keep a
 service change from being displayed as a fabricated quota value.
+The TUI usage request opts into the backend's Luna Reserve bucket; the shared
+client remains passive by default so the companion fallback plugin does not
+change routing behavior.
+See [Luna Reserve in Codex and ChatGPT Work](https://help.openai.com/en/articles/20001499-luna-reserve-in-codex-and-chatgpt-work)
+for availability and account behavior.
 
 ## Checks
 

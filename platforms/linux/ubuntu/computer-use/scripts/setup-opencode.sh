@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Persist OPENCODE_ENABLE_EXA so plain `opencode` always gets it,
-# and deploy global opencode skills and commands from this component.
-# Idempotent - safe to re-run.
+# and deploy global opencode skills, commands, and custom tools from this
+# component. Idempotent - safe to re-run.
 #
 # Usage:
 #   ./setup-opencode.sh --verify-only
@@ -64,6 +64,8 @@ SKILLS_SRC="$COMPUTER_USE_ROOT/skills"
 SKILLS_DEST="$HOME/.config/opencode/skills"
 COMMANDS_SRC="$COMPUTER_USE_ROOT/commands"
 COMMANDS_DEST="$HOME/.config/opencode/commands"
+TOOLS_SRC="$COMPUTER_USE_ROOT/tools"
+TOOLS_DEST="$HOME/.config/opencode/tools"
 REQUIRED_SKILLS=(
   app-setup
   blender
@@ -84,7 +86,12 @@ REQUIRED_SKILLS=(
 )
 REQUIRED_COMMANDS=(
   deploy
+  handoff
   promote-skills
+  resume
+)
+REQUIRED_TOOLS=(
+  desktop
 )
 
 check_required_skill_sources() {
@@ -102,6 +109,16 @@ check_required_command_sources() {
   for name in "${REQUIRED_COMMANDS[@]}"; do
     if [ ! -f "$COMMANDS_SRC/$name.md" ]; then
       echo "ERROR: required command source missing: $COMMANDS_SRC/$name.md" >&2
+      return 1
+    fi
+  done
+}
+
+check_required_tool_sources() {
+  local name
+  for name in "${REQUIRED_TOOLS[@]}"; do
+    if [ ! -f "$TOOLS_SRC/$name.ts" ]; then
+      echo "ERROR: required tool source missing: $TOOLS_SRC/$name.ts" >&2
       return 1
     fi
   done
@@ -202,6 +219,33 @@ ensure_commands() {
   done
 }
 
+ensure_tools() {
+  local name source_file dest_file
+  [ -d "$TOOLS_SRC" ] || { echo "ERROR: no tools dir: $TOOLS_SRC" >&2; return 1; }
+  [ ! -L "$TOOLS_SRC" ] || { echo "ERROR: tool source path is a symbolic link: $TOOLS_SRC" >&2; return 1; }
+  [ ! -L "$TOOLS_DEST" ] || { echo "ERROR: deployed tool path is a symbolic link: $TOOLS_DEST" >&2; return 1; }
+  check_required_tool_sources
+  if [ -n "$(find "$TOOLS_SRC" -maxdepth 1 -type l -print -quit)" ]; then
+    echo "ERROR: tool sources may not contain symbolic links: $TOOLS_SRC" >&2
+    return 1
+  fi
+  mkdir -p "$TOOLS_DEST"
+  for name in "${REQUIRED_TOOLS[@]}"; do
+    source_file="$TOOLS_SRC/$name.ts"
+    dest_file="$TOOLS_DEST/$name.ts"
+    if [ -L "$dest_file" ]; then
+      echo "ERROR: deployed tool is a symbolic link: $dest_file" >&2
+      return 1
+    fi
+    if [ -f "$dest_file" ] && cmp -s "$source_file" "$dest_file"; then
+      echo "OK: global tool $name.ts deployed"
+      continue
+    fi
+    cp -p "$source_file" "$dest_file"
+    echo "OK: deployed global tool $name.ts"
+  done
+}
+
 verify() {
   local status=0
   local skill_dir local_name source_file deployed_file relative dest_file skill_status
@@ -293,6 +337,30 @@ verify() {
   else
     status=1
   fi
+  echo "--- tools ---"
+  if [ -L "$TOOLS_SRC" ] || [ -n "$(find "$TOOLS_SRC" -maxdepth 1 -type l -print -quit 2>/dev/null)" ]; then
+    echo "INVALID: tool sources contain a symbolic link"
+    status=1
+  elif [ -L "$TOOLS_DEST" ]; then
+    echo "INVALID: global tools directory is a symbolic link"
+    status=1
+  elif check_required_tool_sources; then
+    for local_name in "${REQUIRED_TOOLS[@]}"; do
+      source_file="$TOOLS_SRC/$local_name.ts"
+      dest_file="$TOOLS_DEST/$local_name.ts"
+      if [ -L "$dest_file" ]; then
+        echo "INVALID: global tool $local_name.ts is a symbolic link"
+        status=1
+      elif [ ! -f "$dest_file" ] || ! cmp -s "$source_file" "$dest_file"; then
+        echo "MISSING/STALE: global tool $local_name.ts (run with --apply to deploy)"
+        status=1
+      else
+        echo "OK: global tool $local_name.ts deployed"
+      fi
+    done
+  else
+    status=1
+  fi
   return "$status"
 }
 
@@ -305,9 +373,10 @@ ensure_export "$BASHRC"
 [ -f "$ZSHRC" ] && ensure_export "$ZSHRC"
 ensure_skills
 ensure_commands
+ensure_tools
 
 export OPENCODE_ENABLE_EXA="$VALUE"
 
 verify
 echo ""
-echo "Done. Restart OpenCode so updated skills are loaded."
+echo "Done. Restart OpenCode so updated skills, commands, and tools are loaded."

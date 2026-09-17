@@ -7,8 +7,8 @@
 # - installs/enables ydotool and adds the user to input (synthetic input access)
 # - enables isolated Playwright browser MCPs in the project opencode.json
 #   (project-only, never global; no normal-browser cookies)
-# - installs a checksum-pinned GitHub MCP and enables its project-local,
-#   read-only wrapper (credentials remain outside the repository and config)
+# - installs a checksum-pinned GitHub MCP and enables its global, read-only
+#   wrapper (credentials remain outside the repository and config)
 #
 # Default is read-only verification. Use --apply to install/configure.
 set -euo pipefail
@@ -102,18 +102,40 @@ github_auth_available() {
   command -v gh >/dev/null 2>&1 && gh auth token >/dev/null 2>&1
 }
 
+global_mcp_config_path() {
+  if [ -f "$OPENCODE_CONFIG_JSONC" ]; then
+    printf '%s\n' "$OPENCODE_CONFIG_JSONC"
+  else
+    printf '%s\n' "$OPENCODE_CONFIG_JSON"
+  fi
+}
+
 ensure_mcp() {
   local name="$1"
   local wrapper="$2"
-  ensure_project_mcp_entry "$name" "$wrapper" || return 1
-  remove_global_mcp_entry "$name" || return 1
-  if ! project_mcp_matches "$name" "$wrapper"; then
-    fail "Project MCP $name was not bound to $wrapper in $PROJECT_CONFIG_JSON"
-    return 1
-  fi
-  if global_mcp_has_entry "$name"; then
-    fail "Global MCP $name still present; expected project-only in $PROJECT_CONFIG_JSON"
-    return 1
+  local scope="${3:-project}"
+  if [ "$scope" = global ]; then
+    ensure_global_mcp_entry "$name" "$wrapper" || return 1
+    remove_project_mcp_entry "$name" || return 1
+    if ! global_mcp_matches "$name" "$wrapper"; then
+      fail "Global MCP $name was not bound to $wrapper in $(global_mcp_config_path)"
+      return 1
+    fi
+    if project_mcp_has_entry "$name"; then
+      fail "Project MCP $name still present; expected global-only"
+      return 1
+    fi
+  else
+    ensure_project_mcp_entry "$name" "$wrapper" || return 1
+    remove_global_mcp_entry "$name" || return 1
+    if ! project_mcp_matches "$name" "$wrapper"; then
+      fail "Project MCP $name was not bound to $wrapper in $PROJECT_CONFIG_JSON"
+      return 1
+    fi
+    if global_mcp_has_entry "$name"; then
+      fail "Global MCP $name still present; expected project-only in $PROJECT_CONFIG_JSON"
+      return 1
+    fi
   fi
   if ! mcp_config_matches "$name" "$wrapper"; then
     fail "OpenCode MCP $name was not bound to $wrapper"
@@ -121,10 +143,11 @@ ensure_mcp() {
   fi
 }
 
-project_mcp_matches() {
-  local name="$1"
-  local wrapper="$2"
-  [ -f "$PROJECT_CONFIG_JSON" ] || return 1
+mcp_file_matches() {
+  local path="$1"
+  local name="$2"
+  local wrapper="$3"
+  [ -f "$path" ] || return 1
   python3 -c '
 import json
 import sys
@@ -141,11 +164,12 @@ matches = (
     and entry.get("enabled", True) is not False
 )
 raise SystemExit(0 if matches else 1)
-' "$PROJECT_CONFIG_JSON" "$name" "$wrapper" 2>/dev/null
+' "$path" "$name" "$wrapper" 2>/dev/null
 }
 
-global_mcp_has_entry() {
+mcp_file_has_entry() {
   local name="$1"
+  shift
   python3 -c '
 import json
 import os
@@ -160,24 +184,42 @@ for path in paths:
         with open(path, encoding="utf-8") as handle:
             data = json.load(handle)
     except (OSError, ValueError):
-        # Unparseable global config needs manual review; treat as present.
+        # Unparseable config needs manual review; treat as present.
         raise SystemExit(0)
     if name in data.get("mcp", {}):
         raise SystemExit(0)
 raise SystemExit(1)
-' "$name" "$OPENCODE_CONFIG_JSON" "$OPENCODE_CONFIG_JSONC" 2>/dev/null
+' "$name" "$@" 2>/dev/null
 }
 
-ensure_project_mcp_entry() {
-  local name="$1"
-  local wrapper="$2"
+project_mcp_matches() {
+  mcp_file_matches "$PROJECT_CONFIG_JSON" "$1" "$2"
+}
+
+global_mcp_matches() {
+  mcp_file_matches "$(global_mcp_config_path)" "$1" "$2"
+}
+
+global_mcp_has_entry() {
+  mcp_file_has_entry "$1" "$OPENCODE_CONFIG_JSON" "$OPENCODE_CONFIG_JSONC"
+}
+
+project_mcp_has_entry() {
+  mcp_file_has_entry "$1" "$PROJECT_CONFIG_JSON"
+}
+
+write_mcp_entry() {
+  local path="$1"
+  local name="$2"
+  local wrapper="$3"
+  local label="$4"
   python3 -c '
 import json
 import os
 import sys
 import tempfile
 
-path, name, wrapper = sys.argv[1:]
+path, name, wrapper, label = sys.argv[1:]
 entry = {
     "type": "local",
     "command": [wrapper],
@@ -216,21 +258,30 @@ except OSError as exc:
         pass
     print(f"MISSING/FAILED: cannot write {path}: {exc}", file=sys.stderr)
     raise SystemExit(1)
-print(f"OK: project MCP {name} -> {wrapper}")
-' "$PROJECT_CONFIG_JSON" "$name" "$wrapper"
+print(f"OK: {label} MCP {name} -> {wrapper}")
+' "$path" "$name" "$wrapper" "$label"
 }
 
-remove_global_mcp_entry() {
-  local name="$1"
+ensure_project_mcp_entry() {
+  write_mcp_entry "$PROJECT_CONFIG_JSON" "$1" "$2" project
+}
+
+ensure_global_mcp_entry() {
+  write_mcp_entry "$(global_mcp_config_path)" "$1" "$2" global
+}
+
+remove_mcp_entry_from() {
+  local label="$1"
+  local name="$2"
+  shift 2
   python3 -c '
 import json
 import os
 import sys
 import tempfile
 
-name = sys.argv[1]
-paths = sys.argv[2:]
-status = 0
+label, name = sys.argv[1], sys.argv[2]
+paths = sys.argv[3:]
 for path in paths:
     if not os.path.exists(path):
         continue
@@ -263,8 +314,16 @@ for path in paths:
             pass
         print(f"MISSING/FAILED: cannot write {path}: {exc}", file=sys.stderr)
         raise SystemExit(1)
-    print(f"OK: removed global MCP {name} from {path}")
-' "$name" "$OPENCODE_CONFIG_JSON" "$OPENCODE_CONFIG_JSONC"
+    print(f"OK: removed {label} MCP {name} from {path}")
+' "$label" "$name" "$@"
+}
+
+remove_global_mcp_entry() {
+  remove_mcp_entry_from global "$1" "$OPENCODE_CONFIG_JSON" "$OPENCODE_CONFIG_JSONC"
+}
+
+remove_project_mcp_entry() {
+  remove_mcp_entry_from project "$1" "$PROJECT_CONFIG_JSON"
 }
 
 mcp_config_matches() {
@@ -402,7 +461,7 @@ install_github_runtime() {
     fail "both $OPENCODE_CONFIG_JSON and $OPENCODE_CONFIG_JSONC exist; consolidate them before MCP setup"
     return 1
   fi
-  ensure_mcp github "$GITHUB_MCP_WRAPPER"
+  ensure_mcp github "$GITHUB_MCP_WRAPPER" global
 }
 
 initialize_local_state() {
@@ -538,10 +597,10 @@ verify() {
     status=1
   fi
 
-  if project_mcp_matches github "$GITHUB_MCP_WRAPPER"; then
-    ok "Project GitHub MCP uses local pinned wrapper"
+  if global_mcp_matches github "$GITHUB_MCP_WRAPPER"; then
+    ok "Global GitHub MCP uses local pinned wrapper"
   else
-    fail "Project GitHub MCP command is not $GITHUB_MCP_WRAPPER in $PROJECT_CONFIG_JSON"
+    fail "Global GitHub MCP command is not $GITHUB_MCP_WRAPPER in $(global_mcp_config_path)"
     status=1
   fi
 
@@ -559,11 +618,11 @@ verify() {
     ok "Global headless Playwright MCP absent (project-only)"
   fi
 
-  if global_mcp_has_entry github; then
-    fail "Global GitHub MCP present; expected project-only in $PROJECT_CONFIG_JSON"
+  if project_mcp_has_entry github; then
+    fail "Project GitHub MCP present; expected global in $(global_mcp_config_path)"
     status=1
   else
-    ok "Global GitHub MCP absent (project-only)"
+    ok "Project GitHub MCP absent (global)"
   fi
 
   if mcp_config_matches playwright "$LIVE_MCP_WRAPPER"; then
@@ -588,9 +647,9 @@ verify() {
   fi
 
   if "$SCRIPT_DIR/setup-opencode.sh" --verify-only >/dev/null; then
-    ok "all OpenCode skills and commands deployed"
+    ok "all OpenCode skills, commands, and tools deployed"
   else
-    fail "OpenCode skills or commands missing/stale"
+    fail "OpenCode skills, commands, or tools missing/stale"
     status=1
   fi
 

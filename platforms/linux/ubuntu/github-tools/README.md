@@ -13,8 +13,9 @@ from Git. The current pin is the official GitHub release `v1.12.1`:
 The computer-use wrapper starts the server with only the `context`, `repos`,
 `issues`, and `pull_requests` toolsets, plus read-only and lockdown modes. It
 authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` (or `GH_TOKEN`) in OpenCode's
-launch environment, falling back to the logged-in `gh` CLI, and never stores the
-credential in this repository or OpenCode configuration.
+launch environment, including values loaded from a project `.env`, falling back
+to the logged-in `gh` CLI, and never stores the credential in this repository or
+OpenCode configuration.
 
 Update the version, archive URL, and published checksum together in
 `../computer-use/scripts/setup-computer-assistant.sh`, then reinstall and rerun

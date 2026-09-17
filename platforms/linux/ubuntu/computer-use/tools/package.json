@@ -1,0 +1,19 @@
+{
+  "name": "opencode-rig-desktop-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenCode custom tools wrapping the desktop-control AT-SPI script.",
+  "scripts": {
+    "check": "npm run typecheck && npm test",
+    "test": "bash ../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "bash ../scripts/run-bounded-command.sh -- node_modules/.bin/tsc --noEmit"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "1.18.31"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.6",
+    "typescript": "5.9.3"
+  }
+}

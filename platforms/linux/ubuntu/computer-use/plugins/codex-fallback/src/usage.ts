@@ -30,11 +30,12 @@ const FAILURE_CACHE_MAX_MS = 15_000
 export function quotaFromSnapshot(snapshot: CodexUsageSnapshot): QuotaSnapshot {
   const overall = snapshot.buckets.find((bucket) => bucket.id === "codex")
   const weekly = overallWeeklyWindow(snapshot)
+  const explicit = overall?.limitReached !== undefined || overall?.allowed !== undefined
   const limitReached =
     snapshot.reachedType !== undefined ||
     overall?.limitReached === true ||
     overall?.allowed === false ||
-    (weekly !== undefined && weekly.usedPercent >= 100)
+    (!explicit && weekly !== undefined && weekly.usedPercent >= 100)
 
   return {
     limitReached,

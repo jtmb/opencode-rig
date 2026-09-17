@@ -15,19 +15,22 @@ installation. Ask the user where the deployment should go before acting.
 4. If the user chose a repository, use the `question` tool again to confirm the
    absolute path. Offer the current repository as an option and let the user
    type another path.
-5. Use the `question` tool to ask whether to also deploy the bootstrap scripts
+5. Use the `question` tool to ask which plugins to register: `both` (the Codex
+   quota and fallback pair), `all` (including source-control), or one named
+   plugin. Preserve the user's existing plugin options.
+6. Use the `question` tool to ask whether to also deploy the bootstrap scripts
    (a verbatim copy of `computer-use/scripts/` into the target).
-6. Preview the exact change, read-only:
+7. Preview the exact change, read-only:
 
-   `./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope <global|project> --project <path-if-project> [--bootstrap] --verify-only`
+   `./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope <global|project> --project <path-if-project> --plugins <selection> [--bootstrap] --verify-only`
 
-7. Review the preview, then repeat the same command with `--apply` and let its
+8. Review the preview, then repeat the same command with `--apply` and let its
    verification pass run. Do not change any option between the preview and the
    apply.
-8. If `codex-fallback` is being added without a configured chain, tell the user
+9. If `codex-fallback` is being added without a configured chain, tell the user
    it stays inactive until `defaultChain` is set, or offer `--chain a/b,c/d`.
-9. Report the target config files and any copied scripts, and remind the user to
+10. Report the target config files and any copied scripts, and remind the user to
    restart OpenCode so the plugin registration takes effect.
-10. Do not commit, do not edit deployed skill copies, and do not overwrite
-    unrelated configuration. Existing `plugin` entries and their options must
-    stay intact.
+11. Do not commit, do not edit deployed skill copies, and do not overwrite
+   unrelated configuration. Existing `plugin` entries and their options must
+   stay intact.

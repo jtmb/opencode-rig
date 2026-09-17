@@ -2,7 +2,7 @@
 
 Launches the pinned official GitHub MCP Server with a deliberately small,
 read-only tool surface. This is the `github` MCP that OpenCode registers
-project-only. Publishing, merging, workflows, deletions, and account or
+globally. Publishing, merging, workflows, deletions, and account or
 repository security changes are **not** available through it and stay behind an
 explicit confirmation gate.
 
@@ -12,7 +12,8 @@ explicit confirmation gate.
 
 The script is normally launched by OpenCode as an MCP server, not by hand. It
 resolves a credential automatically, so no environment variable is required
-when the `gh` CLI is logged in.
+when the `gh` CLI is logged in. OpenCode also loads a project `.env`, so a
+project can provide the token through an env-backed MCP entry.
 
 ## What it does
 
@@ -58,11 +59,39 @@ version, archive URL, and checksum in the setup script. Do not use `latest`.
 
 ## Integration
 
-- Registered as the MCP named `github` in the **project** `opencode.json`,
-  project-only, with a 30 s timeout.
+- Registered as the MCP named `github` in the **global** config
+  (`~/.config/opencode/opencode.jsonc` when present, otherwise
+  `opencode.json`), global-only, with a 30 s timeout.
 - When a token is present, `setup-computer-assistant.sh --verify-only` confirms
   `opencode mcp list` reports it connected. Without a token, verification
   reports authentication as pending instead of failing.
+
+The setup script's minimal registration inherits the OpenCode launch
+environment. If the config should explicitly pass the project `.env` value to
+the local MCP, use this global `opencode.json`/`opencode.jsonc` entry shape:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "github": {
+      "type": "local",
+      "command": [
+        "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"
+      ],
+      "enabled": true,
+      "timeout": 30000,
+      "environment": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+The reference is only a variable name; the token value stays in the untracked
+`.env` or comes from `GH_TOKEN`/the logged-in `gh` CLI. The wrapper still falls
+back to `GH_TOKEN` and then `gh auth token` when the explicit variable is empty.
 
 ## Authentication
 
@@ -70,7 +99,8 @@ The credential comes from an explicit environment variable or, failing that,
 from the logged-in `gh` CLI. To use a dedicated credential instead:
 
 - Set `GITHUB_PERSONAL_ACCESS_TOKEN` (or `GH_TOKEN`) in OpenCode's launch
-  environment **before** OpenCode starts.
+  environment **before** OpenCode starts. A project `.env` loaded by OpenCode
+  is one supported way to provide that environment value.
 - Prefer a fine-grained PAT limited to the required repositories and read
   permissions.
 - Never put a token in this repository, in `opencode.json`, or in any committed

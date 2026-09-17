@@ -6,7 +6,14 @@ import test from "node:test"
 
 import { formatSnapshot, relativeTime } from "../src/format.ts"
 import { isCodexSubscriptionModel, latestSessionModel, messageModel } from "../src/model.ts"
-import { CodexUsageError, overallWeeklyWindow, parseUsagePayload, readOpenAICredential } from "../src/usage.ts"
+import {
+  CodexUsageError,
+  fetchCodexUsage,
+  lunaReserveWindow,
+  overallWeeklyWindow,
+  parseUsagePayload,
+  readOpenAICredential,
+} from "../src/usage.ts"
 
 test("parses overall and model-specific usage windows", () => {
   const now = Date.UTC(2026, 8, 15, 12, 0, 0)
@@ -53,6 +60,50 @@ test("clamps unexpected usage percentages", () => {
   const low = parseUsagePayload({ rate_limit: { primary_window: { used_percent: -20 } } })
   assert.equal(high.buckets[0]?.windows[0]?.leftPercent, 0)
   assert.equal(low.buckets[0]?.windows[0]?.leftPercent, 100)
+})
+
+test("parses and formats the Luna Reserve weekly window", () => {
+  const now = Date.UTC(2026, 8, 15, 12, 0, 0)
+  const snapshot = parseUsagePayload(
+    {
+      planType: "pro",
+      rateLimits: {
+        limitId: "codex",
+        primary: { usedPercent: 100, windowDurationMins: 10080, resetsAt: now / 1000 + 86_400 },
+      },
+      rateLimitsByLimitId: {
+        base_model_inference: {
+          limitId: "base_model_inference",
+          limitName: "gpt-reserve",
+          primary: { usedPercent: 48, windowDurationMins: 10080, resetsAt: now / 1000 + 172_800 },
+        },
+      },
+    },
+    now,
+  )
+
+  assert.equal(lunaReserveWindow(snapshot)?.leftPercent, 52)
+  assert.match(formatSnapshot(snapshot, now), /Luna Reserve: 52% left/)
+})
+
+test("opts into Luna Reserve data only when requested", async () => {
+  const requestHeaders: Headers[] = []
+  const fetchImpl: typeof fetch = async (_input, init) => {
+    requestHeaders.push(new Headers(init?.headers))
+    return new Response(JSON.stringify({ rate_limit: { primary_window: { used_percent: 0 } } }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })
+  }
+
+  await fetchCodexUsage(
+    { accessToken: "test-token", accountId: "account-test" },
+    { fetchImpl, supportsLunaReserve: true },
+  )
+  await fetchCodexUsage({ accessToken: "test-token", accountId: "account-test" }, { fetchImpl })
+
+  assert.equal(requestHeaders[0]?.get("x-openai-codex-luna-reserve"), "1")
+  assert.equal(requestHeaders[1]?.has("x-openai-codex-luna-reserve"), false)
 })
 
 test("rejects responses without usage windows", () => {

@@ -2,8 +2,9 @@
 
 `codex-usage` is a local **TUI plugin** that shows the remaining overall weekly
 ChatGPT Codex subscription quota and its reset countdown in the session
-sidebar. It intentionally hides the short-window (5h) and model-specific
-counters; only the weekly overall window is surfaced.
+sidebar. When the backend returns the optional Luna Reserve bucket, it adds a
+single compact remaining-percentage row. It otherwise hides the short-window
+(5h) and other model-specific counters.
 
 - Entry point: `src/tui.tsx`
 - Plugin id: `local.codex-usage`
@@ -26,8 +27,17 @@ For registration and the shared security model, read
   once more when a Codex turn becomes idle.
 - It does not poll while another provider is active.
 - It shows the last successful update time so stale data is obvious.
+- If Luna Reserve data is present, the body adds one compact `Luna Reserve` row;
+  the details dialog includes its remaining percentage and reset countdown.
 - When the quota runs out, the sidebar's job is done; switching is the fallback
   router's job.
+
+Luna Reserve is an optional backend-provided fallback allowance for selected
+personal Plus and Pro accounts. It is separate from regular usage and is not
+guaranteed merely because the regular window is exhausted. If the backend does
+not return a `gpt-reserve` bucket, the plugin omits the row instead of showing
+an inferred zero balance. See [Luna Reserve in Codex and ChatGPT Work](https://help.openai.com/en/articles/20001499-luna-reserve-in-codex-and-chatgpt-work)
+for the vendor's availability and usage notes.
 
 ## Module map
 
@@ -127,6 +137,11 @@ with code `auth`, never an exception that escapes the store.
 | `ChatGPT-Account-Id` | the derived account id |
 | `Originator` | `opencode_codex_usage` |
 | `User-Agent` | `opencode-codex-usage/0.1.0` |
+| `x-openai-codex-luna-reserve` | `1` for the TUI usage request so eligible accounts can return the reserve bucket |
+
+The shared `fetchCodexUsage()` client leaves this opt-in disabled by default;
+the TUI store and the diagnostic script enable it, while `codex-fallback`
+continues using the passive request.
 
 Status handling:
 
@@ -145,6 +160,8 @@ Status handling:
   id `codex` and name `Overall`.
 - Extra buckets come from `additional_rate_limits` / `additionalRateLimits`,
   keyed by `metered_feature`, `limit_id`, or an `extra-N` fallback.
+- Newer response shapes are also accepted through `rateLimits` and
+  `rateLimitsByLimitId`.
 - Each bucket parses `primary_window`/`primary` and
   `secondary_window`/`secondary`. A window needs a `used_percent` (or
   `usedPercent`) to exist; percentages are clamped to 0–100.
@@ -160,6 +177,9 @@ Status handling:
 
 `overallWeeklyWindow()` (shared) selects the bucket with id `codex`, then its
 window whose `windowMinutes === 10080`, falling back to the `secondary` window.
+`lunaReserveWindow()` selects the bucket named or identified as `gpt-reserve`
+and prefers its weekly window. The reserve row is omitted when that bucket is
+absent; no value is inferred from the overall quota.
 `codex-usage` uses it to decide visibility and to render; `codex-fallback` uses
 it to decide whether the limit is reached.
 
@@ -190,9 +210,10 @@ model qualifies. All intervals and subscriptions are released in `onCleanup`.
 
 `visible()` requires all three of: a Codex subscription model, a snapshot, and
 an overall weekly window. The header shows `- Codex Usage` or `+ Codex Usage`;
-the body shows the `Weekly limit` row, an optional "Last refresh failed;
-showing saved values." warning, and the last-updated line. Colors are
-green → warning at ≤20 % remaining → error at ≤10 % remaining.
+the body shows the `Weekly limit` row, an optional one-line `Luna Reserve` row,
+an optional "Last refresh failed; showing saved values." warning, and the
+last-updated line. Colors are green → warning at ≤20 % remaining → error at
+≤10 % remaining.
 
 ### `isCodexSubscriptionModel()`
 
@@ -210,8 +231,9 @@ why the panel disappears when another provider becomes active.
 | `Codex usage details` | `codex-usage.details` | `/codex-usage` (alias `/usage-left`) | Show the details dialog |
 
 The details dialog uses `api.ui.DialogAlert` and the text from
-`formatDetails()`, which includes percent left/used, the relative and exact
-reset time, any refresh error, and the last update time.
+`formatDetails()`, which includes overall percent left/used, the relative and
+exact overall reset time, an optional Luna Reserve remaining percentage and
+countdown, any refresh error, and the last update time.
 
 ## Options
 
@@ -248,16 +270,17 @@ npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check:u
   and prints the formatted snapshot (or an error message) once. It is a manual
   diagnostic, not part of CI.
 
-The test suite covers window parsing (including model-specific extras),
-clamping of unexpected percentages, rejection of responses without windows,
-credential reading without JWT decoding, countdown formatting, and model
-detection from both message shapes.
+The test suite covers window parsing (including model-specific extras and Luna
+Reserve), clamping of unexpected percentages, rejection of responses without
+windows, reserve-header opt-in, credential reading without JWT decoding,
+countdown formatting, and model detection from both message shapes.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Resolution |
 |---------|--------------|-----------|
 | No panel at all | Active model is not OpenAI/Codex, or no snapshot yet | Switch to the subscription model; run `Refresh Codex usage` |
+| No Luna Reserve row | The backend did not return the optional `gpt-reserve` bucket | This is expected for accounts without Luna Reserve access; the plugin does not infer a balance |
 | "OpenAI login not found" | No `opencode auth login` for OpenAI | Run `opencode auth login` |
 | "requires an OpenAI OAuth login" | API-key login instead of OAuth | Log in with the ChatGPT/Codex subscription |
 | "needs renewal" | Access token expired | Use OpenAI in OpenCode or log in again |

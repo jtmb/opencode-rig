@@ -45,12 +45,15 @@ lists them at a glance and covers the operating environment.
 | `check-skill-docs-self-test.py` | [`check-skill-docs.md`](check-skill-docs.md) | Proves the validator rejects invalid input |
 | `check-doc-coverage.py` | [`check-doc-coverage.md`](check-doc-coverage.md) | Enforces that mapped sources update or create their documentation |
 | `check-doc-coverage-self-test.py` | [`check-doc-coverage.md`](check-doc-coverage.md) | Proves the coverage gate rejects undocumented changes |
+| `check-plugin-resource-guards.py` | [`check-plugin-resource-guards.md`](check-plugin-resource-guards.md) | Ensures every local plugin's typecheck and test scripts use the adaptive memory guard |
+| `check-plugin-resource-guards-self-test.py` | [`check-plugin-resource-guards-self-test.md`](check-plugin-resource-guards-self-test.md) | Proves a bounded child can terminate without taking down its parent |
 
 ### Repository tooling
 
 | Script | Document | What it does |
 |--------|----------|--------------|
 | `setup-git-hooks.sh` | [`setup-git-hooks.md`](setup-git-hooks.md) | Installs/verifies the pre-push documentation gate |
+| `run-bounded-command.sh` | [`run-bounded-command.md`](run-bounded-command.md) | Runs expensive checks in a serialized, adaptive memory and timeout budget |
 
 ### Database maintenance
 
@@ -82,7 +85,8 @@ lists them at a glance and covers the operating environment.
   operations are APT installs and `usermod` in `setup-computer-assistant.sh`,
   and they are requested through `sudo`/`pkexec` only when `--apply` is passed.
 - **No secrets.** No script writes a credential to the repository or to
-  `opencode.json`. The GitHub token is read only from the launch environment.
+  `opencode.json`. The GitHub token is read from OpenCode's launch environment,
+  which may include values loaded from an untracked project `.env`.
 
 ## Verifying the toolchain
 

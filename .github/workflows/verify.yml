@@ -17,6 +17,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Shell lint
         run: |
           set -euo pipefail
@@ -31,6 +36,22 @@ jobs:
           set -euo pipefail
           python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs.py
           python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.py
+
+      - name: Plugin resource guards
+        run: |
+          python3 platforms/linux/ubuntu/computer-use/scripts/check-plugin-resource-guards.py
+          python3 platforms/linux/ubuntu/computer-use/scripts/check-plugin-resource-guards-self-test.py
+
+      - name: Local plugin checks
+        run: |
+          set -euo pipefail
+          for package in \
+            platforms/linux/ubuntu/computer-use/plugins/codex-usage \
+            platforms/linux/ubuntu/computer-use/plugins/codex-fallback \
+            platforms/linux/ubuntu/computer-use/plugins/source-control; do
+            npm --prefix "$package" ci --ignore-scripts
+            npm --prefix "$package" run check
+          done
 
       - name: Documentation gate self-test
         run: python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage-self-test.py

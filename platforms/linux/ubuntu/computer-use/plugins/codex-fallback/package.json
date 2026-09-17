@@ -6,8 +6,8 @@
   "description": "OpenCode server plugin that fails over from the Codex subscription to a configurable provider chain.",
   "scripts": {
     "check": "npm run typecheck && npm test",
-    "test": "node --experimental-strip-types --test test/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "test": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "bash ../../scripts/run-bounded-command.sh -- node_modules/.bin/tsc --noEmit"
   },
   "dependencies": {
     "@opencode-ai/plugin": "1.18.31"

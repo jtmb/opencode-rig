@@ -23,6 +23,7 @@ export type UsageStoreOptions = {
   authPath?: string
   endpoint?: string
   timeoutMs?: number
+  supportsLunaReserve?: boolean
 }
 
 const MIN_REFRESH_MS = 15_000
@@ -88,6 +89,7 @@ export function createUsageStore(options: UsageStoreOptions = {}): UsageStore {
         const snapshot = await fetchCodexUsage(credential, {
           endpoint: options.endpoint,
           signal: controller.signal,
+          supportsLunaReserve: options.supportsLunaReserve,
         })
         nextAllowedAt = 0
         publish({ status: "ready", snapshot })
