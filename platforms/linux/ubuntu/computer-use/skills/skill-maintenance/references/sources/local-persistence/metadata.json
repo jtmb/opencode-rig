@@ -1,0 +1,6 @@
+{
+  "historicalName": "local-persistence",
+  "status": "inactive",
+  "purpose": "Imported provenance tombstone only; not runtime configuration",
+  "sourceCommit": "f6fbb3802f88c9435b74ce2ecb73c445a31aaf16"
+}

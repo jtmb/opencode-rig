@@ -1,0 +1,24 @@
+{
+  "name": "opencode-codex-usage-local",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenCode TUI sidebar for the overall weekly ChatGPT Codex subscription limit.",
+  "scripts": {
+    "check": "npm run typecheck && npm test",
+    "check:usage": "node --experimental-strip-types scripts/check-usage.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "1.18.31",
+    "@opentui/core": "0.5.11",
+    "@opentui/keymap": "0.5.11",
+    "@opentui/solid": "0.5.11",
+    "solid-js": "1.9.12"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.6",
+    "typescript": "5.9.3"
+  }
+}

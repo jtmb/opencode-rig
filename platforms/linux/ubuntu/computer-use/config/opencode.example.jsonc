@@ -1,0 +1,26 @@
+// Project-level example for <repo>/opencode.json.
+// Computer-use MCPs are project-only and must not appear in global
+// ~/.config/opencode/opencode.json or opencode.jsonc.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "playwright": {
+      "type": "local",
+      "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"],
+      "enabled": true,
+      "timeout": 30000
+    },
+    "playwright_headless": {
+      "type": "local",
+      "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/playwright-headless-mcp.sh"],
+      "enabled": true,
+      "timeout": 30000
+    },
+    "github": {
+      "type": "local",
+      "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"],
+      "enabled": true,
+      "timeout": 30000
+    }
+  }
+}

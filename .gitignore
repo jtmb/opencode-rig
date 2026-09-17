@@ -1,11 +1,15 @@
-# Generated runtime — never commit.
-browser/node_modules/
-browser/browsers/
+# Generated Ubuntu browser runtime - never commit.
+platforms/linux/ubuntu/browser-tools/node_modules/
+platforms/linux/ubuntu/browser-tools/browsers/
+platforms/linux/ubuntu/computer-use/plugins/codex-usage/node_modules/
+platforms/linux/ubuntu/computer-use/plugins/codex-fallback/node_modules/
+
+# Generated GitHub MCP runtime - never commit.
+platforms/linux/ubuntu/github-tools/bin/
 
 # Python caches.
 __pycache__/
 *.py[cod]
-*.pyo
 
 # Editor and OS noise.
 *~
