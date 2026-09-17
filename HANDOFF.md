@@ -179,11 +179,14 @@ Known live state (recorded 2026-09-17):
     jtmb/opencode-rig#1 (branch docs/handoff-blender-note) is open against
     main, mergeable, with the required `verify` check passed; merge only on
     explicit request. The current checkout is branch
-    chore/todo-tracking-gate, stacked on docs/handoff-blender-note, with an
-    uncommitted but fully verified working tree (latest commit is still
-    256a811). The stacked branch carries the /handoff and /resume commands, the
-    desktop custom-tools package (tools/) with its deployment, resource-guard,
-    and docs, and the source-control Ctrl+click and header-count changes
+    chore/todo-tracking-gate, stacked on docs/handoff-blender-note, with a
+    clean working tree at commit 67909ab. The branch is pushed and pull request
+    jtmb/opencode-rig#2 (base docs/handoff-blender-note) is open, mergeable,
+    with the required `verify` check and GitGuardian passing. The stacked
+    branch carries the /handoff and /resume commands, the progress-tracking
+    gate, the desktop custom-tools package (tools/) with its deployment,
+    resource-guard, and docs, and the source-control Ctrl+click and
+    header-count changes
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
@@ -191,12 +194,11 @@ Known live state (recorded 2026-09-17):
   - Progress tracking: mandatory todo-tool rule in AGENTS.md, the /resume
     command, and this prompt; enforced by check-progress-tracking.py plus its
     self-test in the required `verify` CI job and the AGENTS.md verification
-    list (all wiring is in the uncommitted working tree)
-  - Pending deploy: the source `commands/resume.md` now carries the progress
-    step, but the generated copy under ~/.config/opencode/commands/ has not
-    been redeployed, so `setup-opencode.sh --verify-only` reports exactly
-    `MISSING/STALE: global command /resume` (and the full health check with it).
-    Fix with `setup-opencode.sh --apply` when landing the gate
+    list; landed in commit 67909ab on chore/todo-tracking-gate
+  - Deploy state: the progress-gate `/resume` was redeployed with
+    `setup-opencode.sh --apply`, source and deployed content match, and the
+    full `setup-computer-assistant.sh --verify-only` health check is green. The
+    running TUI still holds the pre-restart command until OpenCode restarts
   - Skills deployed: 16/16
   - Global commands deployed: /deploy, /handoff, /promote-skills, /resume
   - Global custom tools: `desktop.ts` in ~/.config/opencode/tools/ exporting
@@ -233,16 +235,16 @@ Work in progress (full detail in the "Work In Progress" section of this file):
   - The desktop custom-tools package is implemented, deployed, and
     live-verified; Basic Memory M0 is complete (0.23.2 installed, bounded
     reindex and stdio smoke recorded) with M1-M4 next.
-  - The progress-tracking gate is complete in the working tree of branch
-    chore/todo-tracking-gate but not committed, pushed, or redeployed yet; the
-    Work In Progress section lists the exact landing steps.
+  - The progress-tracking gate is landed: commit 67909ab on
+    chore/todo-tracking-gate, pushed, PR #2 open and green; the Work In
+    Progress section records the remaining plan.
   - The approved TUI feature plan (source-control to the top and minimized, a
     settings cog overlay, and a VS Code-like file manager) is recorded with the
     user's decisions under Work In Progress.
   - Pending verification: the desktop_* custom tools were confirmed loaded in
     the resume session; the source-control Ctrl+click diff opening and the
     accented change-count header are still unverified (the worktree was clean),
-    and the gate only runs in CI after it is pushed.
+    and the progress gate now runs in CI on PR #2 (passing).
 
 After the health check, give me a concise status and continue with the task I
 give you. If I pasted only this handoff, ask what task I want handled.
@@ -269,17 +271,21 @@ give you. If I pasted only this handoff, ask what task I want handled.
   package, setup verification (`setup-opencode.sh` and
   `setup-computer-assistant.sh`), the deployed tool loading check, and the real
   read-only GitHub MCP smoke test.
-- The resume session (2026-09-17) left branch chore/todo-tracking-gate (stacked
-  on docs/handoff-blender-note) with an uncommitted, fully verified 12-file
-  working tree: the progress-tracking gate (the AGENTS.md section and Start
-  Here step, the `commands/resume.md` step, the prompt expectation,
+- The resumed session (2026-09-17) landed the progress-tracking gate as commit
+  67909ab on branch chore/todo-tracking-gate (stacked on
+  docs/handoff-blender-note): the AGENTS.md section and Start Here step, the
+  `commands/resume.md` step, the prompt expectation,
   `check-progress-tracking.py` and its self-test, the CI step in
   `.github/workflows/verify.yml`, the docs and index rows, and the component
-  README) plus this HANDOFF.md update. Verification already run: the progress
-  checker and its self-test pass, `py_compile` passes, the documentation gate
-  passes completeness and a change-aware simulation over all changed and added
-  files, and `git diff --check` is clean. The only environment warning is the
-  expected stale generated `/resume` command (not redeployed).
+  README. The branch is pushed; pull request jtmb/opencode-rig#2 (base
+  docs/handoff-blender-note) is open, mergeable, and its `verify` and
+  GitGuardian checks pass. The `/resume` command was redeployed
+  (`setup-opencode.sh --apply`), source/deployed content match, and the full
+  health check is green.
+- Next planned change: the source-control reposition/minimize and runtime kv
+  overrides in "Part 3", followed by `tui-settings` (including the new
+  sidebar-positioning requirement) and `file-manager`, with Basic Memory M1-M4
+  queued.
 - Basic Memory M0 was completed in the same session (below), and the TUI
   feature plan in "Part 3" was approved with the user.
 
