@@ -191,8 +191,9 @@ Example requests:
 
 Requires: the project-local `github` MCP entry pointing at
 `../scripts/github-mcp.sh`, the checksum-pinned official runtime under
-`../../github-tools/`, and `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in
-OpenCode's launch environment. The MCP is limited to `context`, `repos`,
+`../../github-tools/`, and a credential from `GITHUB_PERSONAL_ACCESS_TOKEN` or
+`GH_TOKEN` in OpenCode's launch environment, or from the logged-in `gh` CLI.
+The MCP is limited to `context`, `repos`,
 `issues`, and `pull_requests` with read-only and lockdown modes. Credentials,
 publishing, merging, deletion, workflow/deployment actions, and security or
 permission changes retain explicit user handling and confirmation gates.

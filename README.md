@@ -92,8 +92,9 @@ Both plugins are user-registered (`~/.config/opencode/tui.json` and the global
 
 `github-tools` installs the official GitHub MCP Server `v1.12.1` after
 SHA-256 verification and runs it with only `context`, `repos`, `issues`, and
-`pull_requests`, in read-only and lockdown modes. The credential comes from the
-launch environment and is never stored in the repo or config. Publishing,
+`pull_requests`, in read-only and lockdown modes. The credential comes from an
+explicit environment variable or the logged-in `gh` CLI and is never stored in
+the repo or config. Publishing,
 merging, workflows, deletions, and account or repository security changes all
 stay behind an explicit confirmation gate.
 

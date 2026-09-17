@@ -11,13 +11,22 @@ if [ ! -x "$MCP" ]; then
   exit 1
 fi
 
-if [ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]; then
-  if [ -n "${GH_TOKEN:-}" ]; then
-    export GITHUB_PERSONAL_ACCESS_TOKEN="$GH_TOKEN"
-  else
-    echo "github-mcp: authentication is not configured; start OpenCode with GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN set" >&2
-    exit 1
+# Resolve a credential without ever printing it. The explicit variables win;
+# otherwise fall back to the logged-in GitHub CLI, which stores no token in this
+# repository or in OpenCode's configuration.
+if [ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ] && [ -n "${GH_TOKEN:-}" ]; then
+  export GITHUB_PERSONAL_ACCESS_TOKEN="$GH_TOKEN"
+fi
+if [ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ] && command -v gh >/dev/null 2>&1; then
+  gh_token="$(gh auth token 2>/dev/null || true)"
+  if [ -n "$gh_token" ]; then
+    export GITHUB_PERSONAL_ACCESS_TOKEN="$gh_token"
   fi
+  unset gh_token
+fi
+if [ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]; then
+  echo "github-mcp: authentication is not configured; run 'gh auth login' or start OpenCode with GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN set" >&2
+  exit 1
 fi
 
 exec "$MCP" stdio \

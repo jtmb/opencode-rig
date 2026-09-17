@@ -159,8 +159,9 @@ coordinates. Never run an uncontrolled click or key loop.
   confirmation gate for publishing, merging, deleting, workflow/deployment, or
   account/repository/security changes.
 - Never print, store, request in chat, or pass a GitHub credential in command
-  arguments. Authentication must already be present in OpenCode's environment;
-  let the user handle token creation, OAuth, SSO, passwords, and MFA.
+  arguments. The MCP wrapper resolves its credential from
+  `GITHUB_PERSONAL_ACCESS_TOKEN`, `GH_TOKEN`, or the logged-in `gh` CLI; let the
+  user handle token creation, OAuth, SSO, passwords, and MFA.
 
 ### Memory
 

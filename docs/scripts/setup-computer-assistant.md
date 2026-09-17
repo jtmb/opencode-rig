@@ -178,9 +178,11 @@ as a health gate.
   and are gitignored.
 - `ydotool` access may require a logout/login after the first `--apply` on a
   new machine; the script prints a notice and verification fails until then.
-- The GitHub MCP needs `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in
-  OpenCode's launch environment. The script never reads, stores, or verifies the
-  token value itself.
+- The GitHub MCP authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN`
+  in OpenCode's launch environment, or from the logged-in `gh` CLI. The script
+  never reads, stores, or verifies the token value itself. The GitHub connection
+  check is treated as pending until an explicit variable or `gh auth` is
+  available.
 - Reading order: [`setup-opencode.md`](setup-opencode.md),
   [`setup-live-dictation.md`](setup-live-dictation.md),
   [`github-mcp.md`](github-mcp.md), [`playwright-mcp.md`](playwright-mcp.md).

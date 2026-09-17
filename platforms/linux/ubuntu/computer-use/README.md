@@ -235,11 +235,12 @@ MCP Server `v1.12.1` Linux x86_64 release after its published SHA-256 is
 verified. `scripts/github-mcp.sh` enables only `context`, `repos`, `issues`, and
 `pull_requests` with read-only and lockdown modes.
 
-The wrapper requires `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in OpenCode's
-launch environment and fails closed when neither exists. Prefer a fine-grained
-PAT restricted to the required repositories and read permissions. Never put a
-token in this repository or `opencode.json`; restart OpenCode after changing
-its launch environment.
+The wrapper authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in
+OpenCode's launch environment, falling back to the logged-in `gh` CLI, and
+fails closed when none is available. Prefer a fine-grained PAT restricted to the
+required repositories and read permissions. Never put a token in this
+repository or `opencode.json`; restart OpenCode after changing its launch
+environment.
 
 ## Memory store
 

@@ -7,21 +7,26 @@ repository security changes are **not** available through it and stay behind an
 explicit confirmation gate.
 
 ```bash
-GITHUB_PERSONAL_ACCESS_TOKEN=... ./platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh
+./platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh
 ```
 
-The script is normally launched by OpenCode as an MCP server, not by hand.
+The script is normally launched by OpenCode as an MCP server, not by hand. It
+resolves a credential automatically, so no environment variable is required
+when the `gh` CLI is logged in.
 
 ## What it does
 
 1. Resolves `UBUNTU_ROOT` from the script location and expects the executable at
    `github-tools/bin/github-mcp-server`. If it is missing, it prints the path
    and exits `1`.
-2. Resolves authentication, **failing closed**:
-   - If `GITHUB_PERSONAL_ACCESS_TOKEN` is set, use it.
-   - Else if `GH_TOKEN` is set, copy it into `GITHUB_PERSONAL_ACCESS_TOKEN`.
-   - Else print an error telling the user to start OpenCode with one of the two
-     variables set, and exit `1`.
+2. Resolves authentication, **failing closed**. The first available source
+   wins, and the token is never printed:
+   - `GITHUB_PERSONAL_ACCESS_TOKEN` if set.
+   - Otherwise `GH_TOKEN`, copied into `GITHUB_PERSONAL_ACCESS_TOKEN`.
+   - Otherwise the logged-in `gh` CLI, via `gh auth token`.
+   - If none is available, it prints an error telling the user to run
+     `gh auth login` or start OpenCode with one of the variables set, and exits
+     `1`.
 3. Replaces itself (`exec`) with the server:
 
    ```bash
@@ -61,14 +66,18 @@ version, archive URL, and checksum in the setup script. Do not use `latest`.
 
 ## Authentication
 
-The token must be in OpenCode's launch environment **before** OpenCode starts:
+The credential comes from an explicit environment variable or, failing that,
+from the logged-in `gh` CLI. To use a dedicated credential instead:
 
+- Set `GITHUB_PERSONAL_ACCESS_TOKEN` (or `GH_TOKEN`) in OpenCode's launch
+  environment **before** OpenCode starts.
 - Prefer a fine-grained PAT limited to the required repositories and read
   permissions.
 - Never put a token in this repository, in `opencode.json`, or in any committed
   file.
 - Restart OpenCode after changing its launch environment.
-- The wrapper never prints, logs, or stores the token value.
+- The wrapper never prints, logs, or stores the token value; it is passed to
+  the server only through the `GITHUB_PERSONAL_ACCESS_TOKEN` environment.
 
 If authentication later fails, check expiration, selected repositories, read
 permissions, SSO, and organization policy — without displaying the token.
@@ -78,7 +87,7 @@ permissions, SSO, and organization policy — without displaying the token.
 | Condition | Result |
 |-----------|--------|
 | Executable missing | Prints the path and exits `1` |
-| Neither token variable set | Prints a start-OpenCode-with-a-token message and exits `1` |
+| No credential available | Prints a `gh auth login` / token-variable message and exits `1` |
 | Token invalid or expired | The MCP reports an authentication error; the wrapper does not retry with another credential |
 
 The wrapper fails closed: it never starts an unauthenticated server.
@@ -87,8 +96,8 @@ The wrapper fails closed: it never starts an unauthenticated server.
 
 - Read-only and lockdown modes are always on.
 - Only four toolsets are exposed.
-- Credentials come from the environment and stay out of the repository and
-  configuration.
+- Credentials come from the environment or the logged-in `gh` CLI and stay out
+  of the repository and configuration.
 - Remote mutations are not possible through this MCP; the `github-operations`
   skill performs separately approved changes through `gh` after inspecting the
   target and passing the confirmation gate.

@@ -28,10 +28,12 @@ The repository setup installs the pinned official GitHub MCP Server at
 project-local `github` MCP through
 `platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh`.
 
-Before OpenCode starts, provide either `GITHUB_PERSONAL_ACCESS_TOKEN` or
-`GH_TOKEN` in its environment. Use a fine-grained PAT restricted to the needed
-repositories with read-only permissions for normal MCP use. Do not place the
-token in `opencode.json`, a repository file, chat, or task memory.
+Before OpenCode starts, provide a credential either by setting
+`GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in its environment, or by logging
+in with the `gh` CLI (`gh auth login`), which the wrapper reads automatically.
+Use a fine-grained PAT restricted to the needed repositories with read-only
+permissions for normal MCP use. Do not place the token in `opencode.json`, a
+repository file, chat, or task memory.
 
 The agent can verify installation and connection without displaying a token:
 
@@ -85,9 +87,10 @@ size, blocks MCP write tools, and filters some untrusted public issue content.
 
 Known limitations:
 
-- Authentication must be present when OpenCode starts; running sessions do not
-  reload environment variables or MCP configuration.
-- Read-only mode does not reduce the PAT's underlying account permissions.
+- The wrapper resolves its credential when the MCP starts; running sessions do
+  not reload environment variables or MCP configuration, so restart OpenCode
+  after logging in or changing a token.
+- Read-only mode does not reduce the token's underlying account permissions.
 - Lockdown mode is a best-effort content filter, not a security boundary.
 - GitHub Actions, releases, discussions, projects, and security toolsets are not
   exposed by the default MCP wrapper; the agent may use `gh` when requested.
@@ -95,8 +98,9 @@ Known limitations:
 
 ## Troubleshooting
 
-- MCP says authentication is not configured: start a fresh OpenCode process
-  with `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` already set.
+- MCP says authentication is not configured: run `gh auth login`, or start a
+  fresh OpenCode process with `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN`
+  already set.
 - `401` or `403`: check token expiration, selected repositories, permissions,
   organization SSO authorization, and organization MCP policy without printing
   the token.

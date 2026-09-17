@@ -98,6 +98,10 @@ github_runtime_complete() {
   [[ "$version" == *"$GITHUB_MCP_VERSION"* ]]
 }
 
+github_auth_available() {
+  command -v gh >/dev/null 2>&1 && gh auth token >/dev/null 2>&1
+}
+
 ensure_mcp() {
   local name="$1"
   local wrapper="$2"
@@ -509,7 +513,7 @@ verify() {
     status=1
   fi
 
-  if [ -n "${GITHUB_PERSONAL_ACCESS_TOKEN:-}${GH_TOKEN:-}" ]; then
+  if [ -n "${GITHUB_PERSONAL_ACCESS_TOKEN:-}${GH_TOKEN:-}" ] || github_auth_available; then
     if printf '%s\n' "$mcp_list" | grep -q 'github .*connected'; then
       ok "OpenCode GitHub MCP connected"
     else
@@ -517,7 +521,7 @@ verify() {
       status=1
     fi
   else
-    ok "GitHub MCP authentication pending (set GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN before starting OpenCode)"
+    ok "GitHub MCP authentication pending (run 'gh auth login' or set GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN before starting OpenCode)"
   fi
 
   if project_mcp_matches playwright "$LIVE_MCP_WRAPPER"; then
