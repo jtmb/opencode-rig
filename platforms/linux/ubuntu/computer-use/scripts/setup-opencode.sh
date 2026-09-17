@@ -83,6 +83,7 @@ REQUIRED_SKILLS=(
   web-3d-asset-pipeline
 )
 REQUIRED_COMMANDS=(
+  deploy
   promote-skills
 )
 

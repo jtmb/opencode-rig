@@ -153,7 +153,8 @@ changing local plugin registration. Running sessions do not hot-reload them.
 For a fresh chat, paste the prompt in [`HANDOFF.md`](HANDOFF.md): it reads the
 canonical docs, runs the health check, records the live state, and sets the
 operating boundaries. The `/promote-skills` command revalidates and redeploys
-every skill bundle after a restart.
+every skill bundle after a restart, and the `/deploy` command registers the
+local plugins with the global config or a repository's `.opencode/` directory.
 
 ## Documentation map
 

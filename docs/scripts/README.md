@@ -16,6 +16,12 @@ lists them at a glance and covers the operating environment.
 | `setup-opencode.sh` | [`setup-opencode.md`](setup-opencode.md) | Persists `OPENCODE_ENABLE_EXA` and deploys skills and global commands content-aware |
 | `setup-live-dictation.sh` | [`setup-live-dictation.md`](setup-live-dictation.md) | Optional checksum-pinned Vosk dictation runtime and `Alt+X` shortcut |
 
+### Plugin deployment
+
+| Script | Document | What it does |
+|--------|----------|--------------|
+| `deploy-plugins.sh` | [`deploy-plugins.md`](deploy-plugins.md) | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
+
 ### MCP launchers
 
 | Script | Document | What it does |

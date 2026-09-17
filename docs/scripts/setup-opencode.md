@@ -68,7 +68,7 @@ opencode-db-maintenance  routine-automation  skill-maintenance
 system-troubleshooting  task-memory  vscode-management  web-3d-asset-pipeline
 ```
 
-The required command is `promote-skills`.
+The required commands are `deploy` and `promote-skills`.
 
 ### `ensure_skill()`
 

@@ -159,6 +159,27 @@ versioned public REST API. Both plugins validate the response and handle
 service changes conservatively so a malformed reply is never shown as a
 fabricated quota value.
 
+## Deploying the plugins
+
+The repository ships a `/deploy` command and a `deploy-plugins.sh` script that
+register the plugins with an OpenCode installation. Registration references this
+checkout with `file://` URLs; the plugin sources are not copied.
+
+- **Global** deploys to `~/.config/opencode/tui.json` (TUI) and
+  `~/.config/opencode/opencode.jsonc` or `.json` (server).
+- **Project** deploys to `<repo>/.opencode/tui.json` (TUI) and
+  `<repo>/.opencode/opencode.json` (server).
+- `--bootstrap` additionally copies the provisioning scripts into the target.
+
+Run `/deploy` for an interactive, question-driven flow, or invoke the script
+directly. Both default to read-only verification; writes require `--apply`.
+Neither overwrites existing `plugin` entries or their options, and both refuse
+to rewrite a config that contains JSONC comments (they cannot be preserved by a
+plain JSON edit).
+
+Full behavior, options, targets, and exit codes are documented in
+[`docs/scripts/deploy-plugins.md`](../scripts/deploy-plugins.md).
+
 ## Failure isolation
 
 Neither plugin may take the harness down with it:

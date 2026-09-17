@@ -102,7 +102,9 @@ hot-reload them.
 
 After restart, `/promote-skills` validates the canonical skill documentation,
 deploys every complete bundle globally through `setup-opencode.sh --apply`, and
-verifies source parity plus OpenCode discovery.
+verifies source parity plus OpenCode discovery. `/deploy` registers the local
+plugins globally or into a repository's `.opencode/` directory (and optionally
+copies the bootstrap scripts) through `scripts/deploy-plugins.sh`.
 
 [`plugins/codex-usage/`](plugins/codex-usage/README.md) is a local OpenCode TUI
 sidebar for the weekly Codex quota. [`plugins/codex-fallback/`](plugins/codex-fallback/README.md)
@@ -112,8 +114,9 @@ automatic return to Codex when the quota resets.
 
 Both are user-registered local packages, not setup-script deployments:
 codex-usage loads from `~/.config/opencode/tui.json`, codex-fallback from the
-`plugin` array in `~/.config/opencode/opencode.jsonc`. Their runtime and
-verification commands live in their READMEs.
+`plugin` array in `~/.config/opencode/opencode.jsonc`. Register them with
+`/deploy` or `scripts/deploy-plugins.sh`; their runtime and verification
+commands live in their READMEs.
 
 ## New Chat Handoff
 
@@ -154,6 +157,7 @@ phrases, example requests, and how the skills combine.
 | `scripts/setup-computer-assistant.sh` | Provision and verify the full assistant stack (`--verify-only` default, `--apply` to change the system) |
 | `scripts/setup-live-dictation.sh` | Reproduce and verify local incremental Vosk dictation on `Alt+X` without login autostart |
 | `scripts/setup-opencode.sh` | Verify by default; with `--apply`, persist `OPENCODE_ENABLE_EXA=1`, recursively deploy complete skill bundles, and deploy repository-managed global commands |
+| `scripts/deploy-plugins.sh` | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
 | `scripts/desktop-control.py` | AT-SPI inspection with traversal status, short-lived target tokens, focus/text verification, and protected-field refusal |
 | `scripts/check-skill-docs.py` | Read-only validation for skill metadata, usage guides, deployed-set links, unsafe modes, symlinks, and generated artifacts |
 | `scripts/check-skill-docs-self-test.py` | Isolated negative tests proving invalid skill metadata and documentation are rejected |
