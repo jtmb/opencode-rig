@@ -192,7 +192,8 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     TUI plugin (VS Code-style Source Control panel in the sidebar: change-count
     badge, local working-tree list, GitHub MCP section for the current branch).
     The implementation, adaptive memory guard, and global registration are now
-    present; final checks, restart-based UI verification, and the commit remain.
+    present; restart-based UI verification remains the only unperformed
+    acceptance check.
 
 After the health check, give me a concise status and continue with the task I
 give you. If I pasted only this handoff, ask what task I want handled.
@@ -203,14 +204,14 @@ give you. If I pasted only this handoff, ask what task I want handled.
 ### Checkout state
 
 - Branch docs/handoff-blender-note (never pushed; main is protected). Local
-  commit bb21ab4 plus the preserved Luna/config baseline and the uncommitted
-  source-control and adaptive-resource-guard changes. Nothing from this session
-  is committed or pushed.
+  commits bb21ab4 and 63dd2e0; the preserved Luna/config baseline, source-control
+  plugin, and adaptive-resource-guard changes are committed. Nothing has been
+  pushed.
 - The preserved baseline and new work now pass the documentation gate and
   self-tests, shell/Python validation, all three bounded plugin checks, setup
   verification, the real read-only GitHub MCP smoke test, and `git diff --check`.
 
-### Completed and verified (uncommitted)
+### Completed and verified
 
 1. Luna Reserve support (codex-usage, codex-fallback, docs)
    - Conditional x-openai-codex-luna-reserve: 1 header on the TUI usage request
@@ -365,8 +366,8 @@ Known soft dependencies and risks:
 2. Verify the sidebar badge, local rows, collapse state, `/changes`, diff
    activation, refresh behavior, and the hidden/no-PR GitHub row in the current
    branch.
-3. Commit the preserved baseline and source-control implementation locally; do
-   not push unless explicitly requested.
+3. Push/open a PR only if explicitly requested; the implementation is already
+   committed locally.
 4. Update HANDOFF.md whenever registration, branch, or verification state changes.
 
 ## Keep This Current

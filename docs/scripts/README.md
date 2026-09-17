@@ -46,7 +46,7 @@ lists them at a glance and covers the operating environment.
 | `check-doc-coverage.py` | [`check-doc-coverage.md`](check-doc-coverage.md) | Enforces that mapped sources update or create their documentation |
 | `check-doc-coverage-self-test.py` | [`check-doc-coverage.md`](check-doc-coverage.md) | Proves the coverage gate rejects undocumented changes |
 | `check-plugin-resource-guards.py` | [`check-plugin-resource-guards.md`](check-plugin-resource-guards.md) | Ensures every local plugin's typecheck and test scripts use the adaptive memory guard |
-| `check-plugin-resource-guards-self-test.py` | [`check-plugin-resource-guards.md`](check-plugin-resource-guards.md) | Proves a bounded child can terminate without taking down its parent |
+| `check-plugin-resource-guards-self-test.py` | [`check-plugin-resource-guards-self-test.md`](check-plugin-resource-guards-self-test.md) | Proves a bounded child can terminate without taking down its parent |
 
 ### Repository tooling
 
