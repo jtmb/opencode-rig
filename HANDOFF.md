@@ -158,9 +158,8 @@ Changing this project:
 Known live state (recorded 2026-09-17):
 
   - Repository: ~/repos/opencode-rig, public; main is protected. The current
-    checkout is branch docs/handoff-blender-note at local commit bb21ab4
-    (never pushed) with uncommitted baseline and source-control changes (see
-    Work In Progress below)
+    checkout is branch docs/handoff-blender-note at local commit 96939d4
+    (never pushed) with a clean worktree (see Work In Progress below)
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
@@ -184,11 +183,11 @@ Known live state (recorded 2026-09-17):
 
 Work in progress (full detail in the "Work In Progress" section of this file):
 
-  - The checkout is branch docs/handoff-blender-note at local commit bb21ab4
-    (never pushed) with the preserved Luna/config baseline plus source-control
-    and adaptive-resource-guard changes. Preserve the baseline and commit the
-    complete requested work together unless a later request says otherwise.
-  - Current task: finish, verify, deploy, and locally commit the source-control
+  - The checkout is branch docs/handoff-blender-note at local commit 96939d4
+    (never pushed) with a clean worktree. The local history contains the
+    preserved Luna/config baseline and source-control/resource-guard changes;
+    do not push it without an explicit request.
+  - Current task: maintain the committed source-control
     TUI plugin (VS Code-style Source Control panel in the sidebar: change-count
     badge, local working-tree list, GitHub MCP section for the current branch).
     The implementation, adaptive memory guard, and global registration are now
@@ -204,9 +203,9 @@ give you. If I pasted only this handoff, ask what task I want handled.
 ### Checkout state
 
 - Branch docs/handoff-blender-note (never pushed; main is protected). Local
-  commits bb21ab4 and 63dd2e0; the preserved Luna/config baseline, source-control
-  plugin, and adaptive-resource-guard changes are committed. Nothing has been
-  pushed.
+  commits bb21ab4, 63dd2e0, and 96939d4 contain the preserved Luna/config
+  baseline, source-control plugin, adaptive resource guard, and final handoff
+  state. Nothing has been pushed.
 - The preserved baseline and new work now pass the documentation gate and
   self-tests, shell/Python validation, all three bounded plugin checks, setup
   verification, the real read-only GitHub MCP smoke test, and `git diff --check`.
