@@ -35,7 +35,8 @@ platforms/linux/ubuntu/
     ├── config/
     ├── plugins/
     │   ├── codex-fallback/
-    │   └── codex-usage/
+    │   ├── codex-usage/
+    │   └── source-control/
     ├── scripts/
     └── skills/
 ```
@@ -51,6 +52,7 @@ Generated and local-only paths (never committed):
 - `../github-tools/bin/`
 - `scripts/__pycache__/`
 - `plugins/codex-usage/node_modules/`, `plugins/codex-fallback/node_modules/`
+- `plugins/source-control/node_modules/`
 - `~/Documents/computer-assistant/memory.json` (owner-only app data)
 - `/tmp/opencode/playwright*/` (transient MCP output)
 - `~/Pictures/Screenshots/*.png` (viewed once, then deleted)
@@ -83,7 +85,7 @@ What `--apply` does:
   (project-only, never global).
 - Downloads the official GitHub MCP Server `v1.12.1` amd64 archive, verifies its
   published SHA-256, installs the native executable under `../github-tools/`,
-  and registers a project-only wrapper limited to read-only, lockdown-protected
+  and registers a global wrapper limited to read-only, lockdown-protected
   repository, issue, and pull request tools. Credentials are not stored.
 
 Read-only checks:
@@ -107,16 +109,19 @@ plugins globally or into a repository's `.opencode/` directory (and optionally
 copies the bootstrap scripts) through `scripts/deploy-plugins.sh`.
 
 [`plugins/codex-usage/`](plugins/codex-usage/README.md) is a local OpenCode TUI
-sidebar for the weekly Codex quota. [`plugins/codex-fallback/`](plugins/codex-fallback/README.md)
-is a server plugin that fails over from the Codex subscription to a
+sidebar for the weekly Codex quota and optional Luna Reserve usage.
+[`plugins/codex-fallback/`](plugins/codex-fallback/README.md) is a server plugin that fails over from the Codex subscription to a
 configurable chain of any OpenCode providers, with per-agent overrides and
 automatic return to Codex when the quota resets.
+[`plugins/source-control/`](plugins/source-control/README.md) is a local TUI
+sidebar for working-tree changes and the current branch's GitHub pull request.
 
-Both are user-registered local packages, not setup-script deployments:
+All three are user-registered local packages, not setup-script deployments:
 codex-usage loads from `~/.config/opencode/tui.json`, codex-fallback from the
-`plugin` array in `~/.config/opencode/opencode.jsonc`. Register them with
-`/deploy` or `scripts/deploy-plugins.sh`; their runtime and verification
-commands live in their READMEs.
+`plugin` array in `~/.config/opencode/opencode.jsonc`, and source-control from
+the TUI config. Register them with `/deploy` or
+`scripts/deploy-plugins.sh`; their runtime and verification commands live in
+their READMEs.
 
 ## New Chat Handoff
 
@@ -155,6 +160,9 @@ phrases, example requests, and how the skills combine.
 | Script | Purpose |
 |--------|---------|
 | `scripts/setup-computer-assistant.sh` | Provision and verify the full assistant stack (`--verify-only` default, `--apply` to change the system) |
+| `scripts/run-bounded-command.sh` | Run plugin checks in a serialized, adaptive memory and timeout budget |
+| `scripts/check-plugin-resource-guards.py` | Enforce bounded typecheck and test scripts for every local plugin |
+| `scripts/check-plugin-resource-guards-self-test.py` | Verify a bounded child can terminate without taking down its parent |
 | `scripts/setup-live-dictation.sh` | Reproduce and verify local incremental Vosk dictation on `Alt+X` without login autostart |
 | `scripts/setup-opencode.sh` | Verify by default; with `--apply`, persist `OPENCODE_ENABLE_EXA=1`, recursively deploy complete skill bundles, and deploy repository-managed global commands |
 | `scripts/deploy-plugins.sh` | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
@@ -175,8 +183,14 @@ phrases, example requests, and how the skills combine.
 ## Configuration examples
 
 - [`config/opencode.example.jsonc`](config/opencode.example.jsonc)
-  documents the expected project-level Playwright and GitHub MCP registrations
-  (project `opencode.json` only, never global).
+- [`config/.env.example`](config/.env.example) shows the non-OAuth values used
+  by the configuration example. OpenCode loads the real project `.env`
+  automatically; keep it untracked.
+- `config/opencode.example.jsonc` demonstrates the supported provider env
+  reference, complete `codex-fallback` options, per-agent overrides, and the
+  project-level Playwright MCP registrations. The GitHub MCP is registered
+  globally by `setup-computer-assistant.sh`; its env-backed block is documented
+  in [`docs/scripts/github-mcp.md`](../../../../docs/scripts/github-mcp.md).
 - [`config/maintenance.cron.example`](config/maintenance.cron.example)
   documents the weekly maintenance schedule and required cron `PATH`.
 - Plugin registration examples live in
@@ -243,11 +257,11 @@ verified. `scripts/github-mcp.sh` enables only `context`, `repos`, `issues`, and
 `pull_requests` with read-only and lockdown modes.
 
 The wrapper authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in
-OpenCode's launch environment, falling back to the logged-in `gh` CLI, and
-fails closed when none is available. Prefer a fine-grained PAT restricted to the
-required repositories and read permissions. Never put a token in this
-repository or `opencode.json`; restart OpenCode after changing its launch
-environment.
+OpenCode's launch environment, including values loaded from a project `.env`,
+falling back to the logged-in `gh` CLI, and fails closed when none is
+available. Prefer a fine-grained PAT restricted to the required repositories
+and read permissions. Never commit a token or place its value in
+`opencode.json`; restart OpenCode after changing its launch environment.
 
 ## Memory store
 

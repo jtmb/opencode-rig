@@ -12,6 +12,8 @@ the plugin sources. Existing plugin entries and their options are preserved.
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --apply
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope project --project ~/repos/example --apply
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope project --project . --bootstrap --apply
+./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --plugins source-control --apply
+./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --plugins all --apply
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --plugins codex-fallback --chain a/b,c/d --apply
 ```
 
@@ -21,7 +23,7 @@ the plugin sources. Existing plugin entries and their options are preserved.
 |--------|---------|---------|
 | `--scope global\|project` | required | Deploy to the user's global config or one repository |
 | `--project DIR` | required for `project` | Target repository; `.opencode/` is created inside it |
-| `--plugins both\|codex-usage\|codex-fallback` | `both` | Which plugins to register |
+| `--plugins both\|all\|source-control\|codex-usage\|codex-fallback` | `both` | Which plugins to register; `both` preserves the Codex pair and `all` includes source-control |
 | `--bootstrap` | off | Also copy `computer-use/scripts/` into the target |
 | `--chain a/b,c/d` | — | `defaultChain` written when adding `codex-fallback` |
 | `--apply` | — | Write changes |
@@ -39,6 +41,8 @@ missing or non-directory `--project`, or an unknown `--plugins` value exits `2`.
 | global | `codex-fallback` (server) | `~/.config/opencode/opencode.jsonc`, else `opencode.json` | `plugin` |
 | project | `codex-usage` (TUI) | `<repo>/.opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
 | project | `codex-fallback` (server) | `<repo>/.opencode/opencode.json` | `plugin` |
+| global | `source-control` (TUI) | `~/.config/opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
+| project | `source-control` (TUI) | `<repo>/.opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
 
 Entries written:
 
@@ -50,6 +54,13 @@ Entries written:
 [
   "file:///home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins/codex-fallback/src/index.ts",
   { "defaultChain": ["provider/model"] }
+]
+```
+
+```json
+[
+  "file:///home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins/source-control/src/tui.tsx",
+  { "github": true }
 ]
 ```
 
@@ -76,6 +87,11 @@ notice when that is the case.
   and reports `MISSING/STALE` with a "(comments?)" hint rather than rewriting a
   user's file and losing comments. Consolidate or remove comments to let the
   script manage that file, or add the entry by hand.
+
+The source-control TUI entry is written as a tuple with `{ "github": true }`
+so the optional read-only GitHub row is explicitly enabled. Its MCP child
+calculates an adaptive memory budget at runtime; deployment does not write a
+machine-specific byte limit.
 
 ## Bootstrap script copy (`--bootstrap`)
 

@@ -9,6 +9,21 @@ set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
 CHECK="$ROOT/platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py"
+RESOURCE_GUARD="$ROOT/platforms/linux/ubuntu/computer-use/scripts/check-plugin-resource-guards.py"
+RESOURCE_GUARD_SELF_TEST="$ROOT/platforms/linux/ubuntu/computer-use/scripts/check-plugin-resource-guards-self-test.py"
+
+if [ ! -f "$RESOURCE_GUARD" ]; then
+  echo "resource-gate: checker missing at $RESOURCE_GUARD; blocking push." >&2
+  exit 1
+fi
+if ! python3 "$RESOURCE_GUARD"; then
+  echo "resource-gate: every local plugin typecheck and test script must use the adaptive bounded-command wrapper." >&2
+  exit 1
+fi
+if ! python3 "$RESOURCE_GUARD_SELF_TEST"; then
+  echo "resource-gate: bounded-command self-test failed." >&2
+  exit 1
+fi
 
 if [ ! -f "$CHECK" ]; then
   echo "doc-gate: checker missing at $CHECK; allowing push." >&2

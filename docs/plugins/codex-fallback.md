@@ -82,6 +82,26 @@ crashing.
 > The README's example chain names specific providers; there is no hardcoded
 > default chain. Register your own chain or the plugin does nothing.
 
+Provider authentication is separate from fallback routing. For an API-key
+provider, keep the value in the project `.env` and reference it from the
+provider configuration:
+
+```jsonc
+{
+  "provider": {
+    "deepseek": {
+      "options": { "apiKey": "{env:DEEPSEEK_API_KEY}" }
+    }
+  }
+}
+```
+
+The OpenAI primary used by proactive quota checks must be an OpenAI OAuth login
+managed by OpenCode, not an API key. Run `opencode auth login`; the shared
+credential reader uses the managed `auth.json` access token and never reads the
+refresh token. See the complete project configuration example in the component
+README for all plugin, agent, and MCP settings.
+
 ### Per-agent configuration
 
 Override one agent's chain in `opencode.json`:
@@ -353,8 +373,10 @@ so edits made while OpenCode runs do nothing until restart.
   `resetsAt` (converted from seconds to epoch milliseconds), `planType`, and
   `fetchedAt`.
 - `limitReached` is true when the snapshot has a `reachedType`, the overall
-  `codex` bucket is `limitReached` or `allowed === false`, or the weekly window
-  is at ≥ 100 % used.
+  `codex` bucket is `limitReached` or `allowed === false`. The weekly window's
+  ≥ 100 % usage is only a fallback for payloads that carry neither an `allowed`
+  nor a `limitReached` flag on the overall bucket; an explicit `allowed: true`
+  (reserve usage past the included allowance) keeps the primary model in use.
 - Successful results are cached for `usageCacheMs`; failures are cached for
   `min(usageCacheMs, 15 s)` to avoid hammering a failing endpoint.
 - Concurrent checks are de-duplicated.
@@ -384,8 +406,8 @@ runs `tsc --noEmit` plus the `node:test` suites. Coverage includes:
 - Model key format/parse/rejection and model extraction from both message
   shapes.
 - State persistence across reloads, pruning, and corrupt-state tolerance.
-- Quota derivation from the weekly window, `reachedType` handling, caching, and
-  fail-open behavior.
+- Quota derivation from the weekly window, `reachedType` handling, explicit
+  `allowed`/`limitReached` precedence, caching, and fail-open behavior.
 
 ## Troubleshooting
 

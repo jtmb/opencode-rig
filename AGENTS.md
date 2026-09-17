@@ -151,9 +151,9 @@ coordinates. Never run an uncontrolled click or key loop.
 
 - Load `github-operations` for GitHub repository, issue, pull request, review,
   release, or Actions work.
-- Prefer the project-local `github` MCP for bounded reads. Its wrapper exposes
-  only `context`, `repos`, `issues`, and `pull_requests` in read-only and
-  lockdown modes.
+- Prefer the `github` MCP (registered globally) for bounded reads. Its wrapper
+  exposes only `context`, `repos`, `issues`, and `pull_requests` in read-only
+  and lockdown modes.
 - Use `gh` only for functionality outside that MCP surface or an explicitly
   requested remote mutation. Inspect the target first and retain the immediate
   confirmation gate for publishing, merging, deleting, workflow/deployment, or
@@ -227,6 +227,10 @@ or CAPTCHAs for the user.
   `platforms/linux/ubuntu/computer-use/plugins/<name>/` (source, README, and
   checks; loaded directly from these paths). `setup-opencode.sh` does not
   deploy plugins.
+- The local plugin set is `codex-usage` (TUI quota sidebar), `codex-fallback`
+  (server failover), and `source-control` (TUI working-tree and GitHub panel).
+  Their typecheck and test scripts must use the adaptive
+  `scripts/run-bounded-command.sh` wrapper.
 - Plugin registration: `~/.config/opencode/tui.json` for TUI plugins and the
   `plugin` array in `~/.config/opencode/opencode.jsonc` for server plugins.
   Both are user-owned; the setup scripts do not generate them, though the
@@ -250,10 +254,10 @@ or CAPTCHAs for the user.
   `platforms/linux/ubuntu/browser-tools/node_modules/` and
   `platforms/linux/ubuntu/browser-tools/browsers/` (ignored by Git).
 - Config templates: `platforms/linux/ubuntu/computer-use/config/`.
-- Live config: project `opencode.json` holds the `playwright` and `github` MCPs
+- Live config: project `opencode.json` holds the `playwright` MCPs
   (project-only); global `~/.config/opencode/opencode.json` or
-  `~/.config/opencode/opencode.jsonc` must not contain those MCPs but does hold
-  server-plugin registration, plus the user crontab.
+  `~/.config/opencode/opencode.jsonc` holds the `github` MCP and server-plugin
+  registration, plus the user crontab.
 - Runtime data outside Git: `~/Documents/computer-assistant/`,
   `~/Documents/opencode-backups/`, `~/.local/share/opencode/codex-fallback.json`,
   `/tmp/opencode/`, and screenshot files.
@@ -289,7 +293,11 @@ or CAPTCHAs for the user.
    owning registration file. Register plugins manually or with `/deploy`; they
    load from source. Restart OpenCode after changing registration or plugin
    code.
-9. Documentation is gated. `documentation-map.json` defines which sources
+9. Resource-heavy plugin checks run through
+   `scripts/run-bounded-command.sh`, which recalculates memory from the current
+   host/cgroup state, serializes checks, and fails closed without a limiter.
+   `check-plugin-resource-guards.py` enforces the package-script wiring.
+10. Documentation is gated. `documentation-map.json` defines which sources
    require which documentation, and
    `platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py` enforces
    it: a change to a mapped source must update or create its mapped
@@ -311,6 +319,8 @@ shellcheck platforms/linux/ubuntu/computer-use/scripts/*.sh
 python3 -m py_compile platforms/linux/ubuntu/computer-use/scripts/*.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.py
+python3 platforms/linux/ubuntu/computer-use/scripts/check-plugin-resource-guards.py
+python3 platforms/linux/ubuntu/computer-use/scripts/check-plugin-resource-guards-self-test.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage-self-test.py
 ./platforms/linux/ubuntu/computer-use/scripts/setup-git-hooks.sh --verify-only
@@ -321,6 +331,7 @@ opencode debug skill
 opencode mcp list
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
 python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps
 ```

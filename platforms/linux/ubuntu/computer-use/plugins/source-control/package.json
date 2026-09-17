@@ -1,16 +1,16 @@
 {
-  "name": "opencode-codex-usage-local",
+  "name": "opencode-source-control-local",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "OpenCode TUI sidebar for ChatGPT Codex weekly and optional Luna Reserve usage.",
+  "description": "OpenCode TUI source-control sidebar for local changes and GitHub pull requests.",
   "scripts": {
     "check": "npm run typecheck && npm test",
-    "check:usage": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types scripts/check-usage.ts",
     "test": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "bash ../../scripts/run-bounded-command.sh -- node_modules/.bin/tsc --noEmit"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
     "@opencode-ai/plugin": "1.18.31",
     "@opentui/core": "0.5.11",
     "@opentui/keymap": "0.5.11",

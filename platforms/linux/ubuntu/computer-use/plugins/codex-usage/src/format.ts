@@ -1,4 +1,4 @@
-import { overallWeeklyWindow, type CodexUsageSnapshot } from "./usage.ts"
+import { lunaReserveWindow, overallWeeklyWindow, type CodexUsageSnapshot } from "./usage.ts"
 import type { UsageState } from "./store.ts"
 
 export function percent(value: number) {
@@ -48,12 +48,14 @@ export function formatDetails(state: UsageState, now = Date.now()) {
   const snapshot = state.snapshot
   const weekly = overallWeeklyWindow(snapshot)
   if (!weekly) return "The overall weekly Codex limit is unavailable."
+  const reserve = lunaReserveWindow(snapshot)
 
   const lines = [
     "Overall weekly limit",
     `${percent(weekly.leftPercent)} left, ${percent(weekly.usedPercent)} used`,
     `${relativeTime(weekly.resetsAt, now)} (${exactTime(weekly.resetsAt)})`,
   ]
+  if (reserve) lines.push(`Luna Reserve: ${percent(reserve.leftPercent)} left, ${relativeTime(reserve.resetsAt, now)}`)
   if (state.status === "error" && state.message) lines.push(`Refresh error: ${state.message}`)
   lines.push(updatedAgo(snapshot.fetchedAt, now))
   return lines.join("\n")

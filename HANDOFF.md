@@ -18,6 +18,7 @@ Read these files first, in order:
   3. ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/README.md
   4. ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/skills/README.md
   5. ~/repos/opencode-rig/docs/README.md
+  6. The "Work In Progress" section of ~/repos/opencode-rig/HANDOFF.md
 
 The repository is the source of truth. Do not edit the deployed copies under
 ~/.config/opencode/skills/ directly. The copies under ~/scripts/ and
@@ -30,6 +31,11 @@ Repository rules while working here:
     mapped source has its documentation and that a change updates or creates
     it. The map's "handoff" rule also requires HANDOFF.md to change for
     environment-defining edits, so keep this file current.
+  - Resource-heavy local plugin checks must use
+    platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh.
+    check-plugin-resource-guards.py enforces the package-script wiring; the
+    wrapper recalculates an adaptive host/cgroup budget and fails closed without
+    a limiter.
   - main is protected and requires the "verify" GitHub Actions check. Do not
     push to main: create a branch, push it, and open a pull request. The local
     pre-push hook and the required CI check both run the gate.
@@ -45,9 +51,10 @@ If it passes, do not reinstall. A healthy setup has:
   - live and headless Playwright MCP servers connected
   - the pinned GitHub MCP connected, authenticated from
     GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN, or the logged-in gh CLI
-  - the MCPs registered project-only in the project opencode.json
-  - both local plugins registered (check with deploy-plugins.sh --scope global
-    --verify-only)
+  - the Playwright MCPs registered project-only in the project opencode.json and
+    the GitHub MCP registered globally
+  - all requested local plugins registered (check with deploy-plugins.sh
+    --scope global --plugins all --verify-only)
   - AT-SPI available and ydotool's user service and private socket working
   - the private memory store validating
 
@@ -109,7 +116,7 @@ Operating expectations:
     Firefox cookies or tabs. Headless Playwright uses a separate isolated
     context. Make no browser or screenshot calls while I handle a password,
     MFA, payment detail, or CAPTCHA.
-  - The GitHub MCP is project-local, checksum-pinned, read-only, in lockdown
+  - The GitHub MCP is global, checksum-pinned, read-only, in lockdown
     mode, and limited to context, repositories, issues, and pull requests. It
     authenticates from GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN, falling back to
     the logged-in gh CLI. Use gh only for explicitly requested operations
@@ -150,17 +157,21 @@ Changing this project:
 
 Known live state (recorded 2026-09-17):
 
-  - Repository: ~/repos/opencode-rig, branch main, public
+  - Repository: ~/repos/opencode-rig, public; main is protected. The current
+    checkout is branch docs/handoff-blender-note at local commit bb21ab4
+    (never pushed) with uncommitted baseline and source-control changes (see
+    Work In Progress below)
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
     check
   - Skills deployed: 16/16
   - Global commands deployed: /deploy, /promote-skills
-  - Local plugins: codex-usage (TUI quota sidebar, registered in
-    ~/.config/opencode/tui.json) and codex-fallback (server failover, registered
-    in ~/.config/opencode/opencode.jsonc; state at
-    ~/.local/share/opencode/codex-fallback.json)
+  - Local plugins: codex-usage (TUI quota and optional Luna Reserve sidebar,
+    registered in ~/.config/opencode/tui.json), codex-fallback (server
+    failover, registered in ~/.config/opencode/opencode.jsonc; state at
+    ~/.local/share/opencode/codex-fallback.json), and source-control (TUI
+    working-tree/GitHub panel, registered in ~/.config/opencode/tui.json)
   - Browser runtime: @playwright/mcp 0.0.80 with isolated live and headless
     Firefox, via platforms/linux/ubuntu/browser-tools
   - GitHub MCP runtime: official v1.12.1 native amd64 release via
@@ -171,9 +182,192 @@ Known live state (recorded 2026-09-17):
   - Superseded paths (do not use): the ~/scripts/ computer-use copies and
     ~/repos/opencode-browser-tools/
 
+Work in progress (full detail in the "Work In Progress" section of this file):
+
+  - The checkout is branch docs/handoff-blender-note at local commit bb21ab4
+    (never pushed) with the preserved Luna/config baseline plus source-control
+    and adaptive-resource-guard changes. Preserve the baseline and commit the
+    complete requested work together unless a later request says otherwise.
+  - Current task: finish, verify, deploy, and locally commit the source-control
+    TUI plugin (VS Code-style Source Control panel in the sidebar: change-count
+    badge, local working-tree list, GitHub MCP section for the current branch).
+    The implementation, adaptive memory guard, and global registration are now
+    present; final checks, restart-based UI verification, and the commit remain.
+
 After the health check, give me a concise status and continue with the task I
 give you. If I pasted only this handoff, ask what task I want handled.
 ```
+
+## Work In Progress — recorded 2026-09-17
+
+### Checkout state
+
+- Branch docs/handoff-blender-note (never pushed; main is protected). Local
+  commit bb21ab4 plus the preserved Luna/config baseline and the uncommitted
+  source-control and adaptive-resource-guard changes. Nothing from this session
+  is committed or pushed.
+- The preserved baseline and new work now pass the documentation gate and
+  self-tests, shell/Python validation, all three bounded plugin checks, setup
+  verification, the real read-only GitHub MCP smoke test, and `git diff --check`.
+
+### Completed and verified (uncommitted)
+
+1. Luna Reserve support (codex-usage, codex-fallback, docs)
+   - Conditional x-openai-codex-luna-reserve: 1 header on the TUI usage request
+     only; the fallback client stays passive.
+   - gpt-reserve parsing for legacy and newer payload shapes; compact sidebar
+     row; details dialog; diagnostics; docs.
+   - The live account returns no reserve bucket today; that is expected and
+     documented, not a bug.
+2. Complete configuration example and docs
+   - config/opencode.example.jsonc: provider {env:DEEPSEEK_API_KEY}, every
+     codex-fallback option, per-agent codexFallback overrides, Playwright MCPs.
+   - config/.env.example: template for non-OAuth secrets; .env and .env.local
+     are gitignored.
+   - Docs explain {env:NAME} interpolation, the project .env load, the GitHub
+     MCP environment mapping, and that OpenAI/Codex OAuth stays in OpenCode's
+     managed auth.json (never in .env).
+    - Live user configs (opencode.json, global configs, tui.json) were not
+      modified for the baseline; the source-control TUI registration was added
+      afterward to the user-owned `~/.config/opencode/tui.json`.
+
+### Source-control implementation and memory-guard record
+
+Goal: a VS Code-style Source Control panel in the session sidebar: change-count
+badge, local working-tree change list, and a GitHub section for the current
+branch using our pinned read-only GitHub MCP.
+
+User decisions already made:
+
+- Show local changes plus a GitHub MCP-powered section.
+- Change-count badge in the panel header.
+- Clicking a changed file opens OpenCode's built-in /diff viewer.
+- Plugin name source-control; include /deploy (deploy-plugins.sh) support.
+
+Placement and layout:
+
+- Register in sidebar_content with order 600 (append slot; renders last,
+  directly above the pinned path:branch footer). sidebar_footer is
+  single_winner — do not register there.
+- Header "- Source Control 30" toggles collapse (kv key
+  local.source-control.collapsed). Rows show "M src/tui.tsx  +40 -12" with
+  A/M/D letters, left-truncated paths, diff colors, sorted by path, capped at
+  maxFiles (default 8) with a "+N more" line. A GitHub line shows the
+  current-branch PR ("PR #57 - open - checks passing").
+- Hide the whole panel for non-git or nothing to show (whenEmpty option); hide
+  only the GitHub line when there is no PR or the MCP is unavailable; fail open
+  and keep last good data on refresh errors.
+- Commands: "Refresh Source Control" plus a details dialog on slash /changes.
+
+Data sources (verified):
+
+- Local: api.client.vcs.status({ directory }) returns
+  { file, additions, deletions, status: "added" | "deleted" | "modified" }[].
+  api.client.vcs.diff({ mode: "git", context }) returns per-file patches if
+  needed. directory comes from api.state.session.get(sessionID)?.directory.
+- GitHub: derive owner/repo from git remote get-url <remoteName> (github.com
+  only; default origin), then lazily spawn
+  platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh over stdio and call
+  only read-only tools: list_pull_requests (owner, repo, state, head, minimal
+  fields) and pull_request_read (get_status). The wrapper resolves credentials
+  itself (env or logged-in gh; this machine is logged in as jtmb) and enforces
+  read-only + lockdown. TUI plugins cannot call MCP tools directly, so spawning
+  the wrapper is the correct approach.
+- MCP client: pin @modelcontextprotocol/sdk 1.30.0 (client/stdio imports), lazy
+  start, bounded initialize/call timeouts, dispose() on plugin cleanup. Fallback
+  if the SDK misbehaves under the Bun-based TUI: a minimal internal NDJSON
+  JSON-RPC client.
+
+Refresh: mount; session.idle, file.edited, file.watcher.updated (750 ms
+debounce), vcs.branch.updated; polls refreshMs (default 15000, min 5000) for
+local and githubRefreshMs (default 120000, min 30000) for GitHub; dedupe
+in-flight requests.
+
+Options: refreshMs, githubRefreshMs, maxFiles (default 8), whenEmpty
+(hide|show, default hide), github (default true), githubMcpCommand (default
+derived from the plugin location), remoteName (default origin).
+
+Files and registration:
+
+- New package platforms/linux/ubuntu/computer-use/plugins/source-control/:
+  src/tui.tsx, src/changes.ts, src/store.ts, src/github.ts, src/mcp.ts,
+  test/*.test.ts, package.json (pinned @opencode-ai/plugin 1.18.31,
+  @opentui/* 0.5.11, solid-js, @modelcontextprotocol/sdk 1.30.0),
+  tsconfig.json (copy codex-usage), README.md, package-lock.json; dependencies
+  are installed and the package check passes.
+- Register in ~/.config/opencode/tui.json with a [moduleURL, options] tuple
+  (user-owned; currently registered, but restart OpenCode to load).
+- `scripts/deploy-plugins.sh` supports `--plugins source-control|all`, with
+  deployment docs and `/deploy` command guidance updated.
+- Keep expensive plugin checks behind
+  scripts/run-bounded-command.sh: 40% of current effective available memory for
+  repository checks, 25% swap, and a 65% Node heap share. The source-control
+  GitHub MCP child uses a separate adaptive 20% memory budget and 25% swap;
+  systemd-run uses a transient cgroup and prlimit is the bounded fallback.
+- Enforce the package-script guard in the pre-push hook and verify CI with
+  check-plugin-resource-guards.py, plus a self-test that proves a bounded child
+  cannot kill its parent.
+- Docs gate: added docs/plugins/source-control.md; updated docs/plugins/README.md
+  (table, registration, and security wording so the OpenAI OAuth paragraph
+  stays scoped to the codex pair), docs/README.md, root README.md ("two" to
+  "three" plugins), computer-use/README.md, AGENTS.md (plugin list and required
+  verification), .gitignore (plugins/source-control/node_modules/), and this
+  file.
+
+Verification completed:
+
+- `npm run check` passes for source-control (15 tests), codex-usage (8 tests),
+  and codex-fallback (27 tests); typechecks and tests run through the adaptive
+  wrapper.
+- Resource guard metadata and self-test pass; the self-test confirms a bounded
+  timeout child cannot kill its parent.
+- Documentation coverage and self-test, skill checks, shellcheck, Python
+  compilation, setup verification, memory validation, and desktop inspection
+  pass.
+- The bounded read-only GitHub MCP smoke test passed initialization,
+  `tools/list` (25 tools), and one `list_pull_requests` call. The plugin's
+  actual adaptive MCP caller also returned successfully for that call.
+- Global deployment verification passes for codex-usage, codex-fallback, and
+  source-control. TUI visual acceptance remains pending until an OpenCode
+  restart.
+
+Known soft dependencies and risks:
+
+- The built-in diff.open command name and internal diff route (dispatch first,
+  fall back to route.navigate("diff", ...), then toast).
+- One extra MCP server process per TUI instance; hide the GitHub line when the
+  wrapper, token, or network is unavailable.
+- The pinned SDK works in the real Node smoke test; a separate Bun-only NDJSON
+  fallback has not been needed or implemented. Keep the tool caller injectable
+  so unit tests never spawn the real MCP.
+
+### Research references (already verified; do not redo)
+
+- Built-in diff viewer: upstream packages/tui/src/feature-plugins/system/
+  diff-viewer.tsx (route diff, command diff.open, DiffRenderable from
+  @opentui/core).
+- Built-in sidebar session list and footer: feature-plugins/sidebar/files.tsx
+  (order 500) and footer.tsx (order 100, path:branch display).
+- TUI plugin API typings (slots, state.session, client, kv, route, keymap):
+  plugins/codex-usage/node_modules/@opencode-ai/plugin/dist/tui.d.ts.
+- Slot semantics: @opentui/core SlotRegistry sorts by ascending order;
+  sidebar_content is append, sidebar_footer is single_winner.
+- VCS types: @opencode-ai/sdk/v2 VcsFileStatus.
+- Events: file.edited ({ file }), file.watcher.updated ({ file, event }),
+  session.idle, vcs.branch.updated.
+- Current machine: remote github.com/jtmb/opencode-rig; gh logged in as jtmb;
+  the source-control header count is dynamic and reflects the active session
+  directory's current VCS status.
+
+### Suggested next steps for a fresh session
+
+1. Restart OpenCode so the registered source-control TUI plugin loads.
+2. Verify the sidebar badge, local rows, collapse state, `/changes`, diff
+   activation, refresh behavior, and the hidden/no-PR GitHub row in the current
+   branch.
+3. Commit the preserved baseline and source-control implementation locally; do
+   not push unless explicitly requested.
+4. Update HANDOFF.md whenever registration, branch, or verification state changes.
 
 ## Keep This Current
 

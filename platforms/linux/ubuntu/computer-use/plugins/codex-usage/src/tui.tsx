@@ -5,7 +5,7 @@ import { createEffect, createSignal, onCleanup, Show } from "solid-js"
 import { formatDetails, percent, relativeTime, updatedAgo } from "./format.ts"
 import { isCodexSubscriptionModel, latestSessionModel, messageModel, type SessionModel } from "./model.ts"
 import { createUsageStore, type UsageState, type UsageStore, type UsageStoreOptions } from "./store.ts"
-import { overallWeeklyWindow, type CodexUsageWindow } from "./usage.ts"
+import { lunaReserveWindow, overallWeeklyWindow, type CodexUsageWindow } from "./usage.ts"
 
 type PluginOptions = Pick<UsageStoreOptions, "timeoutMs"> & { refreshMs?: number }
 
@@ -33,10 +33,27 @@ function usageColor(leftPercent: number, theme: TuiThemeCurrent) {
   return theme.success
 }
 
-function WindowRow(props: { window: CodexUsageWindow; theme: () => TuiThemeCurrent; now: () => number }) {
+function WindowRow(props: {
+  label: string
+  window: CodexUsageWindow
+  theme: () => TuiThemeCurrent
+  now: () => number
+  compact?: boolean
+}) {
+  if (props.compact) {
+    return (
+      <box flexDirection="row" gap={1}>
+        <text fg={props.theme().textMuted}>{props.label}</text>
+        <text fg={usageColor(props.window.leftPercent, props.theme())}>
+          <b>{percent(props.window.leftPercent)} left</b>
+        </text>
+      </box>
+    )
+  }
+
   return (
     <box flexDirection="column" gap={0}>
-      <text fg={props.theme().textMuted}>Weekly limit</text>
+      <text fg={props.theme().textMuted}>{props.label}</text>
       <text fg={usageColor(props.window.leftPercent, props.theme())}>
         <b>{percent(props.window.leftPercent)} remaining</b>
       </text>
@@ -129,7 +146,10 @@ function UsagePanel(props: {
             {(snapshot) => (
               <box flexDirection="column" gap={0}>
                 <Show when={overallWeeklyWindow(snapshot())}>
-                  {(window) => <WindowRow window={window()} theme={theme} now={now} />}
+                  {(window) => <WindowRow label="Weekly limit" window={window()} theme={theme} now={now} />}
+                </Show>
+                <Show when={lunaReserveWindow(snapshot())}>
+                  {(window) => <WindowRow label="Luna Reserve" compact window={window()} theme={theme} now={now} />}
                 </Show>
                 <Show when={state().status === "error" && state().message}>
                   <text fg={theme().warning}>Last refresh failed; showing saved values.</text>
@@ -157,7 +177,7 @@ function showDetails(api: Parameters<TuiPlugin>[0], store: UsageStore) {
 const tui: TuiPlugin = async (api, rawOptions) => {
   const options = pluginOptions(rawOptions)
   const refreshMs = Math.max(MIN_REFRESH_MS, Math.floor(options.refreshMs ?? DEFAULT_REFRESH_MS))
-  const store = createUsageStore({ timeoutMs: options.timeoutMs })
+  const store = createUsageStore({ timeoutMs: options.timeoutMs, supportsLunaReserve: true })
 
   api.lifecycle.onDispose(() => store.dispose())
 

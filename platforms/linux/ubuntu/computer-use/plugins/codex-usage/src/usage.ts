@@ -31,6 +31,8 @@ export type CodexUsageSnapshot = {
   reachedType?: string
 }
 
+const LUNA_RESERVE_NAME = "gpt-reserve"
+
 export type OpenAICredential = {
   accessToken: string
   accountId: string
@@ -42,6 +44,16 @@ export function overallWeeklyWindow(snapshot: CodexUsageSnapshot) {
   if (!overall) return undefined
   return overall.windows.find((window) => window.windowMinutes === 10080) ??
     overall.windows.find((window) => window.id === "secondary")
+}
+
+export function lunaReserveWindow(snapshot: CodexUsageSnapshot) {
+  const reserve = snapshot.buckets.find(
+    (bucket) => bucket.id.toLowerCase() === LUNA_RESERVE_NAME || bucket.name.toLowerCase() === LUNA_RESERVE_NAME,
+  )
+  if (!reserve) return undefined
+  return reserve.windows.find((window) => window.windowMinutes === 10080) ??
+    reserve.windows.find((window) => window.id === "secondary") ??
+    reserve.windows.find((window) => window.id === "primary")
 }
 
 export type UsageErrorCode = "auth" | "network" | "rate-limit" | "response"
@@ -201,9 +213,9 @@ function parseBucket(value: unknown, id: string, name: string, now: number): Cod
   }
 }
 
-function additionalEntries(value: unknown) {
-  if (Array.isArray(value)) return value
-  return isRecord(value) ? Object.values(value) : []
+function additionalEntries(value: unknown): Array<{ key?: string; value: unknown }> {
+  if (Array.isArray(value)) return value.map((entry) => ({ value: entry }))
+  return isRecord(value) ? Object.entries(value).map(([key, entry]) => ({ key, value: entry })) : []
 }
 
 function creditSummary(payload: JsonRecord) {
@@ -221,16 +233,36 @@ export function parseUsagePayload(payload: unknown, now = Date.now()): CodexUsag
   if (!isRecord(payload)) throw new CodexUsageError("Codex returned an invalid usage response.", "response")
 
   const buckets: CodexUsageBucket[] = []
-  const main = parseBucket(payload.rate_limit ?? payload.rateLimit, "codex", "Overall", now)
-  if (main) buckets.push(main)
+  const bucketIds = new Set<string>()
+  const appendBucket = (bucket: CodexUsageBucket | undefined) => {
+    if (!bucket || bucketIds.has(bucket.id)) return
+    bucketIds.add(bucket.id)
+    buckets.push(bucket)
+  }
 
-  for (const [index, value] of additionalEntries(payload.additional_rate_limits ?? payload.additionalRateLimits).entries()) {
+  appendBucket(
+    parseBucket(
+      payload.rate_limit ?? payload.rateLimit ?? payload.rate_limits ?? payload.rateLimits,
+      "codex",
+      "Overall",
+      now,
+    ),
+  )
+
+  const additional = [
+    ...additionalEntries(payload.additional_rate_limits ?? payload.additionalRateLimits),
+    ...additionalEntries(payload.rate_limits_by_limit_id ?? payload.rateLimitsByLimitId),
+  ]
+  for (const [index, entry] of additional.entries()) {
+    const value = entry.value
     if (!isRecord(value)) continue
     const rateLimit = value.rate_limit ?? value.rateLimit ?? value
-    const id = safeLabel(value.metered_feature ?? value.meteredFeature ?? value.limit_id ?? value.limitId, `extra-${index + 1}`)
+    const id = safeLabel(
+      value.metered_feature ?? value.meteredFeature ?? value.limit_id ?? value.limitId ?? entry.key,
+      `extra-${index + 1}`,
+    )
     const name = safeLabel(value.limit_name ?? value.limitName, id)
-    const bucket = parseBucket(rateLimit, id, name, now)
-    if (bucket) buckets.push(bucket)
+    appendBucket(parseBucket(rateLimit, id, name, now))
   }
 
   if (buckets.length === 0) {
@@ -263,6 +295,7 @@ export async function fetchCodexUsage(
     signal?: AbortSignal
     fetchImpl?: typeof fetch
     now?: number
+    supportsLunaReserve?: boolean
   } = {},
 ) {
   const now = options.now ?? Date.now()
@@ -276,6 +309,7 @@ export async function fetchCodexUsage(
         "ChatGPT-Account-Id": credential.accountId,
         Originator: "opencode_codex_usage",
         "User-Agent": "opencode-codex-usage/0.1.0",
+        ...(options.supportsLunaReserve ? { "x-openai-codex-luna-reserve": "1" } : {}),
       },
       signal: options.signal,
     })

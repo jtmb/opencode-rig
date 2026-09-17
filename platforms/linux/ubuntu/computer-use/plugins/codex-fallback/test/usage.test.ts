@@ -45,6 +45,33 @@ test("flags a reached type even before the weekly window fills", () => {
   assert.equal(quotaFromSnapshot(snapshot).limitReached, true)
 })
 
+test("honors explicit allowed signals over a full weekly window", () => {
+  const now = 2_000_000
+  const quota = quotaFromSnapshot(
+    parseUsagePayload(
+      {
+        plan_type: "pro",
+        rate_limit: {
+          allowed: true,
+          limit_reached: false,
+          primary_window: { used_percent: 100, limit_window_seconds: 604800, reset_after_seconds: 165910 },
+        },
+        rate_limit_reached_type: null,
+      },
+      now,
+    ),
+  )
+  assert.equal(quota.limitReached, false)
+  assert.equal(quota.resetsAt, Math.floor(now / 1000 + 165910) * 1000)
+})
+
+test("falls back to the weekly percent only when explicit flags are absent", () => {
+  const snapshot = parseUsagePayload({
+    rate_limit: { primary_window: { used_percent: 100, limit_window_seconds: 604800 } },
+  })
+  assert.equal(quotaFromSnapshot(snapshot).limitReached, true)
+})
+
 test("checks quota through the injected transport and caches results", async () => {
   const directory = await mkdtemp(join(tmpdir(), "codex-fallback-usage-"))
   const authPath = join(directory, "auth.json")

@@ -25,7 +25,7 @@ Appropriate requests include:
 
 The repository setup installs the pinned official GitHub MCP Server at
 `platforms/linux/ubuntu/github-tools/bin/github-mcp-server` and registers the
-project-local `github` MCP through
+global `github` MCP through
 `platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh`.
 
 Before OpenCode starts, provide a credential either by setting

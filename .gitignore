@@ -3,6 +3,7 @@ platforms/linux/ubuntu/browser-tools/node_modules/
 platforms/linux/ubuntu/browser-tools/browsers/
 platforms/linux/ubuntu/computer-use/plugins/codex-usage/node_modules/
 platforms/linux/ubuntu/computer-use/plugins/codex-fallback/node_modules/
+platforms/linux/ubuntu/computer-use/plugins/source-control/node_modules/
 
 # Generated GitHub MCP runtime - never commit.
 platforms/linux/ubuntu/github-tools/bin/
@@ -17,3 +18,7 @@ __pycache__/
 
 # Local memory temp files (the real store lives outside the repo).
 .memory.*.tmp
+
+# Local OpenCode credentials - never commit.
+.env
+.env.local

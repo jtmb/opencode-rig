@@ -1,13 +1,14 @@
 # Local Plugins
 
-The repository ships two local OpenCode plugins. They are ordinary npm
+The repository ships three local OpenCode plugins. They are ordinary npm
 packages that live in the repository and are loaded directly from source; they
 are **not** deployed by the setup scripts and are **not** published to npm.
 
 | Plugin | Kind | Directory | Purpose |
 |--------|------|-----------|---------|
-| [`codex-usage`](codex-usage.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/codex-usage/` | Collapsible sidebar panel showing the remaining weekly ChatGPT Codex subscription quota and its reset countdown |
+| [`codex-usage`](codex-usage.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/codex-usage/` | Collapsible sidebar panel showing weekly ChatGPT Codex quota and optional Luna Reserve remaining usage |
 | [`codex-fallback`](codex-fallback.md) | Server | `platforms/linux/ubuntu/computer-use/plugins/codex-fallback/` | Transparent failover from the Codex subscription to a configurable chain of any OpenCode providers when the quota runs out |
+| [`source-control`](source-control.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/source-control/` | Working-tree changes and the current branch's GitHub pull request in the session sidebar |
 
 ## TUI vs. server plugins
 
@@ -17,16 +18,19 @@ OpenCode has two distinct plugin surfaces, and these packages target one each.
   command-palette entries, slash commands, dialogs, toasts, and key-value
   storage, and it can subscribe to TUI events. `codex-usage` is a TUI plugin
   whose entry point is `src/tui.tsx`.
+- `source-control` is also a TUI plugin. It uses the VCS client for local
+  status, the built-in diff route for file activation, and a bounded child MCP
+  client for optional GitHub pull-request status.
 - A **server plugin** runs in the OpenCode server. It can hook config
   resolution, message assembly, outbound request parameters, and the event
   stream, and it can call the client API (sessions, providers, TUI). It has no
   rendering surface of its own. `codex-fallback` is a server plugin whose entry
   point is `src/index.ts`.
 
-The two are registered in different files (see below), so enabling one does not
-enable the other. They are designed to be used together: the sidebar tells you
-when the subscription quota is nearly gone, and the router keeps the session
-alive when it is exhausted.
+The TUI plugins are registered in `tui.json`, while the server plugin is
+registered in `opencode.jsonc` (see below), so enabling one does not enable the
+others. The Codex sidebar and router are designed to work together; source
+control is independent and adds local and GitHub working-tree context.
 
 ## Registration
 
@@ -77,13 +81,60 @@ Both forms use the `[moduleURL, options]` tuple. The second element is passed to
 the plugin factory as its raw options object and is normalized internally.
 Omitting the options object is valid; every option has a default.
 
+### `source-control` (TUI)
+
+Register the source file in `~/.config/opencode/tui.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "plugin": [
+    [
+      "file:///absolute/path/to/source-control/src/tui.tsx",
+      { "github": true }
+    ]
+  ]
+}
+```
+
+The deployment script also supports `--plugins source-control` and
+`--plugins all`. Registration is user-owned and takes effect after restart.
+
 > The chain above is an example. There is no baked-in provider chain: until you
 > register a non-empty `defaultChain` (or a per-agent chain), the router is
 > inactive and the session stays on its configured model.
 
+### Environment-backed credentials
+
+OpenCode loads a project `.env` automatically. Reference its values in
+`opencode.json` with `{env:VARIABLE_NAME}`; do not add an `envFile` key or put
+the secret value in JSON. The complete project example is
+[`config/opencode.example.jsonc`](../../platforms/linux/ubuntu/computer-use/config/opencode.example.jsonc),
+with a safe template at
+[`config/.env.example`](../../platforms/linux/ubuntu/computer-use/config/.env.example).
+
+For example, an API-key provider can be configured as:
+
+```jsonc
+{
+  "provider": {
+    "deepseek": {
+      "options": { "apiKey": "{env:DEEPSEEK_API_KEY}" }
+    }
+  }
+}
+```
+
+The GitHub wrapper can receive the same kind of reference through a local MCP
+`environment` entry; its token variable is documented in
+[`github-mcp.md`](../scripts/github-mcp.md). OpenAI/Codex OAuth is intentionally
+different: run `opencode auth login`, and the plugins read only the managed
+`~/.local/share/opencode/auth.json` access-token entry. They do not read OAuth
+tokens from `.env` or the refresh token.
+
 ## Package layout and requirements
 
-Both packages follow the same conventions:
+The packages follow the same conventions:
 
 - `package.json` declares `"type": "module"`, a `check` script, and a pinned
   `@opencode-ai/plugin` dependency (`1.18.31`). Pinning to the installed OpenCode
@@ -95,6 +146,11 @@ Both packages follow the same conventions:
 - `tsconfig.json` enables `--noEmit` type checking.
 - `codex-usage` additionally depends on the `@opentui/*` packages and
   `solid-js` for its JSX rendering.
+- `source-control` additionally depends on the `@opentui/*` packages,
+  `solid-js`, and the pinned `@modelcontextprotocol/sdk` for its bounded stdio
+  GitHub client.
+- Every plugin's `typecheck` and `test` scripts run through the repository's
+  adaptive resource guard so a check cannot take down its OpenCode parent.
 
 `npm run check` runs `tsc --noEmit` followed by the test suite:
 
@@ -103,6 +159,8 @@ npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage install
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback install
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control install
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
 ```
 
 Node.js 22.6 or newer is required for `--experimental-strip-types`. The
@@ -137,8 +195,8 @@ This means:
 
 ## Shared security model
 
-Both plugins handle an OpenAI OAuth credential. Their posture is deliberately
-narrow and identical in spirit:
+The two Codex plugins handle an OpenAI OAuth credential. Their posture is
+deliberately narrow and identical in spirit:
 
 - They read only the OpenAI **access token** (and account id) from OpenCode's
   normal data location (`$XDG_DATA_HOME/opencode/auth.json`, defaulting to
@@ -153,6 +211,14 @@ narrow and identical in spirit:
 - Fallback turns are ordinary model requests to the providers you configure;
   the plugins do not proxy or intercept provider traffic beyond selecting the
   model and aborting a failed turn.
+
+`source-control` does not read OpenCode OAuth credentials. Its GitHub section
+starts the repository's `github-mcp.sh` wrapper only through a transient,
+adaptive-memory user service, or a bounded `prlimit` fallback when the user
+systemd manager is unavailable. That wrapper remains read-only, lockdown
+protected, and limited to repository, issue, and pull-request tools. If no
+safe current-memory budget or authentication is available, the local panel
+continues and the GitHub row stays hidden.
 
 The usage endpoint is a ChatGPT backend endpoint used by Codex clients, not a
 versioned public REST API. Both plugins validate the response and handle

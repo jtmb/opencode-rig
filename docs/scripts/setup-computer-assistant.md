@@ -26,8 +26,8 @@ need review before running on a new machine:
   grants synthetic-input access).
 - Enables isolated Playwright browser MCPs in the **project** `opencode.json`
   (project-only, never global; no normal-browser cookies).
-- Installs a checksum-pinned GitHub MCP and enables its project-local,
-  read-only wrapper.
+- Installs a checksum-pinned GitHub MCP and enables its global, read-only
+  wrapper.
 
 ## Pins and paths
 
@@ -101,13 +101,16 @@ only into the trusted `sudo`/PolicyKit dialog.
   downloads the archive to a temp dir under `/tmp/opencode/`, verifies the
   published SHA-256, extracts it, and installs `github-mcp-server` as `0755`
   under `github-tools/bin/`.
-- Registers the GitHub MCP entry project-only.
+- Registers the GitHub MCP entry globally.
 
 ## MCP registration
 
-MCP entries are written into the **project** `opencode.json`, not the global
-config, and duplicate entries are actively removed from the global files. The
-embedded Python editor writes these entries atomically (temp file + `os.replace`):
+Playwright MCP entries are written into the **project** `opencode.json`, not the
+global config, and duplicate entries are actively removed from the global files.
+The GitHub MCP entry is written into the **global** config
+(`~/.config/opencode/opencode.jsonc` when present, otherwise `opencode.json`),
+and any duplicate project entry is removed. The embedded Python editor writes
+these entries atomically (temp file + `os.replace`):
 
 ```json
 {
@@ -118,13 +121,22 @@ embedded Python editor writes these entries atomically (temp file + `os.replace`
 }
 ```
 
-`ensure_mcp()` performs four checks for each of `playwright`,
-`playwright_headless`, and `github`:
+`ensure_mcp()` takes a scope argument. For the project-scoped `playwright` and
+`playwright_headless` entries it:
 
 1. `ensure_project_mcp_entry` — create or update the project entry.
 2. `remove_global_mcp_entry` — delete the name from `opencode.json`/`jsonc`.
 3. `project_mcp_matches` — confirm the project entry matches exactly.
 4. `global_mcp_has_entry` and `mcp_config_matches` — confirm the global config
+   is clean and `opencode debug config` resolves the wrapper.
+
+For the global-scoped `github` entry it:
+
+1. `ensure_global_mcp_entry` — create or update the entry in the global config.
+2. `remove_project_mcp_entry` — delete the name from the project
+   `opencode.json`.
+3. `global_mcp_matches` — confirm the global entry matches exactly.
+4. `project_mcp_has_entry` and `mcp_config_matches` — confirm the project config
    is clean and `opencode debug config` resolves the wrapper.
 
 If **both** `~/.config/opencode/opencode.json` and `opencode.jsonc` exist, the
@@ -134,9 +146,9 @@ present" so it is never silently overwritten.
 
 The wrappers registered are:
 
-- `playwright` → `playwright-mcp.sh`
-- `playwright_headless` → `playwright-headless-mcp.sh`
-- `github` → `github-mcp.sh`
+- `playwright` → `playwright-mcp.sh` (project)
+- `playwright_headless` → `playwright-headless-mcp.sh` (project)
+- `github` → `github-mcp.sh` (global)
 
 ## Verification
 
@@ -155,8 +167,8 @@ The wrappers registered are:
 - `opencode mcp list` reports the live and headless Playwright MCPs connected.
 - The GitHub MCP is connected when a token is present in the environment,
   otherwise it reports authentication as pending.
-- Each MCP is project-bound to the right wrapper, absent globally, and resolved
-  by `opencode debug config`.
+- Each MCP is bound to the right scope — Playwright project-only, GitHub
+  global-only — and resolved by `opencode debug config`.
 - `setup-opencode.sh --verify-only` passes (skills and commands deployed).
 
 `verify()` returns non-zero if any check fails, so `--verify-only` is suitable
@@ -179,10 +191,10 @@ as a health gate.
 - `ydotool` access may require a logout/login after the first `--apply` on a
   new machine; the script prints a notice and verification fails until then.
 - The GitHub MCP authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN`
-  in OpenCode's launch environment, or from the logged-in `gh` CLI. The script
-  never reads, stores, or verifies the token value itself. The GitHub connection
-  check is treated as pending until an explicit variable or `gh auth` is
-  available.
+  in OpenCode's launch environment, including values loaded from a project
+  `.env`, or from the logged-in `gh` CLI. The script never reads, stores, or
+  verifies the token value itself. The GitHub connection check is treated as
+  pending until an explicit variable or `gh auth` is available.
 - Reading order: [`setup-opencode.md`](setup-opencode.md),
   [`setup-live-dictation.md`](setup-live-dictation.md),
   [`github-mcp.md`](github-mcp.md), [`playwright-mcp.md`](playwright-mcp.md).

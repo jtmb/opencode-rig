@@ -25,9 +25,10 @@ pieces fit together?*
 
 | Document | Covers |
 |----------|--------|
-| [`plugins/README.md`](plugins/README.md) | What a local OpenCode plugin is, TUI vs. server plugins, registration, the shared Codex usage layer, and the common security model |
+| [`plugins/README.md`](plugins/README.md) | What a local OpenCode plugin is, TUI vs. server plugins, registration, the shared Codex usage layer, adaptive resource guards, and the common security model |
 | [`plugins/codex-usage.md`](plugins/codex-usage.md) | The TUI quota sidebar: store, polling, credentials, endpoint parsing, UI, options, and errors |
 | [`plugins/codex-fallback.md`](plugins/codex-fallback.md) | The server failover router: hooks, configuration precedence, proactive and reactive switching, cooldown state, and recovery |
+| [`plugins/source-control.md`](plugins/source-control.md) | Local working-tree status, bounded GitHub pull-request lookup, adaptive MCP memory budgets, UI behavior, and lifecycle |
 
 ### Scripts
 
@@ -66,10 +67,11 @@ These conventions are stated once here rather than repeated in every document.
   with richer states document their own codes; for example
   `opencode-db-maintain.py` returns `3` when OpenCode holds the database and
   refuses to apply, and `4`/`5`/`6` for integrity or backup failures.
-- **No secrets in the repository.** Credentials come from the launch
-  environment (GitHub) or from OpenCode's own data directory (OpenAI OAuth).
-  No document here instructs you to store a secret in the repository or in
-  `opencode.json`.
+- **No secrets in the repository.** OpenCode may load local, untracked project
+  `.env` values through `{env:NAME}` references for API keys and other secrets.
+  GitHub credentials may come from that environment or the logged-in `gh` CLI;
+  OpenAI OAuth remains in OpenCode's own data directory. No document here
+  instructs you to commit a secret value to the repository or to a config file.
 - **Restart to reload.** OpenCode does not hot-reload skills, MCP
   configuration, or plugins. Restart it after changing any of them.
 
