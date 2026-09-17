@@ -43,6 +43,14 @@ lists them at a glance and covers the operating environment.
 |--------|----------|--------------|
 | `check-skill-docs.py` | [`check-skill-docs.md`](check-skill-docs.md) | Validates skill metadata and usage guides |
 | `check-skill-docs-self-test.py` | [`check-skill-docs.md`](check-skill-docs.md) | Proves the validator rejects invalid input |
+| `check-doc-coverage.py` | [`check-doc-coverage.md`](check-doc-coverage.md) | Enforces that mapped sources update or create their documentation |
+| `check-doc-coverage-self-test.py` | [`check-doc-coverage.md`](check-doc-coverage.md) | Proves the coverage gate rejects undocumented changes |
+
+### Repository tooling
+
+| Script | Document | What it does |
+|--------|----------|--------------|
+| `setup-git-hooks.sh` | [`setup-git-hooks.md`](setup-git-hooks.md) | Installs/verifies the pre-push documentation gate |
 
 ### Database maintenance
 

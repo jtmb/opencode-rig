@@ -161,6 +161,9 @@ phrases, example requests, and how the skills combine.
 | `scripts/desktop-control.py` | AT-SPI inspection with traversal status, short-lived target tokens, focus/text verification, and protected-field refusal |
 | `scripts/check-skill-docs.py` | Read-only validation for skill metadata, usage guides, deployed-set links, unsafe modes, symlinks, and generated artifacts |
 | `scripts/check-skill-docs-self-test.py` | Isolated negative tests proving invalid skill metadata and documentation are rejected |
+| `scripts/check-doc-coverage.py` | Enforce that mapped sources update or create their documentation (completeness + change-aware) |
+| `scripts/check-doc-coverage-self-test.py` | Isolated negative tests proving the documentation gate rejects undocumented changes |
+| `scripts/setup-git-hooks.sh` | Install or verify the versioned pre-push hook that runs the documentation gate |
 | `scripts/assistant-memory.py` | Private JSON memory store; record changes require `--apply`, credentials rejected |
 | `scripts/playwright-mcp.sh` | Launch the visible live Firefox MCP shared by user and agent |
 | `scripts/playwright-headless-mcp.sh` | Launch the separate isolated headless Firefox MCP |

@@ -127,7 +127,11 @@ AGENTS.md. Redeploy skills with
 platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --apply; register
 or refresh local plugins with /deploy or
 platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh (plugins otherwise
-load directly from the repo). Tell me to restart
+load directly from the repo). Documentation is gated: documentation-map.json
+maps each source to its required documentation, and the .githooks/pre-push hook
+(install once per clone with setup-git-hooks.sh --apply) blocks a push whose
+mapped source changed without its documentation; update HANDOFF.md whenever the
+environment changes. Tell me to restart
 OpenCode if skills, plugins, or MCP configuration changed.
 
 Known live state, recorded on 2026-09-17:
@@ -147,6 +151,7 @@ Known live state, recorded on 2026-09-17:
   - GitHub MCP policy: project-only, context/repos/issues/pull_requests, read-only, lockdown; credential from GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN, or the logged-in gh CLI
   - Deep-reference docs: docs/README.md (docs/plugins/ and docs/scripts/)
   - Global commands deployed: /deploy, /promote-skills
+  - Documentation gate: documentation-map.json rules enforced by check-doc-coverage.py and the .githooks/pre-push hook (core.hooksPath=.githooks)
   - Memory: ~/Documents/computer-assistant/memory.json, owner-only
   - Maintenance cron: points to the repo script
   - Old ~/scripts computer-use copies are superseded
@@ -163,6 +168,7 @@ Update this handoff whenever any of these change:
 - Skill names or count.
 - Setup or verification commands, and global commands (/deploy, /promote-skills).
 - The docs/ deep reference structure.
+- Documentation gate rules (documentation-map.json) or hook installation.
 - Local plugin registration, fallback chains, or state paths.
 - Browser or GitHub MCP wrappers, versions, authentication, or session policy.
 - Memory location or privacy rules.

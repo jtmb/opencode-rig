@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "name": "skill-docs-self-test",
+      "match": [
+        "platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.py"
+      ],
+      "docs": ["docs/scripts/check-skill-docs.md"]
+    },
+    {
+      "name": "doc-coverage-self-test",
+      "match": [
+        "platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage-self-test.py"
+      ],
+      "docs": ["docs/scripts/check-doc-coverage.md"]
+    },
+    {
+      "name": "scripts",
+      "match": [
+        "platforms/linux/ubuntu/computer-use/scripts/*.sh",
+        "platforms/linux/ubuntu/computer-use/scripts/*.py"
+      ],
+      "docs": ["docs/scripts/{stem}.md"],
+      "onAdd": ["docs/scripts/README.md"]
+    },
+    {
+      "name": "plugins",
+      "match": ["platforms/linux/ubuntu/computer-use/plugins/*/**"],
+      "docs": [
+        "docs/plugins/{plugin}.md",
+        "platforms/linux/ubuntu/computer-use/plugins/{plugin}/README.md"
+      ],
+      "onAdd": ["docs/plugins/README.md"]
+    },
+    {
+      "name": "skills",
+      "match": ["platforms/linux/ubuntu/computer-use/skills/*/**"],
+      "docs": [
+        "platforms/linux/ubuntu/computer-use/skills/{skill}/README.md",
+        "platforms/linux/ubuntu/computer-use/skills/README.md"
+      ]
+    },
+    {
+      "name": "commands",
+      "match": ["platforms/linux/ubuntu/computer-use/commands/*.md"],
+      "docs": [
+        "docs/scripts/setup-opencode.md",
+        "platforms/linux/ubuntu/computer-use/README.md"
+      ]
+    },
+    {
+      "name": "config-examples",
+      "match": ["platforms/linux/ubuntu/computer-use/config/*"],
+      "docs": ["platforms/linux/ubuntu/computer-use/README.md"]
+    },
+    {
+      "name": "browser-manifests",
+      "match": [
+        "platforms/linux/ubuntu/browser-tools/package.json",
+        "platforms/linux/ubuntu/browser-tools/package-lock.json"
+      ],
+      "docs": [
+        "platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh",
+        "docs/scripts/setup-computer-assistant.md",
+        "platforms/linux/ubuntu/computer-use/README.md"
+      ]
+    },
+    {
+      "name": "github-tools",
+      "match": ["platforms/linux/ubuntu/github-tools/**"],
+      "docs": [
+        "docs/scripts/github-mcp.md",
+        "platforms/linux/ubuntu/github-tools/README.md"
+      ]
+    },
+    {
+      "name": "git-hooks",
+      "match": [".githooks/**"],
+      "docs": ["docs/scripts/setup-git-hooks.md"]
+    },
+    {
+      "name": "documentation-map",
+      "match": ["documentation-map.json"],
+      "docs": ["AGENTS.md", "docs/scripts/check-doc-coverage.md"]
+    }
+  ]
+}

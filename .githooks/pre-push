@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Documentation gate: block a push whose commits change a mapped source without
+# updating or creating its documentation.
+#
+# Rules live in documentation-map.json and are enforced by
+# check-doc-coverage.py. Bypass deliberately with `git push --no-verify` or a
+# `Doc-Gate: exempt` line in a commit message.
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+CHECK="$ROOT/platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py"
+
+if [ ! -f "$CHECK" ]; then
+  echo "doc-gate: checker missing at $CHECK; allowing push." >&2
+  exit 0
+fi
+
+base=""
+if git -C "$ROOT" rev-parse --verify --quiet refs/remotes/origin/main >/dev/null; then
+  base="origin/main"
+elif git -C "$ROOT" rev-parse --verify --quiet HEAD~1 >/dev/null; then
+  base="HEAD~1"
+fi
+
+set +e
+if [ -n "$base" ]; then
+  python3 "$CHECK" --root "$ROOT" --base "$base" --head HEAD
+else
+  echo "doc-gate: no comparison base found; running completeness only." >&2
+  python3 "$CHECK" --root "$ROOT"
+fi
+status=$?
+set -e
+
+if [ "$status" -eq 1 ]; then
+  echo "" >&2
+  echo "doc-gate: push blocked. Update or create the mapped documentation, or" >&2
+  echo "add a 'Doc-Gate: exempt' line to a commit message for a deliberate" >&2
+  echo "exception (see documentation-map.json and docs/scripts/check-doc-coverage.md)." >&2
+fi
+exit "$status"

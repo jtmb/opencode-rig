@@ -213,6 +213,10 @@ or CAPTCHAs for the user.
   `platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh`. Never edit
   deployed copies directly.
 - Computer-use scripts: `platforms/linux/ubuntu/computer-use/scripts/`.
+- Documentation gate: `documentation-map.json` holds the source-to-document
+  rules, `platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py`
+  enforces them, and `.githooks/pre-push` runs the gate before every push
+  (installed per clone by `setup-git-hooks.sh --apply`).
 - Deep-reference documentation: `docs/README.md`, with per-component detail
   under `docs/plugins/` and `docs/scripts/`. Component READMEs stay short;
   behavioral detail lives here and must accompany code changes.
@@ -279,8 +283,17 @@ or CAPTCHAs for the user.
    synchronized with behavioral or path changes.
 8. Local plugin packages stay self-contained: pin `@opencode-ai/plugin` to the
    installed OpenCode minor, keep their own `npm run check`, and document the
-   owning registration file. Plugins are registered manually, not deployed;
-   restart OpenCode after changing registration or plugin code.
+   owning registration file. Register plugins manually or with `/deploy`; they
+   load from source. Restart OpenCode after changing registration or plugin
+   code.
+9. Documentation is gated. `documentation-map.json` defines which sources
+   require which documentation, and
+   `platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py` enforces
+   it: a change to a mapped source must update or create its mapped
+   documentation in the same commit, and a new artifact must arrive with its
+   documentation and any index update. Install the pre-push hook once per clone
+   with `setup-git-hooks.sh --apply`; a genuine exception uses a
+   `Doc-Gate: exempt` commit trailer.
 
 ## Required Verification
 
@@ -293,6 +306,9 @@ shellcheck platforms/linux/ubuntu/computer-use/scripts/*.sh
 python3 -m py_compile platforms/linux/ubuntu/computer-use/scripts/*.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.py
+python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py
+python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage-self-test.py
+./platforms/linux/ubuntu/computer-use/scripts/setup-git-hooks.sh --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
@@ -303,6 +319,12 @@ npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run chec
 python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps
 ```
+
+Documentation is gated locally. `setup-git-hooks.sh --verify-only` confirms the
+pre-push hook is installed (once per clone with `--apply`); it runs
+`check-doc-coverage.py` against `origin/main..HEAD` and blocks a push whose
+mapped source changed without its documentation. `check-doc-coverage.py` with no
+arguments runs the completeness check only.
 
 Each plugin package needs one `npm install` before its checks; the generated
 `node_modules/` directories are gitignored. Plugin registration lives in the
