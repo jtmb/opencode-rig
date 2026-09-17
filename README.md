@@ -23,7 +23,7 @@ OpenCode 1.18.31+, Node via fnm, `python3-pyatspi`, `ydotool`, and
 
 | Component | Path | What it gives you |
 |-----------|------|-------------------|
-| Computer use | [`platforms/linux/ubuntu/computer-use/`](platforms/linux/ubuntu/computer-use/) | 16 skills, desktop and browser control, local plugins, setup, memory, and maintenance |
+| Computer use | [`platforms/linux/ubuntu/computer-use/`](platforms/linux/ubuntu/computer-use/) | 16 skills, desktop and browser control, local plugins, typed desktop tools, setup, memory, and maintenance |
 | Browser tools | [`platforms/linux/ubuntu/browser-tools/`](platforms/linux/ubuntu/browser-tools/) | Pinned Playwright MCP runtime with a shared live Firefox and an isolated headless mode |
 | GitHub tools | [`platforms/linux/ubuntu/github-tools/`](platforms/linux/ubuntu/github-tools/) | Pinned official GitHub MCP, read-only and lockdown-protected |
 
@@ -112,7 +112,9 @@ first, documented keyboard navigation only as a fallback, a fresh screenshot
 after every mutation, and immediate deletion of every captured image. Input is
 delivered through `ydotool`'s user service on GNOME Mutter, and admin actions
 use `pkexec` so passwords are typed into the trusted PolicyKit dialog — never
-into chat.
+into chat. The same script is exposed to the model as typed custom tools
+(`desktop_apps`, `desktop_tree`, `desktop_find`, `desktop_act`) with validated
+arguments and the same preview-token apply flow.
 
 ### 3D, memory, maintenance, and more
 

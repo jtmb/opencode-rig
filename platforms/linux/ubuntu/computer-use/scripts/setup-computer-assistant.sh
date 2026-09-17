@@ -647,9 +647,9 @@ verify() {
   fi
 
   if "$SCRIPT_DIR/setup-opencode.sh" --verify-only >/dev/null; then
-    ok "all OpenCode skills and commands deployed"
+    ok "all OpenCode skills, commands, and tools deployed"
   else
-    fail "OpenCode skills or commands missing/stale"
+    fail "OpenCode skills, commands, or tools missing/stale"
     status=1
   fi
 

@@ -1,9 +1,9 @@
 # `setup-opencode.sh`
 
 Persists `OPENCODE_ENABLE_EXA` so a plain `opencode` invocation always gets it,
-and deploys the repository's skills and global commands into the user's OpenCode
-configuration. It is the canonical deployment path; the `/promote-skills`
-command and `setup-computer-assistant.sh` both call it.
+and deploys the repository's skills, global commands, and custom tools into the
+user's OpenCode configuration. It is the canonical deployment path; the
+`/promote-skills` command and `setup-computer-assistant.sh` both call it.
 
 ```bash
 # Verify by default (no changes)
@@ -35,6 +35,8 @@ OPENCODE_ENABLE_EXA=0 ./platforms/linux/ubuntu/computer-use/scripts/setup-openco
 | Skill destination | `~/.config/opencode/skills/<name>/` |
 | Command sources | `platforms/linux/ubuntu/computer-use/commands/` |
 | Command destination | `~/.config/opencode/commands/` |
+| Tool sources | `platforms/linux/ubuntu/computer-use/tools/<name>.ts` |
+| Tool destination | `~/.config/opencode/tools/<name>.ts` |
 | Shell files | `~/.bashrc` and `~/.zshrc` (if present) |
 
 ## Export management
@@ -54,12 +56,12 @@ OPENCODE_ENABLE_EXA=0 ./platforms/linux/ubuntu/computer-use/scripts/setup-openco
 `verify()` checks the exact line in each existing rc file and fails if it is
 missing or stale.
 
-## Skill and command deployment
+## Skill, command, and tool deployment
 
 ### Required sources
 
-`setup-opencode.sh` refuses to proceed if a required skill or command source is
-missing. The required skills are:
+`setup-opencode.sh` refuses to proceed if a required skill, command, or tool
+source is missing. The required skills are:
 
 ```
 app-setup  blender  browser-assistant  browser-headless  desktop-control
@@ -68,7 +70,8 @@ opencode-db-maintenance  routine-automation  skill-maintenance
 system-troubleshooting  task-memory  vscode-management  web-3d-asset-pipeline
 ```
 
-The required commands are `deploy` and `promote-skills`.
+The required commands are `deploy`, `handoff`, `promote-skills`, and `resume`.
+The required custom tools are `desktop` (`tools/desktop.ts`).
 
 ### `ensure_skill()`
 
@@ -96,20 +99,31 @@ The same guards apply to the command source and destination directories, then
 each required command Markdown file is copied content-aware into
 `~/.config/opencode/commands/<name>.md`.
 
+### `ensure_tools()`
+
+The same symbolic-link guards apply to the tool source and destination paths,
+then each `REQUIRED_TOOLS` entry is copied content-aware into
+`~/.config/opencode/tools/<name>.ts`. Only the explicit top-level `.ts` files
+are deployed; the package's `node_modules/` and tests stay in the repository.
+OpenCode discovers the deployed files by filename at startup, which is why a
+restart is required after a tool change.
+
 ## Verification semantics
 
 `verify()` returns a status flag and prints one line per finding:
 
 - `OK:` — deployed and matching.
 - `MISSING/STALE:` — the source file is absent from the destination or differs,
-  or the export line is missing. These fail verification.
+  or the export line is missing. These fail verification. The check covers
+  skills, commands, and custom tools.
 - `EXTRA:` — a deployed file has no source counterpart. This is reported and
   fails verification so it is reviewed, but `--apply` will not delete it.
 - `INVALID:` — a symbolic link was found where one is not allowed.
 
 It also prints the detected `opencode --version`. Note that it does **not**
 verify OpenCode's runtime discovery of the skills; run `opencode debug skill`
-for that.
+for that. Custom tools have no equivalent debug listing and are confirmed by a
+fresh OpenCode process.
 
 ## Exit codes
 
@@ -122,11 +136,12 @@ for that.
 ## Notes and limitations
 
 - **Never edit deployed copies directly.** Change the source under
-  `computer-use/skills/` or `computer-use/commands/`, then re-run `--apply`.
-- Changing skills, commands, or the export requires restarting OpenCode.
-- The command list is explicit (`REQUIRED_COMMANDS`); adding a new command
-  source file requires adding it to the list here, and updating this document
-  and the component README.
+  `computer-use/skills/`, `computer-use/commands/`, or `computer-use/tools/`,
+  then re-run `--apply`.
+- Changing skills, commands, tools, or the export requires restarting OpenCode.
+- The command and tool lists are explicit (`REQUIRED_COMMANDS`,
+  `REQUIRED_TOOLS`); adding a new command or tool source file requires adding it
+  to the list here, and updating this document and the component README.
 - The script is idempotent: a second `--apply` with no source changes reports
   every bundle `OK` and performs no copies.
 - Related: [`check-skill-docs.md`](check-skill-docs.md) validates the skill

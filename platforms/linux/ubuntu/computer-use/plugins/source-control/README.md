@@ -35,10 +35,12 @@ Restart OpenCode after changing the registration or plugin source.
 
 - The panel is registered in `sidebar_content` at order `600`, below the file
   sidebar and above the path/branch footer.
-- The header shows the total local change count and toggles collapsed state in
+- The header shows the total local change count in the theme accent color with
+  a muted `change`/`changes` label, and toggles collapsed state in
   `local.source-control.collapsed`.
 - Changed files are sorted by path, capped by `maxFiles` (default `8`), and
-  activate the built-in `diff.open` viewer.
+  activate the built-in `diff.open` viewer on Ctrl+click (or Enter/Space when
+  focused); a plain click only selects the row.
 - `/changes` opens details, and `Refresh Source Control` refreshes both local
   and GitHub data.
 - GitHub is read-only and optional. The panel hides the GitHub row when the

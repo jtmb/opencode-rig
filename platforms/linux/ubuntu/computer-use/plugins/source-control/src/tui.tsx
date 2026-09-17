@@ -128,6 +128,7 @@ function SourceControlPanel(props: {
     <Show when={visible()}>
       <box flexDirection="column" gap={0}>
         <box
+          flexDirection="row"
           focusable
           onMouseDown={toggle}
           onKeyDown={(event) => {
@@ -138,8 +139,12 @@ function SourceControlPanel(props: {
           }}
         >
           <text fg={props.api.theme.current.text}>
-            <b>{collapsed() ? "+" : "-"} Source Control {state().changes.length}</b>
+            <b>{collapsed() ? "+" : "-"} Source Control</b>
           </text>
+          <text fg={props.api.theme.current.accent}>
+            <b> {state().changes.length}</b>
+          </text>
+          <text fg={props.api.theme.current.textMuted}> {state().changes.length === 1 ? "change" : "changes"}</text>
         </box>
 
         <Show when={!collapsed()}>
@@ -149,7 +154,11 @@ function SourceControlPanel(props: {
                 flexDirection="row"
                 gap={1}
                 focusable
-                onMouseDown={() => openDiff(props.api, props.sessionID)}
+                onMouseDown={(event) => {
+                  if (!event.modifiers.ctrl) return
+                  event.preventDefault()
+                  openDiff(props.api, props.sessionID)
+                }}
                 onKeyDown={(event) => {
                   if (event.name === "return" || event.name === "space") {
                     event.preventDefault()

@@ -38,7 +38,8 @@ platforms/linux/ubuntu/
     │   ├── codex-usage/
     │   └── source-control/
     ├── scripts/
-    └── skills/
+    ├── skills/
+    └── tools/
 ```
 
 This component owns the skills, scripts, plugins, and configuration. The
@@ -53,6 +54,7 @@ Generated and local-only paths (never committed):
 - `scripts/__pycache__/`
 - `plugins/codex-usage/node_modules/`, `plugins/codex-fallback/node_modules/`
 - `plugins/source-control/node_modules/`
+- `tools/node_modules/`
 - `~/Documents/computer-assistant/memory.json` (owner-only app data)
 - `/tmp/opencode/playwright*/` (transient MCP output)
 - `~/Pictures/Screenshots/*.png` (viewed once, then deleted)
@@ -75,8 +77,10 @@ What `--apply` does:
 - Enables the user-owned `ydotool.service` (private socket only, no system
   permission broadening).
 - Deploys all sixteen complete skill bundles to `~/.config/opencode/skills/`.
-- Deploys the repository-managed `/promote-skills` command to
-  `~/.config/opencode/commands/promote-skills.md`.
+- Deploys the repository-managed `/deploy`, `/handoff`, `/promote-skills`, and
+  `/resume` commands to `~/.config/opencode/commands/`.
+- Deploys the typed desktop custom tools (`tools/desktop.ts`) to
+  `~/.config/opencode/tools/` for global discovery.
 - Initializes the owner-only memory store at
   `~/Documents/computer-assistant/memory.json` (dir `700`, file `600`).
 - Installs the pinned Playwright MCP (`@playwright/mcp@0.0.80`) and Firefox
@@ -106,7 +110,10 @@ After restart, `/promote-skills` validates the canonical skill documentation,
 deploys every complete bundle globally through `setup-opencode.sh --apply`, and
 verifies source parity plus OpenCode discovery. `/deploy` registers the local
 plugins globally or into a repository's `.opencode/` directory (and optionally
-copies the bootstrap scripts) through `scripts/deploy-plugins.sh`.
+copies the bootstrap scripts) through `scripts/deploy-plugins.sh`. `/handoff`
+refreshes `HANDOFF.md` with the current session state and regenerates the
+prompt block for a fresh chat. `/resume` reads `HANDOFF.md`, runs the read-only
+health check, reports status, and continues the pending task.
 
 [`plugins/codex-usage/`](plugins/codex-usage/README.md) is a local OpenCode TUI
 sidebar for the weekly Codex quota and optional Luna Reserve usage.
@@ -164,7 +171,7 @@ phrases, example requests, and how the skills combine.
 | `scripts/check-plugin-resource-guards.py` | Enforce bounded typecheck and test scripts for every local plugin |
 | `scripts/check-plugin-resource-guards-self-test.py` | Verify a bounded child can terminate without taking down its parent |
 | `scripts/setup-live-dictation.sh` | Reproduce and verify local incremental Vosk dictation on `Alt+X` without login autostart |
-| `scripts/setup-opencode.sh` | Verify by default; with `--apply`, persist `OPENCODE_ENABLE_EXA=1`, recursively deploy complete skill bundles, and deploy repository-managed global commands |
+| `scripts/setup-opencode.sh` | Verify by default; with `--apply`, persist `OPENCODE_ENABLE_EXA=1`, recursively deploy complete skill bundles, and deploy repository-managed global commands and typed desktop custom tools |
 | `scripts/deploy-plugins.sh` | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
 | `scripts/desktop-control.py` | AT-SPI inspection with traversal status, short-lived target tokens, focus/text verification, and protected-field refusal |
 | `scripts/check-skill-docs.py` | Read-only validation for skill metadata, usage guides, deployed-set links, unsafe modes, symlinks, and generated artifacts |
@@ -287,6 +294,7 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.p
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
+npm --prefix platforms/linux/ubuntu/computer-use/tools run check
 opencode debug skill
 opencode mcp list
 ```

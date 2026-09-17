@@ -44,13 +44,16 @@ directory. It calls `api.client.vcs.status({ directory })`, which returns
 The pure change layer validates the response, clamps invalid counts to zero,
 sorts by path, maps statuses to `A`, `D`, and `M`, and left-truncates long paths
 for the narrow sidebar. The header displays the total count even when only the
-first `maxFiles` rows are rendered. The default is eight rows followed by a
-`+N more` line.
+first `maxFiles` rows are rendered; the count is rendered in the theme accent
+color and followed by a muted `change`/`changes` label so its meaning is
+explicit. The default is eight rows followed by a `+N more` line.
 
 The header toggles `local.source-control.collapsed` in the TUI key-value store.
-Each visible file row opens the built-in `diff.open` command. If the command is
-not registered, the plugin falls back to the built-in `diff` route with `mode:
-git`, the current session ID, and the previous route for return navigation.
+Each visible file row opens the built-in `diff.open` command on Ctrl+click, or
+with Enter/Space when the row is focused; a plain click only selects the row.
+If the command is not registered, the plugin falls back to the built-in `diff`
+route with `mode: git`, the current session ID, and the previous route for
+return navigation.
 
 The panel is hidden for non-git projects and, by default, for clean projects
 with no pull-request row. `whenEmpty: "show"` keeps a clean git panel visible.

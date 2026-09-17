@@ -11,6 +11,8 @@ integrated components separate:
 - Computer use: `platforms/linux/ubuntu/computer-use/`
 - Local OpenCode plugins: `platforms/linux/ubuntu/computer-use/plugins/<name>/`
   (TUI quota sidebar and server provider failover)
+- Custom tools: `platforms/linux/ubuntu/computer-use/tools/` (typed
+  desktop-control tools deployed to `~/.config/opencode/tools/`)
 - Browser tools: `platforms/linux/ubuntu/browser-tools/`
 - GitHub tools: `platforms/linux/ubuntu/github-tools/`
 
@@ -213,6 +215,9 @@ or CAPTCHAs for the user.
   `platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh`. Never edit
   deployed copies directly.
 - Computer-use scripts: `platforms/linux/ubuntu/computer-use/scripts/`.
+- Custom tool package: `platforms/linux/ubuntu/computer-use/tools/` (typed
+  desktop-control tools; deployed to `~/.config/opencode/tools/` by
+  `setup-opencode.sh`).
 - Documentation gate: `documentation-map.json` holds the source-to-document
   rules, `platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py`
   enforces them, and `.githooks/pre-push` runs the gate before every push
@@ -293,10 +298,11 @@ or CAPTCHAs for the user.
    owning registration file. Register plugins manually or with `/deploy`; they
    load from source. Restart OpenCode after changing registration or plugin
    code.
-9. Resource-heavy plugin checks run through
+9. Resource-heavy plugin and custom-tool checks run through
    `scripts/run-bounded-command.sh`, which recalculates memory from the current
    host/cgroup state, serializes checks, and fails closed without a limiter.
-   `check-plugin-resource-guards.py` enforces the package-script wiring.
+   `check-plugin-resource-guards.py` enforces the package-script wiring for the
+   plugins and the tools package.
 10. Documentation is gated. `documentation-map.json` defines which sources
    require which documentation, and
    `platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py` enforces
@@ -332,6 +338,7 @@ opencode mcp list
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
+npm --prefix platforms/linux/ubuntu/computer-use/tools run check
 python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps
 ```

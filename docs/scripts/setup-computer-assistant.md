@@ -2,8 +2,9 @@
 
 Full-stack provisioning and verification for the local computer-assistant
 capabilities on Ubuntu GNOME. This is the top-level setup entry point: it
-installs system packages, deploys skills and commands, initializes the memory
-store, and installs the pinned Playwright and GitHub MCP runtimes.
+installs system packages, deploys skills, commands, and custom tools,
+initializes the memory store, and installs the pinned Playwright and GitHub MCP
+runtimes.
 
 ```bash
 # Read-only health check (default)
@@ -74,8 +75,8 @@ only into the trusted `sudo`/PolicyKit dialog.
 
 ### 2. Local state
 
-- Runs `setup-opencode.sh --apply` to deploy skills and commands (see
-  [`setup-opencode.md`](setup-opencode.md)).
+- Runs `setup-opencode.sh --apply` to deploy skills, commands, and custom tools
+  (see [`setup-opencode.md`](setup-opencode.md)).
 - Runs `assistant-memory.py init` to create the owner-only store (see
   [`assistant-memory.md`](assistant-memory.md)).
 
@@ -169,7 +170,8 @@ The wrappers registered are:
   otherwise it reports authentication as pending.
 - Each MCP is bound to the right scope — Playwright project-only, GitHub
   global-only — and resolved by `opencode debug config`.
-- `setup-opencode.sh --verify-only` passes (skills and commands deployed).
+- `setup-opencode.sh --verify-only` passes (skills, commands, and custom tools
+  deployed).
 
 `verify()` returns non-zero if any check fails, so `--verify-only` is suitable
 as a health gate.

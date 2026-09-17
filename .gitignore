@@ -5,6 +5,9 @@ platforms/linux/ubuntu/computer-use/plugins/codex-usage/node_modules/
 platforms/linux/ubuntu/computer-use/plugins/codex-fallback/node_modules/
 platforms/linux/ubuntu/computer-use/plugins/source-control/node_modules/
 
+# Generated desktop custom-tool dependencies - never commit.
+platforms/linux/ubuntu/computer-use/tools/node_modules/
+
 # Generated GitHub MCP runtime - never commit.
 platforms/linux/ubuntu/github-tools/bin/
 

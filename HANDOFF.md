@@ -31,7 +31,7 @@ Repository rules while working here:
     mapped source has its documentation and that a change updates or creates
     it. The map's "handoff" rule also requires HANDOFF.md to change for
     environment-defining edits, so keep this file current.
-  - Resource-heavy local plugin checks must use
+  - Resource-heavy local plugin and tool checks must use
     platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh.
     check-plugin-resource-guards.py enforces the package-script wiring; the
     wrapper recalculates an adaptive host/cgroup budget and fails closed without
@@ -48,6 +48,9 @@ Read-only health check before changing anything:
 If it passes, do not reinstall. A healthy setup has:
 
   - 16 skills deployed and discoverable
+  - the desktop custom tools (`desktop_apps`, `desktop_tree`, `desktop_find`,
+    `desktop_act`) deployed to ~/.config/opencode/tools/ and loaded by a fresh
+    OpenCode process
   - live and headless Playwright MCP servers connected
   - the pinned GitHub MCP connected, authenticated from
     GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN, or the logged-in gh CLI
@@ -56,7 +59,8 @@ If it passes, do not reinstall. A healthy setup has:
   - all requested local plugins registered (check with deploy-plugins.sh
     --scope global --plugins all --verify-only)
   - AT-SPI available and ydotool's user service and private socket working
-  - the private memory store validating
+  - the private memory store validating (legacy; the approved plan replaces it
+    with Basic Memory - see Work In Progress)
 
 If it fails, diagnose the specific failed check before repairing anything.
 
@@ -87,8 +91,12 @@ Global OpenCode commands:
   - /deploy: register the local plugins globally or into a repository's
     .opencode directory (question-driven); optionally copies the bootstrap
     scripts
+  - /handoff: update HANDOFF.md with the current session state and regenerate
+    the fresh-chat prompt
   - /promote-skills: validate and redeploy all canonical skill bundles, then
     verify discovery
+  - /resume: read HANDOFF.md, run the read-only health check, report status,
+    and continue the pending task (the command form of this prompt)
 
 Operating expectations:
 
@@ -124,10 +132,13 @@ Operating expectations:
     credentials, and keep the confirmation gate for publishing, merging,
     workflows or deployments, deletion, and account, repository, or security
     changes.
-  - Retrieve task memory narrowly for the current request. Never store
+  - Memory: the current store is the owner-only JSON file at
+    ~/Documents/computer-assistant/memory.json managed by
+    scripts/assistant-memory.py (narrow searches; remember/forget preview and
+    require --apply). The approved plan replaces it with a local Basic Memory
+    MCP server; until that lands, follow the existing rules. Never store
     passwords, tokens, private keys, payment details, MFA codes, or whole
-    conversations. Memory record writes require --apply; store initialization
-    is the documented exception.
+    conversations.
   - Confirm immediately before sending or publishing, purchasing, deleting
     data, accepting legal terms, changing account or security settings,
     granting permissions, or any similar consequential action. Never handle
@@ -144,7 +155,7 @@ Operating expectations:
 Changing this project:
 
   - Edit source files in the repository and run the checks in AGENTS.md.
-  - Redeploy skills with
+  - Redeploy skills, global commands, or custom tools with
     platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --apply.
   - Register or refresh local plugins with /deploy or
     platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh.
@@ -152,30 +163,40 @@ Changing this project:
     the gate enforces this.
   - Work on a branch and open a pull request; direct pushes to main are blocked
     by the required "verify" check.
-  - Tell me to restart OpenCode after skills, plugins, or MCP configuration
-    change.
+  - Tell me to restart OpenCode after skills, commands, plugins, or MCP
+    configuration change.
 
 Known live state (recorded 2026-09-17):
 
   - Repository: ~/repos/opencode-rig, public; main is protected. The current
-    checkout is branch docs/handoff-blender-note at local commit 98476be
-    (never pushed) with a clean worktree (see Work In Progress below)
+    checkout is branch docs/handoff-blender-note, pushed to origin and awaiting
+    a pull request. It carries the `/handoff` and `/resume` commands, the
+    desktop custom-tools package (tools/) with its deployment, resource-guard,
+    and docs, and the source-control Ctrl+click and header-count changes (see
+    Work In Progress below)
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
     check
   - Skills deployed: 16/16
-  - Global commands deployed: /deploy, /promote-skills
+  - Global commands deployed: /deploy, /handoff, /promote-skills, /resume
+  - Global custom tools: `desktop.ts` in ~/.config/opencode/tools/ exporting
+    `desktop_apps`, `desktop_tree`, `desktop_find`, and `desktop_act`; deployed
+    by `setup-opencode.sh` and verified loaded by a fresh OpenCode process (the
+    running TUI needs a restart)
   - Local plugins: codex-usage (TUI quota and optional Luna Reserve sidebar,
     registered in ~/.config/opencode/tui.json), codex-fallback (server
     failover, registered in ~/.config/opencode/opencode.jsonc; state at
     ~/.local/share/opencode/codex-fallback.json), and source-control (TUI
-    working-tree/GitHub panel, registered in ~/.config/opencode/tui.json)
+    working-tree/GitHub panel, registered in ~/.config/opencode/tui.json with
+    whenEmpty "show"; panel verified, Ctrl+click-only diff opening and the
+    accented change-count header need a restart to appear)
   - Browser runtime: @playwright/mcp 0.0.80 with isolated live and headless
     Firefox, via platforms/linux/ubuntu/browser-tools
   - GitHub MCP runtime: official v1.12.1 native amd64 release via
     platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh
-  - Memory: ~/Documents/computer-assistant/memory.json, owner-only
+  - Memory: ~/Documents/computer-assistant/memory.json, owner-only (legacy;
+    replacement planned - see Work In Progress)
   - Optional 3D: Blender 5.0.1 with python3-numpy for glTF (Draco unavailable)
   - Maintenance cron: runs the repository maintenance script
   - Superseded paths (do not use): the ~/scripts/ computer-use copies and
@@ -183,192 +204,167 @@ Known live state (recorded 2026-09-17):
 
 Work in progress (full detail in the "Work In Progress" section of this file):
 
-  - The checkout is branch docs/handoff-blender-note at local commit 98476be
-    (never pushed) with a clean worktree. The local history contains the
-    preserved Luna/config baseline and source-control/resource-guard changes;
-    do not push it without an explicit request.
-  - Current task: maintain the committed source-control
-    TUI plugin (VS Code-style Source Control panel in the sidebar: change-count
-    badge, local working-tree list, GitHub MCP section for the current branch).
-    The implementation, adaptive memory guard, and global registration are now
-    present; restart-based UI verification remains the only unperformed
-    acceptance check.
+  - Approved plan: (1) the desktop custom-tools package is implemented,
+    deployed, and live-verified (Phase 0 findings recorded under Work In
+    Progress); (2) Basic Memory adoption (M0-M4) and removal of the legacy
+    memory system are next. Read the Work In Progress section before starting.
+  - Pending verification: after an OpenCode restart, confirm the source-control
+    Ctrl+click diff opening and accented change-count header, and that the
+    desktop_* custom tools load in the running TUI.
 
 After the health check, give me a concise status and continue with the task I
 give you. If I pasted only this handoff, ask what task I want handled.
 ```
 
-## Work In Progress — recorded 2026-09-17
+## Work In Progress — updated 2026-09-17
 
 ### Checkout state
 
-- Branch docs/handoff-blender-note (never pushed; main is protected). Local
-  commits bb21ab4, 63dd2e0, 96939d4, and 98476be contain the preserved
-  Luna/config baseline, source-control plugin, adaptive resource guard, TUI log
-  suppression, and final handoff state. Nothing has been pushed.
-- The preserved baseline and new work now pass the documentation gate and
-  self-tests, shell/Python validation, all three bounded plugin checks, setup
-  verification, the real read-only GitHub MCP smoke test, and `git diff --check`.
+- Branch docs/handoff-blender-note (main is protected). Committed history began
+  at f574842 with the preserved Luna Reserve and configuration baseline, the
+  source-control plugin, the adaptive resource guard, and the GitHub MCP
+  log-suppression fix. The branch is now pushed to origin with this session's
+  work; no pull request is open yet.
+- This session committed the `/handoff` and `/resume` commands with their docs
+  and setup registration; the desktop custom-tools package (`tools/`), its
+  `setup-opencode.sh` deployment, the resource-guard extension, and its docs;
+  the source-control Ctrl+click and header-count changes; and this HANDOFF.md
+  rewrite.
+- All current work passes the documentation gate and self-tests, shell/Python
+  validation, the bounded checks for the plugins and the tools package, setup
+  verification (`setup-opencode.sh` and `setup-computer-assistant.sh`), the
+  deployed tool loading check, and the real read-only GitHub MCP smoke test.
 
-### Completed and verified
+### Approved plan — desktop custom tools and Basic Memory
 
-1. Luna Reserve support (codex-usage, codex-fallback, docs)
-   - Conditional x-openai-codex-luna-reserve: 1 header on the TUI usage request
-     only; the fallback client stays passive.
-   - gpt-reserve parsing for legacy and newer payload shapes; compact sidebar
-     row; details dialog; diagnostics; docs.
-   - The live account returns no reserve bucket today; that is expected and
-     documented, not a bug.
-2. Complete configuration example and docs
-   - config/opencode.example.jsonc: provider {env:DEEPSEEK_API_KEY}, every
-     codex-fallback option, per-agent codexFallback overrides, Playwright MCPs.
-   - config/.env.example: template for non-OAuth secrets; .env and .env.local
-     are gitignored.
-   - Docs explain {env:NAME} interpolation, the project .env load, the GitHub
-     MCP environment mapping, and that OpenAI/Codex OAuth stays in OpenCode's
-     managed auth.json (never in .env).
-    - Live user configs (opencode.json, global configs, tui.json) were not
-      modified for the baseline; the source-control TUI registration was added
-      afterward to the user-owned `~/.config/opencode/tui.json`.
+Decisions made with the user after research:
 
-### Source-control implementation and memory-guard record
+- **Do not convert the project to MCP broadly.** OpenCode loads every MCP tool
+  schema into context on every request. Measured example: the GitHub MCP's 25
+  tools are about 67 KB of schema, roughly 17k tokens, and the machine already
+  carries the GitHub and two Playwright MCPs. The project stays
+  skill + script + plugin based; only specific interfaces become typed tools.
+- **Use OpenCode custom tools** for cleaner, schema-validated interfaces,
+  starting with the desktop-control script. This keeps `bash` as the fallback
+  and adds no extra process.
+- **Adopt Basic Memory** (local-first Markdown plus SQLite and hybrid search,
+  MCP-native) as the memory system, then **remove the legacy JSON memory
+  system entirely** after migration, per the user's explicit decision.
 
-Goal: a VS Code-style Source Control panel in the session sidebar: change-count
-badge, local working-tree change list, and a GitHub section for the current
-branch using our pinned read-only GitHub MCP.
+#### Part 1 — desktop custom tools (implemented and deployed)
 
-User decisions already made:
+- `platforms/linux/ubuntu/computer-use/tools/desktop.ts` exports four tools
+  wrapping `scripts/desktop-control.py`: `desktop_apps`, `desktop_tree`,
+  `desktop_find`, and `desktop_act` (action, focus, or set-text). Argument
+  construction lives in the pure exported `buildDesktopArgs` helper so it is
+  tested without AT-SPI.
+- Each tool spawns `python3` with an argument array (no shell interpolation), a
+  30-second timeout, and a 256 KiB output cap; failures surface the exit code
+  and stderr, while timeouts and output-cap overruns are reported distinctly.
+  Mutations preview by default and require `apply: true` plus the preview
+  `expectToken`; the tool refuses a token without `apply` and refuses `apply`
+  without a token.
+- The package pins `@opencode-ai/plugin` 1.18.31 with its own `node_modules`,
+  plus `typescript`, `@types/node`, and bounded `typecheck`/`test` scripts.
+  `check-plugin-resource-guards.py` now scans `tools/package.json` and fails if
+  it disappears.
+- `setup-opencode.sh` deploys the explicit `REQUIRED_TOOLS` list (`desktop.ts`)
+  content-aware into `~/.config/opencode/tools/` with symbolic-link guards and
+  verify lines; `setup-computer-assistant.sh` reports skills, commands, and
+  tools together.
+- Phase 0 findings (throwaway tools, since deleted): the global tools directory
+  loads at startup only (no hot reload, and no `opencode debug tools` listing;
+  a fresh `opencode run` process is the verification path); a default export
+  becomes `<filename>` and a named export becomes `<filename>_<export>`, so
+  `desktop.ts` exporting `apps` yields `desktop_apps`; tool files resolve
+  `@opencode-ai/plugin` from the user-owned `~/.config/opencode/node_modules`
+  (currently 1.18.30), independent of the package's pinned 1.18.31.
+- Verified: `npm run check` (14 tests), deployment plus `--verify-only` for
+  both setup scripts, and a live fresh-process `opencode run` calling
+  `desktop_apps` against real AT-SPI data.
 
-- Show local changes plus a GitHub MCP-powered section.
-- Change-count badge in the panel header.
-- Clicking a changed file opens OpenCode's built-in /diff viewer.
-- Plugin name source-control; include /deploy (deploy-plugins.sh) support.
+#### Part 2 — Basic Memory adoption (M0-M4)
 
-Placement and layout:
+Chosen after comparing free local MCP memory servers: Basic Memory v0.23.2
+(AGPL-3.0, personal use fine) beats Engram (keyword-only search), the official
+reference server (JSONL with substring search), and mem0 or Zep (hosted-only or
+heavy infrastructure).
 
-- Register in sidebar_content with order 600 (append slot; renders last,
-  directly above the pinned path:branch footer). sidebar_footer is
-  single_winner — do not register there.
-- Header "- Source Control 30" toggles collapse (kv key
-  local.source-control.collapsed). Rows show "M src/tui.tsx  +40 -12" with
-  A/M/D letters, left-truncated paths, diff colors, sorted by path, capped at
-  maxFiles (default 8) with a "+N more" line. A GitHub line shows the
-  current-branch PR ("PR #57 - open - checks passing").
-- Hide the whole panel for non-git or nothing to show (whenEmpty option); hide
-  only the GitHub line when there is no PR or the MCP is unavailable; fail open
-  and keep last good data on refresh errors.
-- Commands: "Refresh Source Control" plus a details dialog on slash /changes.
+- **M0 install spike:** `uv tool install basic-memory==0.23.2` (uv 0.12.15 and
+  Python 3.14.4 are present; about 38 GiB free disk and 3.3 GiB RAM available).
+  Create the project at `~/Documents/computer-assistant/basic-memory/`
+  (owner-only). Bound the first sync (FastEmbed model download) with
+  `run-bounded-command.sh`; run a bounded stdio smoke of `initialize` and
+  `tools/list` and record the exact tool names.
+- **M1 wrapper and registration:** new `scripts/basic-memory-mcp.sh` with an
+  adaptive `systemd-run --user` memory limit (20% of effective memory, 25%
+  swap) and a `prlimit --as` fallback, failing closed without a limiter,
+  mirroring the source-control MCP containment. Register `basic-memory`
+  globally in `~/.config/opencode/opencode.jsonc`; disable rarely used tools
+  through the `tools` config (schema tools, project and workspace management,
+  move_note, and the compatibility search/fetch tools), keeping about nine core
+  tools.
+- **M2 migrate and remove legacy:** import the three JSON entries as notes and
+  verify they are searchable; rewrite the `task-memory` skill and README around
+  `search_notes`, `build_context`, and `write_note`; then delete the legacy
+  system after a final confirmation.
+- **M3 docs and gate:** new `docs/scripts/basic-memory-mcp.md`, `docs/memory.md`,
+  and `docs/tools/README.md`; update `documentation-map.json` (add
+  `basic-memory-mcp.sh` and `tools/**` to the handoff rule), `docs/README.md`,
+  root and component READMEs, `AGENTS.md` (memory section, routing, and required
+  verification), `config/opencode.example.jsonc`, `setup-computer-assistant.sh`
+  (pin `BASIC_MEMORY_VERSION=0.23.2` plus verify checks), and this file.
+- **M4 verification:** bounded MCP write/read/search smoke with temp-note
+  cleanup; all bounded plugin and tool checks; documentation gate and
+  self-tests; shellcheck; `py_compile`; `git diff --check`;
+  `setup-computer-assistant.sh --verify-only`; restart OpenCode and prove recall
+  across sessions.
 
-Data sources (verified):
+Deletion manifest for the legacy memory system (only after the migration is
+verified and the user confirms at the moment of deletion):
 
-- Local: api.client.vcs.status({ directory }) returns
-  { file, additions, deletions, status: "added" | "deleted" | "modified" }[].
-  api.client.vcs.diff({ mode: "git", context }) returns per-file patches if
-  needed. directory comes from api.state.session.get(sessionID)?.directory.
-- GitHub: derive owner/repo from git remote get-url <remoteName> (github.com
-  only; default origin), then lazily spawn
-  platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh over stdio and call
-  only read-only tools: list_pull_requests (owner, repo, state, head, minimal
-  fields) and pull_request_read (get_status). The wrapper resolves credentials
-  itself (env or logged-in gh; this machine is logged in as jtmb) and enforces
-  read-only + lockdown. TUI plugins cannot call MCP tools directly, so spawning
-  the wrapper is the correct approach.
-- MCP client: pin @modelcontextprotocol/sdk 1.30.0 (client/stdio imports), lazy
-  start, bounded initialize/call timeouts, dispose() on plugin cleanup. Fallback
-  if the SDK misbehaves under the Bun-based TUI: a minimal internal NDJSON
-  JSON-RPC client.
+- `platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py` -> deleted
+- `docs/scripts/assistant-memory.md` -> deleted, and its row removed from
+  `docs/scripts/README.md`
+- `~/Documents/computer-assistant/memory.json` and `.memory.lock` -> deleted
+  (entry text is preserved as Basic Memory notes)
+- All references updated: `AGENTS.md`, `HANDOFF.md`, the component README,
+  `setup-computer-assistant.sh`, `skills/README.md`, and the `task-memory`
+  skill and README
 
-Refresh: mount; session.idle, file.edited, file.watcher.updated (750 ms
-debounce), vcs.branch.updated; polls refreshMs (default 15000, min 5000) for
-local and githubRefreshMs (default 120000, min 30000) for GitHub; dedupe
-in-flight requests.
+Risks and tradeoffs:
 
-Options: refreshMs, githubRefreshMs, maxFiles (default 8), whenEmpty
-(hide|show, default hide), github (default true), githubMcpCommand (default
-derived from the plugin location), remoteName (default origin).
+- The first sync downloads the FastEmbed embedding model (around 100 MB) and
+  embedding can spike memory; the bounded wrapper contains it.
+- About nine standing tool schemas add roughly 3-4k tokens per request; the
+  disable list keeps it minimal and per-agent scoping can trim it further.
+- Basic Memory writes apply directly, without the old script's `--apply`
+  preview. The skill keeps the no-secrets rule and adds ask-before-deleting.
+- There is no automatic capture yet; a future server-plugin hook could add
+  ChatGPT-style session summarization on top of this foundation.
 
-Files and registration:
+### Pending verification
 
-- New package platforms/linux/ubuntu/computer-use/plugins/source-control/:
-  src/tui.tsx, src/changes.ts, src/store.ts, src/github.ts, src/mcp.ts,
-  test/*.test.ts, package.json (pinned @opencode-ai/plugin 1.18.31,
-  @opentui/* 0.5.11, solid-js, @modelcontextprotocol/sdk 1.30.0),
-  tsconfig.json (copy codex-usage), README.md, package-lock.json; dependencies
-  are installed and the package check passes.
-- Register in ~/.config/opencode/tui.json with a [moduleURL, options] tuple
-  (user-owned; currently registered, but restart OpenCode to load).
-- `scripts/deploy-plugins.sh` supports `--plugins source-control|all`, with
-  deployment docs and `/deploy` command guidance updated.
-- Keep expensive plugin checks behind
-  scripts/run-bounded-command.sh: 40% of current effective available memory for
-  repository checks, 25% swap, and a 65% Node heap share. The source-control
-  GitHub MCP child uses a separate adaptive 20% memory budget and 25% swap;
-  systemd-run uses a transient cgroup and prlimit is the bounded fallback.
-- Enforce the package-script guard in the pre-push hook and verify CI with
-  check-plugin-resource-guards.py, plus a self-test that proves a bounded child
-  cannot kill its parent.
-- Docs gate: added docs/plugins/source-control.md; updated docs/plugins/README.md
-  (table, registration, and security wording so the OpenAI OAuth paragraph
-  stays scoped to the codex pair), docs/README.md, root README.md ("two" to
-  "three" plugins), computer-use/README.md, AGENTS.md (plugin list and required
-  verification), .gitignore (plugins/source-control/node_modules/), and this
-  file.
+- Restart OpenCode, then confirm:
+  - the source-control panel opens a diff only on Ctrl+click (Enter/Space when
+    the row is focused); a plain click just focuses the row;
+  - the header change count renders in the theme accent color with a muted
+    `change`/`changes` label;
+  - the `desktop_*` custom tools are available in the running TUI.
+- The panel itself was verified after the previous restart: the header count
+  and rows matched `git status` (6 changes), and the no-PR GitHub row was
+  correctly hidden because `docs/handoff-blender-note` has no pull request.
 
-Verification completed:
+### Suggested next steps
 
-- `npm run check` passes for source-control (15 tests), codex-usage (8 tests),
-  and codex-fallback (27 tests); typechecks and tests run through the adaptive
-  wrapper.
-- Resource guard metadata and self-test pass; the self-test confirms a bounded
-  timeout child cannot kill its parent.
-- Documentation coverage and self-test, skill checks, shellcheck, Python
-  compilation, setup verification, memory validation, and desktop inspection
-  pass.
-- The bounded read-only GitHub MCP smoke test passed initialization,
-  `tools/list` (25 tools), and one `list_pull_requests` call. The plugin's
-  actual adaptive MCP caller also returned successfully for that call, without
-  leaking the server's informational stderr into the terminal.
-- Global deployment verification passes for codex-usage, codex-fallback, and
-  source-control. TUI visual acceptance remains pending until an OpenCode
-  restart.
-
-Known soft dependencies and risks:
-
-- The built-in diff.open command name and internal diff route (dispatch first,
-  fall back to route.navigate("diff", ...), then toast).
-- One extra MCP server process per TUI instance; hide the GitHub line when the
-  wrapper, token, or network is unavailable.
-- The pinned SDK works in the real Node smoke test; a separate Bun-only NDJSON
-  fallback has not been needed or implemented. Keep the tool caller injectable
-  so unit tests never spawn the real MCP.
-
-### Research references (already verified; do not redo)
-
-- Built-in diff viewer: upstream packages/tui/src/feature-plugins/system/
-  diff-viewer.tsx (route diff, command diff.open, DiffRenderable from
-  @opentui/core).
-- Built-in sidebar session list and footer: feature-plugins/sidebar/files.tsx
-  (order 500) and footer.tsx (order 100, path:branch display).
-- TUI plugin API typings (slots, state.session, client, kv, route, keymap):
-  plugins/codex-usage/node_modules/@opencode-ai/plugin/dist/tui.d.ts.
-- Slot semantics: @opentui/core SlotRegistry sorts by ascending order;
-  sidebar_content is append, sidebar_footer is single_winner.
-- VCS types: @opencode-ai/sdk/v2 VcsFileStatus.
-- Events: file.edited ({ file }), file.watcher.updated ({ file, event }),
-  session.idle, vcs.branch.updated.
-- Current machine: remote github.com/jtmb/opencode-rig; gh logged in as jtmb;
-  the source-control header count is dynamic and reflects the active session
-  directory's current VCS status.
-
-### Suggested next steps for a fresh session
-
-1. Restart OpenCode so the registered source-control TUI plugin loads.
-2. Verify the sidebar badge, local rows, collapse state, `/changes`, diff
-   activation, refresh behavior, and the hidden/no-PR GitHub row in the current
-   branch.
-3. Push/open a PR only if explicitly requested; the implementation is already
-   committed locally.
-4. Update HANDOFF.md whenever registration, branch, or verification state changes.
+1. Restart OpenCode to load the tools and the source-control changes; use
+   `/resume` to pick the work back up and `/handoff` when state moves on.
+2. Start Basic Memory M0: `uv tool install basic-memory==0.23.2`, create the
+   owner-only project under ~/Documents/computer-assistant/, bound the first
+   sync, and record the stdio tool names.
+3. Land the pushed branch through a pull request when requested (`main`
+   requires the `verify` check); keep the memory-migration deletion gate for
+   the end of the M2 work.
 
 ## Keep This Current
 
@@ -380,6 +376,6 @@ Update this handoff whenever any of these change:
 - Documentation gate rules, hook installation, or CI status.
 - Local plugin registration, fallback chains, or state paths.
 - Browser or GitHub MCP wrappers, versions, authentication, or session policy.
-- Memory location or privacy rules.
+- Memory system, memory location, or privacy rules.
 - Confirmation and screenshot policies.
 - Superseded paths.
