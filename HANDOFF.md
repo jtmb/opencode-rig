@@ -169,11 +169,11 @@ Changing this project:
 Known live state (recorded 2026-09-17):
 
   - Repository: ~/repos/opencode-rig, public; main is protected. The current
-    checkout is branch docs/handoff-blender-note, pushed to origin and awaiting
-    a pull request. It carries the `/handoff` and `/resume` commands, the
-    desktop custom-tools package (tools/) with its deployment, resource-guard,
-    and docs, and the source-control Ctrl+click and header-count changes (see
-    Work In Progress below)
+    checkout is branch docs/handoff-blender-note, pushed to origin with pull
+    request jtmb/opencode-rig#1 open against main. It carries the `/handoff`
+    and `/resume` commands, the desktop custom-tools package (tools/) with its
+    deployment, resource-guard, and docs, and the source-control Ctrl+click and
+    header-count changes (see Work In Progress below)
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
@@ -223,8 +223,9 @@ give you. If I pasted only this handoff, ask what task I want handled.
 - Branch docs/handoff-blender-note (main is protected). Committed history began
   at f574842 with the preserved Luna Reserve and configuration baseline, the
   source-control plugin, the adaptive resource guard, and the GitHub MCP
-  log-suppression fix. The branch is now pushed to origin with this session's
-  work; no pull request is open yet.
+  log-suppression fix. The branch is pushed to origin with this session's work;
+  pull request jtmb/opencode-rig#1 is open against main and waits on the
+  required `verify` check.
 - This session committed the `/handoff` and `/resume` commands with their docs
   and setup registration; the desktop custom-tools package (`tools/`), its
   `setup-opencode.sh` deployment, the resource-guard extension, and its docs;
@@ -362,8 +363,8 @@ Risks and tradeoffs:
 2. Start Basic Memory M0: `uv tool install basic-memory==0.23.2`, create the
    owner-only project under ~/Documents/computer-assistant/, bound the first
    sync, and record the stdio tool names.
-3. Land the pushed branch through a pull request when requested (`main`
-   requires the `verify` check); keep the memory-migration deletion gate for
+3. Merge pull request jtmb/opencode-rig#1 only on explicit request, after the
+   required `verify` check passes; keep the memory-migration deletion gate for
    the end of the M2 work.
 
 ## Keep This Current
