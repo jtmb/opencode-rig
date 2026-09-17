@@ -158,7 +158,7 @@ Changing this project:
 Known live state (recorded 2026-09-17):
 
   - Repository: ~/repos/opencode-rig, public; main is protected. The current
-    checkout is branch docs/handoff-blender-note at local commit 96939d4
+    checkout is branch docs/handoff-blender-note at local commit 98476be
     (never pushed) with a clean worktree (see Work In Progress below)
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
@@ -183,7 +183,7 @@ Known live state (recorded 2026-09-17):
 
 Work in progress (full detail in the "Work In Progress" section of this file):
 
-  - The checkout is branch docs/handoff-blender-note at local commit 96939d4
+  - The checkout is branch docs/handoff-blender-note at local commit 98476be
     (never pushed) with a clean worktree. The local history contains the
     preserved Luna/config baseline and source-control/resource-guard changes;
     do not push it without an explicit request.
@@ -203,9 +203,9 @@ give you. If I pasted only this handoff, ask what task I want handled.
 ### Checkout state
 
 - Branch docs/handoff-blender-note (never pushed; main is protected). Local
-  commits bb21ab4, 63dd2e0, and 96939d4 contain the preserved Luna/config
-  baseline, source-control plugin, adaptive resource guard, and final handoff
-  state. Nothing has been pushed.
+  commits bb21ab4, 63dd2e0, 96939d4, and 98476be contain the preserved
+  Luna/config baseline, source-control plugin, adaptive resource guard, TUI log
+  suppression, and final handoff state. Nothing has been pushed.
 - The preserved baseline and new work now pass the documentation gate and
   self-tests, shell/Python validation, all three bounded plugin checks, setup
   verification, the real read-only GitHub MCP smoke test, and `git diff --check`.
@@ -326,7 +326,8 @@ Verification completed:
   pass.
 - The bounded read-only GitHub MCP smoke test passed initialization,
   `tools/list` (25 tools), and one `list_pull_requests` call. The plugin's
-  actual adaptive MCP caller also returned successfully for that call.
+  actual adaptive MCP caller also returned successfully for that call, without
+  leaking the server's informational stderr into the terminal.
 - Global deployment verification passes for codex-usage, codex-fallback, and
   source-control. TUI visual acceptance remains pending until an OpenCode
   restart.
