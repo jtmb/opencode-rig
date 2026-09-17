@@ -20,7 +20,9 @@ OpenCode has two distinct plugin surfaces, and these packages target one each.
   whose entry point is `src/tui.tsx`.
 - `source-control` is also a TUI plugin. It uses the VCS client for local
   status, the built-in diff route for file activation, and a bounded child MCP
-  client for optional GitHub pull-request status.
+  client for optional GitHub pull-request status. Its `src/options.ts`
+  normalizes the registration options, re-reads the runtime kv overrides on
+  each poll tick, and runs the one-time minimized-start migration.
 - A **server plugin** runs in the OpenCode server. It can hook config
   resolution, message assembly, outbound request parameters, and the event
   stream, and it can call the client API (sessions, providers, TUI). It has no

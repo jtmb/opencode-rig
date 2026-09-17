@@ -25,10 +25,10 @@ or in a project's `.opencode/tui.json`:
 without disturbing existing entries. OpenCode must restart after registration
 or source changes because TUI plugins are loaded at startup.
 
-The panel registers in `sidebar_content` at order `600`. The built-in file
-sidebar uses order `500`, while the built-in path/branch footer occupies the
-separate single-winner `sidebar_footer` slot. The plugin deliberately does not
-claim the footer.
+The panel registers in `sidebar_content` at order `50`, above the built-in
+context panel (order `100`) and file sidebar (order `500`). The built-in
+path/branch footer occupies the separate single-winner `sidebar_footer` slot;
+the plugin deliberately does not claim the footer.
 
 ## Local working-tree state
 
@@ -48,9 +48,13 @@ first `maxFiles` rows are rendered; the count is rendered in the theme accent
 color and followed by a muted `change`/`changes` label so its meaning is
 explicit. The default is eight rows followed by a `+N more` line.
 
-The header toggles `local.source-control.collapsed` in the TUI key-value store.
-Each visible file row opens the built-in `diff.open` command on Ctrl+click, or
-with Enter/Space when the row is focused; a plain click only selects the row.
+The header toggles the collapsed state and persists it in
+`local.source-control.startCollapsed`. A one-time migration key
+(`local.source-control.repositioned`) minimizes installs created before the
+reposition, so the panel starts minimized once and the persisted toggle stays
+sticky afterwards. Each visible file row opens the built-in `diff.open`
+command on Ctrl+click, or with Enter/Space when the row is focused; a plain
+click only selects the row.
 If the command is not registered, the plugin falls back to the built-in `diff`
 route with `mode: git`, the current session ID, and the previous route for
 return navigation.
@@ -115,7 +119,10 @@ Local data refreshes on mount and after `session.idle`, `file.edited`,
 `file.watcher.updated`, and `vcs.branch.updated`. File and watcher events are
 debounced for 750 ms. Local polling defaults to 15 seconds with a five-second
 minimum. GitHub polling defaults to 120 seconds with a thirty-second minimum.
-Local and GitHub refreshes deduplicate in-flight calls independently.
+Local and GitHub refreshes deduplicate in-flight calls independently. The
+polling loops are self-rescheduling and re-read the runtime options from the
+TUI key-value store on every tick, so interval and collapse changes apply
+without restarting OpenCode.
 
 The plugin disposes event listeners, timers, the store, and the transient MCP
 transport during TUI lifecycle cleanup. The GitHub caller is injectable in
@@ -128,10 +135,17 @@ tests, so unit tests never spawn a real MCP process.
 | `refreshMs` | `15000` | Local refresh interval; minimum `5000`. |
 | `githubRefreshMs` | `120000` | GitHub refresh interval; minimum `30000`. |
 | `maxFiles` | `8` | Visible local rows. |
+| `startCollapsed` | `true` | Start minimized; the header toggle persists this value. |
 | `whenEmpty` | `hide` | Hide or show a clean git panel. |
 | `github` | `true` | Enable GitHub lookup. |
 | `githubMcpCommand` | Derived wrapper | Override the command for tests or another checkout. |
 | `remoteName` | `origin` | Git remote to inspect. |
+
+`refreshMs`, `githubRefreshMs`, `maxFiles`, and `startCollapsed` are also
+runtime options: their `local.source-control.<option>` keys in the TUI
+key-value store override the registration options with the same names, and the
+plugin re-reads them on each refresh tick without a restart. `whenEmpty`,
+`github`, `githubMcpCommand`, and `remoteName` stay registration-only.
 
 ## Package checks
 

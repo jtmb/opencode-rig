@@ -210,8 +210,10 @@ Known live state (recorded 2026-09-17):
     failover, registered in ~/.config/opencode/opencode.jsonc; state at
     ~/.local/share/opencode/codex-fallback.json), and source-control (TUI
     working-tree/GitHub panel, registered in ~/.config/opencode/tui.json with
-    whenEmpty "show"; panel verified, Ctrl+click-only diff opening and the
-    accented change-count header need a restart to appear)
+    whenEmpty "show"; repositioned to sidebar order 50 with a minimized start
+    and runtime kv overrides - implemented and checked, with the live panel,
+    Ctrl+click diff opening, and accented change-count header waiting on the
+    next restart)
   - Planned TUI plugins (approved, not built): `tui-settings` (sidebar gear +
     settings overlay) and `file-manager` (project tree, quick-open, in-TUI
     editor) - see "Part 3" under Work In Progress
@@ -453,14 +455,20 @@ User decisions recorded after the deep-research session:
 
 Source-control reposition and settings groundwork:
 
-- Registration order changes `600 -> 50` (above the context panel at 100).
-- The panel starts minimized: collapsed default becomes `true`, the stored
-  `local.source-control.collapsed` kv key is set to `true` once so it takes
-  effect immediately, and toggling stays sticky afterwards.
-- Runtime options come from `api.kv` overrides (`refreshMs`,
-  `githubRefreshMs`, `maxFiles`, `startCollapsed`) with the registration
-  options as defaults, re-read on each refresh tick so changes apply without a
-  restart; `github` and `whenEmpty` stay registration-only and documented.
+- Implemented (2026-09-17, pending restart and live verification): the
+  registration order is `50` (above the built-in context panel at `100`). The
+  panel starts minimized through a new `startCollapsed` option (registration
+  default `true`) whose state persists in
+  `local.source-control.startCollapsed`; the header toggle writes that key. A
+  one-time `local.source-control.repositioned` migration sets the legacy
+  `local.source-control.collapsed` key to `true` on the first load of the new
+  code so existing installs minimize immediately and toggles stay sticky.
+  `refreshMs`, `githubRefreshMs`, `maxFiles`, and `startCollapsed` are
+  re-read from `local.source-control.<option>` kv keys on each
+  self-rescheduling poll tick so they apply without a restart; `github`,
+  `whenEmpty`, `githubMcpCommand`, and `remoteName` stay registration-only.
+  Pure option and migration logic lives in `src/options.ts` with tests, and
+  the plugin README and `docs/plugins/source-control.md` are updated.
 
 File manager details:
 
@@ -528,39 +536,37 @@ Research conclusions and evidence (2026-09-17 session):
 - The panel itself was verified after the previous restart: the header count
   and rows matched `git status` (6 changes), and the no-PR GitHub row was
   correctly hidden because `docs/handoff-blender-note` has no pull request.
-- The progress gate itself is verified in the working tree, but it is not
-  committed or pushed, so the required `verify` CI job has not run it yet.
-- The generated `/resume` command is stale until `setup-opencode.sh --apply`
-  runs (the only health-check warning today).
-- Nothing from the TUI feature plan (Part 3) exists yet; the source-control
-  reposition/minimize change is not implemented.
+- The progress gate is landed (commit 67909ab) and runs in CI on PR #2,
+  passing.
+- The `/resume` command was redeployed and the health check is green; the
+  running TUI still holds the pre-restart copy until OpenCode restarts.
+- The source-control reposition/minimize and runtime kv overrides are
+  implemented and the bounded `npm run check` passes (19 tests), but the live
+  panel (order `50`, minimized start, one-time kv migration) is unverified
+  until OpenCode restarts; the Ctrl+click diff opening and accented
+  change-count header also need a dirty worktree after that restart.
 
 ### Suggested next steps
 
-1. Land the gate: commit the 12-file working tree on
-   chore/todo-tracking-gate, run
-   `./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --apply`
-   to redeploy the `/resume` command (clears the only health-check warning),
-   then push the branch and open its pull request (stacked on PR #1, whose
-   `verify` check is already green).
-2. Reposition and minimize source-control per Part 3: order `600 -> 50`, the
-   collapsed default and stored kv key, and the runtime kv overrides; update
-   `plugins/source-control/README.md` and `docs/plugins/source-control.md`;
-   run the bounded `npm run check`.
-3. Build `tui-settings` per Part 3: gear row at order `10`, the settings
-   overlay, pure tests, docs, registration, restart, and a `desktop-vision`
-   check.
-4. Build `file-manager` per Part 3: the `files` route, tree and quick-open,
+1. Land the source-control reposition: commit the plugin, test, and docs
+   change on chore/todo-tracking-gate (pending explicit request) and push it
+   to PR #2; after the next OpenCode restart, verify the minimized panel at
+   sidebar order `50`, the one-time kv migration, and the runtime overrides
+   with `desktop-vision`.
+2. Build `tui-settings` per Part 3: gear row at order `10`, the settings
+   overlay with the sidebar-positioning requirement, pure tests, docs,
+   registration, restart, and a `desktop-vision` check.
+3. Build `file-manager` per Part 3: the `files` route, tree and quick-open,
    the in-TUI editor with explicit atomic saves and containment, the external
    editor action, Explorer row at order `60`, tests, docs, registration,
    restart, and a `desktop-vision` check.
-5. Resume Basic Memory M1-M4: wrapper `scripts/basic-memory-mcp.sh`, global
+4. Resume Basic Memory M1-M4: wrapper `scripts/basic-memory-mcp.sh`, global
    registration with the revised disable list, migration, then legacy removal
    only at the end with the explicit delete confirmation.
-6. Merge pull request jtmb/opencode-rig#1 (and the stacked PRs) only on
+5. Merge pull request jtmb/opencode-rig#1 (and the stacked PRs) only on
    explicit request; keep the memory-migration deletion gate for the end of
    the M2 work.
-7. Optionally exercise the source-control Ctrl+click/accent behavior with a
+6. Optionally exercise the source-control Ctrl+click/accent behavior with a
    dirty worktree present.
 
 ## Keep This Current
