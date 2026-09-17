@@ -113,7 +113,8 @@ plugins globally or into a repository's `.opencode/` directory (and optionally
 copies the bootstrap scripts) through `scripts/deploy-plugins.sh`. `/handoff`
 refreshes `HANDOFF.md` with the current session state and regenerates the
 prompt block for a fresh chat. `/resume` reads `HANDOFF.md`, runs the read-only
-health check, reports status, and continues the pending task.
+health check, reports status, and continues the pending task with progress
+tracked in the todo list.
 
 [`plugins/codex-usage/`](plugins/codex-usage/README.md) is a local OpenCode TUI
 sidebar for the weekly Codex quota and optional Luna Reserve usage.
@@ -178,6 +179,8 @@ phrases, example requests, and how the skills combine.
 | `scripts/check-skill-docs-self-test.py` | Isolated negative tests proving invalid skill metadata and documentation are rejected |
 | `scripts/check-doc-coverage.py` | Enforce that mapped sources update or create their documentation (completeness + change-aware) |
 | `scripts/check-doc-coverage-self-test.py` | Isolated negative tests proving the documentation gate rejects undocumented changes |
+| `scripts/check-progress-tracking.py` | Enforce the mandatory todo-tracking rule in `AGENTS.md`, the `/resume` command, and the handoff prompt |
+| `scripts/check-progress-tracking-self-test.py` | Isolated negative tests proving the progress gate rejects a missing or gutted rule surface |
 | `scripts/setup-git-hooks.sh` | Install or verify the versioned pre-push hook that runs the documentation gate |
 | `scripts/assistant-memory.py` | Private JSON memory store; record changes require `--apply`, credentials rejected |
 | `scripts/playwright-mcp.sh` | Launch the visible live Firefox MCP shared by user and agent |

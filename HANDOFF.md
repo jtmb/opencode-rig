@@ -36,6 +36,9 @@ Repository rules while working here:
     check-plugin-resource-guards.py enforces the package-script wiring; the
     wrapper recalculates an adaptive host/cgroup budget and fails closed without
     a limiter.
+  - The mandatory todo-tracking rule (the "Progress Tracking" section of
+    AGENTS.md) is CI-enforced by check-progress-tracking.py and its self-test;
+    keep all multi-step work in the todo tool.
   - main is protected and requires the "verify" GitHub Actions check. Do not
     push to main: create a branch, push it, and open a pull request. The local
     pre-push hook and the required CI check both run the gate.
@@ -59,8 +62,8 @@ If it passes, do not reinstall. A healthy setup has:
   - all requested local plugins registered (check with deploy-plugins.sh
     --scope global --plugins all --verify-only)
   - AT-SPI available and ydotool's user service and private socket working
-  - the private memory store validating (legacy; the approved plan replaces it
-    with Basic Memory - see Work In Progress)
+  - the private memory store validating (legacy; Basic Memory 0.23.2 is
+    installed and M1-M4 remain - see Work In Progress)
 
 If it fails, diagnose the specific failed check before repairing anything.
 
@@ -102,6 +105,10 @@ Operating expectations:
 
   - Perform computer tasks directly when tools can do them; do not hand me
     terminal or GUI steps unnecessarily.
+  - Track every multi-step task with the todo tool: create the list before
+    acting, keep exactly one item in progress, and mark items complete only
+    after their verification passes. This is an enforced gate; see the
+    Progress Tracking section of AGENTS.md.
   - Inspect current state first, make the smallest bounded change, and verify
     the real result. Do not stop after a command merely exits 0.
   - Load the relevant skill before acting. Combine desktop-vision with
@@ -168,16 +175,28 @@ Changing this project:
 
 Known live state (recorded 2026-09-17):
 
-  - Repository: ~/repos/opencode-rig, public; main is protected. The current
-    checkout is branch docs/handoff-blender-note, pushed to origin with pull
-    request jtmb/opencode-rig#1 open against main. It carries the `/handoff`
-    and `/resume` commands, the desktop custom-tools package (tools/) with its
-    deployment, resource-guard, and docs, and the source-control Ctrl+click and
-    header-count changes (see Work In Progress below)
+  - Repository: ~/repos/opencode-rig, public; main is protected. Pull request
+    jtmb/opencode-rig#1 (branch docs/handoff-blender-note) is open against
+    main, mergeable, with the required `verify` check passed; merge only on
+    explicit request. The current checkout is branch
+    chore/todo-tracking-gate, stacked on docs/handoff-blender-note, with an
+    uncommitted but fully verified working tree (latest commit is still
+    256a811). The stacked branch carries the /handoff and /resume commands, the
+    desktop custom-tools package (tools/) with its deployment, resource-guard,
+    and docs, and the source-control Ctrl+click and header-count changes
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
     check
+  - Progress tracking: mandatory todo-tool rule in AGENTS.md, the /resume
+    command, and this prompt; enforced by check-progress-tracking.py plus its
+    self-test in the required `verify` CI job and the AGENTS.md verification
+    list (all wiring is in the uncommitted working tree)
+  - Pending deploy: the source `commands/resume.md` now carries the progress
+    step, but the generated copy under ~/.config/opencode/commands/ has not
+    been redeployed, so `setup-opencode.sh --verify-only` reports exactly
+    `MISSING/STALE: global command /resume` (and the full health check with it).
+    Fix with `setup-opencode.sh --apply` when landing the gate
   - Skills deployed: 16/16
   - Global commands deployed: /deploy, /handoff, /promote-skills, /resume
   - Global custom tools: `desktop.ts` in ~/.config/opencode/tools/ exporting
@@ -191,12 +210,19 @@ Known live state (recorded 2026-09-17):
     working-tree/GitHub panel, registered in ~/.config/opencode/tui.json with
     whenEmpty "show"; panel verified, Ctrl+click-only diff opening and the
     accented change-count header need a restart to appear)
+  - Planned TUI plugins (approved, not built): `tui-settings` (sidebar gear +
+    settings overlay) and `file-manager` (project tree, quick-open, in-TUI
+    editor) - see "Part 3" under Work In Progress
   - Browser runtime: @playwright/mcp 0.0.80 with isolated live and headless
     Firefox, via platforms/linux/ubuntu/browser-tools
   - GitHub MCP runtime: official v1.12.1 native amd64 release via
     platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh
-  - Memory: ~/Documents/computer-assistant/memory.json, owner-only (legacy;
-    replacement planned - see Work In Progress)
+  - Memory: legacy JSON store at ~/Documents/computer-assistant/memory.json
+    (owner-only) is still authoritative until the M2 migration. Basic Memory
+    0.23.2 is installed via uv tool: project `computer-assistant` at
+    ~/Documents/computer-assistant/basic-memory (default, auto-update
+    disabled); M0 is verified (bounded reindex and a bounded MCP stdio smoke
+    recording 21 tools). See Work In Progress
   - Optional 3D: Blender 5.0.1 with python3-numpy for glTF (Draco unavailable)
   - Maintenance cron: runs the repository maintenance script
   - Superseded paths (do not use): the ~/scripts/ computer-use copies and
@@ -204,13 +230,19 @@ Known live state (recorded 2026-09-17):
 
 Work in progress (full detail in the "Work In Progress" section of this file):
 
-  - Approved plan: (1) the desktop custom-tools package is implemented,
-    deployed, and live-verified (Phase 0 findings recorded under Work In
-    Progress); (2) Basic Memory adoption (M0-M4) and removal of the legacy
-    memory system are next. Read the Work In Progress section before starting.
-  - Pending verification: after an OpenCode restart, confirm the source-control
-    Ctrl+click diff opening and accented change-count header, and that the
-    desktop_* custom tools load in the running TUI.
+  - The desktop custom-tools package is implemented, deployed, and
+    live-verified; Basic Memory M0 is complete (0.23.2 installed, bounded
+    reindex and stdio smoke recorded) with M1-M4 next.
+  - The progress-tracking gate is complete in the working tree of branch
+    chore/todo-tracking-gate but not committed, pushed, or redeployed yet; the
+    Work In Progress section lists the exact landing steps.
+  - The approved TUI feature plan (source-control to the top and minimized, a
+    settings cog overlay, and a VS Code-like file manager) is recorded with the
+    user's decisions under Work In Progress.
+  - Pending verification: the desktop_* custom tools were confirmed loaded in
+    the resume session; the source-control Ctrl+click diff opening and the
+    accented change-count header are still unverified (the worktree was clean),
+    and the gate only runs in CI after it is pushed.
 
 After the health check, give me a concise status and continue with the task I
 give you. If I pasted only this handoff, ask what task I want handled.
@@ -224,19 +256,34 @@ give you. If I pasted only this handoff, ask what task I want handled.
   at f574842 with the preserved Luna Reserve and configuration baseline, the
   source-control plugin, the adaptive resource guard, and the GitHub MCP
   log-suppression fix. The branch is pushed to origin with this session's work;
-  pull request jtmb/opencode-rig#1 is open against main and waits on the
-  required `verify` check.
+  pull request jtmb/opencode-rig#1 is open against main and its required
+  `verify` check has passed (mergeable, clean) - it waits only on an explicit
+  merge request.
 - This session committed the `/handoff` and `/resume` commands with their docs
   and setup registration; the desktop custom-tools package (`tools/`), its
   `setup-opencode.sh` deployment, the resource-guard extension, and its docs;
   the source-control Ctrl+click and header-count changes; and this HANDOFF.md
   rewrite.
-- All current work passes the documentation gate and self-tests, shell/Python
-  validation, the bounded checks for the plugins and the tools package, setup
-  verification (`setup-opencode.sh` and `setup-computer-assistant.sh`), the
-  deployed tool loading check, and the real read-only GitHub MCP smoke test.
+- All committed work on PR #1 passes the documentation gate and self-tests,
+  shell/Python validation, the bounded checks for the plugins and the tools
+  package, setup verification (`setup-opencode.sh` and
+  `setup-computer-assistant.sh`), the deployed tool loading check, and the real
+  read-only GitHub MCP smoke test.
+- The resume session (2026-09-17) left branch chore/todo-tracking-gate (stacked
+  on docs/handoff-blender-note) with an uncommitted, fully verified 12-file
+  working tree: the progress-tracking gate (the AGENTS.md section and Start
+  Here step, the `commands/resume.md` step, the prompt expectation,
+  `check-progress-tracking.py` and its self-test, the CI step in
+  `.github/workflows/verify.yml`, the docs and index rows, and the component
+  README) plus this HANDOFF.md update. Verification already run: the progress
+  checker and its self-test pass, `py_compile` passes, the documentation gate
+  passes completeness and a change-aware simulation over all changed and added
+  files, and `git diff --check` is clean. The only environment warning is the
+  expected stale generated `/resume` command (not redeployed).
+- Basic Memory M0 was completed in the same session (below), and the TUI
+  feature plan in "Part 3" was approved with the user.
 
-### Approved plan — desktop custom tools and Basic Memory
+### Approved plans — desktop tools, Basic Memory, and TUI features
 
 Decisions made with the user after research:
 
@@ -284,19 +331,40 @@ Decisions made with the user after research:
   both setup scripts, and a live fresh-process `opencode run` calling
   `desktop_apps` against real AT-SPI data.
 
-#### Part 2 — Basic Memory adoption (M0-M4)
+#### Part 2 — Basic Memory adoption (M0 complete, M1-M4 next)
 
 Chosen after comparing free local MCP memory servers: Basic Memory v0.23.2
 (AGPL-3.0, personal use fine) beats Engram (keyword-only search), the official
 reference server (JSONL with substring search), and mem0 or Zep (hosted-only or
 heavy infrastructure).
 
-- **M0 install spike:** `uv tool install basic-memory==0.23.2` (uv 0.12.15 and
-  Python 3.14.4 are present; about 38 GiB free disk and 3.3 GiB RAM available).
-  Create the project at `~/Documents/computer-assistant/basic-memory/`
-  (owner-only). Bound the first sync (FastEmbed model download) with
-  `run-bounded-command.sh`; run a bounded stdio smoke of `initialize` and
-  `tools/list` and record the exact tool names.
+M0 findings (2026-09-17, resume session):
+
+- `uv tool install basic-memory==0.23.2` installed the CLI (`basic-memory` and
+  `bm` under `~/.local/bin`) with uv's managed CPython 3.12; `auto_update` is
+  set to `false` in `~/.basic-memory/config.json` so the pin holds.
+- Project `computer-assistant` at
+  `~/Documents/computer-assistant/basic-memory/` (directory `700`) is the
+  default. The auto-created empty `main` project at `~/basic-memory` still
+  exists but is unused (remove only with explicit approval).
+- The FastEmbed `bge-small-en-v1.5` model downloaded into the Hugging Face
+  cache (~/.cache/huggingface) on the first note write; a full bounded reindex
+  embedded the M0 marker note with a 321 MiB peak under a 1.7 GiB budget.
+- A bounded stdio smoke of `basic-memory mcp --project computer-assistant`
+  returned protocol `2025-06-18` (serverInfo `Basic Memory` 4.0.0b1) and 21
+  tools: `basic_memory_diagnostics`, `delete_note`, `read_content`,
+  `build_context`, `recent_activity`, `search_notes`, `read_note`, `view_note`,
+  `write_note`, `list_directory`, `edit_note`, `move_note`, `list_workspaces`,
+  `list_memory_projects`, `create_memory_project`, `delete_project`, `search`,
+  `fetch`, `schema_validate`, `schema_infer`, `schema_diff`.
+- The M0 marker note and smoke script were deleted; the project is empty and
+  `basic-memory status` reports 0 observed files.
+- M1 planning note: revise the disable list from the earlier draft - this
+  version also exposes `basic_memory_diagnostics`, `read_content`, `view_note`,
+  and `list_directory` beyond the originally listed groups.
+
+Then:
+
 - **M1 wrapper and registration:** new `scripts/basic-memory-mcp.sh` with an
   adaptive `systemd-run --user` memory limit (20% of effective memory, 25%
   swap) and a `prlimit --as` fallback, failing closed without a limiter,
@@ -344,28 +412,150 @@ Risks and tradeoffs:
 - There is no automatic capture yet; a future server-plugin hook could add
   ChatGPT-style session summarization on top of this foundation.
 
+#### Part 3 — TUI feature plan (approved 2026-09-17, not started)
+
+User decisions recorded after the deep-research session:
+
+- **Settings cog overlay** (new plugin `tui-settings`): a slim, right-aligned
+  gear row in `sidebar_content` at order `10` (the top row, above
+  source-control at 50 and the built-in context panel at 100). Click, Enter, or
+  `/settings` opens a host-dialog overlay with the sections **Appearance**
+  (theme picker through the built-in `/themes` flow and `api.theme.set`,
+  dark/light mode), **Display** (kv toggles: timestamps, thinking visibility,
+  tool details, assistant metadata, scrollbar, animations, generic tool
+  output, diff wrap mode), **Plugins** (dispatch the built-in `plugins.list`
+  manager), **Source Control** (the runtime options below), and **About**.
+  Persistence is `api.kv` only; the plugin never rewrites `tui.json`.
+- **Settings scope explicitly includes source-control options** (user choice).
+- **Sidebar positioning inside the settings overlay** (user requirement,
+  2026-09-17): the overlay must offer an option to change the positioning of
+  the additive TUI sidebar items (the gear, source-control, the Explorer row,
+  and the built-in context/mcp/lsp/todo/files panels) - reordering must be
+  responsive to terminal size so the layout stays sensible on small
+  terminals, and persisted through `api.kv` only. Research the reactive host
+  `sidebar` kv key during implementation.
+- **VS Code-like file manager** (new plugin `file-manager`): a full-screen
+  `files` route (`/files`, palette command, and a keybind) with a lazy,
+  ignore-aware project tree, quick-open over `client.find.files`, a tab row,
+  and an in-TUI editor plus an "open external editor" action (user choice).
+  A compact `Explorer` row in `sidebar_content` at order `60` opens the route.
+- **Two separate plugin packages** (user choice), matching the
+  one-concern-per-package pattern and independent bounded checks.
+- **Sequence** (user choice): land the gate, reposition source-control, build
+  `tui-settings`, build `file-manager`, then close out (with Basic Memory
+  M1-M4 still queued).
+
+Source-control reposition and settings groundwork:
+
+- Registration order changes `600 -> 50` (above the context panel at 100).
+- The panel starts minimized: collapsed default becomes `true`, the stored
+  `local.source-control.collapsed` kv key is set to `true` once so it takes
+  effect immediately, and toggling stays sticky afterwards.
+- Runtime options come from `api.kv` overrides (`refreshMs`,
+  `githubRefreshMs`, `maxFiles`, `startCollapsed`) with the registration
+  options as defaults, re-read on each refresh tick so changes apply without a
+  restart; `github` and `whenEmpty` stay registration-only and documented.
+
+File manager details:
+
+- Viewing and editing use `EditBufferRenderable` +
+  `LineNumberRenderable` + `SyntaxStyle` with `getTreeSitterClient()`
+  (bundled js/ts/markdown/zig parsers); an early spike confirms highlighting,
+  with a plain-text fallback if the worker or assets misbehave.
+- Saving is explicit `Ctrl+S`, atomic (`tmp` + `rename`) through `node:fs`,
+  with a dirty marker, an unsaved-changes close guard, a reload prompt on
+  `file.watcher.updated`, and binary/oversize read-only guards. The server
+  file API is read-only (no write endpoint), so `node:fs` is required.
+- Containment: realpath must stay under `api.state.path.worktree`/`directory`;
+  refuse `.git/**` and symlink escapes; save only on explicit user action.
+- "Open external editor" suspends the renderer (`renderer.suspend()/resume()`)
+  for terminal editors and supports GUI editors such as VS Code.
+
+Packages, checks, and gates (both plugins follow the existing plugin rules):
+
+- Self-contained packages under `plugins/<name>/` with `src/`, `test/`,
+  `package.json`, `README.md`, pinned `@opencode-ai/plugin` 1.18.31,
+  `@opentui/*` 0.5.11, and `solid-js`; `typecheck`/`test` run through
+  `scripts/run-bounded-command.sh` so `check-plugin-resource-guards.py` passes.
+- Pure-logic tests with `node --test` (options model, kv encoding, path
+  containment, tree build/flatten, filetype, dirty state, quick-open ranking);
+  UI behavior is verified live and with `desktop-vision`.
+- Docs: `docs/plugins/<name>.md` plus the plugin README and the
+  `docs/plugins/README.md` index row, kept in sync per the documentation gate
+  and the handoff rule.
+- Registration in the user-owned `~/.config/opencode/tui.json` (through
+  `/deploy` or manually); OpenCode must restart to load them.
+
+Research conclusions and evidence (2026-09-17 session):
+
+- TUI plugin API is v1 at `@opencode-ai/plugin/tui` 1.18.31; upstream spec
+  `packages/opencode/specs/tui-plugins.md`; example plugin
+  `.opencode/plugins/tui-smoke.tsx` (full-screen route, plugin overlays,
+  sidebar slots at orders 50/250/650); built-in sidebar orders confirmed as
+  context 100, mcp 200, lsp 300, todo 400, files 500.
+- `sidebar_title`/`sidebar_footer` render `single_winner` (registering there
+  replaces built-ins), so the gear and Explorer rows use additive
+  `sidebar_content`. Host dialogs render with a backdrop; the built-in plugin
+  manager and `/themes` picker can be dispatched instead of rebuilt.
+- Host kv keys consumed reactively: `timestamps`, `tool_details_visibility`,
+  `assistant_metadata_visibility`, `scrollbar_visible`, `diff_wrap_mode`,
+  `animations_enabled`, `generic_tool_output_visibility`, `thinking_mode`,
+  `sidebar`. Theme switching: `api.theme.current/selected/has/set`, plus the
+  built-in `/themes` command (keybind `theme_list`).
+- Upstream file-tree reference:
+  `packages/tui/src/feature-plugins/system/diff-viewer-file-tree.tsx` and its
+  utils (indent guides, expand markers, status letters, scroll-into-view).
+- Risks carried into the build: the TUI plugin API is version-tied and
+  pre-stable (pin dependencies exactly); syntax highlighting depends on the
+  tree-sitter worker and bundled assets (spike first); `node:fs` saves bypass
+  server permissions (containment, `.git` refusal, explicit saves only).
+
 ### Pending verification
 
-- Restart OpenCode, then confirm:
-  - the source-control panel opens a diff only on Ctrl+click (Enter/Space when
-    the row is focused); a plain click just focuses the row;
-  - the header change count renders in the theme accent color with a muted
-    `change`/`changes` label;
-  - the `desktop_*` custom tools are available in the running TUI.
+- Confirmed in this resume session: the `desktop_*` custom tools loaded in the
+  fresh TUI (`desktop_apps`, `desktop_tree`, `desktop_find`, `desktop_act`
+  were available to the agent).
+- Still unverified: the source-control panel opens a diff only on Ctrl+click
+  (Enter/Space when the row is focused), and the header change count renders in
+  the theme accent color with a muted `change`/`changes` label. The worktree
+  was clean at resume time, so the panel had no rows to exercise.
 - The panel itself was verified after the previous restart: the header count
   and rows matched `git status` (6 changes), and the no-PR GitHub row was
   correctly hidden because `docs/handoff-blender-note` has no pull request.
+- The progress gate itself is verified in the working tree, but it is not
+  committed or pushed, so the required `verify` CI job has not run it yet.
+- The generated `/resume` command is stale until `setup-opencode.sh --apply`
+  runs (the only health-check warning today).
+- Nothing from the TUI feature plan (Part 3) exists yet; the source-control
+  reposition/minimize change is not implemented.
 
 ### Suggested next steps
 
-1. Restart OpenCode to load the tools and the source-control changes; use
-   `/resume` to pick the work back up and `/handoff` when state moves on.
-2. Start Basic Memory M0: `uv tool install basic-memory==0.23.2`, create the
-   owner-only project under ~/Documents/computer-assistant/, bound the first
-   sync, and record the stdio tool names.
-3. Merge pull request jtmb/opencode-rig#1 only on explicit request, after the
-   required `verify` check passes; keep the memory-migration deletion gate for
-   the end of the M2 work.
+1. Land the gate: commit the 12-file working tree on
+   chore/todo-tracking-gate, run
+   `./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --apply`
+   to redeploy the `/resume` command (clears the only health-check warning),
+   then push the branch and open its pull request (stacked on PR #1, whose
+   `verify` check is already green).
+2. Reposition and minimize source-control per Part 3: order `600 -> 50`, the
+   collapsed default and stored kv key, and the runtime kv overrides; update
+   `plugins/source-control/README.md` and `docs/plugins/source-control.md`;
+   run the bounded `npm run check`.
+3. Build `tui-settings` per Part 3: gear row at order `10`, the settings
+   overlay, pure tests, docs, registration, restart, and a `desktop-vision`
+   check.
+4. Build `file-manager` per Part 3: the `files` route, tree and quick-open,
+   the in-TUI editor with explicit atomic saves and containment, the external
+   editor action, Explorer row at order `60`, tests, docs, registration,
+   restart, and a `desktop-vision` check.
+5. Resume Basic Memory M1-M4: wrapper `scripts/basic-memory-mcp.sh`, global
+   registration with the revised disable list, migration, then legacy removal
+   only at the end with the explicit delete confirmation.
+6. Merge pull request jtmb/opencode-rig#1 (and the stacked PRs) only on
+   explicit request; keep the memory-migration deletion gate for the end of
+   the M2 work.
+7. Optionally exercise the source-control Ctrl+click/accent behavior with a
+   dirty worktree present.
 
 ## Keep This Current
 
@@ -378,5 +568,6 @@ Update this handoff whenever any of these change:
 - Local plugin registration, fallback chains, or state paths.
 - Browser or GitHub MCP wrappers, versions, authentication, or session policy.
 - Memory system, memory location, or privacy rules.
+- Progress-tracking policy or its gate.
 - Confirmation and screenshot policies.
 - Superseded paths.

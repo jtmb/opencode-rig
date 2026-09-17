@@ -47,6 +47,8 @@ lists them at a glance and covers the operating environment.
 | `check-doc-coverage-self-test.py` | [`check-doc-coverage.md`](check-doc-coverage.md) | Proves the coverage gate rejects undocumented changes |
 | `check-plugin-resource-guards.py` | [`check-plugin-resource-guards.md`](check-plugin-resource-guards.md) | Ensures every local plugin's typecheck and test scripts use the adaptive memory guard |
 | `check-plugin-resource-guards-self-test.py` | [`check-plugin-resource-guards-self-test.md`](check-plugin-resource-guards-self-test.md) | Proves a bounded child can terminate without taking down its parent |
+| `check-progress-tracking.py` | [`check-progress-tracking.md`](check-progress-tracking.md) | Enforces the mandatory todo-tracking rule in `AGENTS.md`, the `/resume` command, and the handoff prompt |
+| `check-progress-tracking-self-test.py` | [`check-progress-tracking-self-test.md`](check-progress-tracking-self-test.md) | Proves the progress gate rejects a missing or gutted rule surface |
 
 ### Repository tooling
 
@@ -99,6 +101,8 @@ shellcheck platforms/linux/ubuntu/computer-use/scripts/*.sh
 python3 -m py_compile platforms/linux/ubuntu/computer-use/scripts/*.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.py
+python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking.py
+python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking-self-test.py
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
 python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate

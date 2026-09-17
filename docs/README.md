@@ -50,6 +50,7 @@ pieces fit together?*
 | [`scripts/desktop-control.md`](scripts/desktop-control.md) | AT-SPI inspection and mutation with traversal bounds and short-lived target tokens |
 | [`scripts/assistant-memory.md`](scripts/assistant-memory.md) | The private JSON memory store: schema, commands, locking, and credential rejection |
 | [`scripts/check-skill-docs.md`](scripts/check-skill-docs.md) | Skill metadata/documentation validation and its negative self-test |
+| [`scripts/check-progress-tracking.md`](scripts/check-progress-tracking.md) | The mandatory todo-tracking gate: required rule surfaces, exit codes, and its negative self-test |
 | [`scripts/check-doc-coverage.md`](scripts/check-doc-coverage.md) | The documentation coverage gate: map rules, completeness, change-aware checks, and the exemption |
 | [`scripts/setup-git-hooks.md`](scripts/setup-git-hooks.md) | Installing the pre-push hook that enforces the documentation gate |
 | [`scripts/playwright-mcp.md`](scripts/playwright-mcp.md) | The visible, user-shared Playwright Firefox launcher |
