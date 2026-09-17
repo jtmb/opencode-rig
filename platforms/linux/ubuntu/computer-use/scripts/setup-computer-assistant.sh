@@ -497,7 +497,7 @@ verify() {
     status=1
     mcp_list=""
   else
-    mcp_list="$(cd "$REPO_ROOT" && opencode mcp list 2>&1 || true)"
+    mcp_list="$( (cd "$REPO_ROOT" 2>/dev/null; opencode mcp list 2>&1) || true )"
   fi
   if printf '%s\n' "$mcp_list" | grep -q 'playwright .*connected'; then
     ok "OpenCode live Playwright MCP connected"
