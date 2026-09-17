@@ -38,12 +38,21 @@ relative (`.githooks`), it resolves inside whichever worktree the hook runs in.
 It exits `1` when either is missing, so it is usable as a gate. Add it to the
 per-clone setup routine after cloning.
 
-## Why a hook
+## Enforcement layers
 
-Branch protection (required status checks) is unavailable on a private
-repository without GitHub Pro, so a CI check cannot hard-block a direct push to
-`main`. The pre-push hook is the only mechanism that actually stops the push on
-this machine.
+The repository has two enforcement layers for the documentation gate:
+
+- **Local pre-push hook** (this script). It blocks the push on this machine,
+  works offline, and gives the full violation report before anything leaves the
+  machine.
+- **GitHub Actions** (`.github/workflows/verify.yml`). It runs the same gate
+  plus shell/Python lint and the other documentation self-tests on every push
+  and pull request. Because the repository is public, Actions is free and
+  branch protection can require the `verify` check before `main` accepts
+  changes.
+
+The hook catches mistakes earliest; the required check is the server-side
+backstop that also covers other machines and clones that skipped the hook.
 
 ## Bypass
 
@@ -66,4 +75,6 @@ directory is untouched.
 
 - [`check-doc-coverage.md`](check-doc-coverage.md) — the gate the hook runs.
 - [`documentation-map.json`](../../documentation-map.json) — the rules.
+- [`.github/workflows/verify.yml`](../../.github/workflows/verify.yml) — the CI
+  enforcement layer.
 - [`docs/README.md`](../README.md) — the documentation index.

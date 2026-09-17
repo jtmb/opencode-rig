@@ -55,8 +55,21 @@ general rule.
 `{plugin}` (directory under `.../plugins/`), and `{skill}` (directory under
 `.../skills/`).
 
-The current rules cover scripts, plugins, skills, commands, config examples,
-the browser manifests, the GitHub tools, the Git hooks, and the map itself.
+### `rules` and `additional`
+
+- `rules` are evaluated **first match wins**, so an exception rule (a self-test
+  that shares its parent's page) must appear before the general rule. Each
+  matched source has exactly one documentation set.
+- `additional` rules use **union** semantics: every matching rule applies in
+  addition to the primary rule. They are used for cross-cutting requirements.
+  `onAdd` is not allowed in `additional`.
+
+The current `rules` cover scripts, plugins, skills, commands, config examples,
+the browser manifests, the GitHub tools, the Git hooks, and the map itself. The
+single `additional` rule (`handoff`) requires `HANDOFF.md` to be updated
+whenever an environment-defining artifact changes: the map and hooks, CI
+workflows, global commands, plugin registration, the skills catalog, the
+setup/MCP/deploy scripts, the browser manifests, or the GitHub tools README.
 
 ## Options
 

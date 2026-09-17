@@ -217,6 +217,9 @@ or CAPTCHAs for the user.
   rules, `platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py`
   enforces them, and `.githooks/pre-push` runs the gate before every push
   (installed per clone by `setup-git-hooks.sh --apply`).
+- Continuous integration: `.github/workflows/verify.yml` runs the gate, lint,
+  and the documentation self-tests on every push and pull request; `main`
+  requires the `verify` check, so changes land through a pull request.
 - Deep-reference documentation: `docs/README.md`, with per-component detail
   under `docs/plugins/` and `docs/scripts/`. Component READMEs stay short;
   behavioral detail lives here and must accompany code changes.
@@ -291,9 +294,11 @@ or CAPTCHAs for the user.
    `platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py` enforces
    it: a change to a mapped source must update or create its mapped
    documentation in the same commit, and a new artifact must arrive with its
-   documentation and any index update. Install the pre-push hook once per clone
-   with `setup-git-hooks.sh --apply`; a genuine exception uses a
-   `Doc-Gate: exempt` commit trailer.
+   documentation and any index update. The map's `handoff` rule also requires
+   `HANDOFF.md` to stay current. Install the pre-push hook once per clone with
+   `setup-git-hooks.sh --apply`; a genuine exception uses a
+   `Doc-Gate: exempt` commit trailer. The same gate runs in GitHub Actions, and
+   `main` requires the `verify` check.
 
 ## Required Verification
 
@@ -324,7 +329,11 @@ Documentation is gated locally. `setup-git-hooks.sh --verify-only` confirms the
 pre-push hook is installed (once per clone with `--apply`); it runs
 `check-doc-coverage.py` against `origin/main..HEAD` and blocks a push whose
 mapped source changed without its documentation. `check-doc-coverage.py` with no
-arguments runs the completeness check only.
+arguments runs the completeness check only. The same gate plus shell/Python lint
+and the documentation self-tests run in GitHub Actions
+(`.github/workflows/verify.yml`) on every push and pull request, and `main`
+requires the `verify` check, so direct pushes to `main` are rejected: work on a
+branch and open a pull request.
 
 Each plugin package needs one `npm install` before its checks; the generated
 `node_modules/` directories are gitignored. Plugin registration lives in the

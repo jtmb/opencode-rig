@@ -43,6 +43,13 @@ FIXTURE_MAP = {
             "docs": [f"{BR}/skills/{{skill}}/README.md", f"{BR}/skills/README.md"],
         },
     ],
+    "additional": [
+        {
+            "name": "handoff",
+            "match": [f"{BR}/scripts/alpha.sh"],
+            "docs": ["HANDOFF.md"],
+        }
+    ],
 }
 
 FILES = [
@@ -59,6 +66,7 @@ FILES = [
     f"{BR}/skills/demo/README.md",
     f"{BR}/skills/README.md",
     "docs/README.md",
+    "HANDOFF.md",
 ]
 
 
@@ -113,7 +121,17 @@ def main() -> int:
             "--changed-file", f"{BR}/scripts/alpha.sh",
             "--changed-file", "docs/scripts/alpha.md",
         )
-        expect(result.returncode == 0, "changed source with its doc change must pass")
+        expect(result.returncode == 1 and "handoff" in result.stderr,
+               "an additional rule must also be satisfied")
+        cases += 1
+
+        result = run(
+            root, map_path,
+            "--changed-file", f"{BR}/scripts/alpha.sh",
+            "--changed-file", "docs/scripts/alpha.md",
+            "--changed-file", "HANDOFF.md",
+        )
+        expect(result.returncode == 0, "changed source with its doc and handoff change must pass")
         cases += 1
 
         result = run(root, map_path, "--changed-file", f"{BR}/scripts/alpha.sh", "--exempt")

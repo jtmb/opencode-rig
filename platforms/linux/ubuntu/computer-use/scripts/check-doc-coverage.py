@@ -10,6 +10,10 @@ The gate has two checks driven by `documentation-map.json`:
   matched changed file must have at least one of its mapped documentation files
   changed in the same set.
 
+The map has two sections: `rules` (first match wins, so exceptions can shadow
+general rules) and `additional` (every matching rule applies, used for
+cross-cutting requirements such as keeping HANDOFF.md current).
+
 A `Doc-Gate: exempt` trailer on any commit in the range, `--exempt`, or
 `DOC_GATE_EXEMPT=1` bypasses only the change-aware check. Completeness still
 runs, so an undocumented new artifact is never allowed through.
@@ -90,19 +94,7 @@ def resolve_doc(spec: str, path: str) -> str:
     return result
 
 
-def load_map(path: str) -> list[dict]:
-    try:
-        with open(path, encoding="utf-8") as handle:
-            data = json.load(handle)
-    except FileNotFoundError as exc:
-        raise ConfigError(f"documentation map not found: {path}") from exc
-    except (OSError, ValueError) as exc:
-        raise ConfigError(f"cannot read {path}: {exc}") from exc
-    if not isinstance(data, dict) or data.get("version") != 1:
-        raise ConfigError(f"{path} must be an object with version 1")
-    entries = data.get("rules")
-    if not isinstance(entries, list) or not entries:
-        raise ConfigError(f"{path} must define a non-empty rules list")
+def compile_rules(entries: list, path: str, allow_on_add: bool) -> list[dict]:
     rules: list[dict] = []
     names: set[str] = set()
     for entry in entries:
@@ -123,6 +115,8 @@ def load_map(path: str) -> list[dict]:
             raise ConfigError(f"rule {name} must list documentation paths")
         if not isinstance(on_add, list) or not all(isinstance(d, str) for d in on_add):
             raise ConfigError(f"rule {name} onAdd must be a list of paths")
+        if on_add and not allow_on_add:
+            raise ConfigError(f"rule {name} may not use onAdd in the additional section")
         rules.append({
             "name": name,
             "match": [compile_glob(m) for m in match],
@@ -132,11 +126,40 @@ def load_map(path: str) -> list[dict]:
     return rules
 
 
+def load_map(path: str) -> tuple[list[dict], list[dict]]:
+    try:
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+    except FileNotFoundError as exc:
+        raise ConfigError(f"documentation map not found: {path}") from exc
+    except (OSError, ValueError) as exc:
+        raise ConfigError(f"cannot read {path}: {exc}") from exc
+    if not isinstance(data, dict) or data.get("version") != 1:
+        raise ConfigError(f"{path} must be an object with version 1")
+    entries = data.get("rules")
+    if not isinstance(entries, list) or not entries:
+        raise ConfigError(f"{path} must define a non-empty rules list")
+    additional_entries = data.get("additional", [])
+    if not isinstance(additional_entries, list):
+        raise ConfigError(f"{path} additional must be a list")
+    rules = compile_rules(entries, path, allow_on_add=True)
+    additional = compile_rules(additional_entries, path, allow_on_add=False) if additional_entries else []
+    return rules, additional
+
+
+def matches(rule: dict, path: str) -> bool:
+    return any(pattern.match(path) for pattern in rule["match"])
+
+
 def first_match(rules: list[dict], path: str) -> dict | None:
     for rule in rules:
-        if any(pattern.match(path) for pattern in rule["match"]):
+        if matches(rule, path):
             return rule
     return None
+
+
+def rule_docs(rule: dict, path: str) -> list[str]:
+    return [resolve_doc(spec, path) for spec in rule["docs"]]
 
 
 def list_files(root: str) -> list[str]:
@@ -213,34 +236,49 @@ def git_exempt(root: str, base: str, head: str) -> bool:
     return bool(EXEMPT_PATTERN.search(proc.stdout))
 
 
-def check_completeness(root: str, rules: list[dict], files: list[str]) -> tuple[list[tuple[str, str]], int]:
+def check_completeness(
+    root: str, rules: list[dict], additional: list[dict], files: list[str]
+) -> tuple[list[tuple[str, str]], int]:
     violations: list[tuple[str, str]] = []
     checked = 0
     for path in files:
         rule = first_match(rules, path)
-        if rule is None:
-            continue
-        checked += 1
-        for spec in rule["docs"]:
-            doc = resolve_doc(spec, path)
-            if not os.path.exists(os.path.join(root, doc)):
-                violations.append((path, f"missing documentation {doc}"))
+        if rule is not None:
+            checked += 1
+            for doc in rule_docs(rule, path):
+                if not os.path.exists(os.path.join(root, doc)):
+                    violations.append((path, f"missing documentation {doc}"))
+        for extra in additional:
+            if not matches(extra, path):
+                continue
+            for doc in rule_docs(extra, path):
+                if not os.path.exists(os.path.join(root, doc)):
+                    violations.append((path, f"missing documentation {doc} ({extra['name']})"))
     return violations, checked
 
 
-def check_changes(root: str, rules: list[dict], changed: dict[str, str]) -> list[tuple[str, str]]:
+def check_changes(
+    root: str, rules: list[dict], additional: list[dict], changed: dict[str, str]
+) -> list[tuple[str, str]]:
     violations: list[tuple[str, str]] = []
     changed_paths = set(changed)
     added: dict[str, set[str]] = {}
     for path in sorted(changed):
         rule = first_match(rules, path)
-        if rule is None:
-            continue
-        docs = [resolve_doc(spec, path) for spec in rule["docs"]]
-        if not any(doc in changed_paths for doc in docs):
-            violations.append((path, "requires an update to one of: " + ", ".join(docs)))
-        if changed[path] == "A":
-            added.setdefault(rule["name"], set()).add(path)
+        if rule is not None:
+            docs = rule_docs(rule, path)
+            if not any(doc in changed_paths for doc in docs):
+                violations.append((path, "requires an update to one of: " + ", ".join(docs)))
+            if changed[path] == "A":
+                added.setdefault(rule["name"], set()).add(path)
+        for extra in additional:
+            if not matches(extra, path):
+                continue
+            docs = rule_docs(extra, path)
+            if not any(doc in changed_paths for doc in docs):
+                violations.append(
+                    (path, f"requires an update to one of: {', '.join(docs)} ({extra['name']})")
+                )
     for name, paths in added.items():
         rule = next(rule for rule in rules if rule["name"] == name)
         if not rule["onAdd"]:
@@ -290,7 +328,7 @@ def main(argv: list[str] | None = None) -> int:
 
     map_path = args.map or os.path.join(root, "documentation-map.json")
     try:
-        rules = load_map(map_path)
+        rules, additional = load_map(map_path)
         changed: dict[str, str] = {}
         if args.changed_file or args.added_file:
             for path in args.changed_file:
@@ -308,8 +346,8 @@ def main(argv: list[str] | None = None) -> int:
             exempt = git_exempt(root, args.base, args.head)
 
         files = list_files(root)
-        completeness, checked = check_completeness(root, rules, files)
-        changes = [] if (exempt or not changed) else check_changes(root, rules, changed)
+        completeness, checked = check_completeness(root, rules, additional, files)
+        changes = [] if (exempt or not changed) else check_changes(root, rules, additional, changed)
     except ConfigError as exc:
         print(f"check-doc-coverage: {exc}", file=sys.stderr)
         return 2
