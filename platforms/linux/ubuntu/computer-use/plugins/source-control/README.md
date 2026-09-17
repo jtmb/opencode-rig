@@ -61,7 +61,8 @@ The GitHub MCP child is launched through an adaptive user cgroup budget based
 on current host and cgroup memory availability when the user systemd manager is
 available. Minimal environments use an adaptive `prlimit --as` fallback. If no
 safe limiter or budget can be created, only the GitHub row is disabled; local
-changes continue to work.
+changes continue to work. The child transport discards informational stderr so
+MCP diagnostics do not leak into the TUI.
 
 ## Checks
 

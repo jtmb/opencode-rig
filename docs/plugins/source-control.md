@@ -102,6 +102,9 @@ The wrapper still resolves GitHub credentials itself from
 `GITHUB_PERSONAL_ACCESS_TOKEN`, `GH_TOKEN`, or the logged-in `gh` CLI. The
 plugin never reads, logs, or stores credentials. The MCP server remains the
 repository's pinned read-only and lockdown-protected wrapper.
+Its informational stderr is discarded at the stdio transport boundary so server
+diagnostics cannot corrupt the OpenCode TUI; connection and call failures still
+surface through the plugin's saved error state.
 
 ## Refresh and lifecycle
 

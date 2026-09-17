@@ -136,6 +136,9 @@ export function createGithubMcpClient(command: GithubMcpCommand = defaultGithubM
         command: bounded.command,
         args: bounded.args,
         env: processEnvironment(),
+        // The server writes informational diagnostics to stderr. In a TUI that
+        // stream is the parent terminal, so inheriting it corrupts the UI.
+        stderr: "ignore",
       })
       const next = new Client({ name: "opencode-source-control", version: "0.1.0" })
       await timeout(next.connect(transport), CONNECT_TIMEOUT_MS, "GitHub MCP initialize")
