@@ -1,6 +1,6 @@
 # Local Plugins
 
-The repository ships four local OpenCode plugins. They are ordinary npm
+The repository ships five local OpenCode plugins. They are ordinary npm
 packages that live in the repository and are loaded directly from source; they
 are **not** deployed by the setup scripts and are **not** published to npm.
 
@@ -10,6 +10,7 @@ are **not** deployed by the setup scripts and are **not** published to npm.
 | [`codex-fallback`](codex-fallback.md) | Server | `platforms/linux/ubuntu/computer-use/plugins/codex-fallback/` | Transparent failover from the Codex subscription to a configurable chain of any OpenCode providers when the quota runs out |
 | [`source-control`](source-control.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/source-control/` | Working-tree changes and the current branch's GitHub pull request in the session sidebar |
 | [`tui-settings`](tui-settings.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/tui-settings/` | Settings overlay for appearance, display, plugins, source control, and sidebar positioning |
+| [`file-manager`](file-manager.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/file-manager/` | Full-screen project tree, quick-open, and an in-TUI editor with explicit saves |
 
 ## TUI vs. server plugins
 
@@ -28,6 +29,11 @@ OpenCode has two distinct plugin surfaces, and these packages target one each.
   overlay over the host `DialogSelect`/`DialogAlert` components. It edits host
   display keys, dispatches the built-in theme and plugin managers, tunes the
   `source-control` runtime keys, and positions the harness sidebar panels.
+- `file-manager` is a TUI plugin that registers a full-screen `files` route and
+  an `Explorer` row. It loads the project tree lazily through
+  `client.file.list`, searches with `client.find.files`, renders files with
+  `line_number` + `code` highlighting, and edits with a `textarea` that saves
+  atomically through `node:fs` under a `realpath` containment check.
 - A **server plugin** runs in the OpenCode server. It can hook config
   resolution, message assembly, outbound request parameters, and the event
   stream, and it can call the client API (sessions, providers, TUI). It has no
@@ -126,6 +132,25 @@ Register the source file in `~/.config/opencode/tui.json`:
 The deployment script also supports `--plugins tui-settings` and
 `--plugins all`. Registration is user-owned and takes effect after restart.
 
+### `file-manager` (TUI)
+
+Register the source file in `~/.config/opencode/tui.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "plugin": [
+    [
+      "file:///absolute/path/to/file-manager/src/tui.tsx",
+      { "order": 60 }
+    ]
+  ]
+}
+```
+
+The deployment script also supports `--plugins file-manager` and
+`--plugins all`. Registration is user-owned and takes effect after restart.
+
 > The chain above is an example. There is no baked-in provider chain: until you
 > register a non-empty `defaultChain` (or a per-agent chain), the router is
 > inactive and the session stays on its configured model.
@@ -177,6 +202,8 @@ The packages follow the same conventions:
   GitHub client.
 - `tui-settings` additionally depends on the `@opentui/*` packages and
   `solid-js` for its sidebar row and host-dialog overlay.
+- `file-manager` additionally depends on the `@opentui/*` packages and
+  `solid-js`; it uses `node:fs` for reads and atomic saves.
 - Every plugin's `typecheck` and `test` scripts run through the repository's
   adaptive resource guard so a check cannot take down its OpenCode parent.
 
@@ -191,6 +218,8 @@ npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control install
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings install
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/file-manager install
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/file-manager run check
 ```
 
 Node.js 22.6 or newer is required for `--experimental-strip-types`. The

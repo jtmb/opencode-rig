@@ -5,6 +5,7 @@ platforms/linux/ubuntu/computer-use/plugins/codex-usage/node_modules/
 platforms/linux/ubuntu/computer-use/plugins/codex-fallback/node_modules/
 platforms/linux/ubuntu/computer-use/plugins/source-control/node_modules/
 platforms/linux/ubuntu/computer-use/plugins/tui-settings/node_modules/
+platforms/linux/ubuntu/computer-use/plugins/file-manager/node_modules/
 
 # Generated desktop custom-tool dependencies - never commit.
 platforms/linux/ubuntu/computer-use/tools/node_modules/

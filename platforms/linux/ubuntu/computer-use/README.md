@@ -36,6 +36,7 @@ platforms/linux/ubuntu/
     ├── plugins/
     │   ├── codex-fallback/
     │   ├── codex-usage/
+    │   ├── file-manager/
     │   ├── source-control/
     │   └── tui-settings/
     ├── scripts/
@@ -56,6 +57,7 @@ Generated and local-only paths (never committed):
 - `plugins/codex-usage/node_modules/`, `plugins/codex-fallback/node_modules/`
 - `plugins/source-control/node_modules/`
 - `plugins/tui-settings/node_modules/`
+- `plugins/file-manager/node_modules/`
 - `tools/node_modules/`
 - `~/Documents/computer-assistant/memory.json` (owner-only app data)
 - `/tmp/opencode/playwright*/` (transient MCP output)
@@ -128,13 +130,15 @@ sidebar for working-tree changes and the current branch's GitHub pull request.
 [`plugins/tui-settings/`](plugins/tui-settings/README.md) is a local TUI
 settings overlay for appearance, display, plugins, source control, and sidebar
 positioning.
+[`plugins/file-manager/`](plugins/file-manager/README.md) is a local TUI
+project tree, quick-open, and editor with atomic saves.
 
-All four are user-registered local packages, not setup-script deployments:
+All five are user-registered local packages, not setup-script deployments:
 codex-usage loads from `~/.config/opencode/tui.json`, codex-fallback from the
-`plugin` array in `~/.config/opencode/opencode.jsonc`, and source-control and
-tui-settings from the TUI config. Register them with `/deploy` or
-`scripts/deploy-plugins.sh`; their runtime and verification commands live in
-their READMEs.
+`plugin` array in `~/.config/opencode/opencode.jsonc`, and source-control,
+tui-settings, and file-manager from the TUI config. Register them with
+`/deploy` or `scripts/deploy-plugins.sh`; their runtime and verification
+commands live in their READMEs.
 
 ## New Chat Handoff
 
@@ -302,6 +306,9 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.p
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/file-manager run check
 npm --prefix platforms/linux/ubuntu/computer-use/tools run check
 opencode debug skill
 opencode mcp list

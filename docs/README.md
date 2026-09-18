@@ -32,6 +32,7 @@ pieces fit together?*
 | [`plugins/codex-fallback.md`](plugins/codex-fallback.md) | The server failover router: hooks, configuration precedence, proactive and reactive switching, cooldown state, and recovery |
 | [`plugins/source-control.md`](plugins/source-control.md) | Local working-tree status, bounded GitHub pull-request lookup, adaptive MCP memory budgets, UI behavior, and lifecycle |
 | [`plugins/tui-settings.md`](plugins/tui-settings.md) | The settings overlay: gear row, drill-down sections, display and source-control keys, sidebar positioning, and responsive sizing |
+| [`plugins/file-manager.md`](plugins/file-manager.md) | The full-screen file manager: lazy tree, quick-open, viewer, editor, atomic saves, containment, and the external editor action |
 
 ### Desktop tools
 

@@ -213,9 +213,11 @@ Known live state (recorded 2026-09-17):
     whenEmpty "show"; verified live at sidebar order 50 with the minimized
     start and runtime kv overrides), and tui-settings (TUI settings overlay,
     registered in ~/.config/opencode/tui.json with order 10; built and checked,
-    waiting on the next restart for live verification)
-  - Planned TUI plugins (approved, not built): `file-manager` (project tree,
-    quick-open, in-TUI editor) - see "Part 3" under Work In Progress
+    waiting on the next restart for live verification), and file-manager (TUI
+    project tree/quick-open/editor, registered in ~/.config/opencode/tui.json
+    with order 60; built and checked, waiting on the same restart)
+  - No planned TUI plugins remain; both approved plugins (`tui-settings` and
+    `file-manager`) are built - see "Part 3" under Work In Progress
   - Browser runtime: @playwright/mcp 0.0.80 with isolated live and headless
     Firefox, via platforms/linux/ubuntu/browser-tools
   - GitHub MCP runtime: official v1.12.1 native amd64 release via
@@ -283,9 +285,9 @@ give you. If I pasted only this handoff, ask what task I want handled.
   GitGuardian checks pass. The `/resume` command was redeployed
   (`setup-opencode.sh --apply`), source/deployed content match, and the full
   health check is green.
-- Next planned change: commit/push the tui-settings work, verify it after a
-  restart, then build the computer-use custom tools (Part 4) and `file-manager`
-  (Part 3), with Basic Memory M1-M4 queued.
+- Next planned change: commit/push the tui-settings and file-manager work,
+  verify both after a restart, then build the computer-use custom tools
+  (Part 4), with Basic Memory M1-M4 queued.
 - Basic Memory M0 was completed in the same session (below), and the TUI
   feature plan in "Part 3" was approved with the user.
 
@@ -447,11 +449,18 @@ User decisions recorded after the deep-research session:
   labels the restart requirement. Dialog size adapts to terminal width
   (`medium` below 96 columns). A live reorder of built-in panels is not
   achievable with this API.
-- **VS Code-like file manager** (new plugin `file-manager`): a full-screen
-  `files` route (`/files`, palette command, and a keybind) with a lazy,
-  ignore-aware project tree, quick-open over `client.find.files`, a tab row,
-  and an in-TUI editor plus an "open external editor" action (user choice).
-  A compact `Explorer` row in `sidebar_content` at order `60` opens the route.
+- **VS Code-like file manager** (new plugin `file-manager`, implemented
+  2026-09-17, pending restart and live verification): a full-screen `files`
+  route (`/files`, palette command `Open file manager`, and a `Ctrl+Shift+E`
+  keybind) with a lazy, ignore-aware project tree over `client.file.list`,
+  quick-open over `client.find.files`, a `line_number` + `code` highlighted
+  viewer, and a `textarea` editor with explicit `Ctrl+S` atomic saves through
+  `node:fs`, `realpath` containment, `.git` refusal, binary/oversize
+  read-only guards, a dirty marker and discard guard, `file.watcher.updated`
+  reloads, and an external-editor action. A compact `Explorer` row in
+  `sidebar_content` at order `60` opens the route. Pure model logic lives in
+  `src/model.ts` with tests; docs in `docs/plugins/file-manager.md` and the
+  plugin README.
 - **Two separate plugin packages** (user choice), matching the
   one-concern-per-package pattern and independent bounded checks.
 - **Sequence** (user choice): land the gate, reposition source-control, build
@@ -475,22 +484,24 @@ Source-control reposition and settings groundwork:
   Pure option and migration logic lives in `src/options.ts` with tests, and
   the plugin README and `docs/plugins/source-control.md` are updated.
 
-File manager details:
+File manager details (implemented):
 
-- Viewing and editing use `EditBufferRenderable` +
-  `LineNumberRenderable` + `SyntaxStyle` with `getTreeSitterClient()`
-  (bundled js/ts/markdown/zig parsers); an early spike confirms highlighting,
-  with a plain-text fallback if the worker or assets misbehave.
+- Viewing uses `LineNumberRenderable` + `CodeRenderable` with a `SyntaxStyle`
+  built from the active theme's syntax colors (bundled js/ts/markdown/zig
+  parsers; unknown filetypes fall back to plain text). The editor is a
+  `TextareaRenderable` with line numbers; edits are tracked with
+  `onContentChange` and read back through `editBuffer.getText()`.
 - Saving is explicit `Ctrl+S`, atomic (`tmp` + `rename`) through `node:fs`,
-  with a dirty marker, an unsaved-changes close guard, a reload prompt on
-  `file.watcher.updated`, and binary/oversize read-only guards. The server
-  file API is read-only (no write endpoint), so `node:fs` is required.
+  with a dirty marker, an unsaved-changes discard guard, a reload on
+  `file.watcher.updated` (a warning instead when dirty), and binary/oversize
+  read-only guards. The server file API is read-only (no write endpoint), so
+  `node:fs` is required.
 - Containment: realpath must stay under `api.state.path.worktree`/`directory`;
   refuse `.git/**` and symlink escapes; save only on explicit user action.
 - "Open external editor" suspends the renderer (`renderer.suspend()/resume()`)
   for terminal editors and supports GUI editors such as VS Code.
 
-Packages, checks, and gates (both plugins follow the existing plugin rules):
+Packages, checks, and gates (the local plugins follow the existing rules):
 
 - Self-contained packages under `plugins/<name>/` with `src/`, `test/`,
   `package.json`, `README.md`, pinned `@opencode-ai/plugin` 1.18.31,
@@ -567,28 +578,26 @@ Research conclusions and evidence (2026-09-17 session):
   order `50` and the user confirmed the expand/collapse toggle persists through
   `local.source-control.startCollapsed`. The Ctrl+click diff opening and
   accented change-count header still need a dirty worktree.
-- The tui-settings overlay, sidebar visibility and positioning, and the
-  `local.source-control.order` override are implemented with bounded checks
-  passing (tui-settings 13 tests, source-control 20 tests) but are unverified
+- The tui-settings overlay, sidebar visibility and positioning, the
+  `local.source-control.order` override, and the file-manager route/tree/
+  viewer/editor are implemented with bounded checks passing (tui-settings 13
+  tests, source-control 20 tests, file-manager 11 tests) but are unverified
   until the next OpenCode restart.
 
 ### Suggested next steps
 
-1. Commit and push the tui-settings work (pending explicit request), restart
-   OpenCode, then verify the overlay (`/settings`, the `Settings` row,
-   sections, sidebar visibility and position) and the source-control order
-   override live; re-check the Ctrl+click/accent behavior with a dirty
-   worktree.
+1. Commit and push the tui-settings and file-manager work (pending explicit
+   request), restart OpenCode, then verify live: the `/settings` overlay, the
+   `Settings` and `Explorer` rows, sidebar visibility/position, the
+   source-control order override, and the file-manager tree, viewer, editor,
+   save, and external editor. Re-check the Ctrl+click/accent behavior with a
+   dirty worktree.
 2. Build the computer-use custom tools (Part 4): screenshot first, then
    window listing and bounded input.
-3. Build `file-manager` per Part 3: the `files` route, tree and quick-open,
-   the in-TUI editor with explicit atomic saves and containment, the external
-   editor action, Explorer row at order `60`, tests, docs, registration,
-   restart, and a `desktop-vision` check.
-4. Resume Basic Memory M1-M4: wrapper `scripts/basic-memory-mcp.sh`, global
+3. Resume Basic Memory M1-M4: wrapper `scripts/basic-memory-mcp.sh`, global
    registration with the revised disable list, migration, then legacy removal
    only at the end with the explicit delete confirmation.
-5. Merge pull request jtmb/opencode-rig#1 (and the stacked PRs) only on
+4. Merge pull request jtmb/opencode-rig#1 (and the stacked PRs) only on
    explicit request; keep the memory-migration deletion gate for the end of
    the M2 work.
 
