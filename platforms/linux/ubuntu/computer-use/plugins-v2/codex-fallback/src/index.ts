@@ -18,7 +18,6 @@ import { createQuotaChecker } from "./usage.ts"
 
 const STATE_FILE = "codex-fallback.json"
 const CATALOG_CACHE_MS = 60_000
-const SWITCH_GRACE_MS = 2_000
 const RETRY_DELAY_MS = 250
 
 function defaultStatePath() {
@@ -27,16 +26,25 @@ function defaultStatePath() {
 }
 
 /** The V2 model reference carries its model id on `id`; normalise it. */
-function refToModel(ref: { providerID: string; id: string }): ModelRef {
-  return { providerID: String(ref.providerID), modelID: String(ref.id) }
+function refToModel(ref: { providerID: string; id: string; variant?: string }): ModelRef {
+  return {
+    providerID: String(ref.providerID),
+    modelID: String(ref.id),
+    ...(typeof ref.variant === "string" && ref.variant ? { variant: ref.variant } : {}),
+  }
 }
 
-interface MutableModelRequest {
-  model: { providerID: string; id: string; variant?: string }
+function storedModel(key: string | undefined, variant: string | undefined): ModelRef | undefined {
+  const model = parseModelKey(key)
+  return model && variant ? { ...model, variant } : model
 }
 
-function setRequestModel(event: unknown, tier: ModelRef): void {
-  ;(event as MutableModelRequest).model = { providerID: tier.providerID, id: tier.modelID }
+function modelIdentity(model: ModelRef): string {
+  return `${modelKey(model)}#${model.variant ?? ""}`
+}
+
+function sameRouteModel(left: ModelRef, right: ModelRef): boolean {
+  return modelKey(left) === modelKey(right) && (!left.variant || !right.variant || left.variant === right.variant)
 }
 
 export default Plugin.define({
@@ -58,10 +66,10 @@ export default Plugin.define({
     })
 
     const fallbacks = new Map<string, AgentFallbackConfig>()
-    const agentModels = new Map<string, ModelRef>()
     const sessionAgent = new Map<string, string>()
     const routing = new Set<string>()
-    const switchedAt = new Map<string, number>()
+    const routedFailures = new Map<string, string>()
+    const pendingSwitches = new Map<string, { target: ModelRef; staleSeen: boolean }>()
     let catalogCache: { at: number; value?: Catalog } = { at: 0 }
 
     // Options may carry an `agents` map; per-agent codexFallback overrides that
@@ -77,8 +85,22 @@ export default Plugin.define({
     const effectiveFor = (agentName: string | undefined): EffectiveFallback =>
       resolveEffective(agentName, fallbacks, options)
 
-    const configuredModel = (agentName: string | undefined): ModelRef | undefined =>
-      agentName ? agentModels.get(agentName) : undefined
+    const switchSessionModel = async (sessionID: string, tier: ModelRef): Promise<void> => {
+      pendingSwitches.set(sessionID, { target: tier, staleSeen: false })
+      try {
+        await ctx.session.switchModel({
+          sessionID,
+          model: {
+            providerID: tier.providerID,
+            id: tier.modelID,
+            ...(tier.variant ? { variant: tier.variant } : {}),
+          },
+        })
+      } catch (error) {
+        pendingSwitches.delete(sessionID)
+        throw error
+      }
+    }
 
     const getCatalog = async (force = false): Promise<Catalog | undefined> => {
       if (!force && catalogCache.value && Date.now() - catalogCache.at < CATALOG_CACHE_MS) {
@@ -114,7 +136,15 @@ export default Plugin.define({
 
     const rememberSession = (
       sessionID: string,
-      patch: { agent?: string; source?: string; active?: string; tier?: string },
+      patch: {
+        agent?: string
+        source?: string
+        sourceVariant?: string
+        active?: string
+        activeVariant?: string
+        tier?: string
+        tierVariant?: string
+      },
     ) => {
       state.setSession(sessionID, patch)
     }
@@ -126,10 +156,10 @@ export default Plugin.define({
       model?: ModelRef
       error?: unknown
       message?: string
+      attempt?: number
       source: string
     }): Promise<ModelRef | undefined> => {
       const { sessionID } = input
-      if (routing.has(sessionID)) return undefined
 
       const record = state.session(sessionID)
       const agentName = input.agent ?? record?.agent ?? sessionAgent.get(sessionID)
@@ -147,17 +177,10 @@ export default Plugin.define({
       }
       log("failure received", input.source, sessionID, failure.kind, failure.status)
 
-      const switched = switchedAt.get(sessionID)
-      if (switched && Date.now() - switched < SWITCH_GRACE_MS) {
-        log("ignoring failure during post-switch grace", sessionID)
-        return undefined
-      }
-
       const failedModel =
         input.model ??
-        (record?.active ? parseModelKey(record.active) : undefined) ??
-        (record?.source ? parseModelKey(record.source) : undefined) ??
-        configuredModel(agentName)
+        storedModel(record?.active, record?.activeVariant) ??
+        storedModel(record?.source, record?.sourceVariant)
       if (!failedModel) {
         log("failure ignored: could not resolve model", sessionID)
         return undefined
@@ -193,18 +216,69 @@ export default Plugin.define({
       }
 
       const sourceModel =
-        (record?.source ? parseModelKey(record.source) : undefined) ??
-        configuredModel(agentName) ??
+        storedModel(record?.source, record?.sourceVariant) ??
         failedModel
       rememberSession(sessionID, {
         agent: agentName,
         source: modelKey(sourceModel),
-        active: modelKey(tier),
-        tier: modelKey(tier),
+        sourceVariant: sourceModel.variant,
+        active: failedKey,
+        activeVariant: failedModel.variant,
+        tier: undefined,
+        tierVariant: undefined,
       })
-      switchedAt.set(sessionID, Date.now())
       log("armed fallback", sessionID, failedKey, "->", modelKey(tier), `(${failure.kind})`)
       return tier
+    }
+
+    const handleFailure = async (input: Parameters<typeof onFailure>[0]): Promise<ModelRef | undefined> => {
+      const token =
+        input.attempt !== undefined && input.model
+          ? `${input.attempt}:${modelIdentity(input.model)}`
+          : undefined
+      if (token && routedFailures.get(input.sessionID) === token) {
+        log("ignored duplicate failure", input.sessionID, token)
+        return undefined
+      }
+      if (routing.has(input.sessionID)) return undefined
+      routing.add(input.sessionID)
+      try {
+        const tier = await onFailure(input)
+        if (!tier) return undefined
+        const record = state.session(input.sessionID)
+        const failedModel =
+          input.model ??
+          storedModel(record?.active, record?.activeVariant) ??
+          storedModel(record?.source, record?.sourceVariant)
+        // switchModel can synchronously cause the next context hook to run.
+        // Publish the intended route before calling it so that hook sees a
+        // plugin-generated selection rather than treating it as manual.
+        rememberSession(input.sessionID, {
+          agent: input.agent ?? record?.agent,
+          active: modelKey(tier),
+          activeVariant: tier.variant,
+          tier: modelKey(tier),
+          tierVariant: tier.variant,
+        })
+        try {
+          await switchSessionModel(input.sessionID, tier)
+        } catch (error) {
+          if (failedModel) {
+            rememberSession(input.sessionID, {
+              agent: input.agent ?? record?.agent,
+              active: modelKey(failedModel),
+              activeVariant: failedModel.variant,
+              tier: undefined,
+              tierVariant: undefined,
+            })
+          }
+          throw error
+        }
+        if (token) routedFailures.set(input.sessionID, token)
+        return tier
+      } finally {
+        routing.delete(input.sessionID)
+      }
     }
 
     const routeRequest = async (input: {
@@ -219,22 +293,60 @@ export default Plugin.define({
       sessionAgent.set(sessionID, agent)
 
       if (!effective.enabled) {
-        rememberSession(sessionID, { agent, source: currentKey, active: currentKey, tier: undefined })
+        rememberSession(sessionID, {
+          agent,
+          source: currentKey,
+          sourceVariant: current.variant,
+          active: currentKey,
+          activeVariant: current.variant,
+          tier: undefined,
+          tierVariant: undefined,
+        })
         return undefined
       }
 
       const record = state.session(sessionID)
+      const active = storedModel(record?.active, record?.activeVariant)
+      const pending = pendingSwitches.get(sessionID)
+      if (pending) {
+        if (sameRouteModel(pending.target, current)) {
+          pendingSwitches.delete(sessionID)
+        } else if (!pending.staleSeen) {
+          pending.staleSeen = true
+          log("preserving pending model switch", sessionID, modelKey(pending.target))
+          return undefined
+        } else {
+          pendingSwitches.delete(sessionID)
+        }
+      }
+      if (active && !sameRouteModel(active, current)) {
+        rememberSession(sessionID, {
+          agent,
+          source: currentKey,
+          sourceVariant: current.variant,
+          active: currentKey,
+          activeVariant: current.variant,
+          tier: undefined,
+          tierVariant: undefined,
+        })
+        log("honoring manual model selection", sessionID, modelKey(current))
+        return undefined
+      }
       const chainIndex = effective.chain.findIndex((tier) => modelKey(tier) === currentKey)
 
       if (state.cooling(currentKey)) {
         const tier = await pickAvailableTier(sessionID, effective, chainIndex >= 0 ? chainIndex + 1 : 0)
         if (tier) {
-          const sourceKey = chainIndex >= 0 ? record?.source : currentKey
+          const sourceModel = chainIndex >= 0 ? storedModel(record?.source, record?.sourceVariant) : current
           rememberSession(sessionID, {
             agent,
-            ...(sourceKey ? { source: sourceKey } : {}),
+            ...(sourceModel
+              ? { source: modelKey(sourceModel), sourceVariant: sourceModel.variant }
+              : {}),
             active: modelKey(tier),
+            activeVariant: tier.variant,
             tier: modelKey(tier),
+            tierVariant: tier.variant,
           })
           log("routed cooling model", sessionID, currentKey, "->", modelKey(tier))
           return tier
@@ -244,15 +356,18 @@ export default Plugin.define({
       }
 
       if (chainIndex >= 0) {
-        const source = record?.source ? parseModelKey(record.source) : configuredModel(agent)
+        const source = storedModel(record?.source, record?.sourceVariant)
         if (source && modelKey(source) !== currentKey && !state.cooling(modelKey(source))) {
           const catalog = await getCatalog()
           if (isTierAvailable(catalog, source)) {
             rememberSession(sessionID, {
               agent,
               source: modelKey(source),
+              sourceVariant: source.variant,
               active: modelKey(source),
+              activeVariant: source.variant,
               tier: undefined,
+              tierVariant: undefined,
             })
             log("recovered session", sessionID, "to", modelKey(source))
             return source
@@ -261,7 +376,15 @@ export default Plugin.define({
         return undefined
       }
 
-      rememberSession(sessionID, { agent, source: currentKey, active: currentKey, tier: undefined })
+      rememberSession(sessionID, {
+        agent,
+        source: currentKey,
+        sourceVariant: current.variant,
+        active: currentKey,
+        activeVariant: current.variant,
+        tier: undefined,
+        tierVariant: undefined,
+      })
 
       if (effective.proactive && current.providerID.toLowerCase() === "openai") {
         const snapshot = await quota.check(false)
@@ -280,8 +403,11 @@ export default Plugin.define({
           rememberSession(sessionID, {
             agent,
             source: currentKey,
+            sourceVariant: current.variant,
             active: modelKey(tier),
+            activeVariant: tier.variant,
             tier: modelKey(tier),
+            tierVariant: tier.variant,
           })
           log("proactive quota switch", sessionID, currentKey, "->", modelKey(tier))
           return tier
@@ -298,7 +424,7 @@ export default Plugin.define({
           agent: String(event.agent),
           model: refToModel(event.model),
         })
-        if (tier) setRequestModel(event, tier)
+        if (tier) await switchSessionModel(String(event.sessionID), tier)
       } catch (error) {
         warn("context routing failed", error)
       }
@@ -306,11 +432,12 @@ export default Plugin.define({
 
     await ctx.session.hook("retry", async (event) => {
       try {
-        const routed = await onFailure({
+        const routed = await handleFailure({
           sessionID: String(event.sessionID),
           agent: String(event.agent),
           model: refToModel(event.model),
           error: event.error,
+          attempt: event.attempt,
           source: "retry",
         })
         if (routed) event.decision = { retry: true, delay: RETRY_DELAY_MS }
@@ -329,22 +456,11 @@ export default Plugin.define({
             const id = typeof data.sessionID === "string" ? data.sessionID : undefined
             if (id) {
               sessionAgent.delete(id)
-              switchedAt.delete(id)
+              routedFailures.delete(id)
+              pendingSwitches.delete(id)
               state.deleteSession(id)
             }
             continue
-          }
-          if (generic.type === "session.execution.failed" || generic.type === "session.retry.scheduled") {
-            const data = isRecord(generic.data) ? generic.data : {}
-            const sessionID = typeof data.sessionID === "string" ? data.sessionID : undefined
-            if (!sessionID) continue
-            const record = state.session(sessionID)
-            await onFailure({
-              sessionID,
-              agent: record?.agent,
-              error: data.error,
-              source: generic.type,
-            })
           }
         }
       } catch (error) {

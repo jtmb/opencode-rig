@@ -81,3 +81,25 @@ test("prunes stale records and tolerates corrupt state", async () => {
     await rm(directory, { recursive: true, force: true })
   }
 })
+
+test("fails closed on an oversized persisted state file", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "codex-fallback-state-"))
+  const path = join(directory, "state.json")
+  try {
+    await writeFile(
+      path,
+      JSON.stringify({
+        version: 1,
+        cooldowns: {},
+        sessions: { oversized: { agent: "x".repeat(1_100_000), updatedAt: Date.now() } },
+      }),
+      { mode: 0o600 },
+    )
+
+    const store = createStateStore(path)
+    await store.load()
+    assert.deepEqual(store.snapshot().sessions, {})
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
+})

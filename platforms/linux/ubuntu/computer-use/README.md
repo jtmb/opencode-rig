@@ -225,6 +225,10 @@ phrases, example requests, and how the skills combine.
   rarely used tools, leaving nine core note tools. `cli.json` enables terminal
   mouse capture (`"mouse": true`) and registers the `rig-todo` sidebar panel in
   addition to the three CLI plugins.
+- [`config/v2-plugin-roles.json`](config/v2-plugin-roles.json) is the canonical
+  six-package v2 role catalog. `deploy-plugins.sh --v2` and
+  `verify-opencode-v2.sh` validate and consume it, including the dual server/CLI
+  role owned by `rig-todo`.
 - [`config/maintenance.cron.example`](config/maintenance.cron.example)
   documents the weekly maintenance schedule and required cron `PATH`.
 - Plugin registration examples live in

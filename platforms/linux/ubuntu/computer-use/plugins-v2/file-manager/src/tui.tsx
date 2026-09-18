@@ -5,39 +5,48 @@ import { SyntaxStyle, getTreeSitterClient, type TextareaRenderable } from "@open
 import { useKeyboard } from "@opentui/solid"
 import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { spawn } from "node:child_process"
-import { readFile, realpath, rename, stat, unlink, writeFile } from "node:fs/promises"
-import { basename, dirname, join, resolve } from "node:path"
+import { basename } from "node:path"
 
+import { EXPLORER_SLASH } from "./commands.ts"
 import {
   MAX_EDIT_BYTES,
   SEARCH_LIMIT,
   filetypeFor,
   flattenTree,
-  isBinaryContent,
-  isContained,
-  isProtectedPath,
   nextIndex,
-  normalizeRelative,
   normalizeSearchResults,
   tooLargeToEdit,
   type FileNode,
 } from "./model.ts"
 import { consumeMouseActivation, editorCursorPosition, type MouseActivation } from "./mouse.ts"
 import { registerParsers, spikeParserAssets } from "./parsers.ts"
+import { beginGeneration, invalidateGeneration, isCurrentGeneration, type GenerationToken } from "./generation.ts"
+import {
+  createPathGuard,
+  DiskConflictError,
+  parseEditorCommand,
+  type PathGuard,
+} from "./safety.ts"
 import {
   EMPTY_TABS,
   activateTab,
   closeTab,
   dirtyTabs,
+  dirtyGuard,
+  dirtyGuardKey,
+  dirtyGuards,
   isDirtyTab,
-  markSaved,
+  markSavedSnapshot,
   nextTab,
   openTab,
   persistTabs,
   replaceTab,
   restorePaths,
   restoredActive,
+  sameDirtyGuard,
+  saveSnapshot,
   takeClosed,
+  type DirtyGuard,
   updateTab,
   type FileTab,
   type TabsState,
@@ -82,7 +91,7 @@ function createSyntaxStyle(theme: Context["theme"]): SyntaxStyle {
 function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const context = usePlugin()
   const directory = projectDirectory(context, props.sessionID)
-  const root = directory
+  const pathGuardPromise = createPathGuard(directory)
   const syntaxStyle = createSyntaxStyle(context.theme)
 
   const [children, setChildren] = createSignal<Map<string, FileNode[]>>(new Map())
@@ -92,7 +101,9 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const [tabs, setTabs] = createSignal<TabsState>(EMPTY_TABS)
   const [mode, setMode] = createSignal<Mode>("tree")
   const [cursor, setCursor] = createSignal<{ line: number; column: number }>({ line: 0, column: 0 })
-  const [closeArmed, setCloseArmed] = createSignal(false)
+  const [closeArmed, setCloseArmed] = createSignal<DirtyGuard | undefined>(undefined)
+  const [panelCloseArmed, setPanelCloseArmed] = createSignal("")
+  const [refreshArmed, setRefreshArmed] = createSignal("")
   const [restored, setRestored] = createSignal(false)
   const [workspace, updateWorkspace] = context.storage.store("workspace", {
     initial: { tabs: {} as Record<string, { open: string[]; active: string }> },
@@ -101,9 +112,22 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const [results, setResults] = createSignal<string[]>([])
   const [resultIndex, setResultIndex] = createSignal(0)
   const [status, setStatus] = createSignal("")
-  const [escapeArmed, setEscapeArmed] = createSignal(false)
+  const [escapeArmed, setEscapeArmed] = createSignal<DirtyGuard | undefined>(undefined)
   let searchTimer: ReturnType<typeof setTimeout> | undefined
   let textareaRef: TextareaRenderable | undefined
+  let pathGuard: PathGuard | undefined
+  const directoryGenerations = new Map<string, number>()
+  const fileGenerations = new Map<string, number>()
+  const searchGenerations = new Map<string, number>()
+  const highlightGenerations = new Map<string, number>()
+  let persistQueue = Promise.resolve()
+
+  const getPathGuard = async (): Promise<PathGuard> => {
+    if (!pathGuard) pathGuard = await pathGuardPromise
+    return pathGuard
+  }
+
+  const currentDirtyKey = () => dirtyGuardKey(dirtyGuards(tabs()))
 
   const rows = createMemo(() => flattenTree(children(), expanded()))
   const selectedIndex = createMemo(() => {
@@ -117,24 +141,37 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   })
 
   const loadDirectory = async (relative: string) => {
+    const generation = beginGeneration(directoryGenerations, relative)
     try {
-      const response = await context.client.file.list({ location: { directory }, path: relative })
-      const nodes: FileNode[] = response.data.map((entry) => {
-        const normalized = normalizeRelative(entry.path)
-        return {
-          name: basename(normalized),
-          path: normalized,
-          absolute: resolve(root, normalized),
-          type: entry.type,
-          ignored: false,
-        }
-      })
+      const guard = await getPathGuard()
+      const safeDirectory = relative ? guard.normalize(relative) : ""
+      const response = await context.client.file.list({ location: { directory }, path: safeDirectory })
+      const nodes = (
+        await Promise.all(
+          response.data.map(async (entry): Promise<FileNode | undefined> => {
+            try {
+              const inspected = await guard.inspect(entry.path)
+              return {
+                name: basename(inspected.relative),
+                path: inspected.relative,
+                absolute: inspected.canonical,
+                type: inspected.info.isDirectory() ? "directory" : "file",
+                ignored: false,
+              }
+            } catch {
+              return undefined
+            }
+          }),
+        )
+      ).filter((entry): entry is FileNode => entry !== undefined)
+      if (!isCurrentGeneration(directoryGenerations, generation)) return
       setChildren((current) => {
         const next = new Map(current)
-        next.set(relative, nodes)
+        next.set(safeDirectory, nodes)
         return next
       })
     } catch (error) {
+      if (!isCurrentGeneration(directoryGenerations, generation)) return
       setStatus(`Cannot list ${relative || "."}: ${errorMessage(error)}`)
     }
   }
@@ -152,33 +189,26 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const readFileTab = async (relative: string): Promise<FileTab | undefined> => {
-    if (isProtectedPath(relative)) {
-      setStatus("Refusing to open .git contents")
-      return undefined
-    }
-    const absolute = resolve(root, relative)
-    if (!isContained(root, absolute)) {
-      setStatus("Refusing to open a path outside the project")
-      return undefined
-    }
+    let normalized: string
+    let generation: GenerationToken
     try {
-      const real = await realpath(absolute)
-      if (!isContained(root, real)) {
-        setStatus("Refusing to follow a symlink outside the project")
+      const guard = await getPathGuard()
+      normalized = guard.normalize(relative)
+      generation = beginGeneration(fileGenerations, normalized)
+      const loaded = await guard.readText(normalized)
+      if (!isCurrentGeneration(fileGenerations, generation)) return undefined
+      if (tooLargeToEdit(loaded.info.size)) {
+        setStatus(`${normalized} is too large to edit (limit ${Math.round(MAX_EDIT_BYTES / 1024)} KiB)`)
         return undefined
       }
-      const info = await stat(real)
-      if (tooLargeToEdit(info.size)) {
-        setStatus(`${relative} is too large to open (limit ${Math.round(MAX_EDIT_BYTES / 1024)} KiB)`)
-        return undefined
+      return {
+        path: loaded.relative,
+        content: loaded.content,
+        original: loaded.content,
+        diskFingerprint: loaded.fingerprint,
+        mode: loaded.mode,
+        revision: 0,
       }
-      const bytes = await readFile(real)
-      if (isBinaryContent(bytes)) {
-        setStatus(`${relative} is binary and cannot be edited`)
-        return undefined
-      }
-      const content = bytes.toString("utf8")
-      return { path: relative, content, original: content }
     } catch (error) {
       setStatus(`Cannot read ${relative}: ${errorMessage(error)}`)
       return undefined
@@ -188,58 +218,70 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const openFile = async (relative: string) => {
     const loaded = await readFileTab(relative)
     if (!loaded) return
+    const current = activeTab()
+    if (current && current.path !== loaded.path && isDirtyTab(current)) {
+      const guard = dirtyGuard(current)
+      if (!sameDirtyGuard(closeArmed(), guard)) {
+        setCloseArmed(guard)
+        setStatus("Unsaved changes: open the file again to keep this buffer open")
+        return
+      }
+    }
     setTabs((state) => openTab(state, loaded))
     setMode("view")
-    setEscapeArmed(false)
-    setCloseArmed(false)
+    setEscapeArmed(undefined)
+    setCloseArmed(undefined)
     setStatus("")
   }
 
   const reloadFile = async (relative: string) => {
+    const existing = tabs().open.find((entry) => entry.path === relative)
+    if (existing && isDirtyTab(existing)) {
+      setStatus(`Unsaved changes in ${relative}; save or discard before reloading`)
+      return
+    }
     const loaded = await readFileTab(relative)
     if (!loaded) return
+    if (!tabs().open.some((entry) => entry.path === loaded.path)) return
     setTabs((state) => replaceTab(state, loaded))
-    setMode("view")
-    setEscapeArmed(false)
-    setCloseArmed(false)
+    if (tabs().active === loaded.path) setMode("view")
+    setEscapeArmed(undefined)
+    setCloseArmed(undefined)
     setStatus("")
   }
 
-  const writeTab = async (current: FileTab): Promise<boolean> => {
-    if (isProtectedPath(current.path)) {
-      setStatus("Refusing to save .git contents")
-      return false
+  const writeTab = async (current: FileTab): Promise<{ saved: boolean; newer: boolean }> => {
+    const snapshot = saveSnapshot(current)
+    if (!snapshot) {
+      setStatus(`Cannot save ${current.path}: no disk baseline is available`)
+      return { saved: false, newer: false }
     }
-    const absolute = resolve(root, current.path)
-    if (!isContained(root, absolute)) {
-      setStatus("Refusing to save outside the project")
-      return false
-    }
-    let temporary: string | undefined
     try {
-      const real = await realpath(absolute)
-      if (!isContained(root, real)) {
-        setStatus("Refusing to follow a symlink outside the project")
-        return false
-      }
-      temporary = join(dirname(real), `.${basename(real)}.${process.pid}.tmp`)
-      await writeFile(temporary, current.content, "utf8")
-      await rename(temporary, real)
-      temporary = undefined
-      setTabs((state) => markSaved(state, current.path))
-      return true
+      const guard = await getPathGuard()
+      const written = await guard.writeText(snapshot)
+      let newer = false
+      setTabs((state) => {
+        const next = markSavedSnapshot(state, snapshot, written.fingerprint, written.mode)
+        const currentTab = next.open.find((entry) => entry.path === snapshot.path)
+        newer = !!currentTab && isDirtyTab(currentTab)
+        return next
+      })
+      return { saved: true, newer }
     } catch (error) {
-      setStatus(`Save failed: ${errorMessage(error)}`)
-      return false
-    } finally {
-      if (temporary) await unlink(temporary).catch(() => undefined)
+      if (error instanceof DiskConflictError) {
+        setStatus(`Save refused: ${current.path} changed on disk; reload or resolve the conflict`)
+      } else {
+        setStatus(`Save failed: ${errorMessage(error)}`)
+      }
+      return { saved: false, newer: false }
     }
   }
 
   const save = async () => {
     const current = activeTab()
     if (!current) return
-    if (await writeTab(current)) setStatus(`Saved ${current.path}`)
+    const result = await writeTab(current)
+    if (result.saved) setStatus(result.newer ? `Saved ${current.path}; newer edits remain unsaved` : `Saved ${current.path}`)
   }
 
   const saveAll = async () => {
@@ -249,28 +291,56 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       return
     }
     let saved = 0
+    let newer = 0
     for (const entry of pending) {
-      if (await writeTab(entry)) saved += 1
+      const result = await writeTab(entry)
+      if (result.saved) saved += 1
+      if (result.newer) newer += 1
     }
-    setStatus(saved === pending.length ? `Saved ${saved} files` : `Saved ${saved}/${pending.length} files`)
+    setStatus(
+      saved === pending.length
+        ? newer > 0
+          ? `Saved ${saved} files; newer edits remain unsaved`
+          : `Saved ${saved} files`
+        : `Saved ${saved}/${pending.length} files`,
+    )
   }
 
   const closeActive = () => {
     const current = activeTab()
     if (!current) return
-    if (dirty() && !closeArmed()) {
-      setCloseArmed(true)
-      setStatus("Unsaved changes: Alt+W again discards")
-      return
+    if (dirty()) {
+      const guard = dirtyGuard(current)
+      if (!sameDirtyGuard(closeArmed(), guard)) {
+        setCloseArmed(guard)
+        setStatus("Unsaved changes: Alt+W again discards")
+        return
+      }
     }
     setTabs((state) => closeTab(state, current.path))
-    setCloseArmed(false)
-    setEscapeArmed(false)
+    setCloseArmed(undefined)
+    setEscapeArmed(undefined)
     setStatus("")
     if (!activeTab()) setMode("tree")
   }
 
+  const closePanel = () => {
+    const key = currentDirtyKey()
+    if (key && panelCloseArmed() !== key) {
+      setPanelCloseArmed(key)
+      setStatus("Unsaved changes in open tabs: press Escape again to close")
+      return
+    }
+    props.panel.close()
+  }
+
   const reopenClosed = async () => {
+    const current = activeTab()
+    if (current && isDirtyTab(current) && !sameDirtyGuard(closeArmed(), dirtyGuard(current))) {
+      setCloseArmed(dirtyGuard(current))
+      setStatus("Unsaved changes: reopen the file again to keep this buffer open")
+      return
+    }
     const popped = takeClosed(tabs())
     setTabs(popped.state)
     if (popped.path) await openFile(popped.path)
@@ -278,10 +348,34 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const switchTab = (delta: number) => {
+    const current = activeTab()
+    if (current && isDirtyTab(current)) {
+      const guard = dirtyGuard(current)
+      if (!sameDirtyGuard(closeArmed(), guard)) {
+        setCloseArmed(guard)
+        setStatus("Unsaved changes: switch tabs again to keep this buffer open")
+        return
+      }
+    }
     setTabs((state) => nextTab(state, delta))
-    setCloseArmed(false)
-    setEscapeArmed(false)
+    setCloseArmed(undefined)
+    setEscapeArmed(undefined)
     if (mode() === "edit") scheduleHighlight()
+  }
+
+  const activatePath = (path: string) => {
+    const current = activeTab()
+    if (current && current.path !== path && isDirtyTab(current)) {
+      const guard = dirtyGuard(current)
+      if (!sameDirtyGuard(closeArmed(), guard)) {
+        setCloseArmed(guard)
+        setStatus("Unsaved changes: select this tab again to keep the buffer open")
+        return
+      }
+    }
+    setTabs((state) => activateTab(state, path))
+    setCloseArmed(undefined)
+    setEscapeArmed(undefined)
   }
 
   const goToLine = async () => {
@@ -318,22 +412,53 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const openExternal = async () => {
     const current = activeTab()
     if (!current) return
+    if (isDirtyTab(current)) {
+      setStatus("Save or discard unsaved changes before opening an external editor")
+      return
+    }
     const editor = (process.env.VISUAL || process.env.EDITOR || "").trim()
     if (!editor) {
       setStatus("Set $EDITOR or $VISUAL to open an external editor")
       return
     }
-    const [command, ...editorArgs] = editor.split(/\s+/)
-    const absolute = resolve(root, current.path)
+    const parsed = parseEditorCommand(editor)
+    if (!parsed) {
+      setStatus("External editor command is invalid or too long")
+      return
+    }
+    let absolute: string
+    let suspended = false
     try {
+      const guard = await getPathGuard()
+      const inspected = await guard.inspect(current.path)
+      if (!inspected.info.isFile()) {
+        setStatus("External editor requires a regular file")
+        return
+      }
+      absolute = inspected.canonical
       context.renderer.suspend()
-      await new Promise<void>((done) => {
-        const child = spawn(command, [...editorArgs, absolute], { stdio: "inherit" })
-        child.on("error", () => done())
-        child.on("exit", () => done())
+      suspended = true
+      const succeeded = await new Promise<boolean>((done) => {
+        let settled = false
+        const finish = (value: boolean) => {
+          if (settled) return
+          settled = true
+          done(value)
+        }
+        try {
+          const child = spawn(parsed.command, [...parsed.args, absolute], { stdio: "inherit", shell: false })
+          child.once("error", () => finish(false))
+          child.once("exit", (code, signal) => finish(code === 0 && signal === null))
+        } catch {
+          finish(false)
+        }
       })
+      if (!succeeded) {
+        setStatus("External editor failed; the current tab was not reloaded")
+        return
+      }
     } finally {
-      context.renderer.resume()
+      if (suspended) context.renderer.resume()
     }
     await reloadFile(current.path)
   }
@@ -388,17 +513,30 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const applyHighlights = async () => {
+    const generation = { key: "editor", value: highlightGenerations.get("editor") ?? 0 }
     const area = textareaRef
     const current = activeTab()
     if (!area || !current) return
     const filetype = filetypeFor(current.path)
     const buffer = area.editBuffer
+    const content = buffer.getText()
+    const pathAtRequest = current.path
     if (!filetype) {
       buffer.clearAllHighlights()
       return
     }
     try {
-      const result = await getTreeSitterClient().highlightOnce(buffer.getText(), filetype)
+      const result = await getTreeSitterClient().highlightOnce(content, filetype)
+      const active = activeTab()
+      if (
+        !isCurrentGeneration(highlightGenerations, generation) ||
+        !active ||
+        active.path !== pathAtRequest ||
+        textareaRef !== area ||
+        buffer.getText() !== content
+      ) {
+        return
+      }
       const highlights = result.highlights ?? []
       buffer.clearAllHighlights()
       for (const [start, end, capture] of highlights) {
@@ -407,13 +545,17 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
         buffer.addHighlightByCharRange({ start, end, styleId })
       }
     } catch {
+      if (!isCurrentGeneration(highlightGenerations, generation) || textareaRef !== area || buffer.getText() !== content) return
       buffer.clearAllHighlights()
     }
   }
 
   const scheduleHighlight = () => {
+    const generation = beginGeneration(highlightGenerations, "editor")
     if (highlightTimer) clearTimeout(highlightTimer)
-    highlightTimer = setTimeout(() => void applyHighlights(), 120)
+    highlightTimer = setTimeout(() => {
+      if (isCurrentGeneration(highlightGenerations, generation)) void applyHighlights()
+    }, 120)
   }
 
   const editSelected = async () => {
@@ -447,6 +589,13 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const refresh = async () => {
+    const dirtyKey = currentDirtyKey()
+    if (dirtyKey && refreshArmed() !== dirtyKey) {
+      setRefreshArmed(dirtyKey)
+      setStatus("Unsaved changes in open tabs: press refresh again to refresh clean files")
+      return
+    }
+    setRefreshArmed("")
     await Promise.all([...children().keys()].map((key) => loadDirectory(key)))
     const current = activeTab()
     if (current) {
@@ -456,6 +605,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const runSearch = (value: string) => {
+    const generation = beginGeneration(searchGenerations, "query")
     if (searchTimer) clearTimeout(searchTimer)
     const query = value.trim()
     if (!query) {
@@ -466,9 +616,11 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     searchTimer = setTimeout(async () => {
       try {
         const response = await context.client.file.find({ location: { directory }, query, type: "file", limit: SEARCH_LIMIT })
+        if (!isCurrentGeneration(searchGenerations, generation)) return
         setResults(normalizeSearchResults(response.data.map((entry) => entry.path), SEARCH_LIMIT))
         setResultIndex(0)
       } catch (error) {
+        if (!isCurrentGeneration(searchGenerations, generation)) return
         setStatus(`Search failed: ${errorMessage(error)}`)
         setResults([])
       }
@@ -478,6 +630,19 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const openSearchResult = async () => {
     const target = results()[resultIndex()]
     if (target) await openFile(target)
+  }
+
+  const persistWorkspace = () => {
+    if (!restored()) return
+    const snapshot = persistTabs(tabs())
+    persistQueue = persistQueue.then(
+      () => updateWorkspace((draft) => {
+        draft.tabs[props.sessionID] = snapshot
+      }),
+      () => updateWorkspace((draft) => {
+        draft.tabs[props.sessionID] = snapshot
+      }),
+    )
   }
 
   useKeyboard((key) => {
@@ -526,6 +691,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       if (name === "escape") {
         key.preventDefault()
         key.stopPropagation()
+        invalidateGeneration(searchGenerations, "query")
         setMode("tree")
         setResults([])
         return
@@ -536,13 +702,13 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
         void openSearchResult()
         return
       }
-      if (name === "up" || name === "k") {
+      if (key.option && name === "up") {
         key.preventDefault()
         key.stopPropagation()
         setResultIndex((index) => nextIndex(index, results().length, -1))
         return
       }
-      if (name === "down" || name === "j") {
+      if (key.option && name === "down") {
         key.preventDefault()
         key.stopPropagation()
         setResultIndex((index) => nextIndex(index, results().length, 1))
@@ -554,14 +720,14 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       if (name === "escape") {
         key.preventDefault()
         key.stopPropagation()
-        if (dirty() && !escapeArmed()) {
-          setEscapeArmed(true)
+        const current = activeTab()
+        if (current && isDirtyTab(current) && !sameDirtyGuard(escapeArmed(), dirtyGuard(current))) {
+          setEscapeArmed(dirtyGuard(current))
           setStatus("Unsaved changes: Ctrl+S saves, Escape again discards")
           return
         }
-        const current = activeTab()
         if (current) setTabs((state) => updateTab(state, current.path, current.original))
-        setEscapeArmed(false)
+        setEscapeArmed(undefined)
         setMode("view")
         setStatus("")
       }
@@ -576,7 +742,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
         setStatus("")
         return
       }
-      props.panel.close()
+      closePanel()
       return
     }
 
@@ -660,13 +826,20 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   })
 
   const stopWatcher = context.data.on("filesystem.changed", (event) => {
-    const changed = normalizeRelative(event.data.file)
-    const current = activeTab()
-    if (current && (changed === current.path || current.path.endsWith(`/${changed}`) || changed.endsWith(`/${current.path}`))) {
-      if (dirty()) setStatus("File changed on disk; save or reopen to refresh")
-      else void reloadFile(current.path)
-    }
-    void Promise.all([...children().keys()].map((key) => loadDirectory(key)))
+    void (async () => {
+      let changed: string
+      try {
+        changed = (await getPathGuard()).normalize(event.data.file)
+      } catch {
+        return
+      }
+      const current = activeTab()
+      if (current && (changed === current.path || current.path.endsWith(`/${changed}`) || changed.endsWith(`/${current.path}`))) {
+        if (dirty()) setStatus("File changed on disk; save or reopen to refresh")
+        else await reloadFile(current.path)
+      }
+      await Promise.all([...children().keys()].map((key) => loadDirectory(key)))
+    })()
   })
 
   onMount(() => {
@@ -691,20 +864,19 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   // Persist the tab list per session (paths only; content reloads on restore).
   createEffect(() => {
     if (!restored()) return
-    const snapshot = persistTabs(tabs())
+    tabs()
     if (persistTimer) clearTimeout(persistTimer)
-    persistTimer = setTimeout(() => {
-      void updateWorkspace((draft) => {
-        draft.tabs[props.sessionID] = snapshot
-      })
-    }, 400)
+    persistTimer = setTimeout(persistWorkspace, 400)
   })
 
   onCleanup(() => {
     stopWatcher()
+    invalidateGeneration(searchGenerations, "query")
+    invalidateGeneration(highlightGenerations, "editor")
     if (searchTimer) clearTimeout(searchTimer)
     if (highlightTimer) clearTimeout(highlightTimer)
     if (persistTimer) clearTimeout(persistTimer)
+    persistWorkspace()
     syntaxStyle.destroy()
   })
 
@@ -728,7 +900,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
               <box
                 flexDirection="row"
                 backgroundColor={entry.path === tabs().active ? theme().background.surface.offset : undefined}
-                onMouseDown={(event) => activateRow(event, () => setTabs((state) => activateTab(state, entry.path)))}
+                onMouseDown={(event) => activateRow(event, () => activatePath(entry.path))}
               >
                 <text fg={entry.path === tabs().active ? theme().hue.accent[200] : theme().text.default}>
                   {basename(entry.path)}
@@ -916,12 +1088,12 @@ export default Plugin.define({
           commands: [
             {
               id: "file-manager.open",
-              title: "Open file manager",
+              title: "Open Explorer",
               description: "Open the project file tree and editor panel.",
               group: "Files",
               bind: "ctrl+shift+e",
               palette: true,
-              slash: { name: "files", aliases: ["explorer"] },
+              slash: EXPLORER_SLASH,
               run: () => {
                 context.ui.panel.open(PANEL_NAME)
               },

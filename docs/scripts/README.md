@@ -22,6 +22,8 @@ lists them at a glance and covers the operating environment.
 | Script | Document | What it does |
 |--------|----------|--------------|
 | `deploy-plugins.sh` | [`deploy-plugins.md`](deploy-plugins.md) | Register the local plugins globally or into a repository's `.opencode/` (v1), or the v2 packages into a config directory, optionally copying the bootstrap scripts |
+| `deploy-plugins-self-test.py` | [`deploy-plugins-self-test.md`](deploy-plugins-self-test.md) | Exercises v2 selection, dual-role registration, malformed entries, and idempotent deployment in temporary configs |
+| `v2-plugin-catalog.py` | [`v2-plugin-catalog.md`](v2-plugin-catalog.md) | Validates and normalizes the canonical six-package v2 role catalog |
 
 ### Verification
 

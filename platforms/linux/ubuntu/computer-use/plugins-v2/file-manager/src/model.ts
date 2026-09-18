@@ -1,5 +1,9 @@
 import path from "node:path"
 
+import { isLexicallySafeRelative, MAX_EDIT_BYTES } from "./safety.ts"
+
+export { MAX_EDIT_BYTES }
+
 export type FileNode = {
   name: string
   path: string
@@ -34,7 +38,6 @@ const FILETYPE_BY_EXTENSION: Record<string, string> = {
   ".zig": "zig",
 }
 
-export const MAX_EDIT_BYTES = 512 * 1024
 export const SEARCH_LIMIT = 200
 
 export function normalizeRelative(value: string): string {
@@ -103,7 +106,7 @@ export function normalizeSearchResults(results: readonly string[], limit: number
   const normalized: string[] = []
   for (const result of results) {
     const value = normalizeRelative(result)
-    if (!value || seen.has(value) || isProtectedPath(value)) continue
+    if (!value || !isLexicallySafeRelative(value) || seen.has(value) || isProtectedPath(value)) continue
     seen.add(value)
     normalized.push(value)
     if (normalized.length >= limit) break

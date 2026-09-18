@@ -4,7 +4,7 @@
 # It inspects the v2 binary, config, skills, commands, plugins, tools, and MCP
 # declarations without connecting any MCP server (so it never launches
 # Firefox). Override paths with OPENCODE_V2_PILOT_DIR, OPENCODE_V2_BIN,
-# OPENCODE_V2_REPO, or OPENCODE_V2_CONFIG_DIR.
+# OPENCODE_V2_REPO, OPENCODE_V2_CONFIG_DIR, or OPENCODE_V2_ROLE_CATALOG.
 set -euo pipefail
 
 PILOT="${OPENCODE_V2_PILOT_DIR:-$HOME/.opencode-v2-pilot}"
@@ -12,8 +12,9 @@ BIN="${OPENCODE_V2_BIN:-$HOME/.local/opt/opencode-v2/opencode}"
 REPO="${OPENCODE_V2_REPO:-$HOME/repos/opencode-rig}"
 CONFIG="${OPENCODE_V2_CONFIG_DIR:-$PILOT/config}"
 PLUGINS="$REPO/platforms/linux/ubuntu/computer-use/plugins-v2"
-SERVER_PLUGINS=(rig-tools rig-todo codex-fallback)
-CLI_PLUGINS=(source-control codex-usage file-manager)
+COMPUTER_USE_ROOT="$REPO/platforms/linux/ubuntu/computer-use"
+ROLE_CATALOG="${OPENCODE_V2_ROLE_CATALOG:-$COMPUTER_USE_ROOT/config/v2-plugin-roles.json}"
+CATALOG_TOOL="$REPO/platforms/linux/ubuntu/computer-use/scripts/v2-plugin-catalog.py"
 
 status=0
 ok() { printf 'OK: %s\n' "$*"; }
@@ -41,16 +42,24 @@ else
   fail "missing $CONFIG/cli.json"
 fi
 
-python3 - "$CONFIG" "$PLUGINS" "$REPO" "${SERVER_PLUGINS[@]}" -- "${CLI_PLUGINS[@]}" <<'PY'
+catalog_json='{"plugins": []}'
+if [ -f "$ROLE_CATALOG" ] && [ -f "$CATALOG_TOOL" ]; then
+  if catalog_json="$(python3 "$CATALOG_TOOL" --catalog "$ROLE_CATALOG" --root "$COMPUTER_USE_ROOT" --json 2>&1)"; then
+    ok "v2 plugin role catalog valid"
+  else
+    fail "v2 plugin role catalog invalid: $catalog_json"
+  fi
+else
+  fail "v2 plugin role catalog or validator missing"
+fi
+
+python3 - "$CONFIG" "$PLUGINS" "$REPO" "$catalog_json" <<'PY'
 import json
 import os
 import re
 import sys
 
-config, plugins_root, repo = sys.argv[1], sys.argv[2], sys.argv[3]
-separator = sys.argv.index("--")
-server_plugins = sys.argv[4:separator]
-cli_plugins = sys.argv[separator + 1 :]
+config, plugins_root, repo, catalog_text = sys.argv[1:5]
 failures: list[str] = []
 
 
@@ -68,8 +77,21 @@ def load_jsonc(path: str):
     return json.loads(text)
 
 
-server = load_jsonc(os.path.join(config, "opencode.jsonc"))
-cli = json.load(open(os.path.join(config, "cli.json"), encoding="utf-8"))
+try:
+    server = load_jsonc(os.path.join(config, "opencode.jsonc"))
+except (OSError, ValueError) as error:
+    server = {}
+    failures.append(f"cannot read server config: {error}")
+try:
+    cli = json.load(open(os.path.join(config, "cli.json"), encoding="utf-8"))
+except (OSError, ValueError) as error:
+    cli = {}
+    failures.append(f"cannot read cli config: {error}")
+try:
+    catalog = json.loads(catalog_text)
+except ValueError as error:
+    catalog = {"plugins": []}
+    failures.append(f"cannot read normalized role catalog: {error}")
 
 skills_dir = os.path.join(config, "skills")
 try:
@@ -105,26 +127,74 @@ if isinstance(mcp, dict):
     else:
         fail(f"more than one playwright MCP declared: {play}")
 
-server_entries = [entry.get("package", "").split("/")[-1] for entry in server.get("plugins", []) if isinstance(entry, dict)]
-cli_entries = [entry.get("package", "").split("/")[-1] for entry in cli.get("plugins", []) if isinstance(entry, dict)]
-missing_server = [name for name in server_plugins if name not in server_entries]
-missing_cli = [name for name in cli_plugins if name not in cli_entries]
-if missing_server:
-    fail(f"server plugins missing: {missing_server}")
-else:
-    ok(f"server plugins declared: {server_plugins}")
-if missing_cli:
-    fail(f"cli plugins missing: {missing_cli}")
-else:
-    ok(f"cli plugins declared: {cli_plugins}")
+expected = {"server": {}, "cli": {}}
+for plugin in catalog.get("plugins", []) if isinstance(catalog, dict) else []:
+    if not isinstance(plugin, dict):
+        failures.append("role catalog contains a malformed plugin")
+        continue
+    name = plugin.get("name")
+    package = plugin.get("package")
+    roles = plugin.get("roles")
+    if not isinstance(name, str) or not isinstance(package, str) or not isinstance(roles, dict):
+        failures.append("role catalog contains an incomplete plugin")
+        continue
+    for role, descriptor in roles.items():
+        if role not in expected or not isinstance(descriptor, dict):
+            failures.append(f"role catalog contains an invalid role for {name}")
+            continue
+        expected[role][name] = (os.path.realpath(package), descriptor.get("entrypoint"))
 
-for name in server_plugins + cli_plugins:
-    shim = os.path.join(plugins_root, name, "server.ts")
-    shim_tui = os.path.join(plugins_root, name, "tui.tsx")
-    if os.path.exists(shim) or os.path.exists(shim_tui):
-        ok(f"plugin package present: {name}")
+
+def config_entries(data, role):
+    entries = data.get("plugins") if isinstance(data, dict) else None
+    if not isinstance(entries, list):
+        failures.append(f"{role} plugins is not a list")
+        return {}
+    result = {}
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict) or not isinstance(entry.get("package"), str):
+            failures.append(f"{role} plugin entry {index} is malformed")
+            continue
+        package = entry["package"]
+        canonical = os.path.realpath(package)
+        if not os.path.isabs(package) or package != canonical:
+            failures.append(f"{role} plugin entry {index} is not a canonical absolute path")
+        if canonical in result:
+            failures.append(f"{role} plugin is declared more than once: {canonical}")
+        result[canonical] = entry
+    return result
+
+
+server_entries = config_entries(server, "server")
+cli_entries = config_entries(cli, "cli")
+actual_by_role = {"server": server_entries, "cli": cli_entries}
+known_packages = {}
+for role, plugins in expected.items():
+    for name, (package, entrypoint) in plugins.items():
+        known_packages.setdefault(package, set()).add(role)
+        if not os.path.isfile(entrypoint):
+            failures.append(f"plugin role entrypoint missing: {name} ({role})")
+        else:
+            ok(f"plugin role entrypoint: {name} ({role})")
+
+for role, plugins in expected.items():
+    actual = actual_by_role[role]
+    missing = [name for name, (package, _) in plugins.items() if package not in actual]
+    if missing:
+        fail(f"{role} plugins missing: {missing}")
     else:
-        fail(f"plugin package missing entry shim: {name}")
+        ok(f"{role} plugins declared: {list(plugins)}")
+    for package in actual:
+        allowed_roles = known_packages.get(package)
+        if allowed_roles is not None and role not in allowed_roles:
+            failures.append(f"{role} contains plugin registered for another role: {package}")
+
+for role, actual in actual_by_role.items():
+    for package in actual:
+        for name, (expected_package, _) in expected[role].items():
+            if expected_package == package:
+                ok(f"plugin package canonical: {name} ({role})")
+                break
 
 theme = cli.get("theme")
 if isinstance(theme, dict) and theme.get("name") == "aura":

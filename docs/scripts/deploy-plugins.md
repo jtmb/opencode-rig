@@ -129,29 +129,42 @@ row sits below Source Control and above the built-in context panel.
 
 ## v2 mode (`--v2`)
 
-`--v2` registers the six packages under `computer-use/plugins-v2/` as object
-entries with absolute package paths:
+`--v2` reads the canonical role catalog from
+`computer-use/config/v2-plugin-roles.json` and registers its six packages as
+object entries with absolute package paths. The catalog records the package
+path, role entrypoint, and expected config file; it is validated before any
+deployment work. Override it for an isolated test with
+`OPENCODE_V2_ROLE_CATALOG`.
 
-| Kind | Plugins | Config file | Key |
+| Kind | Catalog-selected roles | Config file | Key |
 |------|---------|-------------|-----|
-| server | `rig-tools`, `rig-todo`, `codex-fallback` | `<config-dir>/opencode.jsonc` | `plugins` |
-| CLI | `source-control`, `codex-usage`, `file-manager` | `<config-dir>/cli.json` | `plugins` |
+| server | packages declaring the `server` role | `<config-dir>/opencode.jsonc` | `plugins` |
+| CLI | packages declaring the `cli` role | `<config-dir>/cli.json` | `plugins` |
 
 ```json
 { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools", "options": {} }
 ```
 
-`--plugins all` selects all six, `server` and `cli` select a kind, and a single
-name selects one; `both` keeps the Codex pair. Deduplication compares the real
-path of each entry's `package` field, so entries may appear in any order
-without a write. New entries receive `options: {}`; `source-control` is added
-with `{ "github": true, "whenEmpty": "show" }` for v1 parity, and `--chain`
-writes `defaultChain` for `codex-fallback`. Existing entries keep their
-options. A missing config is created with the correct `$schema`; targets are
-strict JSON, so a config with comments is reported instead of rewritten.
+`--plugins all` selects every catalog package and every role, `server` and `cli`
+select only that role, and a single package name selects every role owned by
+that package; `both` keeps the Codex pair. This distinction means selecting
+`server` does not unexpectedly add the Todo CLI panel, while selecting
+`rig-todo` or `all` registers both Todo roles. Deduplication compares canonical
+paths and rejects duplicate, malformed, or non-canonical entries before a
+write. New entries receive `options: {}`; `source-control` is added with
+`{ "github": true, "whenEmpty": "show" }` for v1 parity, and `--chain` writes
+`defaultChain` for `codex-fallback`. Existing entries keep their options. A
+missing config is created with the correct `$schema`; targets are strict JSON,
+so a config with comments is reported instead of rewritten.
 
 `--v2` never touches the v1 config: the default target is the isolated pilot
 config directory. Registration changes take effect after OpenCode restarts.
+
+Run the disposable deployment regression suite with:
+
+```bash
+python3 platforms/linux/ubuntu/computer-use/scripts/deploy-plugins-self-test.py
+```
 
 ## Bootstrap script copy (`--bootstrap`)
 

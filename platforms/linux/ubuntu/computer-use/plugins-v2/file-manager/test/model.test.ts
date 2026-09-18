@@ -112,7 +112,7 @@ test("detects dirty state, binary content, and oversize files", () => {
 })
 
 test("normalizes quick-open results and drops protected paths", () => {
-  const results = ["src/a.ts", "./src/a.ts", ".git/config", "", "src/b.ts"]
+  const results = ["src/a.ts", "./src/a.ts", "../escape.ts", "/etc/passwd", ".git/config", "", "src/b.ts"]
   assert.deepEqual(normalizeSearchResults(results, 10), ["src/a.ts", "src/b.ts"])
   assert.deepEqual(normalizeSearchResults(["a", "b", "c"], 2), ["a", "b"])
 })

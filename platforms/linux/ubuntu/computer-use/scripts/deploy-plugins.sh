@@ -103,8 +103,8 @@ if [ "$V2" -eq 1 ]; then
     exit 2
   fi
   case "$PLUGINS" in
-    both|all|server|cli|rig-tools|rig-todo|codex-fallback|source-control|codex-usage|file-manager) ;;
-    *) echo "ERROR: with --v2 --plugins must be both, all, server, cli, or one of: rig-tools, rig-todo, codex-fallback, source-control, codex-usage, file-manager" >&2; exit 2 ;;
+    both|all|server|cli) ;;
+    ''|*[!a-z0-9-]*) echo "ERROR: with --v2 --plugins must be both, all, server, cli, or a catalog package name" >&2; exit 2 ;;
   esac
 else
   if [ "$V2_CONFIG_SET" -eq 1 ]; then
@@ -129,17 +129,36 @@ SERVER_MODULE="$COMPUTER_USE_ROOT/plugins/codex-fallback/src/index.ts"
 SOURCE_CONTROL_MODULE="$COMPUTER_USE_ROOT/plugins/source-control/src/tui.tsx"
 TUI_SETTINGS_MODULE="$COMPUTER_USE_ROOT/plugins/tui-settings/src/tui.tsx"
 FILE_MANAGER_MODULE="$COMPUTER_USE_ROOT/plugins/file-manager/src/tui.tsx"
-V2_ROOT="$COMPUTER_USE_ROOT/plugins-v2"
-V2_RIG_TOOLS="$V2_ROOT/rig-tools"
-V2_RIG_TODO="$V2_ROOT/rig-todo"
-V2_CODEX_FALLBACK="$V2_ROOT/codex-fallback"
-V2_SOURCE_CONTROL="$V2_ROOT/source-control"
-V2_CODEX_USAGE="$V2_ROOT/codex-usage"
-V2_FILE_MANAGER="$V2_ROOT/file-manager"
+V2_ROLE_CATALOG="${OPENCODE_V2_ROLE_CATALOG:-$COMPUTER_USE_ROOT/config/v2-plugin-roles.json}"
+V2_CATALOG_TOOL="$SCRIPT_DIR/v2-plugin-catalog.py"
+
+declare -a V2_CATALOG_NAMES=()
+declare -a V2_SELECTED_NAMES=()
+declare -A V2_PACKAGE_FOR=()
+declare -A V2_ENTRYPOINT_FOR=()
+declare -A V2_CONFIG_FOR=()
+declare -A V2_ROLE_FOR=()
+declare -A V2_SELECTED_FOR=()
 
 if [ "$V2" -eq 0 ]; then
   [ -f "$TUI_MODULE" ] || { echo "ERROR: missing plugin entrypoint: $TUI_MODULE" >&2; exit 1; }
   [ -f "$SERVER_MODULE" ] || { echo "ERROR: missing plugin entrypoint: $SERVER_MODULE" >&2; exit 1; }
+fi
+
+if [ "$V2" -eq 1 ]; then
+  [ -f "$V2_ROLE_CATALOG" ] || { echo "ERROR: missing v2 role catalog: $V2_ROLE_CATALOG" >&2; exit 1; }
+  [ -f "$V2_CATALOG_TOOL" ] || { echo "ERROR: missing v2 catalog validator: $V2_CATALOG_TOOL" >&2; exit 1; }
+  V2_CATALOG_ROWS="$(python3 "$V2_CATALOG_TOOL" --catalog "$V2_ROLE_CATALOG" --root "$COMPUTER_USE_ROOT" --rows)"
+  while IFS=$'\t' read -r name role package entrypoint config; do
+    [ -n "$name" ] || continue
+    if [ -z "${V2_PACKAGE_FOR[$name]+present}" ]; then
+      V2_CATALOG_NAMES+=("$name")
+      V2_PACKAGE_FOR["$name"]="$package"
+    fi
+    V2_ENTRYPOINT_FOR["$name:$role"]="$entrypoint"
+    V2_CONFIG_FOR["$name:$role"]="$config"
+    V2_ROLE_FOR["$name:$role"]=1
+  done <<< "$V2_CATALOG_ROWS"
 fi
 
 if [ "$V2" -eq 1 ]; then
@@ -330,18 +349,30 @@ entries = data.get("plugins") if isinstance(data, dict) else None
 if not isinstance(entries, list):
     print("missing")
     raise SystemExit(0)
+matches = 0
 for entry in entries:
-    if isinstance(entry, dict):
-        candidate = entry.get("package")
-        if isinstance(candidate, str) and os.path.realpath(candidate) == target:
-            print("present")
-            raise SystemExit(0)
-print("missing")
+    if not isinstance(entry, dict) or not isinstance(entry.get("package"), str):
+        print("malformed")
+        raise SystemExit(0)
+    candidate = entry["package"]
+    if not os.path.isabs(candidate) or candidate != os.path.realpath(candidate):
+        print("malformed")
+        raise SystemExit(0)
+    if os.path.realpath(candidate) == target:
+        matches += 1
+if matches > 1:
+    print("duplicate")
+elif matches == 1:
+    print("present")
+else:
+    print("missing")
 PY
 )"
   case "$result" in
     present) ok "$label plugin registered in $path" ;;
     missing) fail "$label plugin not registered in $path"; PLUGIN_STATUS=1 ;;
+    duplicate) fail "$label plugin is registered more than once in $path"; PLUGIN_STATUS=1 ;;
+    malformed) fail "$label config contains a malformed or non-canonical plugin entry: $path"; PLUGIN_STATUS=1 ;;
     *) fail "$label config is not editable JSON (comments?): $path"; PLUGIN_STATUS=1 ;;
   esac
 }
@@ -379,16 +410,29 @@ else:
 
 entries = data.get("plugins")
 if not isinstance(entries, list):
+    if "plugins" in data:
+        print("invalid: plugins must be a list")
+        raise SystemExit(0)
     entries = []
     data["plugins"] = entries
 
+matches = 0
 for entry in entries:
-    if not isinstance(entry, dict):
-        continue
-    candidate = entry.get("package")
-    if isinstance(candidate, str) and os.path.realpath(candidate) == target:
-        print("present")
+    if not isinstance(entry, dict) or not isinstance(entry.get("package"), str):
+        print("invalid: plugins contains a malformed entry")
         raise SystemExit(0)
+    candidate = entry["package"]
+    if not os.path.isabs(candidate) or candidate != os.path.realpath(candidate):
+        print("invalid: plugins contains a non-canonical package path")
+        raise SystemExit(0)
+    if os.path.realpath(candidate) == target:
+        matches += 1
+if matches > 1:
+    print("invalid: package is duplicated")
+    raise SystemExit(0)
+if matches == 1:
+    print("present")
+    raise SystemExit(0)
 
 entries.append({"package": package, "options": options})
 
@@ -537,20 +581,67 @@ want_fallback=0
 want_source_control=0
 want_tui_settings=0
 want_file_manager=0
-want_rig_tools=0
-want_rig_todo=0
+
+v2_select_name() {
+  local name="$1"
+  if [ -z "${V2_PACKAGE_FOR[$name]+present}" ]; then
+    echo "ERROR: package is not present in the v2 role catalog: $name" >&2
+    exit 2
+  fi
+  if [ -z "${V2_SELECTED_FOR[$name]+present}" ]; then
+    V2_SELECTED_NAMES+=("$name")
+    V2_SELECTED_FOR["$name"]=1
+  fi
+}
+
+v2_select_role() {
+  local role="$1"
+  local name
+  for name in "${V2_CATALOG_NAMES[@]}"; do
+    if [ -n "${V2_ROLE_FOR[$name:$role]+present}" ]; then
+      v2_select_name "$name"
+    fi
+  done
+}
+
+v2_role_selected() {
+  case "$PLUGINS:$1" in
+    server:cli|cli:server) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+v2_config_for_role() {
+  case "$1" in
+    server) printf '%s\n' "$SERVER_CONFIG" ;;
+    cli) printf '%s\n' "$CLI_CONFIG" ;;
+    *) return 1 ;;
+  esac
+}
+
+v2_schema_for_role() {
+  case "$1" in
+    server) printf '%s\n' "https://opencode.ai/config.json" ;;
+    cli) printf '%s\n' "https://opencode.ai/v2/cli.json" ;;
+    *) return 1 ;;
+  esac
+}
+
+v2_options_for() {
+  case "$1" in
+    codex-fallback) chain_options ;;
+    source-control) printf '%s\n' '{"github":true,"whenEmpty":"show"}' ;;
+    *) printf '%s\n' '{}' ;;
+  esac
+}
 
 if [ "$V2" -eq 1 ]; then
   case "$PLUGINS" in
-    both) want_usage=1; want_fallback=1 ;;
-    all) want_rig_tools=1; want_rig_todo=1; want_fallback=1; want_source_control=1; want_usage=1; want_file_manager=1 ;;
-    server) want_rig_tools=1; want_rig_todo=1; want_fallback=1 ;;
-    cli) want_source_control=1; want_usage=1; want_file_manager=1 ;;
-    rig-tools) want_rig_tools=1 ;;
-    rig-todo) want_rig_todo=1 ;;
-    source-control) want_source_control=1 ;;
-    codex-usage) want_usage=1 ;;
-    file-manager) want_file_manager=1 ;;
+    both) v2_select_name codex-usage; v2_select_name codex-fallback ;;
+    all) for name in "${V2_CATALOG_NAMES[@]}"; do v2_select_name "$name"; done ;;
+    server) v2_select_role server ;;
+    cli) v2_select_role cli ;;
+    *) v2_select_name "$PLUGINS" ;;
   esac
 else
   case "$PLUGINS" in
@@ -565,30 +656,24 @@ else
 fi
 
 if [ "$V2" -eq 1 ]; then
-  if [ "$want_rig_tools" -eq 1 ] && [ ! -f "$V2_RIG_TOOLS/server.ts" ]; then
-    echo "ERROR: missing plugin entrypoint: $V2_RIG_TOOLS/server.ts" >&2
-    exit 1
-  fi
-  if [ "$want_rig_todo" -eq 1 ] && [ ! -f "$V2_RIG_TODO/server.ts" ]; then
-    echo "ERROR: missing plugin entrypoint: $V2_RIG_TODO/server.ts" >&2
-    exit 1
-  fi
-  if [ "$want_fallback" -eq 1 ] && [ ! -f "$V2_CODEX_FALLBACK/server.ts" ]; then
-    echo "ERROR: missing plugin entrypoint: $V2_CODEX_FALLBACK/server.ts" >&2
-    exit 1
-  fi
-  if [ "$want_source_control" -eq 1 ] && [ ! -f "$V2_SOURCE_CONTROL/tui.tsx" ]; then
-    echo "ERROR: missing plugin entrypoint: $V2_SOURCE_CONTROL/tui.tsx" >&2
-    exit 1
-  fi
-  if [ "$want_usage" -eq 1 ] && [ ! -f "$V2_CODEX_USAGE/tui.tsx" ]; then
-    echo "ERROR: missing plugin entrypoint: $V2_CODEX_USAGE/tui.tsx" >&2
-    exit 1
-  fi
-  if [ "$want_file_manager" -eq 1 ] && [ ! -f "$V2_FILE_MANAGER/tui.tsx" ]; then
-    echo "ERROR: missing plugin entrypoint: $V2_FILE_MANAGER/tui.tsx" >&2
-    exit 1
-  fi
+  for name in "${V2_SELECTED_NAMES[@]}"; do
+    for role in server cli; do
+      key="$name:$role"
+      if [ -n "${V2_ENTRYPOINT_FOR[$key]+present}" ] && v2_role_selected "$role"; then
+        entrypoint="${V2_ENTRYPOINT_FOR[$key]}"
+        expected_config="${V2_CONFIG_FOR[$key]}"
+        config_path="$(v2_config_for_role "$role")"
+        if [ ! -f "$entrypoint" ]; then
+          echo "ERROR: missing plugin role entrypoint: $entrypoint" >&2
+          exit 1
+        fi
+        if [ "$(basename -- "$config_path")" != "$expected_config" ]; then
+          echo "ERROR: catalog expects $expected_config for $name ($role), but deployment targets $config_path" >&2
+          exit 1
+        fi
+      fi
+    done
+  done
 else
   if [ "$want_source_control" -eq 1 ] && [ ! -f "$SOURCE_CONTROL_MODULE" ]; then
     echo "ERROR: missing plugin entrypoint: $SOURCE_CONTROL_MODULE" >&2
@@ -606,24 +691,16 @@ fi
 
 if [ "$APPLY" -eq 1 ]; then
   if [ "$V2" -eq 1 ]; then
-    if [ "$want_rig_tools" -eq 1 ]; then
-      apply_config_v2 "$SERVER_CONFIG" "https://opencode.ai/config.json" "$V2_RIG_TOOLS" "{}" "rig-tools"
-    fi
-    if [ "$want_rig_todo" -eq 1 ]; then
-      apply_config_v2 "$SERVER_CONFIG" "https://opencode.ai/config.json" "$V2_RIG_TODO" "{}" "rig-todo"
-    fi
-    if [ "$want_fallback" -eq 1 ]; then
-      apply_config_v2 "$SERVER_CONFIG" "https://opencode.ai/config.json" "$V2_CODEX_FALLBACK" "$(chain_options)" "codex-fallback"
-    fi
-    if [ "$want_source_control" -eq 1 ]; then
-      apply_config_v2 "$CLI_CONFIG" "https://opencode.ai/v2/cli.json" "$V2_SOURCE_CONTROL" '{"github":true,"whenEmpty":"show"}' "source-control"
-    fi
-    if [ "$want_usage" -eq 1 ]; then
-      apply_config_v2 "$CLI_CONFIG" "https://opencode.ai/v2/cli.json" "$V2_CODEX_USAGE" "{}" "codex-usage"
-    fi
-    if [ "$want_file_manager" -eq 1 ]; then
-      apply_config_v2 "$CLI_CONFIG" "https://opencode.ai/v2/cli.json" "$V2_FILE_MANAGER" "{}" "file-manager"
-    fi
+    for name in "${V2_SELECTED_NAMES[@]}"; do
+      for role in server cli; do
+        key="$name:$role"
+        if [ -n "${V2_ENTRYPOINT_FOR[$key]+present}" ] && v2_role_selected "$role"; then
+          config_path="$(v2_config_for_role "$role")"
+          schema="$(v2_schema_for_role "$role")"
+          apply_config_v2 "$config_path" "$schema" "${V2_PACKAGE_FOR[$name]}" "$(v2_options_for "$name")" "$name ($role)"
+        fi
+      done
+    done
   else
     if [ "$want_usage" -eq 1 ]; then
       apply_config "$TUI_CONFIG" "https://opencode.ai/tui.json" "file://$TUI_MODULE" "" "codex-usage"
@@ -648,25 +725,15 @@ if [ "$APPLY" -eq 1 ]; then
 fi
 
 if [ "$V2" -eq 1 ]; then
-  if [ "$want_rig_tools" -eq 1 ]; then
-    check_config_v2 "$SERVER_CONFIG" "$V2_RIG_TOOLS" "rig-tools"
-  fi
-  if [ "$want_rig_todo" -eq 1 ]; then
-    check_config_v2 "$SERVER_CONFIG" "$V2_RIG_TODO" "rig-todo"
-  fi
-  if [ "$want_fallback" -eq 1 ]; then
-    check_config_v2 "$SERVER_CONFIG" "$V2_CODEX_FALLBACK" "codex-fallback"
-  fi
-  if [ "$want_source_control" -eq 1 ]; then
-    check_config_v2 "$CLI_CONFIG" "$V2_SOURCE_CONTROL" "source-control"
-  fi
-  if [ "$want_usage" -eq 1 ]; then
-    check_config_v2 "$CLI_CONFIG" "$V2_CODEX_USAGE" "codex-usage"
-  fi
-  if [ "$want_file_manager" -eq 1 ]; then
-    check_config_v2 "$CLI_CONFIG" "$V2_FILE_MANAGER" "file-manager"
-  fi
-  if [ "$want_fallback" -eq 1 ] && ! fallback_chained_v2 "$SERVER_CONFIG" "$V2_CODEX_FALLBACK"; then
+  for name in "${V2_SELECTED_NAMES[@]}"; do
+    for role in server cli; do
+      key="$name:$role"
+      if [ -n "${V2_ENTRYPOINT_FOR[$key]+present}" ] && v2_role_selected "$role"; then
+        check_config_v2 "$(v2_config_for_role "$role")" "${V2_PACKAGE_FOR[$name]}" "$name ($role)"
+      fi
+    done
+  done
+  if [ -n "${V2_SELECTED_FOR[codex-fallback]+present}" ] && ! fallback_chained_v2 "$SERVER_CONFIG" "${V2_PACKAGE_FOR[codex-fallback]}"; then
     echo "NOTICE: codex-fallback has no defaultChain configured and stays inactive (see plugins-v2/codex-fallback/README.md)."
   fi
 else

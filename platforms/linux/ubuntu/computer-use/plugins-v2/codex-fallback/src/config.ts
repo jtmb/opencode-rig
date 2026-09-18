@@ -14,7 +14,6 @@ export type AgentFallbackConfig = {
 export type GlobalOptions = {
   defaultChain: ModelRef[]
   proactive: boolean
-  notify: boolean
   triggerOn: TriggerMode
   failureCooldownSeconds: number
   sourceCooldownSeconds: number
@@ -33,11 +32,6 @@ export type EffectiveFallback = {
   sourceCooldownSeconds: number
 }
 
-export type CollectedAgents = {
-  fallbacks: Map<string, AgentFallbackConfig>
-  models: Map<string, ModelRef>
-}
-
 export const DEFAULT_FAILURE_COOLDOWN_SECONDS = 300
 export const DEFAULT_SOURCE_COOLDOWN_SECONDS = 10_800
 export const DEFAULT_USAGE_CACHE_MS = 60_000
@@ -45,15 +39,18 @@ export const DEFAULT_USAGE_TIMEOUT_MS = 5_000
 
 const MIN_USAGE_CACHE_MS = 1_000
 const MIN_USAGE_TIMEOUT_MS = 500
+const MAX_COOLDOWN_SECONDS = 7 * 24 * 60 * 60
+const MAX_USAGE_CACHE_MS = 24 * 60 * 60 * 1_000
+const MAX_USAGE_TIMEOUT_MS = 60 * 1_000
 
-function boundedNumber(value: unknown, fallback: number, minimum: number): number {
+function boundedNumber(value: unknown, fallback: number, minimum: number, maximum: number): number {
   if (typeof value !== "number" || !Number.isFinite(value)) return fallback
-  return Math.max(minimum, Math.floor(value))
+  return Math.min(maximum, Math.max(minimum, Math.floor(value)))
 }
 
 function optionalSeconds(value: unknown): number | undefined {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return undefined
-  return Math.floor(value)
+  return Math.min(MAX_COOLDOWN_SECONDS, Math.floor(value))
 }
 
 export function parseChain(value: unknown): ModelRef[] {
@@ -89,75 +86,39 @@ export function parseAgentFallback(raw: unknown): AgentFallbackConfig | undefine
   return config
 }
 
-export function collectAgentConfigs(config: unknown): CollectedAgents {
-  const collected: CollectedAgents = { fallbacks: new Map(), models: new Map() }
-  if (!isRecord(config)) return collected
-  const agents = config.agent
-  if (!isRecord(agents)) return collected
-
-  for (const [name, entry] of Object.entries(agents)) {
-    if (!isRecord(entry)) continue
-
-    if (typeof entry.model === "string") {
-      const model = parseModelKey(entry.model)
-      if (model) collected.models.set(name, model)
-    }
-
-    const options = isRecord(entry.options) ? entry.options : undefined
-    const raw = options?.codexFallback ?? entry.codexFallback
-    const parsed = parseAgentFallback(raw)
-    if (parsed) collected.fallbacks.set(name, parsed)
-  }
-
-  return collected
-}
-
-export function stripAgentFallback(config: unknown): number {
-  if (!isRecord(config)) return 0
-  const agents = config.agent
-  if (!isRecord(agents)) return 0
-
-  let removed = 0
-  for (const entry of Object.values(agents)) {
-    if (!isRecord(entry)) continue
-    if (isRecord(entry.options) && "codexFallback" in entry.options) {
-      delete entry.options.codexFallback
-      removed += 1
-    }
-    if ("codexFallback" in entry) {
-      delete entry.codexFallback
-      removed += 1
-    }
-  }
-  return removed
-}
-
 export function normalizeOptions(raw: unknown): GlobalOptions {
   const source = isRecord(raw) ? raw : {}
   return {
     defaultChain: parseChain(source.defaultChain),
     proactive: source.proactive !== false,
-    notify: source.notify !== false,
     triggerOn: source.triggerOn === "any-retryable" ? "any-retryable" : "quota",
     failureCooldownSeconds: boundedNumber(
       source.failureCooldownSeconds,
       DEFAULT_FAILURE_COOLDOWN_SECONDS,
       1,
+      MAX_COOLDOWN_SECONDS,
     ),
     sourceCooldownSeconds: boundedNumber(
       source.sourceCooldownSeconds,
       DEFAULT_SOURCE_COOLDOWN_SECONDS,
       1,
+      MAX_COOLDOWN_SECONDS,
     ),
     usageEndpoint:
       typeof source.usageEndpoint === "string" && source.usageEndpoint
         ? source.usageEndpoint
         : undefined,
-    usageCacheMs: boundedNumber(source.usageCacheMs, DEFAULT_USAGE_CACHE_MS, MIN_USAGE_CACHE_MS),
+    usageCacheMs: boundedNumber(
+      source.usageCacheMs,
+      DEFAULT_USAGE_CACHE_MS,
+      MIN_USAGE_CACHE_MS,
+      MAX_USAGE_CACHE_MS,
+    ),
     usageTimeoutMs: boundedNumber(
       source.usageTimeoutMs,
       DEFAULT_USAGE_TIMEOUT_MS,
       MIN_USAGE_TIMEOUT_MS,
+      MAX_USAGE_TIMEOUT_MS,
     ),
     debug: source.debug === true,
   }

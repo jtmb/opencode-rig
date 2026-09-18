@@ -1,7 +1,12 @@
+import { normalizeSafeRelative } from "./safety.ts"
+
 export interface FileTab {
   path: string
   content: string
   original: string
+  diskFingerprint?: string
+  mode?: number
+  revision?: number
 }
 
 export interface TabsState {
@@ -20,6 +25,50 @@ export function isDirtyTab(tab: FileTab): boolean {
 
 export function dirtyTabs(state: TabsState): FileTab[] {
   return state.open.filter(isDirtyTab)
+}
+
+export type DirtyGuard = {
+  path: string
+  revision: number
+}
+
+export function tabRevision(tab: FileTab): number {
+  return tab.revision ?? 0
+}
+
+export function dirtyGuard(tab: FileTab): DirtyGuard {
+  return { path: tab.path, revision: tabRevision(tab) }
+}
+
+export function dirtyGuards(state: TabsState): DirtyGuard[] {
+  return dirtyTabs(state).map(dirtyGuard)
+}
+
+export function sameDirtyGuard(left: DirtyGuard | undefined, right: DirtyGuard | undefined): boolean {
+  return !!left && !!right && left.path === right.path && left.revision === right.revision
+}
+
+export function dirtyGuardKey(guards: readonly DirtyGuard[]): string {
+  return guards.map((guard) => `${guard.path}:${guard.revision}`).sort().join("|")
+}
+
+export type TabSaveSnapshot = {
+  path: string
+  content: string
+  diskFingerprint: string
+  mode: number
+  revision: number
+}
+
+export function saveSnapshot(tab: FileTab): TabSaveSnapshot | undefined {
+  if (tab.diskFingerprint === undefined || tab.mode === undefined) return undefined
+  return {
+    path: tab.path,
+    content: tab.content,
+    diskFingerprint: tab.diskFingerprint,
+    mode: tab.mode,
+    revision: tabRevision(tab),
+  }
 }
 
 /** Open a file or activate it when already open (unsaved content wins). */
@@ -46,7 +95,14 @@ export function activateTab(state: TabsState, path: string): TabsState {
 
 export function updateTab(state: TabsState, path: string, content: string): TabsState {
   if (!state.open.some((entry) => entry.path === path)) return state
-  return { ...state, open: state.open.map((entry) => (entry.path === path ? { ...entry, content } : entry)) }
+  return {
+    ...state,
+    open: state.open.map((entry) =>
+      entry.path === path && entry.content !== content
+        ? { ...entry, content, revision: tabRevision(entry) + 1 }
+        : entry,
+    ),
+  }
 }
 
 /** Mark a tab's current content as the saved baseline. */
@@ -54,6 +110,24 @@ export function markSaved(state: TabsState, path: string): TabsState {
   return {
     ...state,
     open: state.open.map((entry) => (entry.path === path ? { ...entry, original: entry.content } : entry)),
+  }
+}
+
+/** Mark only the exact snapshot as saved; newer edits remain dirty. */
+export function markSavedSnapshot(
+  state: TabsState,
+  snapshot: TabSaveSnapshot,
+  diskFingerprint: string,
+  mode: number,
+): TabsState {
+  return {
+    ...state,
+    open: state.open.map((entry) => {
+      if (entry.path !== snapshot.path) return entry
+      const updated = { ...entry, diskFingerprint, mode }
+      if (tabRevision(entry) !== snapshot.revision || entry.content !== snapshot.content) return updated
+      return { ...updated, original: snapshot.content }
+    }),
   }
 }
 
@@ -99,10 +173,16 @@ export function restorePaths(saved: unknown): string[] {
   const seen = new Set<string>()
   const paths: string[] = []
   for (const entry of open) {
-    if (typeof entry === "string" && entry.length > 0 && !seen.has(entry)) {
-      seen.add(entry)
-      paths.push(entry)
+    if (typeof entry !== "string" || entry.length === 0) continue
+    let normalized: string
+    try {
+      normalized = normalizeSafeRelative(entry)
+    } catch {
+      continue
     }
+    if (seen.has(normalized)) continue
+    seen.add(normalized)
+    paths.push(normalized)
   }
   return paths
 }

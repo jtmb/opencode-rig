@@ -2,12 +2,10 @@ import assert from "node:assert/strict"
 import test from "node:test"
 
 import {
-  collectAgentConfigs,
   normalizeOptions,
   parseAgentFallback,
   parseChain,
   resolveEffective,
-  stripAgentFallback,
   type GlobalOptions,
 } from "../src/config.ts"
 
@@ -15,7 +13,6 @@ function options(overrides: Partial<GlobalOptions> = {}): GlobalOptions {
   return {
     defaultChain: parseChain(["deepseek/deepseek-v4-flash", "opencode/muse-spark-1.3-contributor-free"]),
     proactive: true,
-    notify: true,
     triggerOn: "quota",
     failureCooldownSeconds: 300,
     sourceCooldownSeconds: 10_800,
@@ -72,55 +69,10 @@ test("parses per-agent fallback config", () => {
   assert.equal(parseAgentFallback(undefined), undefined)
 })
 
-test("collects agent fallbacks and configured models from merged config", () => {
-  const config = {
-    agent: {
-      build: {
-        model: "openai/gpt-5.3-codex-spark",
-        options: { codexFallback: { mode: "chain", chain: ["deepseek/deepseek-v4-pro"] } },
-      },
-      plan: { codexFallback: { mode: "off" } },
-      general: { model: "deepseek/deepseek-v4-flash" },
-    },
-  }
-
-  const collected = collectAgentConfigs(config)
-  assert.deepEqual([...collected.fallbacks.keys()].sort(), ["build", "plan"])
-  assert.deepEqual(collected.fallbacks.get("plan"), { mode: "off" })
-  assert.deepEqual(collected.models.get("build"), {
-    providerID: "openai",
-    modelID: "gpt-5.3-codex-spark",
-  })
-  assert.deepEqual(collected.models.get("general"), {
-    providerID: "deepseek",
-    modelID: "deepseek-v4-flash",
-  })
-})
-
-test("strips plugin keys from agent config so they never reach providers", () => {
-  const config = {
-    agent: {
-      build: {
-        model: "openai/gpt-5.3-codex-spark",
-        options: { codexFallback: { mode: "off" }, reasoningEffort: "high" },
-      },
-      plan: { codexFallback: { mode: "chain" }, options: {} },
-    },
-  }
-
-  const removed = stripAgentFallback(config)
-  assert.equal(removed, 2)
-  assert.deepEqual(config.agent.build.options, { reasoningEffort: "high" })
-  assert.deepEqual(config.agent.plan, { options: {} })
-  assert.deepEqual(collectAgentConfigs(config).fallbacks.size, 0)
-  assert.equal(stripAgentFallback(config), 0)
-})
-
 test("normalizes global plugin options with defaults", () => {
   const defaults = normalizeOptions(undefined)
   assert.deepEqual(defaults.defaultChain, [])
   assert.equal(defaults.proactive, true)
-  assert.equal(defaults.notify, true)
   assert.equal(defaults.triggerOn, "quota")
   assert.equal(defaults.failureCooldownSeconds, 300)
   assert.equal(defaults.sourceCooldownSeconds, 10_800)
@@ -129,7 +81,6 @@ test("normalizes global plugin options with defaults", () => {
   const custom = normalizeOptions({
     defaultChain: ["deepseek/deepseek-v4-flash"],
     proactive: false,
-    notify: false,
     triggerOn: "any-retryable",
     failureCooldownSeconds: 45,
     sourceCooldownSeconds: 900,

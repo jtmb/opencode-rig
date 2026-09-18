@@ -20,12 +20,14 @@ Override the paths with environment variables:
 
 - The v2 binary exists and `--version` reports `opencode v2.x`.
 - The server config (`opencode.jsonc`) and CLI config (`cli.json`) exist.
+- The canonical v2 role catalog validates package paths, role entrypoints, and
+  expected config files.
 - The config-dir `skills/` source has 16 entries (no stray `README`).
 - The config-dir `commands/` source has at least the four global commands.
 - `mcp` declares `github` and exactly one `playwright` server.
-- The server plugins (`rig-tools`, `rig-todo`, `codex-fallback`) and CLI
-  plugins (`source-control`, `codex-usage`, `file-manager`) are declared and
-  have their entry shim (`server.ts` or `tui.tsx`).
+- Every catalog-declared server and CLI role is declared in its expected config,
+  with canonical package paths, no duplicate or malformed entries, and an
+  existing role entrypoint. This includes both `rig-todo` roles.
 - `cli.json` selects the `aura` theme for v1 colour parity.
 
 It exits non-zero if any check fails, printing `OK:` lines for each pass and

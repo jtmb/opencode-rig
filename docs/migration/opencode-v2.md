@@ -236,7 +236,8 @@ Ported and verified in the v2.0.7 pilot:
   Typecheck plus 8 tests pass; the plugin loads.
 - **file-manager** (CLI): a docked `session.panel` tree/viewer/editor opened
   with `ctx.ui.panel.open`, `toggleFullscreen` on `f`, an Explorer
-  `sidebar.content` row, and a `ctrl+shift+e` / `/files` command. v2's
+  `sidebar.content` row, and a `ctrl+shift+e` / `/explorer` command with
+  `/editor` and `/files` aliases. v2's
   `file.list`/`file.find` return `{ path, type }` only, so the node name and
   absolute path are derived and the v1 `ignored` flag is unavailable.
   Typecheck plus 11 tests pass; the plugin loads.

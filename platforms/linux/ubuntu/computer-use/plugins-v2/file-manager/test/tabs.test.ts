@@ -6,13 +6,20 @@ import {
   activateTab,
   closeTab,
   dirtyTabs,
+  dirtyGuard,
+  dirtyGuardKey,
+  dirtyGuards,
   markSaved,
+  markSavedSnapshot,
   nextTab,
   openTab,
   persistTabs,
   replaceTab,
   restorePaths,
   restoredActive,
+  sameDirtyGuard,
+  saveSnapshot,
+  tabRevision,
   takeClosed,
   updateTab,
 } from "../src/tabs.ts"
@@ -41,6 +48,39 @@ test("updateTab and markSaved track the dirty baseline", () => {
   const saved = markSaved(edited, "a.ts")
   assert.equal(dirtyTabs(saved).length, 0)
   assert.equal(saved.open[0].original, "changed")
+})
+
+test("revisions keep a newer edit dirty when an older save completes", () => {
+  const loaded = {
+    path: "a.ts",
+    content: "one",
+    original: "one",
+    diskFingerprint: "disk-one",
+    mode: 0o640,
+    revision: 0,
+  }
+  const state = openTab(EMPTY_TABS, loaded)
+  const snapshot = saveSnapshot(loaded)
+  assert.ok(snapshot)
+  const edited = updateTab(state, "a.ts", "two")
+  const newer = updateTab(edited, "a.ts", "three")
+  assert.equal(tabRevision(newer.open[0]), 2)
+
+  const afterSave = markSavedSnapshot(newer, snapshot, "disk-two", 0o640)
+  assert.equal(afterSave.open[0].original, "one")
+  assert.equal(afterSave.open[0].content, "three")
+  assert.equal(afterSave.open[0].diskFingerprint, "disk-two")
+  assert.equal(dirtyTabs(afterSave).length, 1)
+})
+
+test("dirty guards include the path and content revision", () => {
+  const state = openTab(EMPTY_TABS, tab("a.ts"))
+  const dirty = updateTab(state, "a.ts", "changed")
+  const guard = dirtyGuard(dirty.open[0])
+  assert.equal(sameDirtyGuard(guard, { path: "a.ts", revision: 1 }), true)
+  assert.equal(sameDirtyGuard(guard, { path: "a.ts", revision: 2 }), false)
+  assert.deepEqual(dirtyGuards(dirty), [guard])
+  assert.equal(dirtyGuardKey([guard]), "a.ts:1")
 })
 
 test("replaceTab refreshes an existing tab without changing the closed stack", () => {
@@ -88,7 +128,7 @@ test("persistence round-trips paths and active", () => {
 
 test("restorePaths tolerates malformed input and drops duplicates", () => {
   assert.deepEqual(restorePaths(undefined), [])
-  assert.deepEqual(restorePaths({ open: ["a.ts", "a.ts", 7, ""] }), ["a.ts"])
+  assert.deepEqual(restorePaths({ open: ["a.ts", "a.ts", 7, "", "../escape", ".git/config"] }), ["a.ts"])
   assert.equal(restoredActive({ active: "missing" }, ["a.ts"]), "a.ts")
   assert.equal(restoredActive({}, []), "")
 })

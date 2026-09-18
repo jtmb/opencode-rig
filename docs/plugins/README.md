@@ -6,14 +6,14 @@
 > `tui-settings` → the built-in `/settings`, and the other four concerns →
 > their `plugins-v2/` ports.
 
-The repository ships five local OpenCode plugins. They are ordinary npm
+The repository ships five local **v1 rollback** plugins. They are ordinary npm
 packages that live in the repository and are loaded directly from source; they
-are **not** deployed by the setup scripts and are **not** published to npm.
+are **not** deployed by the v2 setup scripts and are **not** published to npm.
 
 | Plugin | Kind | Directory | Purpose |
 |--------|------|-----------|---------|
 | [`codex-usage`](codex-usage.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/codex-usage/` | Collapsible sidebar panel showing weekly ChatGPT Codex quota and optional Luna Reserve remaining usage |
-| [`codex-fallback`](codex-fallback.md) | Server | `platforms/linux/ubuntu/computer-use/plugins/codex-fallback/` | Transparent failover from the Codex subscription to a configurable chain of any OpenCode providers when the quota runs out |
+| [`codex-fallback`](codex-fallback.md) | Server | `platforms/linux/ubuntu/computer-use/plugins/codex-fallback/` | v1 rollback plugin; the active v2 port is documented below |
 | [`source-control`](source-control.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/source-control/` | Working-tree changes and the current branch's GitHub pull request in the session sidebar |
 | [`tui-settings`](tui-settings.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/tui-settings/` | Settings overlay for appearance, display, plugins, source control, and sidebar positioning |
 | [`file-manager`](file-manager.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/file-manager/` | Full-screen project tree, quick-open, and an in-TUI editor with explicit saves |
@@ -31,7 +31,7 @@ each package registers through the object form in `opencode.jsonc` (server) or
 | --- | --- | --- |
 | `rig-tools` | server | v1 `tools/desktop.ts` + `tools/vision.ts` custom tools |
 | `rig-todo` | server | new: v2.0.7 ships no `todowrite`/`todoread` |
-| `codex-fallback` | server | v1 `codex-fallback` |
+| [`codex-fallback`](codex-fallback.md) | server | [v2 component README](../../platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback/README.md) |
 | `source-control` | CLI | v1 `source-control` |
 | `codex-usage` | CLI | v1 `codex-usage` |
 | `file-manager` | CLI | v1 `file-manager`, now a docked `session.panel` instead of a full-screen route |
@@ -62,11 +62,10 @@ OpenCode has two distinct plugin surfaces, and these packages target one each.
   `client.file.list`, searches with `client.find.files`, renders files with
   `line_number` + `code` highlighting, and edits with a `textarea` that saves
   atomically through `node:fs` under a `realpath` containment check.
-- A **server plugin** runs in the OpenCode server. It can hook config
-  resolution, message assembly, outbound request parameters, and the event
-  stream, and it can call the client API (sessions, providers, TUI). It has no
-  rendering surface of its own. `codex-fallback` is a server plugin whose entry
-  point is `src/index.ts`.
+- A **v1 server plugin** runs in the OpenCode 1 server and has no rendering
+  surface of its own. The active v2 `codex-fallback` port uses
+  `ctx.session.hook("context" | "retry")` and the supported
+  `ctx.session.switchModel()` API; see [`codex-fallback.md`](codex-fallback.md).
 
 The TUI plugins are registered in `tui.json`, while the server plugin is
 registered in `opencode.jsonc` (see below), so enabling one does not enable the

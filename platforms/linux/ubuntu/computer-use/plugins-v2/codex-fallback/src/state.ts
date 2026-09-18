@@ -12,8 +12,11 @@ export type CooldownRecord = {
 export type SessionRecord = {
   agent?: string
   source?: string
+  sourceVariant?: string
   active?: string
+  activeVariant?: string
   tier?: string
+  tierVariant?: string
   updatedAt: number
 }
 
@@ -44,13 +47,17 @@ export type StateStoreOptions = {
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const COOLDOWN_GRACE_MS = 60 * 60 * 1000
 const SAVE_DEBOUNCE_MS = 250
+const MAX_STATE_BYTES = 1_048_576
+const MAX_COOLDOWNS = 512
+const MAX_SESSIONS = 512
+const MAX_STRING_LENGTH = 512
 
 function emptyState(): PersistedState {
   return { version: 1, cooldowns: {}, sessions: {} }
 }
 
 function stringValue(value: unknown): string | undefined {
-  return typeof value === "string" && value ? value : undefined
+  return typeof value === "string" && value && value.length <= MAX_STRING_LENGTH ? value : undefined
 }
 
 function parseState(raw: unknown): PersistedState {
@@ -58,7 +65,8 @@ function parseState(raw: unknown): PersistedState {
   if (!isRecord(raw)) return state
 
   if (isRecord(raw.cooldowns)) {
-    for (const [key, value] of Object.entries(raw.cooldowns)) {
+    for (const [key, value] of Object.entries(raw.cooldowns).slice(0, MAX_COOLDOWNS)) {
+      if (!key || key.length > MAX_STRING_LENGTH) continue
       if (!isRecord(value)) continue
       if (typeof value.until !== "number" || !Number.isFinite(value.until)) continue
       state.cooldowns[key] = {
@@ -71,15 +79,19 @@ function parseState(raw: unknown): PersistedState {
   }
 
   if (isRecord(raw.sessions)) {
-    for (const [key, value] of Object.entries(raw.sessions)) {
+    for (const [key, value] of Object.entries(raw.sessions).slice(0, MAX_SESSIONS)) {
+      if (!key || key.length > MAX_STRING_LENGTH) continue
       if (!isRecord(value)) continue
       const updatedAt =
         typeof value.updatedAt === "number" && Number.isFinite(value.updatedAt) ? value.updatedAt : 0
       state.sessions[key] = {
         agent: stringValue(value.agent),
         source: stringValue(value.source),
+        sourceVariant: stringValue(value.sourceVariant),
         active: stringValue(value.active),
+        activeVariant: stringValue(value.activeVariant),
         tier: stringValue(value.tier),
+        tierVariant: stringValue(value.tierVariant),
         updatedAt,
       }
     }
@@ -108,8 +120,12 @@ export function createStateStore(path: string, options: StateStoreOptions = {}):
   const write = async () => {
     await mkdir(dirname(path), { recursive: true })
     const tmp = `${path}.${process.pid}.${(tmpCounter += 1)}.tmp`
+    const encoded = JSON.stringify(state, null, 2)
+    if (Buffer.byteLength(encoded, "utf8") > MAX_STATE_BYTES) {
+      throw new Error("fallback state exceeds the maximum size")
+    }
     try {
-      await writeFile(tmp, JSON.stringify(state, null, 2), { mode: 0o600 })
+      await writeFile(tmp, encoded, { mode: 0o600 })
       await rename(tmp, path)
     } catch (error) {
       await rm(tmp, { force: true }).catch(() => {})
@@ -144,6 +160,7 @@ export function createStateStore(path: string, options: StateStoreOptions = {}):
     async load() {
       try {
         const raw = await readFile(path, "utf8")
+        if (Buffer.byteLength(raw, "utf8") > MAX_STATE_BYTES) throw new Error("fallback state is too large")
         state = parseState(JSON.parse(raw))
       } catch {
         state = emptyState()
@@ -159,6 +176,11 @@ export function createStateStore(path: string, options: StateStoreOptions = {}):
       return record && record.until > now() ? record.until : undefined
     },
     setCooldown(key, until, reason) {
+      if (!key || key.length > MAX_STRING_LENGTH || !Number.isFinite(until)) return
+      if (!(key in state.cooldowns) && Object.keys(state.cooldowns).length >= MAX_COOLDOWNS) {
+        const oldest = Object.entries(state.cooldowns).sort((left, right) => left[1].setAt - right[1].setAt)[0]
+        if (oldest) delete state.cooldowns[oldest[0]]
+      }
       state.cooldowns[key] = { until, reason, setAt: now() }
       scheduleSave()
     },
@@ -171,6 +193,11 @@ export function createStateStore(path: string, options: StateStoreOptions = {}):
       return state.sessions[sessionID]
     },
     setSession(sessionID, patch) {
+      if (!sessionID || sessionID.length > MAX_STRING_LENGTH) return
+      if (!(sessionID in state.sessions) && Object.keys(state.sessions).length >= MAX_SESSIONS) {
+        const oldest = Object.entries(state.sessions).sort((left, right) => left[1].updatedAt - right[1].updatedAt)[0]
+        if (oldest) delete state.sessions[oldest[0]]
+      }
       const existing = state.sessions[sessionID]
       state.sessions[sessionID] = {
         ...existing,

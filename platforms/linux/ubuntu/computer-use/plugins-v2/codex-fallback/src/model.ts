@@ -1,6 +1,7 @@
 export type ModelRef = {
   providerID: string
   modelID: string
+  variant?: string
 }
 
 type JsonRecord = Record<string, unknown>
@@ -19,10 +20,14 @@ export function parseModelKey(value: unknown): ModelRef | undefined {
   const separator = trimmed.indexOf("/")
   if (separator <= 0 || separator === trimmed.length - 1) return undefined
   const providerID = trimmed.slice(0, separator).trim()
-  const modelID = trimmed.slice(separator + 1).trim()
+  const modelWithVariant = trimmed.slice(separator + 1).trim()
+  const variantSeparator = modelWithVariant.indexOf("#")
+  const modelID = (variantSeparator >= 0 ? modelWithVariant.slice(0, variantSeparator) : modelWithVariant).trim()
+  const variant = variantSeparator >= 0 ? modelWithVariant.slice(variantSeparator + 1).trim() : undefined
   if (!providerID || !modelID) return undefined
   if (/\s/.test(providerID) || /\s/.test(modelID)) return undefined
-  return { providerID, modelID }
+  if (variantSeparator >= 0 && (!variant || /\s/.test(variant))) return undefined
+  return variant ? { providerID, modelID, variant } : { providerID, modelID }
 }
 
 export function modelFromMessage(message: unknown): ModelRef | undefined {
@@ -32,7 +37,8 @@ export function modelFromMessage(message: unknown): ModelRef | undefined {
     const providerID = message.model.providerID
     const modelID = message.model.modelID
     if (typeof providerID === "string" && typeof modelID === "string") {
-      return { providerID, modelID }
+      const variant = message.model.variant
+      return typeof variant === "string" && variant ? { providerID, modelID, variant } : { providerID, modelID }
     }
   }
 
@@ -44,5 +50,11 @@ export function modelFromMessage(message: unknown): ModelRef | undefined {
 }
 
 export function sameModel(left: ModelRef | undefined, right: ModelRef | undefined): boolean {
-  return !!left && !!right && left.providerID === right.providerID && left.modelID === right.modelID
+  return (
+    !!left &&
+    !!right &&
+    left.providerID === right.providerID &&
+    left.modelID === right.modelID &&
+    left.variant === right.variant
+  )
 }

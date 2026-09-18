@@ -65,12 +65,12 @@ Current state:
   documented `mcp.servers` nesting and silently drops the whole MCP block on a
   numeric `timeout`; use an object), skills pointed at the repo skills, the
   four global commands copied in, `cli.json` seeded from v1 kv.
-- Phase 2 (done): plugins-v2/ workspace has all five ports. rig-tools and
-  codex-fallback (server) and source-control, codex-usage, and file-manager
-  (CLI) typecheck, pass their tests (86 total), and load in the pilot.
-  file-manager contributes a docked session.panel; tui-settings is retired in
-  favor of the built-in `/settings`, with its Source Control presets still to
-  fold into source-control.
+- Phase 2 (done): the `plugins-v2/` workspace has six ports. `rig-tools`,
+  `rig-todo`, and `codex-fallback` (server) plus `source-control`,
+  `codex-usage`, `file-manager`, and the `rig-todo` CLI role typecheck, pass
+  their bounded checks, and load in the pilot. `file-manager` contributes a
+  docked `session.panel`; its current Phase 1.1 safety suite has 39 tests.
+  `tui-settings` is retired in favor of the built-in `/settings`.
 - Local plugin registration uses the object form `{ "package": "<absolute
   directory>", "options": {} }` plus a root `server.ts` / `tui.tsx` shim; a
   bare package-name string makes v2 try to install it from npm.
@@ -110,10 +110,11 @@ Phase 2 order and goals (status 2026-09-18):
    desktop_find, desktop_act, and vision_capture via `ctx.tool.transform`,
    wrapping scripts/desktop-control.py and the ydotool screenshot path.
    Screenshots return as file content.
-2. DONE codex-fallback (server): the failover chain now uses
-   `ctx.session.hook("context")` / `ctx.session.hook("retry")`; per-agent
-   overrides live under plugin options `agents`; routing is logged instead of
-   toasted (server plugins have no TUI toast).
+2. DONE codex-fallback (server): the v2 failover chain uses
+   `ctx.session.hook("context")` / `ctx.session.hook("retry")` and the
+   supported `ctx.session.switchModel()` path; fake-provider coverage now
+   proves tier routing, duplicate suppression, recovery, variants, manual
+   selection, and catalog fail-open behavior.
 3. DONE source-control (CLI): the working-tree/PR panel is a `sidebar.content`
    slot using `ctx.client.vcs` / `ctx.data.location.vcs` and the bounded stdio
    GitHub MCP client (the v2 workspace now depends on the MCP SDK).
@@ -123,8 +124,11 @@ Phase 2 order and goals (status 2026-09-18):
 6. DONE retired tui-settings; v2's built-in `/settings` replaces it. Fold its
    Source Control presets into source-control when that plugin lands.
 
-Then Phase 4 (scripts, health checks, docs, AGENTS, HANDOFF, documentation
-map) and Phase 5 (verification and cutover with v1 rollback) from the plan.
+The current worktree has also completed the Explorer Phase 1.1 safety gate:
+canonical path guards, conflict-safe atomic saves, revisioned dirty guards,
+bounded external-editor handling, and async generation guards. Review the
+current `ROADMAP.md` and `HANDOFF.md`, run the final gates, and keep parser
+Phase 2 work held behind explicit approval. Keep v1 untouched for rollback.
 
 Keep v1 as the default and untouched; commit only v2 work on the migration
 branch; report what changed and what passed.

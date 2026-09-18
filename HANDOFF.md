@@ -1,424 +1,669 @@
-# New Chat Handoff
+# Fresh Handoff
 
-Use this after restarting OpenCode so a fresh chat understands the installed
-computer-use environment. Copy and paste the entire fenced block below as the
-first message in the new chat.
+This file replaces the previous handoff. It was recreated on 2026-09-18 after
+a read-only repository, runtime, deployment, and bug audit. It is the current
+fresh-context transfer record; implementation changes remain uncommitted.
 
-## Copy-Paste Prompt
+## Repository snapshot
+
+- Repository: `/home/james/repos/opencode-rig`
+- Branch: `migration/opencode-v2`
+- HEAD: `7caeeec36a87058f6022b9b3a58208760a0321ae`
+- HEAD message: `Build the Phase 1 Explorer editor core`
+- Working tree: dirty with the uncommitted role-catalog/deployment work, Codex
+  fallback stabilization, and Explorer Phase 1.1 safety changes; unrelated
+  handoff and user work is preserved.
+- Upstream: synchronized (`0` commits ahead, `0` behind)
+- No commit, push, merge, or pull-request mutation was performed for this
+  handoff.
+
+## Runtime snapshot verified immediately before writing
+
+- Explicit v2 binary: `~/.local/opt/opencode-v2/opencode`
+- Explicit v2 version: `opencode v2.0.7`
+- Explicit v2 health check: passed
+- v2 pilot config: `~/.opencode-v2-pilot/config/`
+- v2 pilot server config contains:
+  - `plugins-v2/rig-tools`
+  - `plugins-v2/rig-todo`
+  - `plugins-v2/codex-fallback`
+- v2 pilot CLI config contains:
+  - `plugins-v2/source-control`
+  - `plugins-v2/codex-usage`
+  - `plugins-v2/file-manager`
+  - `plugins-v2/rig-todo`
+- The canonical `config/v2-plugin-roles.json` catalog now describes all six
+  packages, both `rig-todo` roles, their entrypoints, and their target config
+  files. Deployment and health verification consume the catalog.
+- `deploy-plugins.sh --v2 --plugins all --verify-only`: passed; it verifies
+  canonical package paths, role entrypoints, duplicate/malformed entries, and
+  both `rig-todo` registrations.
+- `verify-opencode-v2.sh`: passed; it confirmed the v2 binary, 16 skills, four
+  commands, GitHub MCP, exactly one Playwright MCP, the catalog-driven package
+  roles, six package shims, and the Aura theme.
+- In the current agent shell, plain `opencode --version` resolves to
+  `1.18.31` from `~/.opencode/bin/opencode`. The explicit v2 binary resolves to
+  `2.0.7`. A v2 service is running. Do not assume that an arbitrary shell's
+  plain `opencode` command selects v2; verify the path/version or use the
+  explicit v2 launcher.
+- `~/.bashrc` contains a v2 PATH line, but the current shell PATH still puts
+  `~/.opencode/bin` first. This discrepancy remains a runtime/configuration
+  item, not a reason to modify v1.
+- v1 remains installed and must remain untouched for rollback.
+
+## Active objective
+
+Complete and safely ship the OpenCode v2 Explorer IDE in
+`platforms/linux/ubuntu/computer-use/plugins-v2/file-manager`, while keeping
+the v1 stack available for rollback.
+
+Explorer requirements:
+
+- real navigation and editing
+- broad language highlighting
+- project search and replace
+- guarded create/rename/delete operations
+- Git status and diff integration
+- bounded external formatting and diagnostics
+- no automatic saving
+- no silent overwrite or destructive file operation
+- side-by-side editors deferred to Phase 7
+
+## Already present in the repository
+
+The current v2 workspace has six packages:
+
+| Package | Role | Current surface |
+|---|---|---|
+| `rig-tools` | server | desktop accessibility, input, windows, screenshots |
+| `rig-todo` | server + CLI | `todowrite`, `todoread`, Todo sidebar |
+| `codex-fallback` | server | Codex quota fallback routing |
+| `source-control` | CLI | local Git and GitHub PR sidebar |
+| `codex-usage` | CLI | Codex quota sidebar |
+| `file-manager` | CLI | docked Explorer tree, tabs, viewer, editor |
+
+Explorer Phase 0 and Phase 1 code is present at HEAD, with Phase 1.1 safety
+stabilization added in the current worktree:
+
+- manual Tree-sitter highlighting through `highlightOnce()` and explicit
+  highlight ranges
+- JSON/JSONC parser spike registration
+- tabs with `{ path, content, original }`
+- tab switching, save, save-all, close/discard guard, reopen, persistence,
+  refresh, status line, and go-to-line
+- bounded editor click-to-position helper with unit tests
+- canonical-root path validation, disk fingerprints, conflict-safe atomic saves,
+  revisioned dirty guards, bounded external-editor execution, and asynchronous
+  generation guards; the bounded package check passes 39 tests
+
+The detailed design remains in `docs/plans/explorer-ide.md`. Phase 1.1 is
+verified in the current worktree; correctness stabilization is complete, but
+Phase 2 asset work remains held for explicit approval.
+
+## Confirmed bug-hunt findings
+
+### Release-blocking
+
+1. **Resolved in the current worktree: Codex fallback routing used unsupported
+   model mutation.** `plugins-v2/codex-fallback/src/index.ts` now uses the
+   supported `ctx.session.switchModel()` API and never assigns to the read-only
+   `event.model`. The bounded fake-provider/session harness proves primary and
+   tier advancement, duplicate suppression, recovery, variants, manual
+   selection, and catalog fail-open behavior; a disposable v2.0.7 server also
+   completed a local 429-primary → tier-1 turn.
+
+2. **Resolved in the current worktree: Explorer save completion could mark
+   newer edits saved.** `writeTab()` now captures a revisioned immutable
+   snapshot and only advances the in-memory saved baseline when that exact
+   revision completed. Newer edits remain dirty while the disk fingerprint is
+   advanced to the snapshot that was actually written.
+
+3. **Resolved in the current worktree: external editing could discard dirty
+   content.** Dirty tabs are refused until saved or discarded, editor commands
+   use bounded non-shell parsing, and reload occurs only after a successful
+   zero-exit child process.
+
+4. **Resolved for plugin-owned panel closes in the current worktree:** Escape
+   checks every dirty tab using path-plus-revision guards before closing. The
+   accepted paths-only persistence policy remains; unsaved content is never
+   stored.
+
+5. **Resolved in the current worktree: `.git` protection could be bypassed
+   through path resolution.** A canonical-root path guard now rejects absolute,
+   traversal, `.git`, outside-root symlink, directory, special-file, binary,
+   invalid-UTF-8, and size-invalid paths for every Explorer file boundary.
+
+### High priority
+
+- Explorer atomic replacement now preserves mode bits, uses unique exclusive
+  temporary names, flushes before rename, and cleans up on failure.
+- Explorer save snapshots now use disk fingerprints and refuse external-edit
+  conflicts rather than silently overwriting them.
+- Search and highlight requests now have generation guards; `j` and `k` remain
+  available to the focused search input instead of being consumed as list
+  navigation.
+- External-editor command parsing is bounded and does not invoke a shell.
+- `rig-todo` mirror files lack an explicit owner-only permission policy, have no
+  input-size limits, and use collision-prone temporary names.
+- Source Control can publish stale refresh results after a session/project
+  switch, does not scope all filesystem/VCS events, and can retain stale branch
+  data after detached HEAD.
+- Codex Usage needs session-switch generation guards and bounded timer values.
+- `vision_capture` does not fully validate the screenshot file before reading
+  and can report successful cleanup when deletion fails.
+- CI currently exercises only three of the five rollback v1 plugin packages.
+- v1 Source Control typechecking exceeds the normal bounded heap; a bounded
+  `tsc --noEmit --skipLibCheck` run passed with a 272 MiB peak and should be
+  evaluated as the resource-remediation path, not used to hide source errors.
+
+## Required implementation order
+
+### 0. Control-plane documentation
+
+Create or replace the repository-root `ROADMAP.md` as the agent-facing work
+ledger. Keep it distinct from this fresh-context handoff:
+
+- `ROADMAP.md`: live work items, dependencies, acceptance gates, evidence,
+  commits, and next actions.
+- `docs/plans/explorer-ide.md`: detailed architecture and phase design.
+- `HANDOFF.md`: concise current runtime/repository transfer material.
+
+Each roadmap item must have a status, acceptance criteria, automated evidence,
+live evidence, documentation state, and exact next action. Never mark a phase
+complete without verification.
+
+### 1. Registration, verification, CI, and documentation
+
+- Define the six-package role catalog, including both roles for `rig-todo`.
+- Make `deploy-plugins.sh` and `verify-opencode-v2.sh` consume/validate the
+  role catalog.
+- Add temporary-config tests for `all`, `server`, `cli`, single-package,
+  dual-role, duplicate, malformed, and idempotent cases.
+- Make health checks validate canonical package paths and role entrypoints.
+- Add all five v1 packages to CI; keep checks bounded.
+- Add missing v2 component READMEs and deep plugin references.
+- Reconcile stale v1-default, pilot-only, cutover, and removed-memory text.
+
+### 2. Codex fallback stabilization
+
+- Build a fake-provider routing test around the supported v2 session API.
+- Prove one failed primary turn completes on the first fallback tier.
+- Prove a failed fallback advances exactly once to the next tier.
+- Prove cooldown expiry recovers to the source model.
+- Preserve model variants and respect explicit manual model choices.
+- Replace unsupported event mutation and remove dead routing/configuration state.
+- Bound timers, state parsing, and persisted state writes.
+
+If v2 cannot safely resume a failed turn through its supported API, document the
+limitation and disable that behavior rather than retaining an unverified replay
+mechanism.
+
+### 3. Explorer Phase 1.1 safety stabilization
+
+- Centralize lexical and canonical path checks.
+- Refuse traversal, absolute paths, `.git`, outside-root symlinks, directories,
+  invalid UTF-8, and unsafe restored paths.
+- Canonicalize the project root once.
+- Add disk fingerprints and explicit conflict handling.
+- Save immutable snapshots, preserve mode bits, use exclusive unique temporary
+  files, flush writes, and clean up safely.
+- Scope discard guards to a tab/revision and check every dirty tab before panel
+  close.
+- Make external-editor reload conditional on a clean/safely-confirmed tab and a
+  successful child result.
+- Add generation guards for directory loads, search, reload, and highlighting.
+- Flush pending path persistence during cleanup.
+
+### 4. Harden the other v2 packages
+
+Add lifecycle, failure, timeout, stale-result, permission, and cleanup tests for
+Source Control, Codex Usage, Todo, and rig-tools before adding more Explorer
+features.
+
+### 5. Explorer Phases 2–7
+
+- **Phase 2:** pinned checksum-verified parser fetch, ignored generated assets,
+  provenance manifest, full approved language mapping, and large-file fallback.
+- **Phase 3:** file find/replace, editing operations, undo/redo free of the host
+  `ctrl+z` binding, active-line/bracket decorations, and complete mouse behavior.
+- **Phase 4:** bounded cancellable `rg` search, exact result navigation, dry-run
+  multi-file replace, confirmation, fingerprint revalidation, and rollback-safe
+  atomic writes.
+- **Phase 5:** exclusive create, guarded rename, trash-backed delete, reveal,
+  collapse-all, Git status, per-file diff, and gutter markers.
+- **Phase 6:** bounded formatter/diagnostic runner with project-detected defaults,
+  per-project disable, output pane, and diagnostics extmarks.
+- **Phase 7:** side-by-side editors, per-language indentation, OSC52 copy path/
+  selection, prompt-context export, and persistent project layout. Folding is
+  blocked unless OpenTUI exposes a safe non-destructive hidden-range primitive.
+
+## Safety and operating rules
+
+- Preserve v1 binaries, config, data, and processes.
+- Track every multi-step resumed task with the `todo tool`; keep exactly one
+  item in progress and mark items complete only after verification passes.
+- Do not reset, checkout, or discard unrelated user changes.
+- Do not silently overwrite files or delete data.
+- All file operations require containment, `.git` refusal, confirmations where
+  applicable, and preservation of originals.
+- Parser assets are fetched by a pinned, checksum-verified setup path and are
+  ignored by Git.
+- Formatters and diagnostics are bounded, cancellable, and never block the TUI.
+- Do not use shell interpolation for external commands.
+- Do not capture or handle passwords, MFA, payment details, or OAuth dialogs.
+- Do not merge or retarget any pull request without explicit approval.
+- Use `run-bounded-command.sh` for resource-heavy checks.
+- Do not ask the operator to run validation; verify through tools, tests,
+  filesystem assertions, and screenshots when GUI evidence is required.
+
+## Memory workflow
+
+Basic Memory is the local `computer-assistant` project under
+`~/Documents/computer-assistant/basic-memory/`.
+
+- Before a phase: use `recent_activity`, then narrow `search_notes`/
+  `build_context`/`read_note` for the Explorer project and relevant ADRs.
+- During a phase: record only explicit durable decisions or newly verified
+  gotchas; never store secrets or whole conversations.
+- After a phase: edit the existing Explorer project note with status, evidence,
+  retrospective, and next action; supersede obsolete observations instead of
+  duplicating them.
+- Memory capture is explicitly approved only; do not create automatic session
+  summaries.
+- No Basic Memory note was changed while creating this handoff.
+
+## Verification gate for future work
+
+Before declaring a change complete, run the relevant bounded package checks and
+the repository gates:
 
 ```text
-Continue as my local computer assistant. The canonical repository is:
-
-  ~/repos/opencode-rig
-
-The default stack is now OpenCode v2.0.7 (the cutover ran 2026-09-18); v1
-remains installed and untouched for rollback. Read these files first, in order:
-
-  1. ~/repos/opencode-rig/AGENTS.md
-  2. ~/repos/opencode-rig/README.md
-  3. ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/README.md
-  4. ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/skills/README.md
-  5. ~/repos/opencode-rig/docs/README.md
-  6. ~/repos/opencode-rig/docs/plans/explorer-ide.md   (the active plan)
-  7. The "Work In Progress" section of ~/repos/opencode-rig/HANDOFF.md
-
-The repository is the source of truth. Do not edit the deployed copies under
-~/.config/opencode/skills/ directly. The copies under ~/scripts/ and
-~/repos/opencode-browser-tools/ are superseded; do not use or edit them.
-
-Repository rules while working here:
-
-  - Documentation is gated. documentation-map.json maps each source to its
-    required documentation, and check-doc-coverage.py enforces both that every
-    mapped source has its documentation and that a change updates or creates
-    it. The map's "handoff" rule also requires HANDOFF.md to change for
-    environment-defining edits, so keep this file current.
-  - Resource-heavy local plugin and tool checks must use
-    platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh.
-    check-plugin-resource-guards.py enforces the package-script wiring; the
-    wrapper recalculates an adaptive host/cgroup budget and fails closed
-    without a limiter.
-  - The mandatory todo-tracking rule (the "Progress Tracking" section of
-    AGENTS.md) is CI-enforced by check-progress-tracking.py and its self-test;
-    keep all multi-step work in the todo tool.
-  - main is protected and requires the "verify" GitHub Actions check. Do not
-    push to main: create a branch, push it, and open a pull request. The local
-    pre-push hook and the required CI check both run the gate.
-  - Run the checks in AGENTS.md before committing.
-
-Read-only health check before changing anything (v2 stack):
-
-  ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/verify-opencode-v2.sh
-  ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/setup-opencode-v2.sh --verify-only
-  opencode mcp list        # expect basic-memory, github, playwright connected
-
-If it passes, do not reinstall. If it fails, diagnose the specific failed
-check before repairing anything. The v1 health check
-(setup-computer-assistant.sh --verify-only) is only meaningful for a v1
-rollback: under the v2 PATH its `opencode` child reads the v2 config.
-
-Available skills (load the matching SKILL.md before acting):
-
-  - desktop-vision: see the GNOME desktop through announced screenshots
-  - desktop-control: operate accessible GNOME controls through AT-SPI
-  - browser-assistant: share a visible isolated Playwright Firefox window
-  - browser-headless: run explicitly requested invisible browser tasks
-  - game-playtest: test browser games with semantic, visual, and diagnostic evidence
-  - github-operations: inspect GitHub and perform approved remote changes through a bounded, write-capable MCP
-  - blender: inspect, script, render, save, and export Blender scenes safely
-  - web-3d-asset-pipeline: prepare and validate browser-ready GLB/glTF assets
-  - task-memory: store and retrieve durable private context in Basic Memory
-  - app-setup: install, configure, and remove apps with acceptance tests
-  - system-troubleshooting: evidence-first Ubuntu diagnosis and repair
-  - files-and-documents: find, organize, summarize, and export local files
-  - routine-automation: turn proven workflows into idempotent scripts and schedules
-  - opencode-db-maintenance: back up chats and maintain opencode.db
-  - skill-maintenance: create, audit, update, deploy, or retire skills safely
-  - vscode-management: manage VS Code and prefer its integrated browser for in-editor testing
-
-Skill usage guides, prerequisites, commands, tags, and safety requirements are
-linked from the skill catalog cited above.
-
-Global OpenCode commands:
-
-  - /deploy: register the local plugins globally, into a repository's
-    .opencode directory, or into the v2 config (question-driven); optionally
-    copies the bootstrap scripts
-  - /handoff: update HANDOFF.md with the current session state and regenerate
-    the fresh-chat prompt
-  - /promote-skills: validate and redeploy all canonical skill bundles, then
-    verify discovery
-  - /resume: read HANDOFF.md, run the read-only health check, report status,
-    and continue the pending task (the command form of this prompt)
-
-Operating expectations:
-
-  - Perform computer tasks directly when tools can do them; do not hand me
-    terminal or GUI steps unnecessarily.
-  - Track every multi-step task with the todo tool: create the list before
-    acting, keep exactly one item in progress, and mark items complete only
-    after their verification passes. This is an enforced gate; see the
-    Progress Tracking section of AGENTS.md.
-  - Inspect current state first, make the smallest bounded change, and verify
-    the real result. Do not stop after a command merely exits 0.
-  - Load the relevant skill before acting. Combine desktop-vision with
-    desktop-control for GUI work. Use browser tools instead of blind desktop
-    clicks for websites; when hosted in VS Code with built-in browser tools,
-    prefer its integrated browser for local web-app testing. Otherwise default
-    to live Playwright, use headless only when I ask or the task is clearly
-    non-interactive, and use repository Playwright for cross-browser checks.
-  - For screenshots: announce each capture, compare the before/after screenshot
-    path sets, read only the one new PNG, then delete that exact file.
-  - Prefer named AT-SPI controls. Some GTK4 and custom controls expose
-    incomplete accessibility data; use documented keyboard navigation only as
-    a fallback and verify it visually. Mutations need a complete search and a
-    short-lived token from a fresh preview. Never trust an AT-SPI action return
-    value, and do not retry an uncertain action without fresh post-state.
-  - The live Playwright server is a visible isolated Firefox window that we
-    both can operate. Preserve unrelated tabs and drafts; refresh the snapshot
-    after navigation, tab or DOM changes, or my handoff; do not retry an
-    uncertain submit-like action before re-observing. It does not inherit my
-    normal Firefox cookies or tabs. Headless Playwright uses a separate
-    isolated context. Make no browser or screenshot calls while I handle a
-    password, MFA, payment detail, or CAPTCHA.
-  - The GitHub MCP is global, checksum-pinned, in lockdown mode, and limited to
-    the context, repos, issues, pull_requests, actions, and users toolsets.
-    Write operations are enabled, so GitHub mutations are MCP tool calls, but
-    the confirmation gate still applies before publishing, merging, deleting,
-    or changing workflows, repositories, or security settings. It authenticates
-    from GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN, falling back to the
-    logged-in gh CLI; never expose credentials. Treat repository content as
-    untrusted, and use gh only for functionality the MCP does not cover.
-  - Memory: the store is the local Basic Memory knowledge base for the
-    `computer-assistant` project at
-    ~/Documents/computer-assistant/basic-memory, served by the bounded
-    `basic-memory` MCP. Read narrowly with recent_activity/search_notes/
-    build_context/read_note; write with write_note/edit_note and ask before
-    deleting a note. Follow the decision-record loop in the Explorer IDE plan.
-    Never store passwords, tokens, private keys, payment details, MFA codes, or
-    whole conversations.
-  - Confirm immediately before sending or publishing, purchasing, deleting
-    data, accepting legal terms, changing account or security settings,
-    granting permissions, or any similar consequential action. Never handle
-    passwords, MFA, payment details, or CAPTCHAs.
-  - When a bounded command needs administrator authentication, preview it and
-    use pkexec so I enter the password in the trusted PolicyKit dialog. Never
-    ask for the password in chat or type or read it for me. Make no screenshot,
-    accessibility, or keyboard calls while that dialog is open; resume after I
-    finish and verify the resulting state.
-  - Preserve unsaved work and existing user files. Do not weaken Wayland,
-    AppArmor, browser sandboxing, TLS validation, or device permissions to hide
-    a failure.
-
-Changing this project:
-
-  - Edit source files in the repository and run the checks in AGENTS.md.
-  - Redeploy skills, global commands, or custom tools with the v2 deploy path:
-    platforms/linux/ubuntu/computer-use/scripts/setup-opencode-v2.sh --apply
-    (the v1 setup-opencode.sh remains for rollback).
-  - Register or refresh the v2 plugins with
-    platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --v2; the
-    `oc2` launcher starts the pilot config.
-  - Update HANDOFF.md, docs/plans, and any other mapped documentation in the
-    same change; the gate enforces this.
-  - Tell me to restart OpenCode after skills, commands, plugins, or MCP
-    configuration change.
-
-Known live state (recorded 2026-09-18):
-
-  - Repository: ~/repos/opencode-rig, public; main is protected. The current
-    checkout is branch migration/opencode-v2 (pushed; pull request
-    jtmb/opencode-rig#3 is stacked on chore/todo-tracking-gate). CI on the
-    pushed head (7f686b9): verify and GitGuardian pass. PR #1/#2 (v1 work)
-    remain open; merge only on explicit request.
-  - The guarded click-handler fix in plugins-v2 (file-manager, source-control,
-    rig-todo, plus the consumeMouseActivation helper and tests) was verified by
-    the operator on 2026-09-18 (all four targets clickable) and is committed
-    with this handoff revision.
-  - Platform: Linux / Ubuntu; computer use under
-    platforms/linux/ubuntu/computer-use
-  - Documentation gate: documentation-map.json and check-doc-coverage.py, with
-    a local pre-push hook (core.hooksPath=.githooks) and the required "verify"
-    CI check
-  - Progress tracking: mandatory todo-tool rule in AGENTS.md, the /resume
-    command, and this prompt; enforced by check-progress-tracking.py plus its
-    self-test; on v2 the rule is served by plugins-v2/rig-todo plus its
-    sidebar panel
-  - Default stack: OpenCode v2.0.7 via the cutover shim
-    (~/.local/opt/opencode-v2/bin/opencode -> opencode-pilot) and a marked
-    ~/.bashrc block; config, data, state, and cache under
-    ~/.opencode-v2-pilot/. v1 (~/.opencode/bin/opencode 1.18.31) is installed
-    and untouched for rollback; rollback hashes are recorded at
-    ~/.opencode-v2-pilot/cutover-v1-hashes.txt and the runbook is in
-    docs/migration/opencode-v2.md
-  - v2 plugins: rig-tools, rig-todo, and codex-fallback (server);
-    source-control, codex-usage, and file-manager (CLI). tui-settings is
-    retired in favor of the built-in /settings. Exactly one live Playwright MCP
-    is registered; headless-only work runs through the repository Playwright
-    runtime from the shell
-  - Desktop tools (v2 rig-tools): desktop_apps, desktop_tree, desktop_find,
-    desktop_act, vision_capture, desktop_windows, desktop_input. The v1
-    tools package is rollback-only. Terminal mouse capture is enabled in the
-    CLI config ("mouse": true)
-  - Memory: Basic Memory 0.23.2, project computer-assistant at
-    ~/Documents/computer-assistant/basic-memory (owner-only), served by the
-    bounded basic-memory MCP (scripts/basic-memory-mcp.sh; nine core note tools
-    after the permissions deny list). The legacy JSON store and
-    assistant-memory.py were removed on 2026-09-18
-  - Browser runtime: @playwright/mcp 0.0.80 via
-    platforms/linux/ubuntu/browser-tools
-  - GitHub MCP runtime: official v1.12.1 native amd64 release via
-    platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh; write-capable
-    with the context, repos, issues, pull_requests, actions, and users
-    toolsets in lockdown mode (mutation confirmation gate retained)
-  - Optional 3D: Blender 5.0.1 with python3-numpy for glTF (Draco unavailable)
-  - Maintenance cron: runs the repository maintenance script
-  - Superseded paths (do not use): the ~/scripts/ computer-use copies and
-    ~/repos/opencode-browser-tools/
-
-Work in progress (full detail in the "Work In Progress" section of this file):
-
-  - Click-handler fix verified and committed 2026-09-18 (see the body record).
-  - Next major work: the Explorer IDE plan at docs/plans/explorer-ide.md
-    (Phases 0-7, full-IDE editor for the docked Explorer panel, plus the Basic
-    Memory decision loop). The operator's decisions are recorded there (full
-    parser list; project-detected format/diagnostics; guarded file operations;
-    side-by-side later; pinned parser fetch script; explicit-only memory
-    capture). The plan, the operator decisions, and the workflow feedback are
-    already recorded in Basic Memory: projects/opencode-rig/explorer-ide,
-    decisions/adrs-explorer-ide-scope, and
-    feedback/2026-09-18/direct-status-checks-and-question-tool-usage.
-    Phase 0 is done (parser registration + manual editor highlighting work;
-    ctrl+z is the host terminal-suspend binding). Phase 1 is also complete:
-    tabs, save/save-all, guarded close/reopen, status, persistence, go-to-line,
-    and editor click-position mapping are shipped and live-verified. Next:
-    Phase 2 language coverage.
-  - Merge PRs #1/#2/#3 only on explicit request.
-
-After the health check, give me a concise status and continue with the task I
-give you. If I pasted only this handoff, ask what task I want handled.
+bash -n platforms/linux/ubuntu/computer-use/scripts/*.sh
+shellcheck platforms/linux/ubuntu/computer-use/scripts/*.sh
+python3 -m py_compile platforms/linux/ubuntu/computer-use/scripts/*.py
+check-skill-docs.py
+check-plugin-resource-guards.py
+check-progress-tracking.py
+check-doc-coverage.py
+setup-opencode-v2.sh --verify-only
+verify-opencode-v2.sh
+deploy-plugins.sh --v2 --plugins all --verify-only
 ```
 
-## Work In Progress — updated 2026-09-18
+Run package checks for every changed package through the bounded wrapper. For
+Explorer behavior, use disposable projects, assert disk contents and modes,
+inspect screenshots autonomously, and remove every fixture, screenshot, and
+temporary process afterward.
 
-### Click-handler fix (verified 2026-09-18)
+The role-catalog/deployment gate, Codex fallback API stabilization, and
+Explorer Phase 1.1 safety gate are complete in the current worktree, but are
+not committed. The next agent should review the combined diff and preserve the
+separation from v1 and unrelated user work. Do not start parser Phase 2 until
+explicitly approved.
 
-The reported mouse gaps — file-tree rows with no handlers, Source Control
-requiring Ctrl+click, and terminal mouse capture disabled — are fixed and
-verified. The operator confirmed all four targets: a directory name
-expands/collapses, a file name opens in the viewer, a Source Control row opens
-the diff viewer, and the `- Todo` header toggles.
+## Complete implementation plan
 
-The fix adds `consumeMouseActivation` (first-left-click-once, in
-`file-manager/src/mouse.ts` with tests) and guarded `onMouseDown` handlers on
-both the row container and its text children for the tree, quick-open results,
-Source Control rows, and the Todo header. Automated checks: file-manager 16,
-source-control 20, rig-todo 9 tests through the bounded wrapper. Terminal
-mouse capture is enabled in the pilot `cli.json` and in
-`config/v2-cli.example.json`.
+This is the full ordered plan for the remaining work. Each stage is intended
+to land as an independently reviewable commit or small commit series. A later
+stage must not mask an earlier safety or runtime failure.
 
-Note: ydotool's virtual pointer does not move the GNOME cursor on this
-machine, so mouse verification is always a manual operator check; keyboard
-automation through `desktop_input` works and remains the automated path.
+### Stage A — establish the work ledger and reconcile the baseline
 
-### Explorer IDE plan (approved to build next)
+1. Add repository-root `ROADMAP.md`.
+   - Record the objective, current verified runtime, branch, and phase status.
+   - Give every work item an ID, status, owner, dependencies, acceptance
+     criteria, automated evidence, live evidence, documentation status, commit,
+     and next action.
+   - Keep the roadmap operational; keep architecture in
+     `docs/plans/explorer-ide.md`; keep fresh-context transfer information in
+     this file.
+2. Reconcile the current documentation.
+   - Correct stale v1-default and pre-cutover statements.
+   - Correct stale pilot and removed-`assistant-memory.py` statements.
+   - Add the missing v2 Codex Usage and File Manager component READMEs.
+   - Rewrite the v2 Codex Fallback README for the v2 API, not the old 1.x API.
+   - Add deep plugin references and update indexes/documentation mappings.
+   - Keep `HANDOFF.md` current for environment-defining changes.
+3. Add a canonical v2 plugin role catalog.
+   - `rig-tools`: server
+   - `rig-todo`: server and CLI
+   - `codex-fallback`: server
+   - `source-control`: CLI
+   - `codex-usage`: CLI
+   - `file-manager`: CLI
+   - Include package path, role entrypoint, and expected configuration file.
+4. Make deployment and verification consume the role model.
+   - `all` must register both `rig-todo` roles.
+   - `server` and `cli` must select their exact role sets.
+   - Single-package deployment must register every role owned by that package.
+   - Verify canonical real paths, role entrypoints, duplicate entries, and
+     malformed entries.
+5. Add deployment self-tests using temporary config directories.
+   - verify-only on missing configs
+   - apply from empty configs
+   - idempotent apply
+   - `all`, `server`, `cli`, and every individual package
+   - dual-role Todo registration
+   - duplicate and wrong-role entries
+   - relative and non-canonical package paths
+   - invalid JSON/JSONC handling
+6. Close the rollback verification gap.
+   - CI must check all five v1 packages, all six v2 packages, and custom tools.
+   - Keep every typecheck and test command behind the adaptive bounded wrapper.
+   - Resolve the v1 Source Control heap issue with a documented bounded
+     compiler configuration such as `skipLibCheck`, while retaining strict
+     checking for project source.
 
-Full plan: [`docs/plans/explorer-ide.md`](docs/plans/explorer-ide.md). It turns
-`plugins-v2/file-manager` from a tree + viewer + plain editor into a real TUI
-IDE — not another diff viewer.
+**Stage A gate:** documentation, role-catalog, deployment self-tests, all
+package registrations, and all CI package checks agree; a fresh temporary
+deployment cannot omit the Todo panel.
 
-**Goal.** Multi-tab editing, broad syntax highlighting, project search and
-replace, guarded file operations, git integration (status letters + gutter),
-and opt-in external format/diagnostics services, all inside the docked
-Explorer panel.
+### Stage B — repair v2 plugin correctness before Explorer expansion
 
-**Researched constraints (evidence in the plan).**
+#### B1. Codex Fallback — complete in the current worktree; not committed
 
-- `TextareaRenderable` provides cursor/selection APIs, undo/redo, go-to-line,
-  custom keybindings, extmarks (gutter), and traits for key ownership, but its
-  0.5.11 `syntaxStyle` has no tree-sitter filetype hook; the editor computes
-  highlights through `highlightOnce` and applies ranges manually. `Code`,
-  `LineNumber`, `TabSelect`, `Select`, and `ScrollBox` are available.
-- Only javascript, typescript, markdown, and zig parsers ship bundled;
-  `addDefaultParsers()` accepts extra `wasm` + `highlights.scm` assets, so
-  coverage grows by vendoring pinned parsers.
-- 2.0.7 exposes no LSP/diagnostics/formatter/editor-context API to plugins;
-  missing IDE services come from bounded subprocesses (`rg`, `git`, prettier/
-  biome/black/rustfmt/gofmt/shfmt, tsc/eslint/ruff/shellcheck), opt-in.
-- Files are written with `node:fs` (server file API is read-only); containment,
-  `.git` refusal, atomic saves, binary/large guards, and never-auto-save stay.
-- Mouse clicks require `"mouse": true` plus the guarded handler pattern above.
+1. Build a fake-provider integration harness around the OpenCode 2.0.7 session
+   API.
+2. Test the supported `ctx.session.switchModel()` path and determine precisely
+   how it interacts with `session.hook("retry")`.
+3. Remove mutation of read-only `event.model`.
+4. Prove these cases:
+   - quota failure on the primary completes the same user turn on tier 1;
+   - tier 1 failure advances once to tier 2;
+   - a duplicate failure event does not duplicate a replay or switch;
+   - a cooldown prevents reuse of the failed tier;
+   - expiry or reported reset returns a new turn to the source model;
+   - manual model selection is not treated as a plugin-generated route;
+   - model variants survive switching where supported;
+   - provider catalog failure fails open without taking down the session.
+5. Remove or implement dead state and options: `routing`, unused agent model
+   collection, ineffective notification behavior, and obsolete v1 hook logic.
+6. Bound usage timers, catalog refresh, persisted state parsing, and state-file
+   size. Keep state owner-only and atomic.
 
-**Phases.**
+If the supported v2 API cannot safely resume a failed turn, the fallback must
+fail closed for that behavior and document the limitation. Unsupported event
+mutation is not an acceptable fallback implementation.
 
-- **0. Spikes. DONE 2026-09-18.** Parser registration via
-  `addFiletypeParser` and the manual `highlightOnce` +
-  `addHighlightByCharRange` editor pipeline both work (JSON verified live in
-  the viewer and editor); `ctrl+z` is the host's terminal-suspend binding, so
-  Phase 3 must bind editor undo to free chords; the physical pointer remains
-  unavailable through this machine's ydotool, but the editor click mapping is
-  now implemented and unit-tested.
-- **1. Editor core. DONE 2026-09-18.** Multi-tab model + tab strip,
-  save/save-all/close/reopen, dirty/discard guards, status bar (`L:C`),
-  go-to-line, per-session path persistence, disk refresh, and bounded editor
-  click-to-position mapping. Live checks covered two-file save-all and a
-  discarded dirty edit without changing the tracked repository.
-- **2. Language coverage** — pinned, checksum-verified parser assets + manifest,
-  extended filetype map, large-file highlight policy.
-- **3. Editing power** — find/replace, indent/dedent, comment toggle,
-  duplicate/move line, bracket and active-line highlight, mouse.
-- **4. Project search/replace** — `rg` results with jump-to-hit, previewed
-  multi-file replace with dry-run and confirmation.
-- **5. Files + git** — create/rename/delete (guarded), reveal/collapse, status
-  letters, git gutter (`git diff --unified=0` + extmarks), open diff per file.
-- **6. External services** — opt-in format-on-save and diagnostics-on-save in
-  an output pane, bounded and cancellable.
-- **7. Optional** — side-by-side editors, folding, selection-to-prompt export.
+#### B2. Source Control
 
-Each phase ships separately with pure unit tests, bounded package checks, live
-keyboard-driven verification (`desktop_input`), screenshots, docs/handoff
-updates, and a memory status update.
+- Add refresh generation/context tokens so results from an old session or
+  directory cannot overwrite current state.
+- Scope `filesystem.changed` and `vcs.branch.updated` events to the active
+  location where event metadata permits.
+- Clear branch/remote/PR state on detached HEAD and context changes.
+- Make manual refresh toasts reflect actual success or failure.
+- Bound all configurable intervals and GitHub page sizes.
+- Test local failure retention, stale result rejection, branch changes,
+  detached HEAD, GitHub timeout, malformed MCP responses, and cleanup.
 
-**Memory loop (decisions and continuous improvement).**
+#### B3. Codex Usage
 
-- Notes: `projects/opencode-rig/explorer-ide` (living project note),
-  `decisions/adr-<slug>` (status/context/decision/consequences, schema-backed),
-  `gotchas/<slug>` (API limits and workarounds), `feedback/<date>-<topic>`
-  (operator input, linked).
-- Workflow: before each phase read with `recent_activity`/`search_notes`/
-  `build_context`; during, write an ADR when a decision is made and a gotcha
-  when a limit is found; after, `edit_note` the project note with what shipped,
-  the acceptance evidence, and the next action; supersede stale ADRs.
-- Standing instructions: extend AGENTS.md and the `task-memory` skill with a
-  `references/decision-records.md` template and the read-before/record-after
-  discipline. No secrets; ask before recording personal facts; edit instead of
-  duplicating.
-- Future (opt-in): a session-idle hook that drafts a summary note for review,
-  mirroring Basic Memory's harness capture.
+- Re-synchronize the active session model whenever the sidebar session changes.
+- Use generation guards around message sync and usage refresh.
+- Bound refresh intervals, timeout values, and timer scheduling.
+- Preserve last-good values on network errors, but surface initial/auth errors.
+- Test session switching, account switching, rate limiting, timeout, malformed
+  responses, and disposal.
 
-**Risks.** Pre-stable plugin API (pin 2.0.7, re-test on upgrade); parser asset
-licensing/size/path resolution (Phase 0 spike, provenance + checksums);
-performance on large files/repos (caps, lazy loads, cancellable processes);
-key conflicts with the host (traits + keymap layers); file safety (atomic
-saves, guards, confirmations); scope creep (phases are independently
-shippable).
+#### B4. Todo
 
-**Operator decisions (2026-09-18).** Full parser language list; project-detected
-format/diagnostics defaults with a per-project disable; guarded create/rename/
-delete in scope; side-by-side editors later; a pinned, checksum-verified fetch
-script for parser assets (not committed); memory capture strictly explicit.
-The plan document records these under "Operator decisions".
+- Create the mirror directory with owner-only permissions and ensure the file
+  mode remains owner-only.
+- Use unique exclusive temporary files, not only PID-based names.
+- Cap todo count and content size before storage and mirroring.
+- Guard polling against stale session reads and clean up timers/subscriptions.
+- Test session deletion, corrupt mirrors, concurrent writes, permissions, and
+  oversized input.
 
-### OpenCode v2 stack (default since 2026-09-18)
+#### B5. rig-tools
 
-- Cutover: the shim `~/.local/opt/opencode-v2/bin/opencode` execs
-  `opencode-pilot`, which starts v2.0.7 with all state under
-  `~/.opencode-v2-pilot/`; a marked block in `~/.bashrc` puts the shim first.
-- Rollback (documented in `docs/migration/opencode-v2.md`): remove the shim or
-  the bashrc block, open a new shell, confirm `opencode --version` reports
-  1.18.31, then run `setup-computer-assistant.sh --verify-only`. v1's binary and
-  config were never modified; compare against
-  `~/.opencode-v2-pilot/cutover-v1-hashes.txt`.
-- The four global commands are stack-aware: they detect the running harness and
-  use `verify-opencode-v2.sh`, `setup-opencode-v2.sh`, and
-  `deploy-plugins.sh --v2` under v2, or the v1 paths otherwise.
-- Exactly one Playwright MCP is registered in v2; headless-only work runs
-  through the pinned repository runtime from the shell.
-- Migration history and phase results: `docs/migration/opencode-v2.md`.
+- Serialize screenshot captures to avoid overlapping before/after directory
+  snapshots.
+- Require a regular file, stable path, valid PNG signature, and bounded size
+  before reading.
+- Report unlink failure instead of claiming successful deletion.
+- Bound desktop traversal inputs at the TypeScript schema layer as well as in
+  the Python script.
+- Test timeout, max-buffer, malformed screenshot, multiple-new-file, and
+  cleanup-failure paths.
 
-### Basic Memory (M0-M4 complete; legacy removed)
+**Stage B gate:** every plugin has lifecycle/failure tests, the fallback uses
+only supported v2 routing behavior, and live tool/panel checks show no stale
+cross-session state.
 
-- Basic Memory 0.23.2 (uv tool, auto-update disabled), project
-  `computer-assistant` at `~/Documents/computer-assistant/basic-memory/`
-  (owner-only), FastEmbed `bge-small-en-v1.5` cached locally.
-- Bounded MCP: `scripts/basic-memory-mcp.sh` applies an adaptive user-cgroup
-  budget (20% memory, 25% swap, 64 MiB floor) with a `prlimit` fallback and
-  fails closed without a limiter.
-- Nine core tools remain after the v2 `permissions` deny list: `search_notes`,
-  `read_note`, `write_note`, `edit_note`, `delete_note`, `build_context`,
-  `recent_activity`, `list_directory`, `basic_memory_diagnostics`.
-- Migrated and searchable notes: `preferences/direct-automation-with-verification`
-  and `decisions/desktop-screenshot-policy`. Their legacy source (the JSON
-  store, `assistant-memory.py`, and the migration doc) was deleted on
-  2026-09-18 with explicit approval; the deletion manifest is recorded in the
-  previous handoff revision and the git history.
-- Docs: `docs/memory.md`, `docs/scripts/basic-memory-mcp.md`; the `task-memory`
-  skill and guide describe the current tool usage and safety rules.
+### Stage C — Explorer Phase 1.1 safety stabilization (complete in current worktree; not committed)
 
-### Desktop tools and mouse
+#### C1. Centralize path safety
 
-- v2 rig-tools exposes `desktop_apps`, `desktop_tree`, `desktop_find`,
-  `desktop_windows`, `desktop_act`, `desktop_input`, and `vision_capture`.
-- `desktop_act` and `desktop_input` preview by default and require the preview
-  token with `apply: true`; `desktop_input` sends exactly one allowlisted key
-  chord or up to 256 printable ASCII characters through the private ydotool
-  socket, bound to the focused window.
-- Terminal mouse capture is enabled (`"mouse": true`). Note: ydotool's virtual
-  pointer does not move the GNOME cursor on this machine. The editor now has a
-  bounded click-to-position handler with pure tests, while physical pointer
-  delivery remains an environment limitation; keyboard input through
-  `desktop_input` works and is the automation path.
+- Canonicalize the project root once, including a symlinked root.
+- Reject absolute paths, empty/invalid names, traversal segments, and every
+  `.git` component after both lexical and canonical normalization.
+- Reject symlinks that resolve outside the project or into `.git`.
+- Reject directories, special files, invalid UTF-8, binary content, and files
+  over the edit/read thresholds.
+- Apply the same validation to tree entries, search results, restored tabs,
+  save paths, external editor paths, and future file operations.
 
-### Suggested next steps
+#### C2. Make saving race-safe
 
-1. Start Phase 2 (language coverage): pinned checksum-verified parser fetch,
-   manifest, extended filetype map, and large-file highlight policy.
-2. Continue Phases 3-7 with the memory loop and per-phase verification.
-3. Merge PRs #1/#2/#3 only on explicit request; retarget PR #3 to main after
-   PR #1/#2 merge.
+- Capture an immutable `{path, content, diskFingerprint, mode}` snapshot before
+  each write.
+- Write to an exclusive uniquely named temporary file in the destination
+  directory.
+- Preserve the original mode, flush the file where supported, atomically
+  replace the destination, and clean up on every failure.
+- Mark only the written snapshot as saved. If newer edits exist, retain them as
+  dirty.
+- Refuse or explicitly confirm a write when the disk fingerprint changed since
+  the tab was opened or last saved.
+- Never silently overwrite a changed disk file.
 
-## Keep This Current
+#### C3. Make dirty-state lifecycle complete
 
-Update this handoff whenever any of these change:
+- Track dirty/discard confirmation by tab path plus content revision.
+- Guard switching/reloading/refreshing an active or background dirty tab.
+- Check every dirty tab before closing or unmounting the panel.
+- Preserve the accepted paths-only persistence policy; do not persist unsaved
+  content unless a new explicit decision approves it.
+- Flush pending storage updates during cleanup.
 
-- Repository path, branch, or visibility.
-- Skill names or count.
-- Global commands, setup or verification commands, or the health check.
-- Documentation gate rules, hook installation, or CI status.
-- Local plugin registration, fallback chains, or state paths.
-- Browser or GitHub MCP wrappers, versions, authentication, or session policy.
-- Memory system, memory location, or privacy rules.
-- Progress-tracking policy or its gate.
-- Confirmation and screenshot policies.
-- The Explorer IDE plan, its phases, or its open questions.
-- Superseded paths.
+#### C4. Fix external editing and asynchronous races
+
+- Parse editor commands without unsafe shell interpolation, or use a bounded
+  explicit command/argument configuration.
+- Do not reload after spawn failure or non-successful exit.
+- Require a clean tab or an explicit dirty-buffer decision before reloading.
+- Add request generations to directory loads, disk reloads, search, and syntax
+  highlighting so old asynchronous results cannot update new state.
+- Keep search text input from receiving navigation keybindings intended for the
+  result list.
+
+#### C5. Add regression tests and live acceptance
+
+- save while editing during an in-flight write
+- external disk modification conflict
+- mode preservation and temporary-file cleanup
+- traversal and symlink-to-`.git` rejection
+- dirty background tab on panel close
+- editor spawn failure with dirty content
+- stale search/highlight result rejection
+- Unicode cursor/highlight offsets
+- restored invalid paths
+
+Use disposable projects only. Assert disk bytes, modes, and tab state directly;
+use screenshots for the visible panel state; remove fixtures afterward.
+
+**Stage C gate:** no known Phase 0/1 safety issue can lose unsaved content or
+write outside the allowed project scope.
+
+Evidence for the Stage C gate: the bounded file-manager check passed with 39
+tests; repository shell/Python/documentation/deployment gates passed; the v2
+health check passed; slash completion exposed `/explorer`, `/editor`, and
+`/files`; and a live v2 client rendered the updated `Files` panel against the
+isolated session. A disposable file retained its original disk bytes after an
+unsaved edit attempt and all fixtures/processes created for that check were
+removed. No v1 file, configuration, or process was changed.
+
+### Stage D — Explorer Phase 2: language coverage
+
+1. Add a pinned parser manifest containing, for every language, source URL or
+   commit, version, SHA-256, expected size, aliases, filetype, license/SPDX
+   metadata, and highlight-query source.
+2. Implement a setup/deployment fetcher that:
+   - downloads only pinned assets;
+   - verifies checksum and size before installation;
+   - writes into an ignored generated parser directory;
+   - installs the manifest/assets atomically;
+   - fails closed on mismatch;
+   - never requires network access during normal verification.
+3. Remove the Phase 0 `/tmp/opencode/parsers` dependency and environment
+   override.
+4. Cover the approved language set:
+   JSON/JSONC, YAML, TOML, Bash/sh, Python, Go, Rust, SQL, HTML, CSS/SCSS,
+   XML, C/C++, Java, Ruby, PHP, Lua, Dockerfile, INI, and diff, alongside the
+   bundled JavaScript/TypeScript/Markdown/Zig parsers.
+5. Map both extensions and basenames such as `Dockerfile`, `Makefile`, and
+   shell/config filenames where the parser supports them.
+6. Apply a highlight threshold below the edit-size threshold; large editable
+   files must remain usable as plain text.
+7. Test manifest integrity, missing assets, checksum mismatch, aliases,
+   fallback-to-plain-text, large files, and Unicode highlight offsets.
+
+**Stage D gate:** three or more representative languages are visibly
+highlighted in the live Explorer, the asset manifest is reproducible and
+verified, and no generated parser asset is tracked by Git.
+
+### Stage E — Explorer Phase 3: editing power
+
+- Add a pure `edit.ts` module for line and selection operations.
+- Implement file find/replace with literal matching first and an explicitly
+  bounded regex mode only if safe execution can be guaranteed.
+- Implement indent/dedent, comment toggle, duplicate line, move line up/down,
+  select all, word navigation, and safe deletion behavior.
+- Add active-line and bracket-match decorations without corrupting the buffer.
+- Bind undo/redo to free chords such as `alt+z` and `alt+shift+z`; never rely on
+  host-owned `ctrl+z` while it remains `terminal.suspend`.
+- Track per-tab cursor, selection, scroll, and edit/view state.
+- Complete click-to-position with display-column handling for tabs, wide
+  characters, and Unicode; add bounded wheel scrolling without breaking
+  selection.
+- Test every pure operation, selection boundary, empty buffer, Unicode case,
+  and undo/redo binding.
+
+**Stage E gate:** a keyboard-driven edit demo completes entirely inside the
+Explorer, with a screenshot and pure tests for every editing operation.
+
+### Stage F — Explorer Phase 4: project search and replace
+
+1. Add a reusable bounded subprocess runner with:
+   - argument arrays only;
+   - timeout;
+   - output and match caps;
+   - cancellation and process-tree cleanup;
+   - adaptive memory limit.
+2. Use `rg --json` for content search. Parse only bounded match records and
+   reject paths through the centralized safety layer.
+3. Support case sensitivity and glob filters without shell expansion.
+4. Navigate to exact file, line, and Unicode-correct column.
+5. Build a multi-file replacement plan showing every old/new range and file.
+6. Require dry-run preview and explicit confirmation.
+7. Revalidate each file fingerprint before writing; refuse dirty/open conflicts
+   unless explicitly resolved.
+8. Write each file atomically with mode preservation and retain rollback copies
+   until the complete operation succeeds.
+9. Test malformed `rg` output, cancellation, timeout, output overflow, path
+   containment, stale fingerprints, partial failure, and rollback.
+
+**Stage F gate:** a repository search opens a result, and a replacement can be
+previewed, confirmed, verified on disk, or safely cancelled without silent
+partial changes.
+
+### Stage G — Explorer Phase 5: file operations and Git
+
+- Create files with exclusive creation; never overwrite an existing path.
+- Create directories only after confirmation and safe-name validation.
+- Rename only to a nonexistent destination; preserve the original if any step
+  fails; refuse `.git`, traversal, symlink escapes, and cross-device surprises.
+- Delete through bounded trash integration (`gio trash`) where available;
+  never silently fall back to permanent deletion.
+- Confirm every create, rename, and delete and show an old-to-new manifest.
+- Add reveal-active-file, collapse-all, deterministic refresh, and selection
+  restoration.
+- Add Git status letters in the tree using the existing VCS client or bounded
+  Git calls.
+- Parse bounded `git diff --unified=0` output into gutter markers.
+- Open a diff for the exact active file; do not assume the host's generic diff
+  route can target the desired path.
+- Test name/path validation, confirmation cancellation, trash failure, rename
+  failure, Git parsing, untracked/renamed files, and stale refreshes.
+
+**Stage G gate:** create/edit/rename/delete and Git gutter behavior work in a
+disposable Git project, with originals preserved on every failure path.
+
+### Stage H — Explorer Phase 6: external language services
+
+1. Reuse the bounded subprocess runner.
+2. Detect project-local formatter/linter configuration and choose defaults:
+   - Prettier or Biome
+   - Black or Ruff
+   - rustfmt
+   - gofmt
+   - shfmt
+   - TypeScript/ESLint
+   - Ruff
+   - ShellCheck
+3. Run format-on-save only when a trusted project configuration is detected and
+   the project setting is not disabled.
+4. Format through stdin or a guarded temporary file before committing the save.
+5. If formatting fails, retain the buffer and offer explicit save-without-format.
+6. Run diagnostics after save with timeout, output caps, cancellation, and no UI
+   blocking.
+7. Parse diagnostics into an output pane and gutter extmarks with bounded
+   message/path lengths.
+8. Persist the per-project `auto`/`off` choice without modifying project config.
+9. Test command detection, arguments, timeout, malformed output, nonzero exit,
+   formatter failure, diagnostic mapping, and disposal.
+
+**Stage H gate:** format and diagnostics demonstrations complete without a TUI
+stall, and disabling the project feature prevents subprocess execution.
+
+### Stage I — Explorer Phase 7: polish and deferred split view
+
+- Add two independently focused editor panes using two textareas and explicit
+  per-pane tab/view state.
+- Add per-language indentation defaults and safe tab rendering.
+- Add copy path and copy selection through OpenTUI OSC52 when supported.
+- Add prompt-context export as copied, formatted text because v2 exposes no
+  plugin API to inject host editor context.
+- Persist project paths, active tabs, pane layout, and preferences, but not
+  unsaved buffer contents under the current explicit persistence decision.
+- Investigate folding only behind a feasibility gate. OpenTUI 0.5.11 currently
+  exposes no safe hidden-range/folding primitive; do not emulate folding by
+  destructively changing the edit buffer.
+
+**Stage I gate:** side-by-side editing preserves independent cursors, tabs,
+dirty state, and save guards; unsupported host capabilities remain documented
+as blocked rather than simulated unsafely.
+
+## Per-stage completion loop
+
+For every implementation stage:
+
+1. Read the current roadmap item and relevant Basic Memory notes.
+2. Make the smallest bounded source change.
+3. Add pure tests before or with behavior changes.
+4. Run changed-package checks through `run-bounded-command.sh`.
+5. Run repository shell, Python, resource, progress, documentation, setup, and
+   v2 health gates relevant to the change.
+6. Perform live verification in a disposable project or fake-provider harness.
+7. Capture visual evidence only when UI behavior is part of acceptance; never
+   retain screenshots.
+8. Update component docs, deep docs, `ROADMAP.md`, and the approved Basic
+   Memory project/ADR notes. Replace obsolete facts instead of duplicating
+   them.
+9. Assert the filesystem and runtime post-state directly.
+10. Ensure temporary files, processes, fixtures, and screenshots are removed and
+    the repository remains clean.
+11. Commit and push the independently reviewable change to the working branch.
+    Do not merge or retarget a pull request without explicit approval.

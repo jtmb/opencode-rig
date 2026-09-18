@@ -1,12 +1,13 @@
 # Plan: Explorer as a full IDE editor
 
-Status: proposed; implementation not started. Owner: operator + assistant.
+Status: Phase 0, Phase 1, and Phase 1.1 are implemented in the current
+worktree; Phases 2–7 remain proposed. Owner: operator + assistant.
 Repository copy of the plan (the Plan-mode original lives in
 `~/.opencode/plan/`). Tracking note: `projects/opencode-rig/explorer-ide` in
 the `computer-assistant` Basic Memory project. Decisions are recorded as
-`decisions/adr-*` notes (see "Memory loop"). The guarded click-handler fix for
-the current Explorer is documented in `HANDOFF.md` under "Pending verification"
-and should be verified and committed before Phase 0.
+`decisions/adr-*` notes (see "Memory loop"). Phase 1.1 safety evidence and the
+remaining release gates are recorded below and in `HANDOFF.md`; parser Phase 2
+work has not started.
 
 ## Goal
 
@@ -203,6 +204,31 @@ keyboard verification (via the `desktop_input` tool) + screenshots + docs gate
 Exit criteria met: two temporary files were edited and saved, another dirty
 edit was discard-guarded without changing disk content, and the tab strip and
 status bar were verified in screenshots.
+
+### Phase 1.1 — safety stabilization (DONE in the current worktree)
+
+- `src/safety.ts` now canonicalizes the project root once and centralizes
+  lexical/canonical containment, `.git` and symlink checks, regular-file,
+  binary, UTF-8, and size validation for tree entries, search results, restored
+  paths, reads, saves, and external-editor targets.
+- Saves capture `{ path, content, diskFingerprint, mode, revision }`, refuse
+  stale disk fingerprints, use unique exclusive temporary files, flush and
+  atomically replace the destination, preserve mode bits, and clean up every
+  temporary file. Tab metadata updates even when newer edits remain dirty.
+- Dirty guards include path and revision for tab switching, reload/refresh,
+  discard, reopen, and panel close. Paths-only persistence remains unchanged;
+  unsaved content is never written to storage.
+- External editor commands are bounded and parsed without a shell. A spawn
+  failure or non-zero exit leaves the current tab untouched.
+- Directory, file, search, and highlight requests use generation tokens. The
+  search input no longer consumes `j`/`k` as result navigation; result movement
+  uses explicit Alt+arrow bindings.
+- Tests: 39 file-manager tests pass, including disposable-project path,
+  symlink, `.git`, UTF-8, binary, size, atomic-save, mode, conflict, revision,
+  dirty-guard, command-parser, and stale-generation regressions.
+
+The v2 command layer opens the panel with `/explorer`, `/editor`, `/files`, or
+`Ctrl+Shift+E`. The v1 stack and its configuration remain rollback-only.
 
 ### Phase 2 — language coverage (1 day + asset build)
 

@@ -77,6 +77,9 @@ jobs:
       - name: Documentation gate self-test
         run: python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage-self-test.py
 
+      - name: v2 deployment self-test
+        run: python3 platforms/linux/ubuntu/computer-use/scripts/deploy-plugins-self-test.py
+
       - name: Documentation gate
         env:
           DOC_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}

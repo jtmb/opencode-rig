@@ -15,6 +15,11 @@ test("formats and parses provider/model keys", () => {
     providerID: "provider",
     modelID: "model/with/slashes",
   })
+  assert.deepEqual(parseModelKey("provider/model#fast"), {
+    providerID: "provider",
+    modelID: "model",
+    variant: "fast",
+  })
 })
 
 test("rejects malformed model keys", () => {
@@ -25,12 +30,19 @@ test("rejects malformed model keys", () => {
   assert.equal(parseModelKey("trailing/"), undefined)
   assert.equal(parseModelKey("with space/model"), undefined)
   assert.equal(parseModelKey("provider/with space"), undefined)
+  assert.equal(parseModelKey("provider/model#"), undefined)
+  assert.equal(parseModelKey("provider/model#fast mode"), undefined)
 })
 
 test("reads models from both user and assistant message shapes", () => {
   assert.deepEqual(modelFromMessage({ model: { providerID: "openai", modelID: "gpt-5.6-sol" } }), {
     providerID: "openai",
     modelID: "gpt-5.6-sol",
+  })
+  assert.deepEqual(modelFromMessage({ model: { providerID: "openai", modelID: "gpt-5.6-sol", variant: "fast" } }), {
+    providerID: "openai",
+    modelID: "gpt-5.6-sol",
+    variant: "fast",
   })
   assert.deepEqual(modelFromMessage({ providerID: "deepseek", modelID: "deepseek-v4-pro" }), {
     providerID: "deepseek",
@@ -43,5 +55,9 @@ test("reads models from both user and assistant message shapes", () => {
 test("compares model references", () => {
   assert.equal(sameModel({ providerID: "a", modelID: "b" }, { providerID: "a", modelID: "b" }), true)
   assert.equal(sameModel({ providerID: "a", modelID: "b" }, { providerID: "a", modelID: "c" }), false)
+  assert.equal(
+    sameModel({ providerID: "a", modelID: "b", variant: "fast" }, { providerID: "a", modelID: "b", variant: "slow" }),
+    false,
+  )
   assert.equal(sameModel(undefined, undefined), false)
 })

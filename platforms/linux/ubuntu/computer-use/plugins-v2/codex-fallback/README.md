@@ -1,196 +1,138 @@
-# Codex Fallback Router
+# Codex Fallback Router (OpenCode v2)
 
-This local OpenCode server plugin keeps sessions running when the ChatGPT
-Codex subscription quota is exhausted. It watches the ChatGPT usage endpoint
-and provider errors, then transparently continues the current turn on a
-configurable fallback chain of any OpenCode providers and models. When the
-quota resets, new turns return to the original model.
+This local OpenCode **server** plugin keeps a session running when an OpenAI
+Codex quota is exhausted. It watches quota/provider failures and uses the
+supported v2 `ctx.session.switchModel()` API plus the `retry` hook to continue
+the same turn on an ordered fallback chain. When the source cooldown expires,
+a later turn can return to the original model.
 
-The plugin is provider-agnostic: chain entries are ordinary
-`provider/model` IDs from `opencode models`, and per-agent configuration can
-change, reorder, or disable fallback in `opencode.json` or agent Markdown.
+Chain entries use `provider/model` IDs from `opencode models`. A model variant
+may be appended as `provider/model#variant`; variants are preserved when the
+plugin switches or recovers a session.
 
 ## Requirements
 
-- OpenCode 1.18.31 or a compatible 1.x build with server plugins.
+- OpenCode v2.0.7 or a compatible v2 release with the v2 plugin API.
 - The sibling [`../codex-usage/`](../codex-usage/README.md) package, which
-  provides the OpenAI OAuth credential reader and ChatGPT usage parser.
-- Authenticated providers for every model listed in the fallback chain
-  (`opencode auth login`). When the provider catalog is available,
-  unauthenticated providers and unknown model IDs are skipped; if the catalog
-  lookup itself fails, the plugin fails open and attempts the chain anyway.
+  provides the OpenAI OAuth credential reader and usage parser.
+- Authenticated providers for the configured fallback models. If the model
+  catalog is unavailable, the plugin fails open and still attempts the chain.
 - Node.js 22.6+ for development checks (`--experimental-strip-types`).
 
 ## Configuration
 
-Register the plugin in `~/.config/opencode/opencode.jsonc`:
+Register the plugin in the v2 `plugins` array:
 
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    [
-      "file:///absolute/path/to/codex-fallback/src/index.ts",
-      {
+  "plugins": [
+    {
+      "package": "file:///absolute/path/to/codex-fallback/src/index.ts",
+      "options": {
         "defaultChain": [
           "deepseek/deepseek-v4-flash",
           "deepseek/deepseek-v4-pro",
           "opencode/muse-spark-1.3-contributor-free"
         ],
         "proactive": true,
-        "notify": true
+        "agents": {
+          "plan": { "mode": "off" }
+        }
       }
-    ]
+    }
   ]
 }
 ```
 
-The chain applies to every agent. Restart OpenCode after changing
-configuration; running sessions do not hot-reload plugins or config.
+The plugin is inactive for an agent with an empty effective chain. Restart or
+reload the v2 server after changing plugin configuration.
 
-### Plugin options
+### Options
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `defaultChain` | string[] | `[]` | Ordered `provider/model` fallback tiers used by agents without a per-agent override. The plugin is inactive for an agent until its effective chain is non-empty. Invalid entries and duplicates are dropped silently. |
-| `proactive` | boolean | `true` | Check the Codex usage endpoint before a turn and switch before the request fails. Requires an OpenAI OAuth (ChatGPT/Codex) login; API-key providers are ignored. |
-| `notify` | boolean | `true` | Show a short TUI toast when routing, switching, recovering, or exhausting the chain. At most one toast per subject per 15 seconds; silently skipped when no TUI is attached. |
-| `triggerOn` | `"quota"` \| `"any-retryable"` | `"quota"` | `"quota"` reacts to usage-limit/quota signals. `"any-retryable"` also reacts to rate limits, 429s, and 5xx provider errors. A quota check that reports the limit reached can force a fallback even under `"quota"`. |
-| `failureCooldownSeconds` | number | `300` | How long a failed model (primary or fallback tier) is skipped after a non-quota failure. |
-| `sourceCooldownSeconds` | number | `10800` | How long the primary model is avoided when the usage endpoint reports no reset time. |
-| `usageEndpoint` | string | `https://chatgpt.com/backend-api/wham/usage` | Override the quota endpoint, useful for local tests. |
-| `usageCacheMs` | number | `60000` | Quota cache lifetime (minimum 1000). A failed OpenAI primary request forces one refresh. |
-| `usageTimeoutMs` | number | `5000` | Quota request timeout (minimum 500). Failures fail open (no switch). |
-| `debug` | boolean | `false` | Print `[codex-fallback]` decision logs to the OpenCode log. Warnings print with the same prefix even when disabled. |
+| `defaultChain` | string[] | `[]` | Ordered fallback tiers. Invalid entries and duplicate model IDs are ignored. |
+| `proactive` | boolean | `true` | Check OpenAI OAuth quota before a turn and switch early when it is exhausted. |
+| `agents` | object | `{}` | Per-agent overrides supplied through plugin options. |
+| `triggerOn` | `"quota"` or `"any-retryable"` | `"quota"` | Select quota-only or broader retryable failure routing. |
+| `failureCooldownSeconds` | number | `300` | Cooldown for a failed model when no quota reset is known. |
+| `sourceCooldownSeconds` | number | `10800` | Fallback cooldown for a source quota failure without a reset time. |
+| `usageEndpoint` | string | ChatGPT usage endpoint | Optional quota endpoint override for tests or compatible services. |
+| `usageCacheMs` | number | `60000` | Successful quota-cache lifetime; bounded to 1 second–24 hours. |
+| `usageTimeoutMs` | number | `5000` | Quota request timeout; bounded to 500 ms–60 seconds. |
+| `debug` | boolean | `false` | Print routing decisions with the `[codex-fallback]` prefix. |
 
-Numeric options are floored; cooldowns must be at least 1 second.
+Cooldown and timeout values are floored and bounded. The plugin does not show
+TUI notifications; server-side decisions are logged instead.
 
-### Per-agent configuration
+### Per-agent overrides
 
-Override the chain for one agent in `opencode.json`:
+Per-agent settings are nested under the plugin's `agents` option because v2
+plugins do not receive the old mutable global config hook:
 
 ```jsonc
 {
-  "agent": {
-    "build": {
-      "codexFallback": {
-        "mode": "chain",
-        "chain": ["provider-a/model-x", "provider-b/model-y"]
+  "plugins": [
+    {
+      "package": "file:///absolute/path/to/codex-fallback/src/index.ts",
+      "options": {
+        "defaultChain": ["fake/tier-1", "fake/tier-2"],
+        "agents": {
+          "build": {
+            "mode": "chain",
+            "chain": ["fake/tier-1#fast", "fake/tier-2#deep"]
+          },
+          "plan": { "mode": "off" }
+        }
       }
-    },
-    "plan": {
-      "codexFallback": { "mode": "off" }
     }
-  }
+  ]
 }
 ```
 
-The same fields can live in agent Markdown frontmatter:
+Supported per-agent fields are `mode`, `chain`, `proactive`, `triggerOn`,
+`failureCooldownSeconds`, and `sourceCooldownSeconds`. `enabled: false` remains
+accepted as an alias for `mode: "off"`.
 
-```md
----
-description: Reviews code without edits
-mode: subagent
-model: openai/gpt-5.3-codex-spark
-codexFallback:
-  mode: chain
-  chain:
-    - deepseek/deepseek-v4-flash
-    - opencode/muse-spark-1.3-contributor-free
----
+## Routing behavior
 
-You are a strict reviewer.
-```
+1. The `context` hook records the source model, routes a cooling model, checks
+   proactive quota when enabled, and requests model changes through
+   `ctx.session.switchModel()`; it never mutates the read-only `event.model`.
+2. The `retry` hook classifies the failure, cools the failed model, switches to
+   the next available tier, and sets `{ retry: true, delay: 250 }`. OpenCode's
+   normal retry machinery performs the next request on the selected model.
+3. A duplicate retry event for the same physical attempt is ignored. A failed
+   fallback tier advances exactly once to the next tier.
+4. When a source cooldown expires, a later context request can switch from a
+   fallback tier back to the recorded source model.
+5. A model selected manually outside the plugin's active route resets the
+   route bookkeeping and is not silently replaced.
 
-Per-agent fields: `mode` (`"chain"` or `"off"`), `chain`, `proactive`,
-`triggerOn`, `failureCooldownSeconds`, and `sourceCooldownSeconds`. Values
-override the plugin options for that agent only; `mode: "off"` (or an empty
-chain) leaves the agent on its configured model. The legacy `enabled: false`
-alias is accepted and behaves like `mode: "off"`. The
-`options: { codexFallback: ... }` form is equivalent; if both forms are
-present, `options.codexFallback` wins.
+The provider catalog comes from `ctx.model.list()`. Known unavailable tiers are
+skipped. If catalog lookup fails, availability is unknown and the chain is
+attempted rather than taking down the session.
 
-OpenCode normally forwards unrecognized agent options to the provider. This
-plugin captures `codexFallback` in its config hook and also deletes it in the
-per-request `chat.params` hook, so the key never reaches a provider API.
-
-## How it works
-
-1. **Proactive routing.** On each user message (`chat.message`), if the turn
-   uses the OpenAI OAuth model and the cached Codex usage check reports the
-   limit reached (a `reachedType`, or the overall bucket marked `limitReached`
-   or `allowed: false`), the message model is rewritten to the first available
-   chain tier before dispatch. The weekly window's ≥ 100 % usage counts only
-   when the overall bucket carries neither flag, so explicit `allowed: true`
-   reserve usage keeps the primary model. The primary model enters cooldown
-   until the reported reset time, or `sourceCooldownSeconds` when no reset time
-   is available.
-2. **Reactive switching.** The plugin subscribes to `session.status` retry,
-   `session.error`, and `message.updated` events (and clears per-session
-   bookkeeping on `session.deleted`). Quota signals (or any retryable failure
-   when configured) abort the run, revert the failed turn, and replay the last
-   user message on the next tier. Revert is best-effort: after three attempts
-   the replay proceeds without cleanup, and if no replayable user message is
-   found the switch is abandoned. Only `text`, `file`, and `agent` parts are
-   replayed; synthetic and empty text parts are dropped.
-3. **Chain and cooldowns.** Tiers are validated against the provider catalog
-   (`provider.list`: connected providers and known model IDs), which is cached
-   for 60 seconds and kept stale if a lookup fails. Cooling tiers and
-   unavailable providers are skipped; if a fallback tier itself fails, the
-   next tier is tried. If the whole chain is unavailable the session stays put
-   with an explanatory toast, and the debug log records the exhausted chain.
-4. **Recovery.** When the primary model's cooldown expires (the reset
-   timestamp from the usage endpoint when available), the next message routes
-   back to it automatically, provided the session's source model is known and
-   still present in the provider catalog.
-
-Routing state is persisted at
-`~/.local/share/opencode/codex-fallback.json` (or under `XDG_DATA_HOME`).
-Cooldowns are pruned one hour after expiry and session records after seven
-days; writes are debounced, owner-only (`0600`), and atomic. Two OpenCode
-servers sharing the file use last-writer-wins semantics.
-
-## Troubleshooting
-
-Start OpenCode with `--print-logs --log-level DEBUG` and look for
-`[codex-fallback]` lines (enable the `debug` option). Decisions are logged:
-failures received, tiers skipped, switches, recoveries, and exhausted chains.
-
-- **No fallback happens.** Confirm the agent's effective chain is non-empty,
-  the provider is authenticated (`opencode models`), and the failure matched
-  the trigger mode. Under the default `triggerOn: "quota"`, transient rate
-  limits are left to OpenCode's own retry logic. A primary model that fails
-  without a quota signal is not switched.
-- **Wrong provider selected.** Chain entries are used in order; a tier can be
-  skipped when its provider is not in `provider.list().connected`, the model
-  ID is unknown, or the tier is cooling down.
-- **Primary model stays on fallback.** The source cooldown lasts until the
-  reset reported by the usage endpoint, or `sourceCooldownSeconds`. Recovery
-  also requires the session source to be known.
-- **Reset routing manually.** Stop OpenCode and delete
-  `~/.local/share/opencode/codex-fallback.json`, or remove both the model's
-  `cooldowns` entry and any session entries pointing at it. State loads once at
-  plugin startup, so edits while OpenCode runs have no effect until restart.
-- **Headless runs.** `opencode run` may exit as soon as the original request
-  errors, before the asynchronous replay finishes; the replay is only
-  delivered while the server is alive. Interactive TUI sessions and
-  `opencode serve` instances complete the switch normally.
-- **A tier fails immediately after a switch.** Failures within two seconds of
-  a switch are ignored to avoid switch loops; send the message again to advance
-  the chain.
+Routing state is stored at `$XDG_DATA_HOME/opencode/codex-fallback.json`, or
+`~/.local/share/opencode/codex-fallback.json`. Writes are atomic, debounced,
+owner-only (`0600`), size-bounded, and pruned on load. State is loaded once per
+plugin instance.
 
 ## Security
 
-The plugin reads the OpenAI OAuth access token from the normal OpenCode data
-location and sends it, with the `ChatGPT-Account-Id` header, only to the fixed
-ChatGPT usage endpoint (or the configured `usageEndpoint`). It never reads or
-exposes the refresh token, does not modify `auth.json`, and never logs
-credentials. Fallback turns are normal model requests to the providers you
-configure.
+The plugin reads the OpenAI OAuth access token only through the shared
+`codex-usage` reader and sends it only to the configured usage endpoint. It
+never reads or exposes the refresh token, modifies `auth.json`, or logs
+credentials. Fallback turns are normal requests to the providers configured by
+the operator.
 
 ## Checks
 
 ```bash
-npm install
-npm run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback run check
 ```
+
+The integration suite uses a fake provider catalog and fake session API to
+exercise primary failover, tier advancement, duplicate suppression, cooldown
+recovery, manual model selection, variants, and catalog fail-open behavior.
