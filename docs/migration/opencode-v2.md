@@ -147,6 +147,30 @@ Exit criteria: the documentation gate and all required checks pass for v2.
 
 Exit criteria: v2 passes the same health check as v1, and rollback is documented.
 
+## Phase 0 results (2026-09-17)
+
+- Installed the standalone v2.0.7 linux-x64 binary to
+  `~/.local/opt/opencode-v2/opencode`; v1 at `~/.opencode/bin/opencode` is
+  untouched.
+- Repeatable isolated launcher:
+  `~/.local/opt/opencode-v2/opencode-pilot` sets `OPENCODE_CONFIG_DIR`,
+  `XDG_DATA_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME`, and
+  `OPENCODE_DISABLE_AUTOUPDATE=1` under `~/.opencode-v2-pilot/`.
+- `opencode debug paths` confirms every path (config, data, state, cache, db,
+  log, repos) resolves under the pilot root. v1's `opencode.jsonc` and `tui.json`
+  hashes are unchanged after the pilot runs, and v1's data directory gained no
+  v2 files.
+- v2 boots (`opencode v2.0.7`), reads only the pilot config, and connects MCP
+  servers (github, playwright, playwright_headless) when they are configured.
+- The pilot log shows v2 watching the configured skills directory
+  (`.../computer-use/skills`), confirming the `skills` source is active.
+- **MCP shape finding:** v2.0.7 accepted the v1 flat `mcp` map and did **not**
+  register a server from the documented `mcp.servers` nesting. Phase 1 must
+  confirm the exact shape against the installed build (the published docs may
+  track a newer build than 2.0.7).
+- `opencode service` has no `stop`; the background service was stopped by PID
+  during cleanup. Use `--standalone` where possible to avoid a shared service.
+
 ## Risks
 
 - New major with pre-stable plugin and hook surfaces; names and shapes can
