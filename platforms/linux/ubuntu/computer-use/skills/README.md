@@ -151,9 +151,11 @@ Example requests:
 - "Run this browser smoke test without opening a window."
 - "Download this public artifact in the background."
 
-Requires: `playwright_headless` MCP entry pointing at
-`../scripts/playwright-headless-mcp.sh` and the same pinned browser runtime.
-It has a separate isolated context and shares no state with the live window.
+Requires: on v1, the `playwright_headless` MCP entry pointing at
+`../scripts/playwright-headless-mcp.sh`; on v2, exactly one live `playwright`
+MCP plus the pinned repository runtime driven from the shell through
+`../scripts/run-bounded-command.sh`. Both run an isolated context that shares
+no state with the live window.
 
 ### game-playtest
 

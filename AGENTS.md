@@ -156,6 +156,9 @@ coordinates. Never run an uncontrolled click or key loop.
 - `playwright_headless` is a separate isolated, invisible browser. Use it only
   when the user explicitly requests headless/background execution or the task
   is clearly non-interactive.
+- The v2 stack registers exactly one live `playwright` MCP; there, route
+  explicitly headless work through the repository Playwright runtime from the
+  shell instead of adding a second MCP.
 - If the user interacts with the live window, wait for their handoff and take
   a fresh snapshot before acting. Never assume page state remained unchanged.
 - List tabs and preserve unrelated tabs. Refresh the snapshot after navigation,

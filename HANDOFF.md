@@ -180,9 +180,10 @@ Known live state (recorded 2026-09-18):
     mergeable, with the required `verify` check passed, and PR #2 (base
     docs/handoff-blender-note) is open and green; merge only on explicit
     request. The current checkout is branch migration/opencode-v2 (local, no
-    upstream), carrying the OpenCode v2 port; v1 remains the default and
-    untouched. The only working-tree changes are this HANDOFF update and the
-    untracked session-ses_f4dc.md transcript
+    upstream), carrying the OpenCode v2 port; the cutover ran 2026-09-18, so
+    new shells start the v2 stack via the shim while v1 stays installed and
+    untouched for rollback. The only working-tree change is the untracked
+    session-ses_f4dc.md transcript
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
@@ -191,18 +192,21 @@ Known live state (recorded 2026-09-18):
     command, and this prompt; enforced by check-progress-tracking.py plus its
     self-test in the required `verify` CI job and the AGENTS.md verification
     list
-  - Deploy state: v1 `/deploy`, `/handoff`, `/promote-skills`, `/resume`, the
-    skills, and both custom tools are deployed and source-matched; the v1
-    `setup-computer-assistant.sh --verify-only` health check must run outside
-    the pilot environment because its `opencode` child would otherwise read the
-    pilot config and database. The v2 pilot loads all six plugins and the four
-    commands, and `verify-opencode-v2.sh` is green
-  - v2 pilot: v2.0.7 at ~/.local/opt/opencode-v2/ with the `oc2` launcher and
-    isolated config/data under ~/.opencode-v2-pilot/; the pilot declares one
-    `github` MCP and no Playwright MCP yet (one live Playwright MCP is
-    registered at cutover). Plugins: rig-tools, rig-todo, and codex-fallback
-    (server); source-control, codex-usage, and file-manager (CLI). tui-settings
-    is retired in favor of v2's built-in `/settings`
+  - Deploy state: the default `opencode` now starts v2 (PATH shim at
+    ~/.local/opt/opencode-v2/bin/opencode -> opencode-pilot; `opencode
+    --version` reports v2.0.7). `verify-opencode-v2.sh` and `opencode mcp list`
+    (github plus the single live playwright) are green. The v1 stack remains
+    installed and source-matched for rollback; run its
+    `setup-computer-assistant.sh --verify-only` only after reverting, because
+    under the v2 PATH its `opencode` child would read the v2 config
+  - v2 stack (default since the 2026-09-18 cutover): v2.0.7 at
+    ~/.local/opt/opencode-v2/ with the `oc2` launcher and isolated
+    config/data/state/cache under ~/.opencode-v2-pilot/; the config declares
+    `github` and exactly one live `playwright` MCP (no `playwright_headless`;
+    headless-only work runs through the repository runtime from the shell).
+    Plugins: rig-tools, rig-todo, and codex-fallback (server); source-control,
+    codex-usage, and file-manager (CLI). tui-settings is retired in favor of
+    v2's built-in `/settings`
   - Skills deployed: 16/16
   - Global commands deployed: /deploy, /handoff, /promote-skills, /resume
   - Global custom tools: `desktop.ts` exporting `desktop_apps`, `desktop_tree`,
@@ -215,10 +219,12 @@ Known live state (recorded 2026-09-18):
     and GitHub panel), tui-settings (settings menu launcher), and file-manager
     (project tree and editor) from ~/.config/opencode/tui.json and
     ~/.config/opencode/opencode.jsonc; all are built, checked, and verified
-    live after the 2026-09-17 restart. The v2 pilot runs the six plugins-v2
-    packages and uses the built-in `/settings` instead of tui-settings
-  - Browser runtime: @playwright/mcp 0.0.80 with isolated live and headless
-    Firefox, via platforms/linux/ubuntu/browser-tools
+    live after the 2026-09-17 restart. The v2 stack (default) runs the six
+    plugins-v2 packages and uses the built-in `/settings` instead of
+    tui-settings
+  - Browser runtime: @playwright/mcp 0.0.80 via
+    platforms/linux/ubuntu/browser-tools; v1 registers live + headless MCPs,
+    v2 exactly one live `playwright` MCP
   - GitHub MCP runtime: official v1.12.1 native amd64 release via
     platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh; write-capable
     with the context, repos, issues, pull_requests, actions, and users
@@ -236,37 +242,41 @@ Known live state (recorded 2026-09-18):
 
 Work in progress (full detail in the "Work In Progress" section of this file):
 
-  - The OpenCode v2 port is the active work: branch migration/opencode-v2
-    (local; no upstream), pilot v2.0.7 under ~/.opencode-v2-pilot/. All six
-    plugins-v2 packages pass their bounded checks and load in the pilot, and
-    the four global commands are discovered. The A1 keymap fix is verified
-    after a fresh pilot start
-  - Phase 4 is complete on migration/opencode-v2: A1-A8 landed (six plugin
-    ports, rig-todo, deploy tooling, CI coverage, stack-aware commands) plus
-    the v2 health check, config examples, and rollback runbook. Phase 5 (live
-    verification and the PATH cutover) waits on an explicit operator go
-  - Phase 5 (full v2 health check and PATH cutover with v1 rollback) waits on
-    an explicit operator go; v1 (1.18.31) remains the default until then, with
-    no left dock in either version, so the Explorer panel docks right
-  - Queued after cutover: the computer-use window-listing and bounded input
-    tools, then Basic Memory M1-M4 (the legacy JSON memory stays authoritative
-    until the M2 migration), then the untracked session-ses_f4dc.md cleanup
-    (with approval)
+  - The OpenCode v2 cutover is done: branch migration/opencode-v2, v2.0.7
+    default via the PATH shim, all six plugins loaded, four commands
+    discovered, and both health checks green
+  - Phases A-D progress: Phase 4 and the Phase 5 cutover are complete on
+    migration/opencode-v2 (deploy tooling, CI coverage, stack-aware commands,
+    single live Playwright MCP, verification C1-C3, cutover with a rollback
+    record). No left dock exists in either version, so the Explorer panel
+    docks right
+  - Queued next: the computer-use window-listing and bounded input tools
+    (D1/D2), then Basic Memory M1-M4 (D3-D6; the legacy JSON memory stays
+    authoritative until the M2 migration), then the untracked
+    session-ses_f4dc.md cleanup (with approval). Post-cutover tidy (C5):
+    translate the repo project `opencode.json` for v2 and mark v1-only docs
+    retired
+  - PR #1/#2 merge only on explicit request; v1 rollback is one PATH/shim
+    change and is recorded in docs/migration/opencode-v2.md
 
 After the health check, give me a concise status and continue with the task I
 give you. If I pasted only this handoff, ask what task I want handled.
 ```
 
-## Work In Progress — updated 2026-09-17
+## Work In Progress — updated 2026-09-18
 
 ### Checkout state
 
 - The current checkout is branch `migration/opencode-v2` (local; no upstream),
-  where the OpenCode v2 port lives. v1 stays the default and untouched:
-  `~/.opencode/bin/opencode` (1.18.31), `~/.config/opencode/`, and the
-  `~/.local/share/opencode/opencode.db` are unchanged this session.
-- The v2 pilot is v2.0.7 at `~/.local/opt/opencode-v2/` with all state under
-  `~/.opencode-v2-pilot/` (config, data, state, cache). `oc2` starts it with
+  where the OpenCode v2 port lives. The cutover ran 2026-09-18: the default
+  `opencode` resolves to the shim at `~/.local/opt/opencode-v2/bin/opencode`
+  (via a marked PATH block in `~/.bashrc`) and starts v2.0.7 with its own
+  config/data under `~/.opencode-v2-pilot/`. v1 remains installed and untouched
+  (`~/.opencode/bin/opencode` 1.18.31, `~/.config/opencode/`, and its database);
+  rollback hashes are recorded at
+  `~/.opencode-v2-pilot/cutover-v1-hashes.txt`.
+- The v2 stack declares `github` and exactly one live `playwright` MCP;
+  `opencode mcp list` shows both connected. `oc2` still starts the v2 TUI with
   the v2 session prompt; `verify-opencode-v2.sh` is the read-only health check
   and is green. The v2 session handoff lives at
   `docs/migration/v2-session-handoff.md`; the plan and phase results live at
@@ -278,7 +288,7 @@ give you. If I pasted only this handoff, ask what task I want handled.
   (08bc281), the v2 health check (d32bcf7), CI coverage (167df04), the v2
   deploy tooling (`setup-opencode-v2.sh` plus `deploy-plugins.sh --v2`), the
   stack-aware command rewrites (A6), the `verify-opencode-v2.sh` shellcheck
-  fix, and the B4 docs (AGENTS.md v2 section, README notes).
+  fix, the B4 docs, and the Phase 5 verification/cutover records.
 - v1 work stays on PRs #1/#2 as recorded in the prompt above; merge only on
   explicit request. The untracked `session-ses_f4dc.md` transcript sits at the
   repository root; remove it only with approval (Phase D8).
@@ -287,19 +297,18 @@ give you. If I pasted only this handoff, ask what task I want handled.
 
 ### Current todo status (2026-09-18)
 
-- Completed: the six v2 plugin ports with bounded checks; the pilot loads all
-  six and discovers the four commands; A1 restart verification (no
-  `Keymap.Provider is missing`; `plugin list` shows all six; `command.list`
-  shows deploy/handoff/promote-skills/resume); rig-todo; tui-settings presets
-  folded into source-control; the config-dir skills source; `cli.json` parity;
-  v2 config examples; colour parity; the cutover/rollback runbook; the
-  `verify-opencode-v2.sh` health check; CI coverage for `plugins-v2` with the
-  rig-todo workspace fix; the v2 deploy tooling (`setup-opencode-v2.sh` and
-  `deploy-plugins.sh --v2`) with its docs; the stack-aware v2 command rewrites
-  (A6); the AGENTS.md v2 section, README notes, and Phase 4 completion (B4).
-- Pending: Phase 5 (live verification and the PATH cutover) on explicit
-  approval; then the window/input tools and Basic Memory M1-M4; merge PR #1/#2
-  only on explicit request; remove `session-ses_f4dc.md` with approval.
+- Completed: the six v2 plugin ports with bounded checks; the v2 stack loads
+  all six and discovers the four commands; A1 keymap verification; rig-todo;
+  tui-settings presets folded into source-control; the config-dir skills
+  source; `cli.json` parity; v2 config examples; colour parity; the
+  cutover/rollback runbook; the `verify-opencode-v2.sh` health check; CI
+  coverage with the rig-todo workspace fix; the v2 deploy tooling; the
+  stack-aware command rewrites (A6); the AGENTS.md v2 section and Phase 4
+  completion (B4); Phase 5 C1-C3 verification (health checks, skills,
+  commands, todo/desktop/vision tools, panels by screenshot, GitHub MCP read +
+  approved write) and the C4 cutover with the single live Playwright MCP.
+- Pending: the D queue (window/input tools, Basic Memory M1-M4, transcript
+  cleanup, post-cutover tidy); merge PR #1/#2 only on explicit request.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -783,13 +792,17 @@ README notes, Phase 4 recorded complete).
   tools, skills, and the four commands.
 - **C2.** GitHub MCP read plus one approved write through v2.
 - **C3.** DeepSeek and OpenAI connectivity check.
-- **C4.** Cut over only on explicit go: point `opencode` at v2, restart, smoke
-  test; v1 remains installed.
+- **C4. DONE 2026-09-18.** The cutover shim
+  (`~/.local/opt/opencode-v2/bin/opencode` -> `opencode-pilot`) plus the marked
+  `~/.bashrc` PATH block make v2.0.7 the default in new shells; the pilot
+  config gained the single live `playwright` MCP and the service reconciled it
+  live (`opencode mcp list`: github + playwright connected). Smoke test passed
+  (see results). v1 remains installed for rollback.
 - **C5.** Post-cutover tidy: mark v1-only docs retired; decide the fate of the
   v1 `plugins/tui-settings` package.
 - **C6.** Merge `migration/opencode-v2` (and PR #1/#2) only when requested.
 
-Phase C results (2026-09-18, partial): C1-C3 verified in the live pilot -
+Phase C results (2026-09-18): C1-C4 complete. C1-C3 verified in the live pilot -
 `verify-opencode-v2.sh` and `setup-opencode-v2.sh --verify-only` are green;
 all six plugins load; the four commands are discovered; discovery shows the 16
 repo skills plus 2 built-ins; both todo tools, `desktop_apps`, and
@@ -797,10 +810,13 @@ repo skills plus 2 built-ins; both todo tools, `desktop_apps`, and
 PNG was deleted); file-manager's docked Files panel, the Source Control row
 with real worktree data, the MCP `github Connected` row, and the `Explorer`
 row were confirmed by screenshot; and a GitHub MCP read (`get_me`) plus one
-approved write (PR #2 comment 5725307311) succeeded. OpenAI OAuth is not
-mapped in the pilot (a one-time `/connect` is needed), and the Codex Usage row
-loaded but was not in frame. C4 cutover remains unstarted and needs explicit
-approval.
+approved write (PR #2 comment 5725307311) succeeded. C4 cutover executed: a
+new login shell resolves `opencode` to the shim (v2.0.7), `opencode mcp list`
+shows `github` and the single `playwright` connected, and the v1 binary/config
+hashes are unchanged (recorded at
+`~/.opencode-v2-pilot/cutover-v1-hashes.txt`). OpenAI OAuth is not mapped in
+v2 (a one-time `/connect` is needed), and the Codex Usage row loaded but was
+not in frame. C5 tidy and C6 merges remain.
 
 #### Phase D - resume the pre-migration queue (on the default stack)
 
@@ -825,11 +841,9 @@ approval.
   (with approval); keep this file current.
 
 Order: A1 -> A2 -> A3/A4/A5 -> A6 -> A7 -> A8 -> B1/B2 -> B3/B4/B5 -> C -> D.
-A1-A8 and B1/B3/B4/B5 are done; B2 is partial (the one live Playwright MCP is
-decided and in the cutover example, but the pilot registration and the
-`browser-headless` text land at cutover). Phase C: C1-C3 verified 2026-09-18;
-C4 cutover awaits explicit approval. Phases A and D1/D2 are independent;
-Basic Memory (D3-D6) can start once the v2 config is final.
+A1-A8 and B1-B5 are done; Phase C C1-C4 are done 2026-09-18 (v2 is the default;
+rollback recorded). Remaining: C5 post-cutover tidy and C6 merges (on request),
+then the Phase D queue.
 
 Risks: v2 plugin APIs are pre-stable (pin 2.0.7, re-test on upgrades); no v2
 todo panel unless A2b is built; a single Playwright MCP trades headless
@@ -842,13 +856,14 @@ v2 upgrade beyond 2.0.7.
 
 ### Suggested next steps
 
-1. Phase 5 C1-C3 verified 2026-09-18. The C4 cutover needs explicit approval
-   and three pieces: a PATH wrapper that starts v2 with its own config
-   directory, the single live Playwright MCP registered in the v2 config
-   (B2), and the `browser-headless` skill text update for the one-MCP model.
-2. After cutover, resume the pre-migration queue: desktop window-listing and
-   bounded input tools, then Basic Memory M1-M4; delete the legacy memory only
-   with the explicit confirmation at the M2 gate.
+1. Post-cutover tidy (C5): translate the repository project `opencode.json`
+   for v2 (or keep the project config disabled), mark v1-only docs retired,
+   and decide the fate of the v1 `plugins/tui-settings` package. OpenCode
+   should be restarted once so the new v2 default, MCP list, and skill text
+   load cleanly.
+2. Resume the pre-migration queue: desktop window-listing and bounded input
+   tools (D1/D2), then Basic Memory M1-M4 (D3-D6); delete the legacy memory
+   only with the explicit confirmation at the M2 gate.
 3. Merge PRs #1/#2 only on explicit request; remove `session-ses_f4dc.md` with
    approval.
 4. Keep the v2 docs and HANDOFF current and re-test the v2 port on any 2.0.x

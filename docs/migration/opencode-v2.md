@@ -1,8 +1,8 @@
 # Migration plan: OpenCode v1 (1.18.31) to v2 (2.0.x)
 
-Status: Phase 4 complete on branch `migration/opencode-v2`; Phase 5
-(verification and cutover) is pending explicit operator approval. v1 remains the
-default until the v2 stack passes the same health checks.
+Status: cutover executed 2026-09-18. The default `opencode` now starts the v2
+stack via a PATH shim; v1 remains installed and untouched for rollback. v2 work
+continues on branch `migration/opencode-v2`.
 
 ## Why
 
@@ -341,6 +341,24 @@ OpenAI OAuth is not mapped in the pilot. B2's remaining pieces (single
 Playwright MCP registration in the running config and the `browser-headless`
 text) and the C4 cutover await explicit approval.
 
+## Cutover executed (2026-09-18)
+
+- Shim: `~/.local/opt/opencode-v2/bin/opencode` execs `opencode-pilot`, so v2
+  starts with the isolated config/data/state/cache under `~/.opencode-v2-pilot/`.
+- PATH: a managed block appended to `~/.bashrc`
+  (`export PATH="$HOME/.local/opt/opencode-v2/bin:$PATH"`) after the existing
+  `~/.opencode/bin` entry, so new login shells resolve v2 first.
+- Config: the pilot `opencode.jsonc` gained the single live `playwright` MCP;
+  the running service reconciled it without a restart, and `opencode mcp list`
+  shows `github` and `playwright` connected (no `playwright_headless`).
+- Smoke test through a new login shell: `opencode --version` reports v2.0.7;
+  18 skills (16 repo + 2 built-ins); the four global commands; both MCPs. The
+  v1 binary and config hashes are unchanged and recorded at
+  `~/.opencode-v2-pilot/cutover-v1-hashes.txt`.
+- The repo project `opencode.json` is still v1-shaped and is not read by v2
+  (`opencode-pilot` sets `OPENCODE_DISABLE_PROJECT_CONFIG=1`); translating it
+  is post-cutover tidy (C5).
+
 ## Risks
 
 - New major with pre-stable plugin and hook surfaces; names and shapes can
@@ -372,13 +390,17 @@ Cutover (Phase 5, explicit approval only):
 4. Smoke test: version, skills (16), commands (4), six plugins, both todo tools,
    the desktop/vision tools, and one MCP read.
 
-Revert (any time):
+Revert (any time, minutes):
 
-1. Remove or repoint the `opencode` shim so `~/.opencode/bin/opencode` (v1) is
-   first on `PATH` again.
-2. Restore the v1 config directory from the recorded backup if it was moved.
-   Leaving the v2 config in its isolated directory is enough; v1 never reads it.
-3. Restart OpenCode and re-run `setup-computer-assistant.sh --verify-only`.
+1. Remove the marked `opencode v2 cutover` PATH block from `~/.bashrc` (or
+   remove the shim at `~/.local/opt/opencode-v2/bin/opencode`); new shells then
+   resolve `~/.opencode/bin/opencode` (v1) first again.
+2. v1's binary and config were never moved or changed; compare them against
+   `~/.opencode-v2-pilot/cutover-v1-hashes.txt` to confirm.
+3. Open a new shell and verify: `opencode --version` reports 1.18.31, then run
+   `setup-computer-assistant.sh --verify-only`.
+4. Optionally remove the added `playwright` entry from the pilot config; v1
+   never reads that directory.
 
 The v2 config lives in an isolated directory until the final step, and v1's
 config, database, and kv are never modified by migration work, so the revert is

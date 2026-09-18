@@ -113,6 +113,10 @@ and rollback runbook.
 - transient output under `/tmp/opencode/`, and image responses omitted by
   default to keep context small.
 
+OpenCode v1 registers both contexts as `playwright` and `playwright_headless`.
+The v2 stack registers exactly one live `playwright` MCP; headless-only work
+runs through the same pinned runtime from the shell.
+
 ### GitHub without the blast radius
 
 `github-tools` installs the official GitHub MCP Server `v1.12.1` after
