@@ -230,15 +230,13 @@ Known live state (recorded 2026-09-18):
     platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh; write-capable
     with the context, repos, issues, pull_requests, actions, and users
     toolsets in lockdown mode (mutation confirmation gate retained)
-  - Memory: legacy JSON store at ~/Documents/computer-assistant/memory.json
-    (owner-only) is still authoritative until the M2 migration. Basic Memory
-    0.23.2 is installed via uv tool: project `computer-assistant` at
-    ~/Documents/computer-assistant/basic-memory (default, auto-update
-    disabled). M1 is verified: the `basic-memory` MCP runs under
-    scripts/basic-memory-mcp.sh (adaptive 20%/25% cgroup budget, prlimit
-    fallback, fail closed) and the v2 config hides 12 of its 21 tools with
-    `permissions` deny entries, leaving nine core note tools. See Work In
-    Progress
+  - Memory: Basic Memory 0.23.2 (uv tool) serves the `computer-assistant`
+    project at ~/Documents/computer-assistant/basic-memory (owner-only,
+    auto-update disabled) through the bounded `basic-memory` MCP; the two
+    durable legacy entries were migrated in M2 and are searchable. The legacy
+    JSON store at ~/Documents/computer-assistant/memory.json still exists and
+    is deleted only with an explicit confirmation; do not write to it. See
+    Work In Progress
   - Optional 3D: Blender 5.0.1 with python3-numpy for glTF (Draco unavailable)
   - Maintenance cron: runs the repository maintenance script
   - Superseded paths (do not use): the ~/scripts/ computer-use copies and
@@ -254,12 +252,12 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     single live Playwright MCP, verification C1-C3, cutover with a rollback
     record). No left dock exists in either version, so the Explorer panel
     docks right
-  - In progress: Basic Memory M2 next - migrate the three legacy JSON entries
-    as notes and rewrite the task-memory skill (M1 landed: bounded wrapper and
-    the 9-tool registration). The legacy JSON memory stays authoritative until
-    the migration is verified; deletion still needs explicit confirmation.
-    Also queued: the untracked session-ses_f4dc.md cleanup (with approval) and
-    the C5 post-cutover tidy
+  - In progress: Basic Memory M3/M4 next (docs, map rows, setup pin, config
+    examples, then the cross-session checks). M2 migrated the two durable
+    legacy entries into searchable Basic Memory notes and rewrote the
+    task-memory skill. The legacy JSON store is now unused and is deleted only
+    with an explicit confirmation at the M4 gate. Also queued: the untracked
+    session-ses_f4dc.md cleanup (with approval) and the C5 post-cutover tidy
   - PR #1/#2 merge only on explicit request; v1 rollback is one PATH/shim
     change and is recorded in docs/migration/opencode-v2.md
 
@@ -314,9 +312,12 @@ give you. If I pasted only this handoff, ask what task I want handled.
   approved write) and the C4 cutover with the single live Playwright MCP; the
   D1/D2 window-listing and bounded input tools (25 rig-tools tests green, live
   input apply verified with a screenshot, docs updated); Basic Memory M1 (the
-  bounded `basic-memory-mcp.sh` wrapper and the 9-tool v2 registration).
-- Pending: Basic Memory M2-M4, the transcript cleanup, and the C5
-  post-cutover tidy; merge PR #1/#2 only on explicit request.
+  bounded `basic-memory-mcp.sh` wrapper and the 9-tool v2 registration); Basic
+  Memory M2 (two durable legacy entries migrated and searchable, task-memory
+  skill rewritten).
+- Pending: Basic Memory M3/M4 and the legacy-store deletion (explicit
+  confirmation), the transcript cleanup, and the C5 post-cutover tidy; merge
+  PR #1/#2 only on explicit request.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -366,7 +367,7 @@ Decisions made with the user after research:
   vision), deployment plus `--verify-only` for both setup scripts, and a live
   fresh-process `opencode run` calling `desktop_apps` against real AT-SPI data.
 
-#### Part 2 — Basic Memory adoption (M0 and M1 complete, M2-M4 next)
+#### Part 2 — Basic Memory adoption (M0-M2 complete, M3/M4 next)
 
 Chosen after comparing free local MCP memory servers: Basic Memory v0.23.2
 (AGPL-3.0, personal use fine) beats Engram (keyword-only search), the official
@@ -412,6 +413,21 @@ M1 findings (2026-09-18):
   leaving nine core tools, and the live v2 catalog confirms
   `basic-memory (9 tools)`.
 - Docs: `docs/scripts/basic-memory-mcp.md` plus the scripts index row.
+
+M2 findings (2026-09-18):
+
+- Migrated the two durable legacy entries through MCP `write_note`:
+  `preferences/direct-automation-with-verification` and
+  `decisions/desktop-screenshot-policy`. `recent_activity` lists both and
+  `search_notes` finds each by its key terms (this doubles as the M4
+  write/read/search smoke).
+- The third legacy entry is a concurrency test probe ("Second concurrent
+  memory probe", pending/observed); it is deliberately not migrated and
+  disappears with the legacy store.
+- The `task-memory` skill and usage guide now use the Basic Memory core tools,
+  keep the no-secrets rule, and add ask-before-deleting. The v2 stack picks
+  the rewrite up live through the skills symlink farm; the v1 deployed copies
+  are refreshed with `setup-opencode.sh --apply`.
 
 Then:
 
@@ -887,8 +903,9 @@ v2 upgrade beyond 2.0.7.
 1. Post-cutover tidy (C5): translate the repository project `opencode.json`
    for v2 (or keep the project config disabled), mark v1-only docs retired,
    and decide the fate of the v1 `plugins/tui-settings` package.
-2. Resume the memory queue: Basic Memory M1-M4 (D3-D6); delete the legacy JSON
-   memory only with the explicit confirmation at the M2 gate.
+2. Finish the memory migration (M3/M4): docs and map rows, setup pin and
+   verify, config examples, then the cross-session recall check; delete the
+   legacy JSON store only with an explicit confirmation.
 3. Merge PRs #1/#2 only on explicit request; remove `session-ses_f4dc.md` with
    approval (D8).
 4. Keep the v2 docs and HANDOFF current and re-test the v2 port on any 2.0.x
