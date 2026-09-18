@@ -12,6 +12,7 @@
     "rig-tools"
   ],
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
     "@opencode/plugin": "2.0.7",
     "@opencode/theme": "2.0.7",
     "@opentui/core": "0.5.11",
