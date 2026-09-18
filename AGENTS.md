@@ -228,6 +228,35 @@ or CAPTCHAs for the user.
   state.
 - Never retain screenshots. Never upload local content without explicit scope.
 
+## OpenCode v2 Stack (pilot)
+
+The v2 port lives on branch `migration/opencode-v2` and runs in an isolated
+pilot until the operator approves the one-time cutover. v1 remains the default,
+and v2 work never modifies v1 config, data, or processes.
+
+- Binary: `~/.local/opt/opencode-v2/opencode` (pin 2.0.7) with the `oc2`
+  launcher; all state stays under `~/.opencode-v2-pilot/`.
+- Config: pilot `opencode.jsonc` (flat `mcp` map; `timeout` must be an object,
+  a numeric value silently drops the whole MCP block) plus `cli.json`.
+- Plugins: six packages under
+  `platforms/linux/ubuntu/computer-use/plugins-v2/` (server: `rig-tools`,
+  `rig-todo`, `codex-fallback`; CLI: `source-control`, `codex-usage`,
+  `file-manager`), registered as absolute-path object entries.
+- Deployment: `scripts/setup-opencode-v2.sh` (skill links, commands, starting
+  config) and `scripts/deploy-plugins.sh --v2` (plugin registration).
+- Verification: `scripts/verify-opencode-v2.sh` and
+  `scripts/setup-opencode-v2.sh --verify-only`; both are bounded and never
+  connect an MCP, so they never launch Firefox. The six `plugins-v2` packages
+  run their bounded checks in the `verify` CI job.
+- Exactly one Playwright MCP is registered in v2 (the live visible wrapper);
+  explicitly headless work runs through the repository Playwright runtime from
+  the shell instead of a second MCP.
+- Progress tracking in v2 is served by `rig-todo` (`todowrite`/`todoread`,
+  `plugins-v2/rig-todo/`) because 2.0.7 ships neither tool.
+- Cutover is a `PATH` change plus starting v2 with its own config directory,
+  and it happens only on explicit approval; the rollback runbook is in
+  `docs/migration/opencode-v2.md`.
+
 ## Source Of Truth
 
 - Skill sources:

@@ -95,6 +95,14 @@ All five plugins are user-registered (`~/.config/opencode/tui.json` and the
 global `opencode.jsonc`) and are not deployed by the general setup scripts.
 Use `/deploy` or `deploy-plugins.sh` to register them.
 
+A parallel **OpenCode v2 port** ships six `plugins-v2` packages in an isolated
+pilot under `~/.opencode-v2-pilot/`: the same five concerns plus `rig-todo`,
+which restores the todo tools that 2.0.x omits. v1 remains the default until
+the approved cutover; deploy with `setup-opencode-v2.sh` and
+`deploy-plugins.sh --v2`, verify with `verify-opencode-v2.sh`, and read
+[`docs/migration/opencode-v2.md`](docs/migration/opencode-v2.md) for the plan
+and rollback runbook.
+
 ### Browser automation, live and headless
 
 `browser-tools` pins `@playwright/mcp@0.0.80` with a locked dependency graph:

@@ -1,8 +1,8 @@
 # Migration plan: OpenCode v1 (1.18.31) to v2 (2.0.x)
 
-Status: planning. This document is the tracking plan for moving `opencode-rig`
-from the v1 CLI to the v2 CLI. It is not yet executed; v1 remains the default
-until the v2 stack passes the same health checks.
+Status: Phase 4 complete on branch `migration/opencode-v2`; Phase 5
+(verification and cutover) is pending explicit operator approval. v1 remains the
+default until the v2 stack passes the same health checks.
 
 ## Why
 
