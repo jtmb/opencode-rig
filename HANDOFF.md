@@ -224,8 +224,11 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     Memory decision loop). The operator's decisions are recorded there (full
     parser list; project-detected format/diagnostics; guarded file operations;
     side-by-side later; pinned parser fetch script; explicit-only memory
-    capture). Start by folding the plan into the memory project note
-    projects/opencode-rig/explorer-ide, then run the Phase 0 spikes.
+    capture). The plan, the operator decisions, and the workflow feedback are
+    already recorded in Basic Memory: projects/opencode-rig/explorer-ide,
+    decisions/adrs-explorer-ide-scope, and
+    feedback/2026-09-18/direct-status-checks-and-question-tool-usage.
+    Next action: run the Phase 0 spikes.
   - Merge PRs #1/#2/#3 only on explicit request.
 
 After the health check, give me a concise status and continue with the task I
@@ -384,8 +387,8 @@ The plan document records these under "Operator decisions".
 
 ### Suggested next steps
 
-1. Fold the Explorer IDE plan into the Basic Memory project note
-   (projects/opencode-rig/explorer-ide) and start the Phase 0 spikes.
+1. Start the Phase 0 spikes (plan, decisions, and workflow feedback are
+   recorded in Basic Memory).
 2. Continue Phases 1-7 with the memory loop and per-phase verification.
 3. Merge PRs #1/#2/#3 only on explicit request; retarget PR #3 to main after
    PR #1/#2 merge.
