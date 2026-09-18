@@ -240,6 +240,12 @@ Ported and verified in the v2.0.7 pilot:
   (`opencode.settings`) already covers theme, display, plugins, and keybinds,
   so only the v1 harness-specific Source Control presets remain to be folded
   into the v2 source-control plugin.
+- **CLI keymap gotcha:** v2.0.7 throws `Keymap.Provider is missing` when a CLI
+  plugin calls `context.keymap.layer(...)` directly in `setup`. Register the
+  layer inside a slot render instead (for example an `append: "app"` slot that
+  returns `null`), which runs under the host's keymap provider. Without this,
+  the whole plugin setup fails and its sidebar panel and commands silently
+  disappear.
 
 Remaining in Phase 2: none. `source-control` landed as the last port, and the
 per-plugin test totals are rig-tools 20, codex-fallback 27, source-control 20,

@@ -601,7 +601,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
 export default Plugin.define({
   id: "opencode-rig.file-manager",
   setup(context) {
-    context.ui.slot({
+    const stopPanel = context.ui.slot({
       append: "session.panel",
       render: (panel) => (
         <Show when={panel.name === PANEL_NAME}>
@@ -610,25 +610,31 @@ export default Plugin.define({
       ),
     })
 
-    context.keymap.layer(() => ({
-      mode: "global",
-      commands: [
-        {
-          id: "file-manager.open",
-          title: "Open file manager",
-          description: "Open the project file tree and editor panel.",
-          group: "Files",
-          bind: "ctrl+shift+e",
-          palette: true,
-          slash: { name: "files", aliases: ["explorer"] },
-          run: () => {
-            context.ui.panel.open(PANEL_NAME)
-          },
-        },
-      ],
-    }))
+    const stopKeymap = context.ui.slot({
+      append: "app",
+      render: () => {
+        context.keymap.layer(() => ({
+          mode: "global",
+          commands: [
+            {
+              id: "file-manager.open",
+              title: "Open file manager",
+              description: "Open the project file tree and editor panel.",
+              group: "Files",
+              bind: "ctrl+shift+e",
+              palette: true,
+              slash: { name: "files", aliases: ["explorer"] },
+              run: () => {
+                context.ui.panel.open(PANEL_NAME)
+              },
+            },
+          ],
+        }))
+        return null as never
+      },
+    })
 
-    context.ui.slot({
+    const stopSidebar = context.ui.slot({
       append: "sidebar.content",
       render: () => (
         <box
@@ -650,5 +656,11 @@ export default Plugin.define({
         </box>
       ),
     })
+
+    return () => {
+      stopPanel()
+      stopKeymap()
+      stopSidebar()
+    }
   },
 })

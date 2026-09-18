@@ -159,9 +159,12 @@ export default Plugin.define({
       supportsLunaReserve: true,
     })
 
-    context.keymap.layer(() => ({
-      mode: "global",
-      commands: [
+    const stopKeymap = context.ui.slot({
+      append: "app",
+      render: () => {
+        context.keymap.layer(() => ({
+          mode: "global",
+          commands: [
         {
           id: "codex-usage.refresh",
           title: "Refresh Codex usage",
@@ -197,6 +200,9 @@ export default Plugin.define({
         },
       ],
     }))
+        return null as never
+      },
+    })
 
     const stopSlot = context.ui.slot({
       append: "sidebar.content",
@@ -204,6 +210,7 @@ export default Plugin.define({
     })
 
     return () => {
+      stopKeymap()
       stopSlot()
       store.dispose()
     }

@@ -295,9 +295,12 @@ export default Plugin.define({
     scheduleLocalPoll()
     scheduleGithubPoll()
 
-    context.keymap.layer(() => ({
-      mode: "global",
-      commands: [
+    const stopKeymap = context.ui.slot({
+      append: "app",
+      render: () => {
+        context.keymap.layer(() => ({
+          mode: "global",
+          commands: [
         {
           id: "source-control.refresh",
           title: "Refresh Source Control",
@@ -322,8 +325,11 @@ export default Plugin.define({
         },
       ],
     }))
+        return null as never
+      },
+    })
 
-    context.ui.slot({
+    const stopSidebar = context.ui.slot({
       append: "sidebar.content",
       render: ({ sessionID: nextSessionID }) => {
         if (updateContext(nextSessionID)) void refresh(true)
@@ -343,6 +349,8 @@ export default Plugin.define({
       if (refreshTimer) clearTimeout(refreshTimer)
       if (localTimer) clearTimeout(localTimer)
       if (githubTimer) clearTimeout(githubTimer)
+      stopKeymap()
+      stopSidebar()
       stopSessionIdle()
       stopFiles()
       stopBranch()

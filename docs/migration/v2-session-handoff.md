@@ -93,6 +93,12 @@ v2 API facts already verified:
   `ctx.location`, `ctx.vcs`, `ctx.session`.
 - Tool results: `{ content, output?, metadata? }`; images use
   `{ type: "file", uri: "data:...", mime }`.
+- CLI keymap: register `context.keymap.layer(...)` inside a slot render
+  (`append: "app"`, return `null`), not directly in `setup`; direct calls throw
+  `Keymap.Provider is missing` in 2.0.7 and abort the whole plugin setup.
+- v2.0.7 has no `todowrite`/`todoread` tool: they are absent from the registered
+  tool catalog and the binary strings, so the v1 progress-tracking rule has no
+  direct v2 equivalent yet.
 
 Phase 2 order and goals (status 2026-09-18):
 1. DONE rig-tools (server): registers desktop_apps, desktop_tree,

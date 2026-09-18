@@ -664,6 +664,12 @@ Research conclusions and evidence (2026-09-17 session):
 - Phase 4 started (2026-09-18): `check-plugin-resource-guards.py` now also
   scans `plugins-v2/`, and `documentation-map.json` maps the v2 workspace to
   `plugins-v2/README.md`.
+- v2.0.7 gotchas found live (2026-09-18): a CLI plugin that calls
+  `context.keymap.layer(...)` directly in `setup` fails with
+  `Keymap.Provider is missing`, which silently drops its sidebar panel and
+  commands; register the layer inside an `append: "app"` slot render instead.
+  Separately, v2.0.7 has no `todowrite`/`todoread` tool, so the v1
+  progress-tracking rule has no direct v2 equivalent.
 - Remaining: fold the tui-settings Source Control presets into source-control,
   finish Phase 4 (setup/verify scripts, health checks, AGENTS, docs, and a
   v2-specific skills source to drop the stray `README` skill), then Phase 5

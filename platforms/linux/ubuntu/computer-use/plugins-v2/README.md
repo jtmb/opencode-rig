@@ -38,6 +38,12 @@ object form and a root entry shim:
 The loader resolves `<package>/server` and `<package>/tui`, which is why each
 package has a root `server.ts` or `tui.tsx` that re-exports `src/`.
 
+CLI plugins must register keymap layers from inside a slot render, not directly
+in `setup`: on 2.0.7 a direct `context.keymap.layer(...)` throws
+`Keymap.Provider is missing` and aborts the whole plugin. The packages here use
+an `append: "app"` slot that calls `context.keymap.layer(...)` and returns
+`null`.
+
 ## Checks
 
 Each package follows the same adaptive resource guard as v1: `npm run check`
