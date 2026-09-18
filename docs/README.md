@@ -40,6 +40,12 @@ pieces fit together?*
 |----------|--------|
 | [`tools/README.md`](tools/README.md) | Typed OpenCode custom tools wrapping the desktop-control AT-SPI script: tool names, preview/apply flow, execution limits, checks, and deployment |
 
+### Memory
+
+| Document | Covers |
+|----------|--------|
+| [`memory.md`](memory.md) | The Basic Memory knowledge base: layout, exposed tools, registration, operations, and the legacy retirement |
+
 ### Scripts
 
 | Document | Covers |
@@ -51,7 +57,8 @@ pieces fit together?*
 | [`scripts/deploy-plugins.md`](scripts/deploy-plugins.md) | Registering the local plugins globally or into a repository, plus the `/deploy` command and optional bootstrap copy |
 | [`scripts/setup-live-dictation.md`](scripts/setup-live-dictation.md) | Checksum-pinned Vosk dictation runtime and the `Alt+X` shortcut |
 | [`scripts/desktop-control.md`](scripts/desktop-control.md) | AT-SPI inspection and mutation with traversal bounds and short-lived target tokens |
-| [`scripts/assistant-memory.md`](scripts/assistant-memory.md) | The private JSON memory store: schema, commands, locking, and credential rejection |
+| [`scripts/assistant-memory.md`](scripts/assistant-memory.md) | The retired legacy JSON memory store: schema, commands, locking, and credential rejection |
+| [`scripts/basic-memory-mcp.md`](scripts/basic-memory-mcp.md) | The bounded Basic Memory MCP launcher: adaptive cgroup budget, prlimit fallback, and the nine exposed tools |
 | [`scripts/check-skill-docs.md`](scripts/check-skill-docs.md) | Skill metadata/documentation validation and its negative self-test |
 | [`scripts/check-progress-tracking.md`](scripts/check-progress-tracking.md) | The mandatory todo-tracking gate: required rule surfaces, exit codes, and its negative self-test |
 | [`scripts/check-doc-coverage.md`](scripts/check-doc-coverage.md) | The documentation coverage gate: map rules, completeness, change-aware checks, and the exemption |

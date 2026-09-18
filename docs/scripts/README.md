@@ -42,7 +42,7 @@ lists them at a glance and covers the operating environment.
 | Script | Document | What it does |
 |--------|----------|--------------|
 | `desktop-control.py` | [`desktop-control.md`](desktop-control.md) | AT-SPI app/window inspection and mutation, plus bounded ydotool key/text input, with dry-run tokens |
-| `assistant-memory.py` | [`assistant-memory.md`](assistant-memory.md) | Owner-only JSON memory store |
+| `assistant-memory.py` | [`assistant-memory.md`](assistant-memory.md) | Retired legacy JSON memory store (kept until the confirmed deletion) |
 | `basic-memory-mcp.sh` | [`basic-memory-mcp.md`](basic-memory-mcp.md) | Launches the bounded Basic Memory MCP server (adaptive user-cgroup budget, `prlimit` fallback, fail closed) |
 
 ### Documentation validation

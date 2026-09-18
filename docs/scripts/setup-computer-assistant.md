@@ -2,9 +2,9 @@
 
 Full-stack provisioning and verification for the local computer-assistant
 capabilities on Ubuntu GNOME. This is the top-level setup entry point: it
-installs system packages, deploys skills, commands, and custom tools,
-initializes the memory store, and installs the pinned Playwright and GitHub MCP
-runtimes.
+installs system packages, deploys skills, commands, and custom tools, verifies
+the bounded Basic Memory installation, and installs the pinned Playwright and
+GitHub MCP runtimes.
 
 ```bash
 # Read-only health check (default)
@@ -42,7 +42,7 @@ need review before running on a new machine:
 | Global configs | `~/.config/opencode/opencode.json` and `opencode.jsonc` |
 | Browser project | `platforms/linux/ubuntu/browser-tools/` |
 | GitHub project | `platforms/linux/ubuntu/github-tools/` |
-| Memory store | `~/Documents/computer-assistant/memory.json` |
+| Basic Memory | `0.23.2` (`BASIC_MEMORY_VERSION`) via `basic-memory-mcp.sh` |
 | Required packages | `python3-pyatspi`, `ydotool`, `wl-clipboard` |
 
 Node is used from the fnm default alias at
@@ -76,9 +76,8 @@ only into the trusted `sudo`/PolicyKit dialog.
 ### 2. Local state
 
 - Runs `setup-opencode.sh --apply` to deploy skills, commands, and custom tools
-  (see [`setup-opencode.md`](setup-opencode.md)).
-- Runs `assistant-memory.py init` to create the owner-only store (see
-  [`assistant-memory.md`](assistant-memory.md)).
+  (see [`setup-opencode.md`](setup-opencode.md)). It does not recreate the
+  retired legacy JSON memory store.
 
 ### 3. Browser runtime
 
@@ -162,7 +161,8 @@ The wrappers registered are:
 - `/dev/uinput` is writable in this login.
 - `ydotool.service` is active and its private socket exists.
 - `desktop-control.py apps` runs (AT-SPI inspection works).
-- `assistant-memory.py validate` passes.
+- Basic Memory `0.23.2` is on `PATH` and `basic-memory-mcp.sh --verify-only`
+  resolves a limiter and a usable budget.
 - The pinned Playwright runtime and Firefox binary are complete.
 - The pinned GitHub MCP runtime is present.
 - `opencode mcp list` reports the live and headless Playwright MCPs connected.

@@ -192,16 +192,22 @@ coordinates. Never run an uncontrolled click or key loop.
 
 ### Memory
 
-- Store: `~/Documents/computer-assistant/memory.json` (directory `700`, file
-  `600`), managed only by
-  `platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py`.
-- Reads are narrow and task-relevant. Record writes preview by default and
-  require `--apply`; store initialization is the documented exception.
+- Store: the Basic Memory knowledge base for the `computer-assistant` project
+  at `~/Documents/computer-assistant/basic-memory/` (owner-only Markdown plus a
+  local SQLite index), served by the bounded `basic-memory` MCP launched from
+  `platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh`.
+- Read narrowly with `recent_activity`, `search_notes`, `build_context`, and
+  `read_note`; do not dump the knowledge base into a conversation.
+- `write_note` and `edit_note` apply directly. Confirm before recording a
+  personal fact or durable decision, replace obsolete facts instead of
+  accumulating contradictions, and ask before deleting any note.
 - Store only explicit durable preferences, verified system facts, tested
   workflows, approved decisions, and concrete pending work.
-- Never store passwords, API keys, tokens, private keys, payment details,
-  dictated private content, or whole chats. Script detection is only a
-  guardrail.
+- Never store passwords, API keys, tokens, private keys, payment details, MFA
+  codes, dictated private content, or whole chats.
+- The legacy JSON store at `~/Documents/computer-assistant/memory.json` and
+  `assistant-memory.py` are retired after the M2 migration; they are deleted
+  only with the explicit confirmation recorded in `HANDOFF.md`.
 
 ## Confirmation Gates
 
@@ -409,7 +415,7 @@ npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run chec
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/file-manager run check
 npm --prefix platforms/linux/ubuntu/computer-use/tools run check
-python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
+./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps
 ```
 

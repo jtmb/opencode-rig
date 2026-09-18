@@ -143,8 +143,9 @@ arguments and the same preview-token apply flow.
 
 - **Blender 5.0.1** with `python3-numpy` for glTF import/export, versioned
   saves, renders, and clean reimport checks.
-- **Task memory** in `~/Documents/computer-assistant/memory.json`: owner-only,
-  preview-by-default writes, credential shapes rejected.
+- **Task memory** in a local Basic Memory knowledge base
+  (`~/Documents/computer-assistant/basic-memory/`): owner-only Markdown plus a
+  SQLite index, served through a memory-bounded MCP with nine core note tools.
 - **Weekly maintenance cron** that backs up chats to
   `~/Documents/opencode-backups/` and reclaims database space while OpenCode is
   closed, with an `@reboot` catch-up run.

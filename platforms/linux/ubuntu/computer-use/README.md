@@ -220,7 +220,9 @@ phrases, example requests, and how the skills combine.
   with no numeric `timeout`, the `rig-tools`/`rig-todo`/`codex-fallback`
   server plugins, and the three CLI plugins in `cli.json`. v2 registers exactly
   **one** Playwright MCP (the live visible wrapper); headless-only work runs
-  through the repository Playwright runtime from the shell.
+  through the repository Playwright runtime from the shell. It also registers
+  the bounded `basic-memory` MCP with `permissions` deny entries that hide 12
+  rarely used tools, leaving nine core note tools.
 - [`config/maintenance.cron.example`](config/maintenance.cron.example)
   documents the weekly maintenance schedule and required cron `PATH`.
 - Plugin registration examples live in
@@ -298,13 +300,16 @@ are expected. Never commit a token or place its value in
 
 ## Memory store
 
-`scripts/assistant-memory.py` manages `~/Documents/computer-assistant/memory.json`.
-Record writes preview by default and require `--apply`; store initialization
-is the documented exception. Categories: `preference`,
-`system`, `workflow`, `decision`, `pending`. Sources: `user`, `observed`,
-`verified`. Obvious credential shapes are rejected, but that is only a
-guardrail — never store passwords, tokens, keys, payment details, or full
-private conversations.
+The memory system of record is **Basic Memory** 0.23.2: owner-only Markdown
+plus a local SQLite index for the `computer-assistant` project at
+`~/Documents/computer-assistant/basic-memory/`, served through the bounded
+`basic-memory` MCP (`scripts/basic-memory-mcp.sh`, adaptive cgroup budget,
+`prlimit` fallback, fail closed). Writes through `write_note`/`edit_note` apply
+directly, so durable personal facts and decisions are confirmed first, and
+deleting a note always needs an explicit confirmation. The legacy JSON store
+(`scripts/assistant-memory.py` and `~/Documents/computer-assistant/memory.json`)
+is retired after the M2 migration and is removed only with the explicit
+confirmation recorded in `HANDOFF.md`.
 
 ## Verification
 

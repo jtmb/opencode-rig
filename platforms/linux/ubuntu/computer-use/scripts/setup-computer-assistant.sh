@@ -60,7 +60,8 @@ GITHUB_MCP_URL="https://github.com/github/github-mcp-server/releases/download/v$
 GITHUB_MCP_WRAPPER="$SCRIPT_DIR/github-mcp.sh"
 OPENCODE_CONFIG_JSON="$HOME/.config/opencode/opencode.json"
 OPENCODE_CONFIG_JSONC="$HOME/.config/opencode/opencode.jsonc"
-MEMORY="$HOME/Documents/computer-assistant/memory.json"
+BASIC_MEMORY_VERSION="0.23.2"
+BASIC_MEMORY_WRAPPER="$SCRIPT_DIR/basic-memory-mcp.sh"
 REQUIRED_PACKAGES=(python3-pyatspi ydotool wl-clipboard)
 
 ok() { echo "OK: $*"; }
@@ -466,9 +467,8 @@ install_github_runtime() {
 }
 
 initialize_local_state() {
-  echo "=== skills and memory ==="
+  echo "=== skills ==="
   "$SCRIPT_DIR/setup-opencode.sh" --apply
-  python3 "$SCRIPT_DIR/assistant-memory.py" init
 }
 
 verify() {
@@ -529,10 +529,20 @@ verify() {
     status=1
   fi
 
-  if python3 "$SCRIPT_DIR/assistant-memory.py" validate >/dev/null 2>&1; then
-    ok "private memory store $MEMORY"
+  if ! command -v basic-memory >/dev/null 2>&1; then
+    fail "Basic Memory $BASIC_MEMORY_VERSION (basic-memory not on PATH)"
+    status=1
+  elif ! basic-memory --version 2>&1 | grep -qF "$BASIC_MEMORY_VERSION"; then
+    fail "Basic Memory $BASIC_MEMORY_VERSION (found: $(basic-memory --version 2>&1 | head -1))"
+    status=1
   else
-    fail "private memory store $MEMORY"
+    ok "Basic Memory $BASIC_MEMORY_VERSION"
+  fi
+
+  if [ -x "$BASIC_MEMORY_WRAPPER" ] && "$BASIC_MEMORY_WRAPPER" --verify-only >/dev/null 2>&1; then
+    ok "bounded Basic Memory MCP wrapper"
+  else
+    fail "bounded Basic Memory MCP wrapper ($BASIC_MEMORY_WRAPPER --verify-only)"
     status=1
   fi
 

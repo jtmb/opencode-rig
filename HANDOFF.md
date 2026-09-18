@@ -252,12 +252,13 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     single live Playwright MCP, verification C1-C3, cutover with a rollback
     record). No left dock exists in either version, so the Explorer panel
     docks right
-  - In progress: Basic Memory M3/M4 next (docs, map rows, setup pin, config
-    examples, then the cross-session checks). M2 migrated the two durable
-    legacy entries into searchable Basic Memory notes and rewrote the
-    task-memory skill. The legacy JSON store is now unused and is deleted only
-    with an explicit confirmation at the M4 gate. Also queued: the untracked
-    session-ses_f4dc.md cleanup (with approval) and the C5 post-cutover tidy
+  - In progress: Basic Memory M4 next (fresh-process recall check and final
+    gates); M3 landed (docs/memory.md, map/handoff rows, setup pin and verify,
+    v2 example). M2 migrated the two durable legacy entries into searchable
+    Basic Memory notes and rewrote the task-memory skill. The legacy JSON store
+    is now unused and is deleted only with an explicit confirmation at the M4
+    gate. Also queued: the untracked session-ses_f4dc.md cleanup (with
+    approval) and the C5 post-cutover tidy
   - PR #1/#2 merge only on explicit request; v1 rollback is one PATH/shim
     change and is recorded in docs/migration/opencode-v2.md
 
@@ -314,8 +315,9 @@ give you. If I pasted only this handoff, ask what task I want handled.
   input apply verified with a screenshot, docs updated); Basic Memory M1 (the
   bounded `basic-memory-mcp.sh` wrapper and the 9-tool v2 registration); Basic
   Memory M2 (two durable legacy entries migrated and searchable, task-memory
-  skill rewritten).
-- Pending: Basic Memory M3/M4 and the legacy-store deletion (explicit
+  skill rewritten); Basic Memory M3 (docs/memory.md, map/handoff rows, setup
+  pin and verify, v2 config example).
+- Pending: Basic Memory M4 and the legacy-store deletion (explicit
   confirmation), the transcript cleanup, and the C5 post-cutover tidy; merge
   PR #1/#2 only on explicit request.
 
@@ -367,7 +369,7 @@ Decisions made with the user after research:
   vision), deployment plus `--verify-only` for both setup scripts, and a live
   fresh-process `opencode run` calling `desktop_apps` against real AT-SPI data.
 
-#### Part 2 — Basic Memory adoption (M0-M2 complete, M3/M4 next)
+#### Part 2 — Basic Memory adoption (M0-M3 complete, M4 next)
 
 Chosen after comparing free local MCP memory servers: Basic Memory v0.23.2
 (AGPL-3.0, personal use fine) beats Engram (keyword-only search), the official
@@ -428,6 +430,19 @@ M2 findings (2026-09-18):
   keep the no-secrets rule, and add ask-before-deleting. The v2 stack picks
   the rewrite up live through the skills symlink farm; the v1 deployed copies
   are refreshed with `setup-opencode.sh --apply`.
+
+M3 findings (2026-09-18):
+
+- New `docs/memory.md` documents the knowledge base, and `docs/README.md`
+  indexes it; `docs/scripts/basic-memory-mcp.md` documents the launcher.
+- `documentation-map.json` now requires `HANDOFF.md` for
+  `basic-memory-mcp.sh` changes; `AGENTS.md` (Memory section plus the
+  verification list) and `docs/scripts/check-doc-coverage.md` are updated.
+- `setup-computer-assistant.sh` pins `BASIC_MEMORY_VERSION=0.23.2`, verifies
+  the binary version and the bounded wrapper, and no longer initializes the
+  legacy JSON store.
+- `config/v2-opencode.example.jsonc` declares the bounded `basic-memory` MCP
+  and the 12-entry `permissions` deny list.
 
 Then:
 

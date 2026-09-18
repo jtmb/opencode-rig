@@ -1,5 +1,9 @@
 # `assistant-memory.py`
 
+> **Retired.** Basic Memory replaced this store in the 2026-09-18 M2 migration.
+> The script and this document remain only until the deletion confirmation in
+> `HANDOFF.md`; do not write new memories here.
+
 A small, private JSON memory store for the local computer-assistant skills,
 managed only through this script. Reads are safe by default; writes preview
 first and require `--apply`. The store lives outside the repository.

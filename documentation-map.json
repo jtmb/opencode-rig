@@ -114,6 +114,7 @@
         "platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh",
         "platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh",
         "platforms/linux/ubuntu/computer-use/scripts/setup-opencode-v2.sh",
+        "platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh",
         "platforms/linux/ubuntu/computer-use/tools/**",
         "platforms/linux/ubuntu/computer-use/scripts/setup-git-hooks.sh",
         "platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh",

@@ -8,6 +8,8 @@
 //   so either omit it or use the object form `{ "startup": 30000 }`.
 // - Exactly ONE Playwright MCP is registered. Headless-only work runs through
 //   the repository Playwright runtime from the shell instead of a second MCP.
+// - Basic Memory runs through the bounded wrapper and hides 12 rarely used
+//   tools with `permissions` deny entries, leaving nine core note tools.
 // - v2 agents are the `agents` map; per-agent codex-fallback overrides move
 //   under the plugin options `agents` key.
 {
@@ -26,8 +28,26 @@
     "playwright": {
       "type": "local",
       "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"]
+    },
+    "basic-memory": {
+      "type": "local",
+      "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"]
     }
   },
+  "permissions": [
+    { "action": "basic-memory_read_content", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_view_note", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_move_note", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_create_memory_project", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_delete_project", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_list_memory_projects", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_list_workspaces", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_schema_validate", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_schema_infer", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_schema_diff", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_search", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_fetch", "resource": "*", "effect": "deny" }
+  ],
   "plugins": [
     { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools", "options": {} },
     { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo", "options": {} },
