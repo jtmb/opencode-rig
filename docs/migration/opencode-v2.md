@@ -197,6 +197,54 @@ Exit criteria: v2 passes the same health check as v1, and rollback is documented
 - Plugin registration is deferred to Phase 2: the v1 server plugin
   (`codex-fallback`) and TUI plugins do not load in v2.
 
+## Phase 2 results (2026-09-18, in progress)
+
+Workspace: `platforms/linux/ubuntu/computer-use/plugins-v2/` holds one package per
+plugin (`rig-tools`, `codex-fallback`, `codex-usage`, `file-manager`,
+`source-control`), a shared `tsconfig.base.json`, and one hoisted
+`node_modules`. Each package declares `exports["./server"]` or
+`exports["./tui"]` plus a root `server.ts` or `tui.tsx` shim.
+
+Registration finding: v2 registers **server** plugins from the `plugins` array
+in `opencode.jsonc` and **CLI** plugins from the `plugins` array in `cli.json`.
+A bare string is treated as an npm package and v2 tries to install it from the
+registry, so local packages use the object form
+`{ "package": "<absolute directory>", "options": {} }`; the loader resolves
+`<dir>/server.ts` and `<dir>/tui.tsx`, which is why the root shims exist.
+
+Ported and verified in the v2.0.7 pilot:
+
+- **rig-tools** (server): registers `desktop_apps`, `desktop_tree`,
+  `desktop_find`, `desktop_act`, and `vision_capture` through
+  `ctx.tool.transform`. The desktop tools wrap `scripts/desktop-control.py`;
+  `vision_capture` returns the PNG as `{ type: "file", uri: "data:..." }`.
+  Typecheck plus 20 tests pass, and the five tools appear live in the v2
+  session's tool list.
+- **codex-fallback** (server): routes requests through
+  `ctx.session.hook("context")` and `ctx.session.hook("retry")`, reusing the v1
+  chain, failure detector, state store, and quota checker. Because v2 exposes
+  no raw config, per-agent `codexFallback` overrides move to the plugin options
+  `agents` map, and server plugins have no TUI toast, so routing is logged.
+  Typecheck plus 27 tests pass; the plugin loads with its stable id.
+- **codex-usage** (CLI): `sidebar.content` quota panel plus
+  `refresh`/`details` keymap commands, using `ctx.storage.store` for the
+  collapsed flag and `ctx.data.session.message`/events for the active model.
+  Typecheck plus 8 tests pass; the plugin loads.
+- **file-manager** (CLI): a docked `session.panel` tree/viewer/editor opened
+  with `ctx.ui.panel.open`, `toggleFullscreen` on `f`, an Explorer
+  `sidebar.content` row, and a `ctrl+shift+e` / `/files` command. v2's
+  `file.list`/`file.find` return `{ path, type }` only, so the node name and
+  absolute path are derived and the v1 `ignored` flag is unavailable.
+  Typecheck plus 11 tests pass; the plugin loads.
+- **tui-settings**: retired. v2's built-in `/settings`
+  (`opencode.settings`) already covers theme, display, plugins, and keybinds,
+  so only the v1 harness-specific Source Control presets remain to be folded
+  into the v2 source-control plugin.
+
+Remaining in Phase 2: port `source-control` (working-tree and pull-request
+`sidebar.content` panel) using `ctx.client.vcs` and the GitHub MCP path. It is
+the last unported plugin.
+
 ## Risks
 
 - New major with pre-stable plugin and hook surfaces; names and shapes can

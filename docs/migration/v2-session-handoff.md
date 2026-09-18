@@ -65,13 +65,17 @@ Current state:
   documented `mcp.servers` nesting and silently drops the whole MCP block on a
   numeric `timeout`; use an object), skills pointed at the repo skills, the
   four global commands copied in, `cli.json` seeded from v1 kv.
-- Phase 2 (in progress): plugins-v2/ workspace exists with five package
-  manifests (codex-fallback, codex-usage, source-control, file-manager,
-  rig-tools), a shared tsconfig.base.json, and one installed node_modules at
-  plugins-v2/ (391 packages). Plugin sources are not written yet.
+- Phase 2 (in progress): plugins-v2/ workspace has four ported plugins.
+  rig-tools and codex-fallback (server) and codex-usage and file-manager (CLI)
+  typecheck, pass their tests, and load in the pilot. file-manager contributes
+  a docked session.panel; tui-settings is retired in favor of the built-in
+  `/settings`. source-control is the last unported plugin.
+- Local plugin registration uses the object form `{ "package": "<absolute
+  directory>", "options": {} }` plus a root `server.ts` / `tui.tsx` shim; a
+  bare package-name string makes v2 try to install it from npm.
 - tui-settings is redundant in v2: the built-in `/settings`
   (`opencode.settings`) already covers theme, display, plugins, and keybinds.
-  Retire it and fold its Source Control presets into the source-control plugin.
+  Its Source Control presets still need folding into source-control.
 
 v2 API facts already verified:
 - CLI plugin: `import { Plugin } from "@opencode/plugin/tui"` and
@@ -89,21 +93,22 @@ v2 API facts already verified:
 - Tool results: `{ content, output?, metadata? }`; images use
   `{ type: "file", uri: "data:...", mime }`.
 
-Phase 2 order and goals:
-1. rig-tools (server): register desktop_apps, desktop_tree, desktop_find,
-   desktop_act, and vision_capture via `ctx.tool.transform`, wrapping
-   scripts/desktop-control.py and the ydotool screenshot path from
-   tools/vision.ts. Return screenshots as file content.
-2. codex-fallback (server): port the failover chain to v2 session hooks and
-   `ctx.session.switchModel` / `ctx.session.prompt`; follow
-   https://opencode.ai/v2/docs/build/plugins/migrate-v1.
-3. source-control (CLI): port the working-tree/PR panel to a `sidebar.content`
-   slot using `client.vcs` / `data.location.vcs`.
-4. codex-usage (CLI): port the weekly quota panel to a `sidebar.content` slot.
-5. file-manager (CLI): port the tree/viewer/editor to a `session.panel`
-   contribution opened with `ui.panel.open`, using `toggleFullscreen` for
-   dock/undock.
-6. Retire tui-settings; update cli.json and pilot config registration.
+Phase 2 order and goals (status 2026-09-18):
+1. DONE rig-tools (server): registers desktop_apps, desktop_tree,
+   desktop_find, desktop_act, and vision_capture via `ctx.tool.transform`,
+   wrapping scripts/desktop-control.py and the ydotool screenshot path.
+   Screenshots return as file content.
+2. DONE codex-fallback (server): the failover chain now uses
+   `ctx.session.hook("context")` / `ctx.session.hook("retry")`; per-agent
+   overrides live under plugin options `agents`; routing is logged instead of
+   toasted (server plugins have no TUI toast).
+3. TODO source-control (CLI): port the working-tree/PR panel to a
+   `sidebar.content` slot using `ctx.client.vcs` / `ctx.data.location.vcs`.
+4. DONE codex-usage (CLI): weekly quota panel on a `sidebar.content` slot.
+5. DONE file-manager (CLI): tree/viewer/editor as a `session.panel`
+   contribution opened with `ctx.ui.panel.open`, `toggleFullscreen` on `f`.
+6. DONE retired tui-settings; v2's built-in `/settings` replaces it. Fold its
+   Source Control presets into source-control when that plugin lands.
 
 Then Phase 4 (scripts, health checks, docs, AGENTS, HANDOFF, documentation
 map) and Phase 5 (verification and cutover with v1 rollback) from the plan.
