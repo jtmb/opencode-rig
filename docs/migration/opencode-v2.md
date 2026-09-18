@@ -171,6 +171,32 @@ Exit criteria: v2 passes the same health check as v1, and rollback is documented
 - `opencode service` has no `stop`; the background service was stopped by PID
   during cleanup. Use `--standalone` where possible to avoid a shared service.
 
+## Phase 1 results (2026-09-17)
+
+- Pilot config `~/.opencode-v2-pilot/config/opencode.jsonc` uses the flat `mcp`
+  map with `github`, `playwright`, and `playwright_headless`; all three connect
+  under v2. `opencode debug config` confirms only the pilot config is loaded.
+- **MCP shape:** v2.0.7 uses the flat `mcp` map. Two blockers found:
+  - the documented `mcp.servers` nesting registered no server in 2.0.7;
+  - a numeric `"timeout": 30000` silently dropped the whole MCP block. The v2
+    `timeout` is an object (`{ startup, catalog, execution }`), not a number.
+- **Skills:** `opencode api skill.list` returned 19 entries: 2 built-in
+  (`opencode`, `report`), the 16 repo skills, and an unintended `README` skill.
+  v2 discovers root-level `*.md` files in a skills source, so pointing `skills`
+  at the repo `skills/` directory also picks up `skills/README.md`. Phase 4 must
+  use a v2-specific skills source or exclude that file.
+- **Commands:** `opencode api command.list` returned 8 entries: the 4 built-in
+  plus `deploy`, `handoff`, `promote-skills`, and `resume` discovered from the
+  pilot `commands/` directory. The bodies still reference v1 paths.
+- `cli.json` was seeded from the v1 `kv.json`: `animations`, `session.sidebar`,
+  `session.thinking`, `session.scrollbar`, and `diffs.wrap`. The v1 theme name
+  `opencode` has no verified v2 equivalent, so `theme` was omitted pending
+  validation. The v1 keys `timestamps`, `tool_details_visibility`,
+  `assistant_metadata_visibility`, and `generic_tool_output_visibility` have no
+  documented `cli.json` equivalent.
+- Plugin registration is deferred to Phase 2: the v1 server plugin
+  (`codex-fallback`) and TUI plugins do not load in v2.
+
 ## Risks
 
 - New major with pre-stable plugin and hook surfaces; names and shapes can
