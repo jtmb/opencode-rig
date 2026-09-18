@@ -205,9 +205,8 @@ coordinates. Never run an uncontrolled click or key loop.
   workflows, approved decisions, and concrete pending work.
 - Never store passwords, API keys, tokens, private keys, payment details, MFA
   codes, dictated private content, or whole chats.
-- The legacy JSON store at `~/Documents/computer-assistant/memory.json` and
-  `assistant-memory.py` are retired after the M2 migration; they are deleted
-  only with the explicit confirmation recorded in `HANDOFF.md`.
+- The legacy JSON store and `assistant-memory.py` were removed on 2026-09-18
+  after the verified M2 migration; do not recreate or write to them.
 
 ## Confirmation Gates
 

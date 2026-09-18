@@ -3,8 +3,8 @@
 The assistant's durable memory is **Basic Memory** — local-first Markdown notes
 plus a SQLite index with hybrid search, exposed over MCP. It replaced the
 legacy owner-only JSON store (`assistant-memory.py`) in the 2026-09-18 M2
-migration; the legacy files remain only until the explicit deletion
-confirmation recorded in `HANDOFF.md`.
+migration; the legacy files were removed on 2026-09-18 after the explicit
+deletion confirmation.
 
 ## Layout
 

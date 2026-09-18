@@ -233,10 +233,9 @@ Known live state (recorded 2026-09-18):
   - Memory: Basic Memory 0.23.2 (uv tool) serves the `computer-assistant`
     project at ~/Documents/computer-assistant/basic-memory (owner-only,
     auto-update disabled) through the bounded `basic-memory` MCP; the two
-    durable legacy entries were migrated in M2 and are searchable. The legacy
-    JSON store at ~/Documents/computer-assistant/memory.json still exists and
-    is deleted only with an explicit confirmation; do not write to it. See
-    Work In Progress
+    durable legacy entries were migrated and verified searchable, and the
+    retired legacy JSON store and `assistant-memory.py` were removed on
+    2026-09-18. See Work In Progress
   - Optional 3D: Blender 5.0.1 with python3-numpy for glTF (Draco unavailable)
   - Maintenance cron: runs the repository maintenance script
   - Superseded paths (do not use): the ~/scripts/ computer-use copies and
@@ -252,13 +251,12 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     single live Playwright MCP, verification C1-C3, cutover with a rollback
     record). No left dock exists in either version, so the Explorer panel
     docks right
-  - In progress: Basic Memory M4 next (fresh-process recall check and final
-    gates); M3 landed (docs/memory.md, map/handoff rows, setup pin and verify,
-    v2 example). M2 migrated the two durable legacy entries into searchable
-    Basic Memory notes and rewrote the task-memory skill. The legacy JSON store
-    is now unused and is deleted only with an explicit confirmation at the M4
-    gate. Also queued: the untracked session-ses_f4dc.md cleanup (with
-    approval) and the C5 post-cutover tidy
+  - Basic Memory M0-M4 are complete: the bounded wrapper and 9-tool
+    registration, the migrated and verified notes, the docs/map/setup pin, and
+    the fresh-process recall check. The retired legacy JSON store and
+    `assistant-memory.py` were removed on 2026-09-18 with explicit approval.
+    Queued next: the untracked session-ses_f4dc.md cleanup (with approval) and
+    the C5 post-cutover tidy
   - PR #1/#2 merge only on explicit request; v1 rollback is one PATH/shim
     change and is recorded in docs/migration/opencode-v2.md
 
@@ -316,10 +314,10 @@ give you. If I pasted only this handoff, ask what task I want handled.
   bounded `basic-memory-mcp.sh` wrapper and the 9-tool v2 registration); Basic
   Memory M2 (two durable legacy entries migrated and searchable, task-memory
   skill rewritten); Basic Memory M3 (docs/memory.md, map/handoff rows, setup
-  pin and verify, v2 config example).
-- Pending: Basic Memory M4 and the legacy-store deletion (explicit
-  confirmation), the transcript cleanup, and the C5 post-cutover tidy; merge
-  PR #1/#2 only on explicit request.
+  pin and verify, v2 config example); Basic Memory M4 (fresh-process recall
+  and the legacy removal with explicit confirmation).
+- Pending: the transcript cleanup and the C5 post-cutover tidy; merge PR #1/#2
+  only on explicit request.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -369,7 +367,7 @@ Decisions made with the user after research:
   vision), deployment plus `--verify-only` for both setup scripts, and a live
   fresh-process `opencode run` calling `desktop_apps` against real AT-SPI data.
 
-#### Part 2 — Basic Memory adoption (M0-M3 complete, M4 next)
+#### Part 2 — Basic Memory adoption (M0-M4 complete; legacy removed)
 
 Chosen after comparing free local MCP memory servers: Basic Memory v0.23.2
 (AGPL-3.0, personal use fine) beats Engram (keyword-only search), the official
@@ -470,17 +468,28 @@ Then:
   `setup-computer-assistant.sh --verify-only`; restart OpenCode and prove recall
   across sessions.
 
-Deletion manifest for the legacy memory system (only after the migration is
-verified and the user confirms at the moment of deletion):
+M4 findings (2026-09-18):
+
+- Fresh-process recall: a brand-new bounded server process (not the running
+  one) found both migrated notes via `search_notes`, and `basic-memory status`
+  reports 2 observed files.
+- Deletion executed with explicit confirmation: `assistant-memory.py`,
+  `docs/scripts/assistant-memory.md`, `memory.json`, and `.memory.lock` are
+  removed, and every reference (AGENTS, HANDOFF, READMEs, docs, and
+  `~/Documents/computer-assistant/README.md`) is updated.
+
+Deletion manifest for the legacy memory system (executed 2026-09-18 with the
+user's explicit confirmation, after the migration was verified):
 
 - `platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py` -> deleted
 - `docs/scripts/assistant-memory.md` -> deleted, and its row removed from
-  `docs/scripts/README.md`
+  `docs/scripts/README.md` and `docs/README.md`
 - `~/Documents/computer-assistant/memory.json` and `.memory.lock` -> deleted
-  (entry text is preserved as Basic Memory notes)
+  (the two durable entries are preserved as Basic Memory notes; the third was
+  a concurrency test probe)
 - All references updated: `AGENTS.md`, `HANDOFF.md`, the component README,
-  `setup-computer-assistant.sh`, `skills/README.md`, and the `task-memory`
-  skill and README
+  `docs/memory.md`, `docs/scripts/desktop-control.md`, `setup-computer-assistant.sh`,
+  `skills/README.md`, and the `task-memory` skill and README
 
 Risks and tradeoffs:
 
@@ -918,9 +927,7 @@ v2 upgrade beyond 2.0.7.
 1. Post-cutover tidy (C5): translate the repository project `opencode.json`
    for v2 (or keep the project config disabled), mark v1-only docs retired,
    and decide the fate of the v1 `plugins/tui-settings` package.
-2. Finish the memory migration (M3/M4): docs and map rows, setup pin and
-   verify, config examples, then the cross-session recall check; delete the
-   legacy JSON store only with an explicit confirmation.
+2. The memory migration is complete (M0-M4; legacy removed). No action.
 3. Merge PRs #1/#2 only on explicit request; remove `session-ses_f4dc.md` with
    approval (D8).
 4. Keep the v2 docs and HANDOFF current and re-test the v2 port on any 2.0.x

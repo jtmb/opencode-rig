@@ -59,7 +59,7 @@ Generated and local-only paths (never committed):
 - `plugins/tui-settings/node_modules/`
 - `plugins/file-manager/node_modules/`
 - `tools/node_modules/`
-- `~/Documents/computer-assistant/memory.json` (owner-only app data)
+- `~/Documents/computer-assistant/basic-memory/` (owner-only memory project data)
 - `/tmp/opencode/playwright*/` (transient MCP output)
 - `~/Pictures/Screenshots/*.png` (viewed once, then deleted)
 
@@ -307,9 +307,8 @@ plus a local SQLite index for the `computer-assistant` project at
 `prlimit` fallback, fail closed). Writes through `write_note`/`edit_note` apply
 directly, so durable personal facts and decisions are confirmed first, and
 deleting a note always needs an explicit confirmation. The legacy JSON store
-(`scripts/assistant-memory.py` and `~/Documents/computer-assistant/memory.json`)
-is retired after the M2 migration and is removed only with the explicit
-confirmation recorded in `HANDOFF.md`.
+(`assistant-memory.py` and `~/Documents/computer-assistant/memory.json`) was
+removed on 2026-09-18 after the verified M2 migration.
 
 ## Verification
 

@@ -52,8 +52,8 @@ Set `note_type` and tags accordingly, and keep each note short.
   codes, dictated private content, or whole chats.
 - Do not record guesses as facts. Prefer a short pending item when uncertain.
 - Do not silently remember incidental personal details.
-- The legacy JSON store and `assistant-memory.py` are retired after the M2
-  migration; use Basic Memory only.
+- The legacy JSON store and `assistant-memory.py` were removed on 2026-09-18;
+  use Basic Memory only.
 
 ## Usage guide
 

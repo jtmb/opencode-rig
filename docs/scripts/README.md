@@ -42,7 +42,6 @@ lists them at a glance and covers the operating environment.
 | Script | Document | What it does |
 |--------|----------|--------------|
 | `desktop-control.py` | [`desktop-control.md`](desktop-control.md) | AT-SPI app/window inspection and mutation, plus bounded ydotool key/text input, with dry-run tokens |
-| `assistant-memory.py` | [`assistant-memory.md`](assistant-memory.md) | Retired legacy JSON memory store (kept until the confirmed deletion) |
 | `basic-memory-mcp.sh` | [`basic-memory-mcp.md`](basic-memory-mcp.md) | Launches the bounded Basic Memory MCP server (adaptive user-cgroup budget, `prlimit` fallback, fail closed) |
 
 ### Documentation validation
@@ -113,6 +112,6 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking-self-test.py
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
-python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
+./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps
 ```

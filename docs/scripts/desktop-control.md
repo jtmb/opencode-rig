@@ -227,5 +227,4 @@ to synthesize clicks.
 - `input` fails closed when the ydotool service or its private socket is
   unavailable; it never changes input permissions or device access, and it
   never sends passwords or other secrets.
-- Related: [`assistant-memory.md`](assistant-memory.md),
-  [`setup-computer-assistant.md`](setup-computer-assistant.md).
+- Related: [`setup-computer-assistant.md`](setup-computer-assistant.md).

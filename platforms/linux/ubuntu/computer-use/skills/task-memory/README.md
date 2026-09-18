@@ -113,8 +113,8 @@ Known limitations:
   `delete_note` instead of leaving contradictions.
 - Writes apply directly with no preview; the confirmation rule below is the
   guardrail.
-- The legacy JSON store and `assistant-memory.py` are retired after the M2
-  migration and must not be used for new writes.
+- The legacy JSON store and `assistant-memory.py` were removed on 2026-09-18;
+  do not recreate them.
 
 ## Troubleshooting
 
