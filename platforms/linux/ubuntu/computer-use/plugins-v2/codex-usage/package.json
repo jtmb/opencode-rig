@@ -1,0 +1,10 @@
+{
+  "name": "opencode-codex-usage-v2-local",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenCode v2 CLI plugin: weekly Codex quota sidebar panel.",
+  "exports": {
+    "./tui": "./src/tui.tsx"
+  }
+}
