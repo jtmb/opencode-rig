@@ -182,8 +182,7 @@ Known live state (recorded 2026-09-18):
     request. The current checkout is branch migration/opencode-v2 (local, no
     upstream), carrying the OpenCode v2 port; the cutover ran 2026-09-18, so
     new shells start the v2 stack via the shim while v1 stays installed and
-    untouched for rollback. The only working-tree change is the untracked
-    session-ses_f4dc.md transcript
+    untouched for rollback. The working tree is clean
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
@@ -255,8 +254,8 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     the fresh-process recall check. The retired legacy JSON store and
     `assistant-memory.py` were removed on 2026-09-18 with explicit approval.
     C5 tidy is done too (v2-safe project config, retired banners, tui-settings
-    retained as rollback-only). Queued next: the untracked session-ses_f4dc.md
-    cleanup (with approval)
+    retained as rollback-only). The previous session transcript was removed
+    with approval, so the worktree is clean
   - PR #1/#2 merge only on explicit request; v1 rollback is one PATH/shim
     change and is recorded in docs/migration/opencode-v2.md
 
@@ -292,8 +291,8 @@ give you. If I pasted only this handoff, ask what task I want handled.
   fix, the B4 docs, the Phase 5 verification/cutover records, the D1/D2
   window and input tools, and the Basic Memory M1-M4 adoption plus C5 tidy.
 - v1 work stays on PRs #1/#2 as recorded in the prompt above; merge only on
-  explicit request. The untracked `session-ses_f4dc.md` transcript sits at the
-  repository root; remove it only with approval (Phase D8).
+  explicit request. The working tree is clean: the previous session transcript
+  was removed with approval (D8).
 - Basic Memory M0 is complete (below); the TUI feature plan in "Part 3" was
   approved with the user and is implemented for v1.
 
@@ -920,8 +919,8 @@ C5 tidy (2026-09-18):
 - **D7.** Re-check the old pending-verification items as v2 tests (the v1
   settings overlay is retired; file-manager and source-control hints are
   re-verified in v2).
-- **D8.** Housekeeping: remove the untracked `session-ses_f4dc.md` transcript
-  (with approval); keep this file current.
+- **D8. DONE 2026-09-18.** The previous session transcript was removed with
+  approval; keep this file current.
 
 Order: A1 -> A2 -> A3/A4/A5 -> A6 -> A7 -> A8 -> B1/B2 -> B3/B4/B5 -> C -> D.
 A1-A8 and B1-B5 are done; Phase C C1-C4 are done 2026-09-18 (v2 is the default;
@@ -939,10 +938,10 @@ v2 upgrade beyond 2.0.7.
 
 ### Suggested next steps
 
-1. Push `migration/opencode-v2` and open a PR when you want CI to verify the
-   whole branch; merge PRs #1/#2 only on explicit request.
-2. Remove `session-ses_f4dc.md` with approval (D8).
-3. Keep the v2 docs and HANDOFF current and re-test on any 2.0.x upgrade;
+1. Push `migration/opencode-v2` and open a stacked PR (base
+   `chore/todo-tracking-gate`); retarget it to `main` after PR #1/#2 merge, and
+   merge only on explicit request.
+2. Keep the v2 docs and HANDOFF current and re-test on any 2.0.x upgrade;
    translate the repository project config to the one-MCP v2 shape once v1
    rollback is no longer needed.
 
