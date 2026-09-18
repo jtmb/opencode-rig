@@ -52,8 +52,8 @@ If it passes, do not reinstall. A healthy setup has:
 
   - 16 skills deployed and discoverable
   - the desktop custom tools (`desktop_apps`, `desktop_tree`, `desktop_find`,
-    `desktop_act`) deployed to ~/.config/opencode/tools/ and loaded by a fresh
-    OpenCode process
+    `desktop_act`) and the `vision_capture` screenshot tool deployed to
+    ~/.config/opencode/tools/ and loaded by a fresh OpenCode process
   - live and headless Playwright MCP servers connected
   - the pinned GitHub MCP connected, authenticated from
     GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN, or the logged-in gh CLI
@@ -176,17 +176,17 @@ Changing this project:
 Known live state (recorded 2026-09-17):
 
   - Repository: ~/repos/opencode-rig, public; main is protected. Pull request
-    jtmb/opencode-rig#1 (branch docs/handoff-blender-note) is open against
-    main, mergeable, with the required `verify` check passed; merge only on
-    explicit request. The current checkout is branch
-    chore/todo-tracking-gate, stacked on docs/handoff-blender-note, with a
-    clean working tree at commit 67909ab. The branch is pushed and pull request
-    jtmb/opencode-rig#2 (base docs/handoff-blender-note) is open, mergeable,
-    with the required `verify` check and GitGuardian passing. The stacked
-    branch carries the /handoff and /resume commands, the progress-tracking
-    gate, the desktop custom-tools package (tools/) with its deployment,
-    resource-guard, and docs, and the source-control Ctrl+click and
-    header-count changes
+    jtmb/opencode-rig#1 (branch docs/handoff-blender-note) is open against main,
+    mergeable, with the required `verify` check passed; merge only on explicit
+    request. The current checkout is branch chore/todo-tracking-gate, stacked on
+    docs/handoff-blender-note, at commit 76b8294 (pushed; HEAD equals origin);
+    the only working-tree change is this HANDOFF refresh (intentionally left
+    uncommitted). Pull request jtmb/opencode-rig#2 (base
+    docs/handoff-blender-note) is open, mergeable, and its `verify` and
+    GitGuardian checks pass. The stacked branch carries the /handoff and /resume
+    commands, the progress-tracking gate, the desktop and vision custom tools,
+    the source-control reposition and row affordance, and the tui-settings and
+    file-manager plugins
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
@@ -194,11 +194,11 @@ Known live state (recorded 2026-09-17):
   - Progress tracking: mandatory todo-tool rule in AGENTS.md, the /resume
     command, and this prompt; enforced by check-progress-tracking.py plus its
     self-test in the required `verify` CI job and the AGENTS.md verification
-    list; landed in commit 67909ab on chore/todo-tracking-gate
-  - Deploy state: the progress-gate `/resume` was redeployed with
-    `setup-opencode.sh --apply`, source and deployed content match, and the
-    full `setup-computer-assistant.sh --verify-only` health check is green. The
-    running TUI still holds the pre-restart command until OpenCode restarts
+    list
+  - Deploy state: `/resume`, the skills, and both custom tools are deployed and
+    source-matched; the full `setup-computer-assistant.sh --verify-only` health
+    check is green. The running TUI still holds the pre-restart skills,
+    commands, tools, plugins, and GitHub MCP until OpenCode restarts
   - Skills deployed: 16/16
   - Global commands deployed: /deploy, /handoff, /promote-skills, /resume
   - Global custom tools: `desktop.ts` exporting `desktop_apps`, `desktop_tree`,
@@ -213,9 +213,12 @@ Known live state (recorded 2026-09-17):
     working-tree/GitHub panel, registered in ~/.config/opencode/tui.json with
     whenEmpty "show"; verified live at sidebar order 50 with the minimized
     start and runtime kv overrides, and newly underlined file rows with a
-    hover hint pending restart), tui-settings (TUI settings overlay, registered
-    in ~/.config/opencode/tui.json with order 10; built and checked, waiting on
-    the next restart for live verification), and file-manager (TUI project
+    hover hint pending restart), tui-settings (TUI `/settings` launcher for the
+    built-in OpenCode settings menu plus the harness-only source-control and
+    sidebar options; registered in ~/.config/opencode/tui.json. Revised
+    2026-09-17: the sidebar `Settings` row and the duplicate
+    Appearance/Display/Plugins/About sections were removed; checks green,
+    pending a restart to load), and file-manager (TUI project
     tree/quick-open/editor, registered in ~/.config/opencode/tui.json with
     order 60; built and checked, waiting on the same restart)
   - No planned TUI plugins remain; both approved plugins (`tui-settings` and
@@ -239,19 +242,21 @@ Known live state (recorded 2026-09-17):
 
 Work in progress (full detail in the "Work In Progress" section of this file):
 
-  - The desktop custom-tools package plus the `vision_capture` screenshot tool
-    are implemented, deployed, and checked; Basic Memory M0 is complete (0.23.2
-    installed, bounded reindex and stdio smoke recorded) with M1-M4 next.
-  - The progress-tracking gate is landed: commit 67909ab on
-    chore/todo-tracking-gate, pushed, PR #2 open and green; the Work In
-    Progress section records the remaining plan.
-  - The approved TUI feature plan (source-control to the top and minimized, a
-    settings overlay, and a VS Code-like file manager) is implemented, and the
-    GitHub MCP is now write-capable; the Work In Progress section records the
-    details.
-  - Pending verification: the tui-settings overlay, file-manager, source-control
-    underline/hover hint, `vision_capture`, and the GitHub write tools all
-    await the next restart; the progress gate runs in CI on PR #2 (passing).
+  - Everything through commit 76b8294 is committed and pushed; PR #2 is open
+    and its required `verify` check and GitGuardian check pass.
+  - The next action is a restart, then live verification of the settings
+    overlay, file-manager, source-control row hint, `vision_capture`, and the
+    write-capable GitHub MCP.
+  - Queued after that: the computer-use window-listing and bounded input tools,
+    then Basic Memory M1-M4 (the legacy JSON memory stays authoritative until
+    the M2 migration).
+  - Planned: migration to OpenCode v2 (2.0.x) so the Explorer can be a docked
+    `session.panel` instead of a full-screen route. See
+    `docs/migration/opencode-v2.md` on branch `migration/opencode-v2`. v1
+    (1.18.31) remains the default until the v2 stack passes the same health
+    checks; there is no left dock in either version, so the panel docks right.
+  - Pending verification: the whole batch awaits the next restart; the
+    progress-tracking gate and the PR #2 CI checks are green.
 
 After the health check, give me a concise status and continue with the task I
 give you. If I pasted only this handoff, ask what task I want handled.
@@ -289,12 +294,25 @@ give you. If I pasted only this handoff, ask what task I want handled.
   GitGuardian checks pass. The `/resume` command was redeployed
   (`setup-opencode.sh --apply`), source/deployed content match, and the full
   health check is green.
-- Next planned change: commit/push the tui-settings, file-manager, vision tool,
-  GitHub MCP, and source-control hint batch, verify it after a restart, then
-  build the remaining computer-use tools (window listing and bounded input),
-  with Basic Memory M1-M4 queued.
+- This session committed and pushed aba7cc9 (tui-settings + source-control
+  order override), b826cd3 (file-manager), and 76b8294 (vision_capture +
+  write-capable GitHub MCP + source-control row hint). PR #2 head is 76b8294
+  and its `verify` and GitGuardian checks pass.
+- Next planned change: restart OpenCode and live-verify the batch, then build
+  the remaining computer-use tools (window listing and bounded input), with
+  Basic Memory M1-M4 queued.
 - Basic Memory M0 was completed in the same session (below), and the TUI
   feature plan in "Part 3" was approved with the user.
+
+### Current todo status (2026-09-17)
+
+- Completed: tui-settings build; file-manager build; commits aba7cc9, b826cd3,
+  and 76b8294 pushed to PR #2 (CI green); `vision_capture` tool; write-capable
+  GitHub MCP; source-control underline/hover hint.
+- Pending: restart and live-verify the batch (settings overlay, file-manager,
+  source-control hint, `vision_capture`, GitHub write tools); build the
+  remaining computer-use tools (window listing, bounded input); resume Basic
+  Memory M1-M4; merge PR #1/#2 only on explicit request.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -329,10 +347,10 @@ Decisions made with the user after research:
   plus `typescript`, `@types/node`, and bounded `typecheck`/`test` scripts.
   `check-plugin-resource-guards.py` now scans `tools/package.json` and fails if
   it disappears.
-- `setup-opencode.sh` deploys the explicit `REQUIRED_TOOLS` list (`desktop.ts`)
-  content-aware into `~/.config/opencode/tools/` with symbolic-link guards and
-  verify lines; `setup-computer-assistant.sh` reports skills, commands, and
-  tools together.
+- `setup-opencode.sh` deploys the explicit `REQUIRED_TOOLS` list (`desktop.ts`,
+  `vision.ts`) content-aware into `~/.config/opencode/tools/` with
+  symbolic-link guards and verify lines; `setup-computer-assistant.sh` reports
+  skills, commands, and tools together.
 - Phase 0 findings (throwaway tools, since deleted): the global tools directory
   loads at startup only (no hot reload, and no `opencode debug tools` listing;
   a fresh `opencode run` process is the verification path); a default export
@@ -340,9 +358,9 @@ Decisions made with the user after research:
   `desktop.ts` exporting `apps` yields `desktop_apps`; tool files resolve
   `@opencode-ai/plugin` from the user-owned `~/.config/opencode/node_modules`
   (currently 1.18.30), independent of the package's pinned 1.18.31.
-- Verified: `npm run check` (14 tests), deployment plus `--verify-only` for
-  both setup scripts, and a live fresh-process `opencode run` calling
-  `desktop_apps` against real AT-SPI data.
+- Verified: `npm run check` in the tools package (21 tests: 10 desktop + 11
+  vision), deployment plus `--verify-only` for both setup scripts, and a live
+  fresh-process `opencode run` calling `desktop_apps` against real AT-SPI data.
 
 #### Part 2 — Basic Memory adoption (M0 complete, M1-M4 next)
 
@@ -425,7 +443,7 @@ Risks and tradeoffs:
 - There is no automatic capture yet; a future server-plugin hook could add
   ChatGPT-style session summarization on top of this foundation.
 
-#### Part 3 — TUI feature plan (approved 2026-09-17, in progress)
+#### Part 3 — TUI feature plan (implemented 2026-09-17, pending restart verification)
 
 User decisions recorded after the deep-research session:
 
@@ -442,6 +460,19 @@ User decisions recorded after the deep-research session:
   Persistence is `api.kv` only; the plugin never rewrites `tui.json`. Pure
   model logic lives in `src/settings.ts` with tests; docs in
   `docs/plugins/tui-settings.md` and the plugin README.
+- **Settings overlay revised** (2026-09-17, after the restart): the sidebar
+  `Settings` row was removed because the user found the button undesirable, and
+  the duplicated **Appearance**, **Display**, **Plugins**, and **About**
+  sections were dropped because the built-in `settings.open` menu already
+  covers them. The plugin now registers only the `/settings` command; its menu's
+  first entry is **OpenCode Settings**, which dispatches the host `settings.open`
+  command via `api.keymap.dispatchCommand`, followed by the harness-only
+  **Source Control** and **Sidebar** sections. The `order` plugin option, the
+  `local.tui-settings.order` key, the `Settings gear` sidebar panel, and the
+  display-settings model were removed; `deploy-plugins.sh` now writes the
+  tui-settings entry without options. `npm run check` is green (12 tests). Needs
+  a restart to load; the user's `tui.json` still carries a harmless
+  `{"order":10}` tuple that the plugin ignores.
 - **Sidebar positioning inside the settings overlay** (user requirement,
   2026-09-17; implemented with a documented API limit): the v1 TUI plugin API
   fixes each panel's order at registration and cannot move the built-in
@@ -575,40 +606,77 @@ Research conclusions and evidence (2026-09-17 session):
 
 ### Pending verification
 
-- Confirmed in this resume session: the `desktop_*` custom tools loaded in the
-  fresh TUI (`desktop_apps`, `desktop_tree`, `desktop_find`, `desktop_act`
-  were available to the agent).
-- Still unverified: the source-control panel opens a diff only on Ctrl+click
-  (Enter/Space when the row is focused), and the header change count renders in
-  the theme accent color with a muted `change`/`changes` label. The worktree
-  was clean at resume time, so the panel had no rows to exercise.
-- The panel itself was verified after the previous restart: the header count
-  and rows matched `git status` (6 changes), and the no-PR GitHub row was
-  correctly hidden because `docs/handoff-blender-note` has no pull request.
-- The progress gate is landed (commit 67909ab) and runs in CI on PR #2,
-  passing.
-- The `/resume` command was redeployed and the health check is green; the
-  running TUI still holds the pre-restart copy until OpenCode restarts.
-- Source-control reposition verified live after the restart: the panel is at
-  order `50` and the user confirmed the expand/collapse toggle persists through
-  `local.source-control.startCollapsed`. The Ctrl+click diff opening and
-  accented change-count header still need a dirty worktree.
-- The tui-settings overlay, sidebar visibility and positioning, the
-  `local.source-control.order` override, the file-manager route/tree/viewer/
-  editor, the `vision_capture` tool, the source-control underline/hover hint,
-  and the write-capable GitHub MCP are implemented with bounded checks passing
-  (tui-settings 13, source-control 20, file-manager 11, tools 21 tests) but are
-  unverified until the next OpenCode restart.
+- Verified live in this resume session: the `desktop_*` custom tools loaded in
+  the fresh TUI; the source-control panel rendered at sidebar order `50`,
+  matched `git status`, hid the no-PR GitHub row, and the user confirmed the
+  expand/collapse toggle persists through `local.source-control.startCollapsed`.
+- Landed and green: the progress-tracking gate (commit 67909ab) runs in CI on
+  PR #2; `/resume` and both custom tools are deployed and the health check is
+  green.
+- Verified live after the 2026-09-17 restart: `vision_capture` (screenshot as an
+  attachment), the GitHub MCP read plus one approved write (comment on PR #2),
+  and the sidebar rows (`Settings`, `Source Control` at order 50, `Explorer`).
+- Awaiting the next restart: the revised tui-settings (no sidebar row; the
+  `/settings` menu with the `OpenCode Settings` built-in launcher plus Source
+  Control and Sidebar); the file-manager
+  route/tree/viewer/editor/save/external editor; and the source-control
+  underline/hover hint.
+- Still unverified: the source-control Ctrl+click diff opening and the accented
+  change-count header need a dirty worktree with rows.
+
+### OpenCode v2 migration (planned 2026-09-17)
+
+- Full plan: `docs/migration/opencode-v2.md`, on branch `migration/opencode-v2`.
+- Trigger: the `file-manager` Explorer is a full-screen route in v1; v2 adds
+  `session.panel` (host-sized, resizable, `toggleFullscreen`) for a docked
+  panel. v2's panel shares the right dock with the sidebar; neither version has
+  a left dock.
+- Shape: Phase 0 isolated pilot (separate prefix and config/data dirs, v1
+  untouched), Phase 1 config translation (`mcp.servers`, `plugins`, `cli.json`),
+  Phase 2 rewrite the five plugins, Phase 3 custom tools via
+  `ctx.tool.transform`, Phase 4 scripts/docs/gate, Phase 5 verification and
+  PATH cutover with v1 rollback.
+- v2 facts: CLI settings in `~/.config/opencode/cli.json`; skills and commands
+  still auto-discover from `~/.config/opencode/skills` and
+  `~/.config/opencode/commands`; official migration guides at
+  `/build/plugins/migrate-v1` and `/build/plugins/cli`.
+- Phase 0 done (2026-09-17): v2.0.7 installed isolated at
+  `~/.local/opt/opencode-v2/` with the `opencode-pilot` launcher and a
+  `~/.opencode-v2-pilot/` root; v1 config/db untouched; MCP connects; skills
+  source watched.
+- Phase 1 done (2026-09-17): pilot config translated. MCP caveats: v2.0.7 uses
+  the flat `mcp` map (the documented `mcp.servers` nesting registered nothing),
+  and a numeric server `timeout` silently drops the whole MCP block (it must be
+  an object). `skill.list` shows 16 repo skills plus an unintended `README`
+  skill because v2 discovers root-level `*.md` in a skills source; `command.list`
+  shows the four global commands. `cli.json` seeded from v1 kv.
+- Phase 2 done (2026-09-18, in progress on the branch): all five plugins have
+  v2 ports under `platforms/linux/ubuntu/computer-use/plugins-v2/` -
+  `rig-tools` and `codex-fallback` (server) plus `source-control`,
+  `codex-usage`, and `file-manager` (CLI). Each typechecks and passes its
+  ported tests through the bounded resource guard (20 + 27 + 20 + 8 + 11 = 86
+  tests), and all five load in the v2.0.7 pilot. `rig-tools` is live-verified
+  (its tools appear in a v2 session tool list). Local packages register with
+  the object form `{ "package": "<absolute directory>", "options": {} }` plus a
+  root `server.ts` / `tui.tsx` shim. `tui-settings` is retired in favor of
+  v2's built-in `/settings`; its Source Control presets still need folding into
+  the v2 `source-control` plugin.
+- Phase 4 started (2026-09-18): `check-plugin-resource-guards.py` now also
+  scans `plugins-v2/`, and `documentation-map.json` maps the v2 workspace to
+  `plugins-v2/README.md`.
+- Remaining: fold the tui-settings Source Control presets into source-control,
+  finish Phase 4 (setup/verify scripts, health checks, AGENTS, docs, and a
+  v2-specific skills source to drop the stray `README` skill), then Phase 5
+  (full health check and PATH cutover with v1 rollback).
 
 ### Suggested next steps
 
-1. Commit and push this batch (pending explicit request), restart OpenCode,
-   then verify live: the `/settings` overlay, the `Settings` and `Explorer`
-   rows, sidebar visibility/position, the source-control order override and
-   underline/hover hint, the file-manager tree/viewer/editor/save/external
-   editor, `vision_capture`, and a read-only GitHub MCP call plus one approved
-   write through the MCP. Re-check the Ctrl+click/accent behavior with a dirty
-   worktree.
+1. Restart OpenCode, then live-verify the batch: the `/settings` overlay, the
+   `Settings` and `Explorer` rows, sidebar visibility/position, the
+   source-control order override and underline/hover hint, the file-manager
+   tree/viewer/editor/save/external editor, `vision_capture`, and a GitHub MCP
+   read plus one approved write. Re-check the Ctrl+click/accent behavior with a
+   dirty worktree.
 2. Build the remaining computer-use tools (Part 4): window listing and bounded
    input.
 3. Resume Basic Memory M1-M4: wrapper `scripts/basic-memory-mcp.sh`, global

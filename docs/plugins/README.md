@@ -12,6 +12,27 @@ are **not** deployed by the setup scripts and are **not** published to npm.
 | [`tui-settings`](tui-settings.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/tui-settings/` | Settings overlay for appearance, display, plugins, source control, and sidebar positioning |
 | [`file-manager`](file-manager.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/file-manager/` | Full-screen project tree, quick-open, and an in-TUI editor with explicit saves |
 
+## OpenCode v2 ports
+
+OpenCode 2.0.x uses a new plugin API, so the plugins have parallel ports under
+`platforms/linux/ubuntu/computer-use/plugins-v2/` rather than edits to the v1
+packages. The v2 workspace has its own `node_modules`, tsconfig base, and
+[README](../../platforms/linux/ubuntu/computer-use/plugins-v2/README.md), and
+each package registers through the object form in `opencode.jsonc` (server) or
+`cli.json` (CLI). v1 remains the default until the migration cutover.
+
+| v2 package | Kind | Replaces |
+| --- | --- | --- |
+| `rig-tools` | server | v1 `tools/desktop.ts` + `tools/vision.ts` custom tools |
+| `codex-fallback` | server | v1 `codex-fallback` |
+| `source-control` | CLI | v1 `source-control` |
+| `codex-usage` | CLI | v1 `codex-usage` |
+| `file-manager` | CLI | v1 `file-manager`, now a docked `session.panel` instead of a full-screen route |
+
+There is no `tui-settings` port: v2's built-in `/settings` covers appearance,
+display, plugins, and keybinds, and its Source Control presets move into the
+v2 `source-control` plugin.
+
 ## TUI vs. server plugins
 
 OpenCode has two distinct plugin surfaces, and these packages target one each.

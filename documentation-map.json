@@ -34,6 +34,12 @@
       "onAdd": ["docs/plugins/README.md"]
     },
     {
+      "name": "plugins-v2",
+      "match": ["platforms/linux/ubuntu/computer-use/plugins-v2/**"],
+      "docs": ["platforms/linux/ubuntu/computer-use/plugins-v2/README.md"],
+      "onAdd": ["docs/plugins/README.md"]
+    },
+    {
       "name": "skills",
       "match": ["platforms/linux/ubuntu/computer-use/skills/*/**"],
       "docs": [
@@ -101,6 +107,9 @@
         "platforms/linux/ubuntu/computer-use/commands/*.md",
         "platforms/linux/ubuntu/computer-use/plugins/*/README.md",
         "platforms/linux/ubuntu/computer-use/plugins/*/package.json",
+        "platforms/linux/ubuntu/computer-use/plugins-v2/README.md",
+        "platforms/linux/ubuntu/computer-use/plugins-v2/*/README.md",
+        "platforms/linux/ubuntu/computer-use/plugins-v2/*/package.json",
         "platforms/linux/ubuntu/computer-use/skills/README.md",
         "platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh",
         "platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh",

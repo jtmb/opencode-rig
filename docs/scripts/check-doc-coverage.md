@@ -53,7 +53,11 @@ general rule.
 
 `docs` paths may use placeholders: `{stem}` (file name without extension),
 `{plugin}` (directory under `.../plugins/`), and `{skill}` (directory under
-`.../skills/`).
+`.../skills/`). The v2 plugin workspace
+(`platforms/linux/ubuntu/computer-use/plugins-v2/**`) is matched by a rule
+whose documentation is the workspace
+[`plugins-v2/README.md`](../../platforms/linux/ubuntu/computer-use/plugins-v2/README.md)
+rather than a per-plugin page.
 
 ### `rules` and `additional`
 
