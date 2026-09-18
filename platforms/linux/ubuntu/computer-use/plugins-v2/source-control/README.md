@@ -39,10 +39,12 @@ plugin source.
 - The header shows the total local change count in the theme accent color with
   a muted `change`/`changes` label.
 - Changed files are sorted by path, capped by `maxFiles` (default `8`), and
-  activate the host `diff.open` command on Ctrl+click (or Enter/Space when
-  focused); a plain click only selects the row. File paths are underlined to
-  show they are interactive, and hovering a row highlights the path and shows a
-  `ctrl+click to open the diff` hint.
+  open the host `diff.open` viewer on a left click (or Enter/Space when
+  focused). File paths are underlined to show they are interactive, hovering a
+  row highlights the path and shows a `click to open the diff viewer` hint,
+  and the built-in viewer's own mouse file tree selects the individual file.
+  Click handlers require terminal mouse capture (`"mouse": true` in
+  `cli.json`).
 - `/changes` opens details, and the `source-control.refresh` command refreshes
   both local and GitHub data.
 - GitHub is read-only and optional. The panel hides the GitHub row when the

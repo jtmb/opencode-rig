@@ -75,6 +75,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const [children, setChildren] = createSignal<Map<string, FileNode[]>>(new Map())
   const [expanded, setExpanded] = createSignal<Set<string>>(new Set())
   const [selected, setSelected] = createSignal("")
+  const [hovered, setHovered] = createSignal<string | undefined>(undefined)
   const [tab, setTab] = createSignal<Tab>()
   const [mode, setMode] = createSignal<Mode>("tree")
   const [results, setResults] = createSignal<string[]>([])
@@ -505,11 +506,22 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
                       flexDirection="row"
                       backgroundColor={selected() === row.node.path ? theme().background.surface.offset : undefined}
                       paddingLeft={row.depth * 2 + 1}
+                      onMouseOver={() => setHovered(row.node.path)}
+                      onMouseOut={() => setHovered((current) => (current === row.node.path ? undefined : current))}
+                      onMouseDown={(event) => {
+                        if (event.button !== 0) return
+                        event.preventDefault()
+                        setSelected(row.node.path)
+                        if (row.node.type === "directory") void toggleDirectory(row.node)
+                        else void openFile(row.node.path)
+                      }}
                     >
                       <text fg={theme().text.subdued}>
                         {row.node.type === "directory" ? (row.expanded ? "- " : "+ ") : "  "}
                       </text>
-                      <text fg={theme().text.default}>{row.node.name}</text>
+                      <text fg={hovered() === row.node.path ? theme().hue.accent[200] : theme().text.default}>
+                        {row.node.name}
+                      </text>
                     </box>
                   )}
                 </For>
@@ -528,8 +540,16 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
                   flexDirection="row"
                   backgroundColor={index() === resultIndex() ? theme().background.surface.offset : undefined}
                   paddingLeft={1}
+                  onMouseOver={() => setHovered(result)}
+                  onMouseOut={() => setHovered((current) => (current === result ? undefined : current))}
+                  onMouseDown={(event) => {
+                    if (event.button !== 0) return
+                    event.preventDefault()
+                    setResultIndex(index())
+                    void openFile(result)
+                  }}
                 >
-                  <text fg={theme().text.default}>{result}</text>
+                  <text fg={hovered() === result ? theme().hue.accent[200] : theme().text.default}>{result}</text>
                 </box>
               )}
             </For>

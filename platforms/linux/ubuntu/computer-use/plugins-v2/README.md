@@ -10,7 +10,7 @@ isolated: one `node_modules` at this directory, a shared
 | Package | Kind | Surfaces |
 | --- | --- | --- |
 | [`rig-tools`](rig-tools/README.md) | server | `desktop_apps`, `desktop_tree`, `desktop_find`, `desktop_windows`, `desktop_act`, `desktop_input`, `vision_capture` |
-| [`rig-todo`](rig-todo/README.md) | server | `todowrite`, `todoread` (v2 has no built-in todo tool) |
+| [`rig-todo`](rig-todo/README.md) | server + CLI | `todowrite`, `todoread`, plus a `sidebar.content` todo panel |
 | [`codex-fallback`](codex-fallback/README.md) | server | `session.context` and `session.retry` model routing |
 | [`source-control`](source-control/README.md) | CLI | working-tree and pull-request `sidebar.content` panel |
 | [`codex-usage`](codex-usage/README.md) | CLI | weekly Codex quota `sidebar.content` panel |

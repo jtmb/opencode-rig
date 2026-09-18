@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "OpenCode v2 server plugin: session todo list tools (todowrite/todoread).",
+  "description": "OpenCode v2 plugin: session todo tools (todowrite/todoread) plus a sidebar todo panel.",
   "exports": {
-    "./server": "./src/index.ts"
+    "./server": "./src/index.ts",
+    "./tui": "./src/tui.tsx"
   },
   "scripts": {
     "check": "npm run typecheck && npm test",

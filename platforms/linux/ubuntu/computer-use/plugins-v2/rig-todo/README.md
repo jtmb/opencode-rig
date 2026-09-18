@@ -1,10 +1,10 @@
-# `rig-todo` v2 server plugin
+# `rig-todo` v2 plugin
 
 OpenCode v2 (2.0.7) ships no `todowrite`/`todoread` tool, but the harness's
 progress-tracking rule requires one. This package restores the pair as a server
-plugin.
+plugin and adds a sidebar panel so the list is visible while working.
 
-## Tools
+## Tools (server)
 
 - `todowrite` — replaces the session todo list with the supplied list and
   returns a markdown summary. The complete list is sent on every call. At most
@@ -16,26 +16,40 @@ Items are `{ content, status, priority? }` with
 `status: pending | in_progress | completed | cancelled` and
 `priority?: high | medium | low`.
 
-## State
+## Panel (CLI)
 
-Lists are stored through `ctx.storage` under `todos/<sessionID>` and are removed
-when the session is deleted. v2 has no built-in todo panel, so the list is
-model-facing only; a sidebar panel is a possible future addition.
+`tui.tsx` contributes a `sidebar.content` panel with a `- Todo n/m` header and
+the item list (`✔` completed, `◐` in progress, `○` pending, `✕` cancelled).
+Clicking the header collapses or expands it. The panel hides itself when the
+list is empty.
+
+The server plugin mirrors the authoritative `ctx.storage` entry into a small
+JSON file at
+`${XDG_DATA_HOME:-~/.local/share}/opencode/rig-todo/<sessionID>.json`
+(atomically written; removed with the session). Both processes share the launch
+environment, so the CLI panel can read it without an RPC channel. Corrupt or
+missing files render as an empty list.
+
+**Mouse:** the panel's collapse toggle is clickable, which requires terminal
+mouse capture (`"mouse": true` in `cli.json`). On a fresh setup, restart
+OpenCode after enabling the setting.
 
 ## Registration
 
-Register the package in the server `plugins` array in `opencode.jsonc`:
+Register the package in **both** places:
 
 ```jsonc
-{
-  "plugins": [
-    { "package": "/abs/path/to/plugins-v2/rig-todo", "options": {} }
-  ]
-}
+// opencode.jsonc (server tools)
+{ "plugins": [{ "package": "/abs/path/to/plugins-v2/rig-todo", "options": {} }] }
 ```
 
-The package has a root `server.ts` shim and resolves `@opencode/plugin` from the
-shared `plugins-v2/node_modules`.
+```jsonc
+// cli.json (sidebar panel)
+{ "plugins": [{ "package": "/abs/path/to/plugins-v2/rig-todo", "options": {} }] }
+```
+
+The loader resolves the root `server.ts` shim for the server role and `tui.tsx`
+for the CLI role, so one package directory serves both.
 
 ## Checks
 
@@ -44,4 +58,5 @@ npm run check
 ```
 
 `src/store.ts` holds the pure normalization, invariant, and summary logic;
-`test/store.test.ts` covers it.
+`src/state.ts` holds the mirror path, serialization, and parsing logic;
+`test/store.test.ts` and `test/state.test.ts` cover them.

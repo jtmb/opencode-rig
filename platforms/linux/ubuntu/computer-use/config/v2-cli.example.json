@@ -17,6 +17,7 @@
   "prompt": {
     "paste": "full"
   },
+  "mouse": true,
   "plugins": [
     {
       "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/source-control",
@@ -28,6 +29,10 @@
     },
     {
       "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+      "options": {}
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
       "options": {}
     }
   ]

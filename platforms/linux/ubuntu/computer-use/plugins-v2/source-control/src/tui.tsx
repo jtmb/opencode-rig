@@ -117,7 +117,7 @@ function SourceControlPanel(props: {
                 onMouseOver={() => setHovered(change.file)}
                 onMouseOut={() => setHovered((current) => (current === change.file ? undefined : current))}
                 onMouseDown={(event) => {
-                  if (!event.modifiers.ctrl) return
+                  if (event.button !== 0) return
                   event.preventDefault()
                   openDiff(context)
                 }}
@@ -139,7 +139,7 @@ function SourceControlPanel(props: {
             )}
           </For>
           <Show when={hovered()}>
-            <text fg={theme().text.feedback.info.default}>ctrl+click to open the diff</text>
+            <text fg={theme().text.feedback.info.default}>click to open the diff viewer</text>
           </Show>
           <Show when={state().changes.length > props.runtime().maxFiles}>
             <text fg={theme().text.subdued}>

@@ -255,8 +255,12 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     the fresh-process recall check. The retired legacy JSON store and
     `assistant-memory.py` were removed on 2026-09-18 with explicit approval.
     C5 tidy is done too (v2-safe project config, retired banners, tui-settings
-    retained as rollback-only). The previous session transcript was removed
-    with approval, so the worktree is clean
+    retained as rollback-only). The v2 UI gap fixes landed 2026-09-18: a
+    visible Todo sidebar panel (A2b), plain-click file rows in Source Control
+    that open the diff viewer, click-through file-manager rows, and terminal
+    mouse capture (`"mouse": true`) in the CLI config. Restart OpenCode once to
+    activate mouse capture. The previous session transcript was removed with
+    approval, so the worktree is clean
   - PR #1/#2 merge only on explicit request; v1 rollback is one PATH/shim
     change and is recorded in docs/migration/opencode-v2.md
 
@@ -290,7 +294,8 @@ give you. If I pasted only this handoff, ask what task I want handled.
   deploy tooling (`setup-opencode-v2.sh` plus `deploy-plugins.sh --v2`), the
   stack-aware command rewrites (A6), the `verify-opencode-v2.sh` shellcheck
   fix, the B4 docs, the Phase 5 verification/cutover records, the D1/D2
-  window and input tools, and the Basic Memory M1-M4 adoption plus C5 tidy.
+  window and input tools, the Basic Memory M1-M4 adoption plus C5 tidy, and
+  the v2 UI fixes (A2b todo panel, clickable rows, mouse capture).
 - v1 work stays on PRs #1/#2 as recorded in the prompt above; merge only on
   explicit request. The working tree is clean: the previous session transcript
   was removed with approval (D8).
@@ -315,8 +320,10 @@ give you. If I pasted only this handoff, ask what task I want handled.
   Memory M2 (two durable legacy entries migrated and searchable, task-memory
   skill rewritten); Basic Memory M3 (docs/memory.md, map/handoff rows, setup
   pin and verify, v2 config example); Basic Memory M4 (fresh-process recall
-  and the legacy removal with explicit confirmation).
-- Pending: the transcript cleanup; merge PR #1/#2 only on explicit request.
+  and the legacy removal with explicit confirmation); the v2 UI fixes (Todo
+  panel A2b, clickable Source Control and file-manager rows, mouse capture).
+- Pending: the on-request items only (retarget/merge PR #3, merges of PR
+  #1/#2); merge only on explicit request.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -788,7 +795,9 @@ README notes, Phase 4 recorded complete).
   the pilot `opencode.jsonc`; verify both tools in the live tool catalog; add
   to `plugins-v2/README.md`, `docs/plugins/README.md`, `documentation-map.json`
   (handoff rule), this file, and the AGENTS.md Progress Tracking section.
-  **A2b (deferred):** optional `sidebar.content` todo panel for v1 parity.
+  **A2b (done 2026-09-18):** the optional `sidebar.content` todo panel now
+  ships in the same package (server tools plus CLI panel, mirroring the state
+  through a small JSON file).
 - **A3. Fold `tui-settings` presets into v2 `source-control`. DONE 2026-09-18.** Options
   (`refreshMs`, `githubRefreshMs`, `maxFiles`, `startCollapsed`, `whenEmpty`,
   `github`, `remoteName`) documented; note that v2 has no live slot-order
@@ -942,6 +951,8 @@ v2 upgrade beyond 2.0.7.
 1. PR #3 (migration/opencode-v2, base chore/todo-tracking-gate) is open;
    retarget it to `main` after PR #1/#2 merge, and merge only on explicit
    request. CI runs the full gate including the plugins-v2 checks.
+2. Restart OpenCode once to activate terminal mouse capture (`"mouse": true`)
+   if the UI clicks are still inert after this session.
 2. Keep the v2 docs and HANDOFF current and re-test on any 2.0.x upgrade;
    translate the repository project config to the one-MCP v2 shape once v1
    rollback is no longer needed.

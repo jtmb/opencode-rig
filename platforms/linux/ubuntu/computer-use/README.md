@@ -222,7 +222,9 @@ phrases, example requests, and how the skills combine.
   **one** Playwright MCP (the live visible wrapper); headless-only work runs
   through the repository Playwright runtime from the shell. It also registers
   the bounded `basic-memory` MCP with `permissions` deny entries that hide 12
-  rarely used tools, leaving nine core note tools.
+  rarely used tools, leaving nine core note tools. `cli.json` enables terminal
+  mouse capture (`"mouse": true`) and registers the `rig-todo` sidebar panel in
+  addition to the three CLI plugins.
 - [`config/maintenance.cron.example`](config/maintenance.cron.example)
   documents the weekly maintenance schedule and required cron `PATH`.
 - Plugin registration examples live in
