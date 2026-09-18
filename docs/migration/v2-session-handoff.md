@@ -77,6 +77,11 @@ Current state:
 - tui-settings is redundant in v2: the built-in `/settings`
   (`opencode.settings`) already covers theme, display, plugins, and keybinds.
   Its Source Control presets still need folding into source-control.
+- Phase 4 progress: a sixth package, `rig-todo`, restores
+  `todowrite`/`todoread` (2.0.7 has neither) and is live. The v2 skills source
+  is now the config-dir `skills/` symlink farm, so exactly the 16 skills load
+  with no stray `README` skill. The CLI keymap layers are registered inside
+  `append: "app"` slot renders.
 
 v2 API facts already verified:
 - CLI plugin: `import { Plugin } from "@opencode/plugin/tui"` and

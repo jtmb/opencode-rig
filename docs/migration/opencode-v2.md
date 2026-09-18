@@ -183,8 +183,12 @@ Exit criteria: v2 passes the same health check as v1, and rollback is documented
 - **Skills:** `opencode api skill.list` returned 19 entries: 2 built-in
   (`opencode`, `report`), the 16 repo skills, and an unintended `README` skill.
   v2 discovers root-level `*.md` files in a skills source, so pointing `skills`
-  at the repo `skills/` directory also picks up `skills/README.md`. Phase 4 must
-  use a v2-specific skills source or exclude that file.
+  at the repo `skills/` directory also picks up `skills/README.md`. **Resolved
+  in Phase 4:** the v2 config no longer points at the repo skills root; the
+  config-dir `skills/` source holds one symlink per skill and discovers exactly
+  the 16 skills (18 with the two built-ins). The v1 deployed
+  `~/.config/opencode/skills/` is already README-free, so cutover needs no
+  change there.
 - **Commands:** `opencode api command.list` returned 8 entries: the 4 built-in
   plus `deploy`, `handoff`, `promote-skills`, and `resume` discovered from the
   pilot `commands/` directory. The bodies still reference v1 paths.
@@ -254,12 +258,12 @@ guard. Phase 4 has begun: `check-plugin-resource-guards.py` also scans
 `plugins-v2/`, and `documentation-map.json` maps the v2 workspace to
 `plugins-v2/README.md`.
 
-Still to do in Phase 4: fold the tui-settings Source Control presets into the
-v2 source-control plugin, add v2 setup/verify scripts and health checks, update
-`AGENTS.md`, and replace the repo-level `skills` source with one that does not
-pick up `skills/README.md` as a skill. Phase 5 (full health check and PATH
-cutover with v1 rollback) stays pending explicit approval; v1 remains the
-default.
+Still to do in Phase 4: add v2 setup/verify scripts and health checks and update
+`AGENTS.md`. The tui-settings presets are folded into v2 `source-control`
+(`plugins-v2/source-control/README.md`), the stray `README` skill is resolved
+via the config-dir symlink source, and the `rig-todo` plugin restores
+`todowrite`/`todoread`. Phase 5 (full health check and PATH cutover with v1
+rollback) stays pending explicit approval; v1 remains the default.
 
 ## Risks
 
