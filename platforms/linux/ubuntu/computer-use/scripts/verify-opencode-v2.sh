@@ -19,15 +19,27 @@ status=0
 ok() { printf 'OK: %s\n' "$*"; }
 fail() { printf 'FAIL: %s\n' "$*" >&2; status=1; }
 
-[ -x "$BIN" ] && ok "v2 binary: $BIN" || fail "v2 binary missing: $BIN"
+if [ -x "$BIN" ]; then
+  ok "v2 binary: $BIN"
+else
+  fail "v2 binary missing: $BIN"
+fi
 version="$("$BIN" --version 2>/dev/null || true)"
 case "$version" in
   "opencode v2."*) ok "version: $version" ;;
   *) fail "unexpected version: ${version:-<none>}" ;;
 esac
 
-[ -f "$CONFIG/opencode.jsonc" ] && ok "server config present" || fail "missing $CONFIG/opencode.jsonc"
-[ -f "$CONFIG/cli.json" ] && ok "cli config present" || fail "missing $CONFIG/cli.json"
+if [ -f "$CONFIG/opencode.jsonc" ]; then
+  ok "server config present"
+else
+  fail "missing $CONFIG/opencode.jsonc"
+fi
+if [ -f "$CONFIG/cli.json" ]; then
+  ok "cli config present"
+else
+  fail "missing $CONFIG/cli.json"
+fi
 
 python3 - "$CONFIG" "$PLUGINS" "$REPO" "${SERVER_PLUGINS[@]}" -- "${CLI_PLUGINS[@]}" <<'PY'
 import json

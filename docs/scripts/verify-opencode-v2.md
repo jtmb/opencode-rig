@@ -29,5 +29,6 @@ Override the paths with environment variables:
 - `cli.json` selects the `aura` theme for v1 colour parity.
 
 It exits non-zero if any check fails, printing `OK:` lines for each pass and
-`FAIL:` lines for each problem. Because it is a config/file check, it is safe to
-run in CI and while a v2 TUI is running.
+`FAIL:` lines for each problem. A missing binary or config still runs the
+remaining checks so every problem appears in one pass. Because it is a
+config/file check, it is safe to run in CI and while a v2 TUI is running.

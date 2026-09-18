@@ -274,8 +274,9 @@ give you. If I pasted only this handoff, ask what task I want handled.
   the config-dir skills source (170a68a), v2 config examples (18d3a45), the
   cutover and rollback runbook (a4671a1), source-control colour parity
   (08bc281), the v2 health check (d32bcf7), CI coverage (167df04), the v2
-  deploy tooling (`setup-opencode-v2.sh` plus `deploy-plugins.sh --v2`), and
-  the stack-aware command rewrites (A6).
+  deploy tooling (`setup-opencode-v2.sh` plus `deploy-plugins.sh --v2`), the
+  stack-aware command rewrites (A6), and the `verify-opencode-v2.sh`
+  shellcheck fix.
 - v1 work stays on PRs #1/#2 as recorded in the prompt above; merge only on
   explicit request. The untracked `session-ses_f4dc.md` transcript sits at the
   repository root; remove it only with approval (Phase D8).
