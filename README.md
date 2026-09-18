@@ -25,7 +25,7 @@ OpenCode 1.18.31+, Node via fnm, `python3-pyatspi`, `ydotool`, and
 |-----------|------|-------------------|
 | Computer use | [`platforms/linux/ubuntu/computer-use/`](platforms/linux/ubuntu/computer-use/) | 16 skills, desktop and browser control, local plugins, typed desktop tools, setup, memory, and maintenance |
 | Browser tools | [`platforms/linux/ubuntu/browser-tools/`](platforms/linux/ubuntu/browser-tools/) | Pinned Playwright MCP runtime with a shared live Firefox and an isolated headless mode |
-| GitHub tools | [`platforms/linux/ubuntu/github-tools/`](platforms/linux/ubuntu/github-tools/) | Pinned official GitHub MCP, read-only and lockdown-protected |
+| GitHub tools | [`platforms/linux/ubuntu/github-tools/`](platforms/linux/ubuntu/github-tools/) | Pinned official GitHub MCP, write-capable and lockdown-protected |
 
 The components are integrated: computer-use wrappers launch the browser and
 GitHub runtimes from their pinned, checksum-verified installs.
@@ -58,7 +58,7 @@ automate, and keep the harness healthy.
 
 ### Local plugins that harden the harness
 
-The repo ships three local OpenCode plugins, all loaded directly from source:
+The repo ships five local OpenCode plugins, all loaded directly from source:
 
 - **`codex-usage`** — a TUI sidebar showing the remaining weekly ChatGPT Codex
   subscription quota and optional Luna Reserve usage, with refresh and details
@@ -81,7 +81,17 @@ The repo ships three local OpenCode plugins, all loaded directly from source:
   built-in diff viewer, read-only GitHub MCP calls, and an adaptive memory
   budget for its external MCP child.
 
-All three plugins are user-registered (`~/.config/opencode/tui.json` and the
+- **`tui-settings`** — a TUI settings overlay opened from a sidebar `Settings`
+  row or `/settings`. It edits display preferences, opens the built-in theme
+  and plugin managers, tunes the source-control runtime options, and positions
+  the harness sidebar panels.
+
+- **`file-manager`** — a full-screen file manager opened from a sidebar
+  `Explorer` row or `/files`, with a lazy ignore-aware project tree, quick-open
+  search, a syntax-highlighted viewer, and an in-TUI editor with atomic saves
+  and path containment.
+
+All five plugins are user-registered (`~/.config/opencode/tui.json` and the
 global `opencode.jsonc`) and are not deployed by the general setup scripts.
 Use `/deploy` or `deploy-plugins.sh` to register them.
 
@@ -98,12 +108,13 @@ Use `/deploy` or `deploy-plugins.sh` to register them.
 ### GitHub without the blast radius
 
 `github-tools` installs the official GitHub MCP Server `v1.12.1` after
-SHA-256 verification and runs it with only `context`, `repos`, `issues`, and
-`pull_requests`, in read-only and lockdown modes. The credential comes from an
-explicit environment variable or the logged-in `gh` CLI and is never stored in
-the repo or config. Publishing,
-merging, workflows, deletions, and account or repository security changes all
-stay behind an explicit confirmation gate.
+SHA-256 verification and runs it with the `context`, `repos`, `issues`,
+`pull_requests`, `actions`, and `users` toolsets in lockdown mode. GitHub reads
+and mutations are MCP tool calls rather than `gh` shell commands. The credential
+comes from an explicit environment variable or the logged-in `gh` CLI and is
+never stored in the repo or config. Publishing, merging, workflow dispatches,
+deletions, and account or repository security changes all stay behind an
+explicit confirmation gate.
 
 ### Desktop control you can trust
 
@@ -180,6 +191,8 @@ local plugins with the global config or a repository's `.opencode/` directory.
 | [`platforms/linux/ubuntu/computer-use/plugins/codex-usage/README.md`](platforms/linux/ubuntu/computer-use/plugins/codex-usage/README.md) | Quota sidebar configuration and security model |
 | [`platforms/linux/ubuntu/computer-use/plugins/codex-fallback/README.md`](platforms/linux/ubuntu/computer-use/plugins/codex-fallback/README.md) | Fallback chains, per-agent config, and troubleshooting |
 | [`platforms/linux/ubuntu/computer-use/plugins/source-control/README.md`](platforms/linux/ubuntu/computer-use/plugins/source-control/README.md) | Source-control sidebar, GitHub status, options, and adaptive MCP containment |
+| [`platforms/linux/ubuntu/computer-use/plugins/tui-settings/README.md`](platforms/linux/ubuntu/computer-use/plugins/tui-settings/README.md) | Settings overlay, display and source-control keys, and sidebar positioning |
+| [`platforms/linux/ubuntu/computer-use/plugins/file-manager/README.md`](platforms/linux/ubuntu/computer-use/plugins/file-manager/README.md) | Project tree, quick-open, in-TUI editor, atomic saves, and containment |
 | [`platforms/linux/ubuntu/browser-tools/README.md`](platforms/linux/ubuntu/browser-tools/README.md) | Pinned Playwright runtime and integration |
 | [`platforms/linux/ubuntu/github-tools/README.md`](platforms/linux/ubuntu/github-tools/README.md) | Pinned GitHub MCP runtime and policy |
 | [`AGENTS.md`](AGENTS.md) | Operating guide, source of truth, and required verification |

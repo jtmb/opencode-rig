@@ -31,6 +31,8 @@ pieces fit together?*
 | [`plugins/codex-usage.md`](plugins/codex-usage.md) | The TUI quota sidebar: store, polling, credentials, endpoint parsing, UI, options, and errors |
 | [`plugins/codex-fallback.md`](plugins/codex-fallback.md) | The server failover router: hooks, configuration precedence, proactive and reactive switching, cooldown state, and recovery |
 | [`plugins/source-control.md`](plugins/source-control.md) | Local working-tree status, bounded GitHub pull-request lookup, adaptive MCP memory budgets, UI behavior, and lifecycle |
+| [`plugins/tui-settings.md`](plugins/tui-settings.md) | The settings overlay: gear row, drill-down sections, display and source-control keys, sidebar positioning, and responsive sizing |
+| [`plugins/file-manager.md`](plugins/file-manager.md) | The full-screen file manager: lazy tree, quick-open, viewer, editor, atomic saves, containment, and the external editor action |
 
 ### Desktop tools
 
@@ -50,11 +52,12 @@ pieces fit together?*
 | [`scripts/desktop-control.md`](scripts/desktop-control.md) | AT-SPI inspection and mutation with traversal bounds and short-lived target tokens |
 | [`scripts/assistant-memory.md`](scripts/assistant-memory.md) | The private JSON memory store: schema, commands, locking, and credential rejection |
 | [`scripts/check-skill-docs.md`](scripts/check-skill-docs.md) | Skill metadata/documentation validation and its negative self-test |
+| [`scripts/check-progress-tracking.md`](scripts/check-progress-tracking.md) | The mandatory todo-tracking gate: required rule surfaces, exit codes, and its negative self-test |
 | [`scripts/check-doc-coverage.md`](scripts/check-doc-coverage.md) | The documentation coverage gate: map rules, completeness, change-aware checks, and the exemption |
 | [`scripts/setup-git-hooks.md`](scripts/setup-git-hooks.md) | Installing the pre-push hook that enforces the documentation gate |
 | [`scripts/playwright-mcp.md`](scripts/playwright-mcp.md) | The visible, user-shared Playwright Firefox launcher |
 | [`scripts/playwright-headless-mcp.md`](scripts/playwright-headless-mcp.md) | The isolated headless Playwright Firefox launcher |
-| [`scripts/github-mcp.md`](scripts/github-mcp.md) | The pinned, read-only, lockdown-protected GitHub MCP launcher |
+| [`scripts/github-mcp.md`](scripts/github-mcp.md) | The pinned, write-capable, lockdown-protected GitHub MCP launcher |
 | [`scripts/opencode-db-maintain.md`](scripts/opencode-db-maintain.md) | Database statistics, event-log pruning, VACUUM, and hardening |
 | [`scripts/opencode-chat-backup.md`](scripts/opencode-chat-backup.md) | Full-fidelity chat export with a pruning manifest |
 | [`scripts/opencode-maintenance-cron.md`](scripts/opencode-maintenance-cron.md) | The weekly wrapper that combines backup and cleanup |

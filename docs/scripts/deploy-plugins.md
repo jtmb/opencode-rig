@@ -23,7 +23,7 @@ the plugin sources. Existing plugin entries and their options are preserved.
 |--------|---------|---------|
 | `--scope global\|project` | required | Deploy to the user's global config or one repository |
 | `--project DIR` | required for `project` | Target repository; `.opencode/` is created inside it |
-| `--plugins both\|all\|source-control\|codex-usage\|codex-fallback` | `both` | Which plugins to register; `both` preserves the Codex pair and `all` includes source-control |
+| `--plugins both\|all\|source-control\|tui-settings\|file-manager\|codex-usage\|codex-fallback` | `both` | Which plugins to register; `both` preserves the Codex pair and `all` includes source-control, tui-settings, and file-manager |
 | `--bootstrap` | off | Also copy `computer-use/scripts/` into the target |
 | `--chain a/b,c/d` | — | `defaultChain` written when adding `codex-fallback` |
 | `--apply` | — | Write changes |
@@ -43,6 +43,10 @@ missing or non-directory `--project`, or an unknown `--plugins` value exits `2`.
 | project | `codex-fallback` (server) | `<repo>/.opencode/opencode.json` | `plugin` |
 | global | `source-control` (TUI) | `~/.config/opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
 | project | `source-control` (TUI) | `<repo>/.opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
+| global | `tui-settings` (TUI) | `~/.config/opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
+| project | `tui-settings` (TUI) | `<repo>/.opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
+| global | `file-manager` (TUI) | `~/.config/opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
+| project | `file-manager` (TUI) | `<repo>/.opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
 
 Entries written:
 
@@ -61,6 +65,20 @@ Entries written:
 [
   "file:///home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins/source-control/src/tui.tsx",
   { "github": true }
+]
+```
+
+```json
+[
+  "file:///home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins/tui-settings/src/tui.tsx",
+  { "order": 10 }
+]
+```
+
+```json
+[
+  "file:///home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins/file-manager/src/tui.tsx",
+  { "order": 60 }
 ]
 ```
 
@@ -92,6 +110,14 @@ The source-control TUI entry is written as a tuple with `{ "github": true }`
 so the optional read-only GitHub row is explicitly enabled. Its MCP child
 calculates an adaptive memory budget at runtime; deployment does not write a
 machine-specific byte limit.
+
+The tui-settings TUI entry is written with `{ "order": 10 }` so the settings
+row defaults to the top of the sidebar. The overlay can later move it, and
+source-control, through the `local.tui-settings.order` and
+`local.source-control.order` kv keys, which apply at the next restart.
+
+The file-manager TUI entry is written with `{ "order": 60 }` so the `Explorer`
+row sits below Source Control and above the built-in context panel.
 
 ## Bootstrap script copy (`--bootstrap`)
 

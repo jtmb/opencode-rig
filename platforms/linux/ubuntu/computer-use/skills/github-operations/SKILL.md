@@ -9,9 +9,9 @@ metadata:
 
 # GitHub Operations
 
-Use the connected `github` MCP for bounded read-only GitHub context and the
-authenticated `gh` CLI only when the requested workflow is unavailable through
-the MCP. Keep local Git operations separate from remote GitHub actions.
+Use the connected `github` MCP for GitHub reads and mutations; keep local Git
+operations separate from remote GitHub actions. Every MCP mutation still passes
+the confirmation gate before it runs.
 
 ## Inspect First
 
@@ -29,12 +29,13 @@ the MCP. Keep local Git operations separate from remote GitHub actions.
 
 ## Tool Choice
 
-- Prefer the `github` MCP for repository, issue, pull request, and user-context
-  reads. Its configured toolsets are `context`, `repos`, `issues`, and
-  `pull_requests`; read-only and lockdown modes are enforced by the wrapper.
-- Use `gh` for GitHub Actions, releases, discussions, or an explicitly
-  requested remote mutation that the read-only MCP cannot perform. Use
-  non-interactive commands and inspect the target immediately before acting.
+- Prefer the `github` MCP for repository, issue, pull request, Actions, and
+  user-context reads and mutations. Its configured toolsets are `context`,
+  `repos`, `issues`, `pull_requests`, `actions`, and `users`; lockdown mode is
+  enforced by the wrapper and write operations are enabled.
+- For a mutation, inspect the exact target, present it, and ask immediately
+  before the final action, then perform it once and re-read the result. Use
+  non-interactive `gh` only for functionality the MCP does not cover.
 - Use local `git` commands for working-tree, branch, diff, commit, and remote
   inspection. Do not use GitHub APIs when local repository state is the source
   of truth.

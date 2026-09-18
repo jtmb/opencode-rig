@@ -29,13 +29,18 @@ For every new task in this repo:
    never dump the entire memory store into the conversation.
 4. Inspect current machine/app/project state read-only. Do not assume setup is
    missing or rerun installers before checking.
-5. State a short progress update before substantial work or any screenshot.
-6. Make the smallest bounded change that satisfies the request.
-7. Verify the user's actual outcome, not only process exit status.
-8. Clean temporary files, screenshots, test windows, and processes created by
+5. Track the work with the todo tool. For any request with multiple distinct
+   steps, create the todo list before acting, keep exactly one item
+   `in_progress`, update statuses in real time, and mark an item `completed`
+   only after its verification passes. This is a gate; single-step requests are
+   exempt.
+6. State a short progress update before substantial work or any screenshot.
+7. Make the smallest bounded change that satisfies the request.
+8. Verify the user's actual outcome, not only process exit status.
+9. Clean temporary files, screenshots, test windows, and processes created by
    the task. Preserve unrelated work.
-9. Report what changed, what passed, and any real limitation. Suggest another
-   step only when it is useful.
+10. Report what changed, what passed, and any real limitation. Suggest another
+    step only when it is useful.
 
 For a fresh chat, [`HANDOFF.md`](HANDOFF.md) contains the prompt the user can
 paste. Keep it synchronized with this guide and the actual runtime.
@@ -73,6 +78,19 @@ paste. Keep it synchronized with this guide and the actual runtime.
   physical access, or an unresolved consequential decision.
 - Do not confuse autonomy with permission. The confirmation gates below still
   apply immediately before consequential actions.
+
+## Progress Tracking
+
+- Multi-step work is tracked with the todo tool from the first action to the
+  verified end: create the list before acting, keep exactly one item
+  `in_progress`, and mark an item `completed` only after its verification
+  passes. Never batch status updates or close an item on intent.
+- The todo list is part of the work product: report its final state when
+  summarizing the task, and carry unfinished items into the handoff.
+- This is an enforced gate, not a suggestion: `check-progress-tracking.py`
+  fails when this section, the `/resume` command, or the `HANDOFF.md`
+  copy-paste prompt loses the progress-tracking requirement.
+- Single-step requests are exempt.
 
 ## Privilege Elevation
 
@@ -153,13 +171,14 @@ coordinates. Never run an uncontrolled click or key loop.
 
 - Load `github-operations` for GitHub repository, issue, pull request, review,
   release, or Actions work.
-- Prefer the `github` MCP (registered globally) for bounded reads. Its wrapper
-  exposes only `context`, `repos`, `issues`, and `pull_requests` in read-only
-  and lockdown modes.
-- Use `gh` only for functionality outside that MCP surface or an explicitly
-  requested remote mutation. Inspect the target first and retain the immediate
-  confirmation gate for publishing, merging, deleting, workflow/deployment, or
-  account/repository/security changes.
+- Prefer the `github` MCP (registered globally) for GitHub reads and mutations.
+  Its wrapper exposes the `context`, `repos`, `issues`, `pull_requests`,
+  `actions`, and `users` toolsets in lockdown mode; write operations are
+  enabled.
+- Keep the immediate confirmation gate for publishing, merging, deleting,
+  workflow/deployment, or account/repository/security changes even though the
+  MCP can perform them. Inspect the target first. Use `gh` only for
+  functionality the MCP does not cover.
 - Never print, store, request in chat, or pass a GitHub credential in command
   arguments. The MCP wrapper resolves its credential from
   `GITHUB_PERSONAL_ACCESS_TOKEN`, `GH_TOKEN`, or the logged-in `gh` CLI; let the
@@ -233,7 +252,9 @@ or CAPTCHAs for the user.
   checks; loaded directly from these paths). `setup-opencode.sh` does not
   deploy plugins.
 - The local plugin set is `codex-usage` (TUI quota sidebar), `codex-fallback`
-  (server failover), and `source-control` (TUI working-tree and GitHub panel).
+  (server failover), `source-control` (TUI working-tree and GitHub panel),
+  `tui-settings` (TUI settings overlay and sidebar positioning), and
+  `file-manager` (TUI project tree, quick-open, and editor).
   Their typecheck and test scripts must use the adaptive
   `scripts/run-bounded-command.sh` wrapper.
 - Plugin registration: `~/.config/opencode/tui.json` for TUI plugins and the
@@ -288,8 +309,9 @@ or CAPTCHAs for the user.
    `BROWSER_MCP_VERSION` in
    `platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh`.
 6. GitHub MCP stays pinned to the official amd64 release and published
-   checksum in `setup-computer-assistant.sh`. Keep its wrapper read-only and
-   toolset-limited unless the user explicitly approves a broader design.
+   checksum in `setup-computer-assistant.sh`. Its wrapper runs in lockdown mode
+   with a deliberately bounded toolset list; widen that list only with explicit
+   approval because every toolset adds schema context to each request.
 7. Keep root and component README files, `HANDOFF.md`, script help, skills,
    plugin READMEs and registration examples, and configuration examples
    synchronized with behavioral or path changes.
@@ -329,6 +351,8 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-plugin-resource-guards
 python3 platforms/linux/ubuntu/computer-use/scripts/check-plugin-resource-guards-self-test.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage-self-test.py
+python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking.py
+python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking-self-test.py
 ./platforms/linux/ubuntu/computer-use/scripts/setup-git-hooks.sh --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --verify-only
@@ -338,6 +362,8 @@ opencode mcp list
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/file-manager run check
 npm --prefix platforms/linux/ubuntu/computer-use/tools run check
 python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps

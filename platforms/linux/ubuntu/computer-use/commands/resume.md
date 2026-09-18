@@ -24,10 +24,13 @@ Resume the assistant's work from the repository handoff.
    `git status --short`, and the current branch.
 5. Give a concise status: branch, latest commit, worktree state, the pending
    task, and any blockers.
-6. Continue the Work In Progress task from the handoff. Load the skill that
+6. Track the resumed work with the todo tool: create the list before acting,
+   keep exactly one item in progress, and mark items completed only after
+   their verification passes.
+7. Continue the Work In Progress task from the handoff. Load the skill that
    matches it before acting, make the smallest bounded change, and verify the
    real result. If the pending work is complete or ambiguous, ask what to do
    next instead of guessing.
-7. Preserve unrelated dirty work and user files. Keep the confirmation gates for
+8. Preserve unrelated dirty work and user files. Keep the confirmation gates for
    consequential actions, and never handle passwords, MFA, payment details, or
    CAPTCHAs.

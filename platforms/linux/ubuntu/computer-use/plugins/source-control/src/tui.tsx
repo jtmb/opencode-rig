@@ -4,53 +4,12 @@ import { createSignal, For, onCleanup, Show } from "solid-js"
 
 import { leftTruncate, statusLetter, visibleChanges, type SourceControlChange } from "./changes.ts"
 import type { GithubCheckState } from "./github.ts"
-import { createGithubMcpClient, type GithubMcpCommand } from "./mcp.ts"
+import { createGithubMcpClient } from "./mcp.ts"
+import { applyRepositionDefault, KEYS, pluginOptions, readRegistrationOrder, readRuntimeOptions, type RuntimeOptions } from "./options.ts"
 import { createSourceControlStore, type SourceControlState, type SourceControlStore } from "./store.ts"
 
-type PluginOptions = {
-  refreshMs?: number
-  githubRefreshMs?: number
-  maxFiles?: number
-  whenEmpty?: "hide" | "show"
-  github?: boolean
-  githubMcpCommand?: GithubMcpCommand
-  remoteName?: string
-}
-
 const id = "local.source-control"
-const COLLAPSED_KEY = "local.source-control.collapsed"
-const DEFAULT_REFRESH_MS = 15_000
-const MIN_REFRESH_MS = 5_000
-const DEFAULT_GITHUB_REFRESH_MS = 120_000
-const MIN_GITHUB_REFRESH_MS = 30_000
-const DEFAULT_MAX_FILES = 8
 const REFRESH_DEBOUNCE_MS = 750
-
-function pluginOptions(value: unknown): PluginOptions {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return {}
-  const options = value as Record<string, unknown>
-  const githubMcpCommand = options.githubMcpCommand
-  return {
-    ...(typeof options.refreshMs === "number" && Number.isFinite(options.refreshMs)
-      ? { refreshMs: options.refreshMs }
-      : {}),
-    ...(typeof options.githubRefreshMs === "number" && Number.isFinite(options.githubRefreshMs)
-      ? { githubRefreshMs: options.githubRefreshMs }
-      : {}),
-    ...(typeof options.maxFiles === "number" && Number.isFinite(options.maxFiles)
-      ? { maxFiles: options.maxFiles }
-      : {}),
-    ...(options.whenEmpty === "hide" || options.whenEmpty === "show" ? { whenEmpty: options.whenEmpty } : {}),
-    ...(typeof options.github === "boolean" ? { github: options.github } : {}),
-    ...(typeof githubMcpCommand === "string" ||
-    (Array.isArray(githubMcpCommand) && githubMcpCommand.every((part) => typeof part === "string"))
-      ? { githubMcpCommand: githubMcpCommand as GithubMcpCommand }
-      : {}),
-    ...(typeof options.remoteName === "string" && options.remoteName.trim()
-      ? { remoteName: options.remoteName.trim() }
-      : {}),
-  }
-}
 
 function statusColor(status: SourceControlChange["status"], theme: TuiThemeCurrent) {
   if (status === "added") return theme.diffAdded
@@ -102,20 +61,18 @@ function SourceControlPanel(props: {
   api: TuiPluginApi
   store: SourceControlStore
   sessionID: string
-  maxFiles: number
+  runtime: () => RuntimeOptions
+  setStartCollapsed: (value: boolean) => void
   whenEmpty: "hide" | "show"
 }) {
   const [state, setState] = createSignal<SourceControlState>(props.store.getState())
-  const [collapsed, setCollapsed] = createSignal(props.api.kv.get(COLLAPSED_KEY, false))
+  const [hovered, setHovered] = createSignal<string | undefined>(undefined)
   const stop = props.store.subscribe(setState)
 
   onCleanup(stop)
 
-  const toggle = () => {
-    const next = !collapsed()
-    setCollapsed(next)
-    props.api.kv.set(COLLAPSED_KEY, next)
-  }
+  const collapsed = () => props.runtime().startCollapsed
+  const toggle = () => props.setStartCollapsed(!collapsed())
 
   const visible = () => {
     const current = state()
@@ -148,12 +105,14 @@ function SourceControlPanel(props: {
         </box>
 
         <Show when={!collapsed()}>
-          <For each={visibleChanges(state().changes, props.maxFiles)}>
+          <For each={visibleChanges(state().changes, props.runtime().maxFiles)}>
             {(change) => (
               <box
                 flexDirection="row"
                 gap={1}
                 focusable
+                onMouseOver={() => setHovered(change.file)}
+                onMouseOut={() => setHovered((current) => (current === change.file ? undefined : current))}
                 onMouseDown={(event) => {
                   if (!event.modifiers.ctrl) return
                   event.preventDefault()
@@ -167,15 +126,26 @@ function SourceControlPanel(props: {
                 }}
               >
                 <text fg={statusColor(change.status, props.api.theme.current)}>{statusLetter(change.status)}</text>
-                <text fg={props.api.theme.current.text}>{leftTruncate(change.file, 34)}</text>
+                <text
+                  fg={
+                    hovered() === change.file ? props.api.theme.current.accent : props.api.theme.current.text
+                  }
+                >
+                  <u>{leftTruncate(change.file, 34)}</u>
+                </text>
                 <box flexGrow={1} />
                 <text fg={props.api.theme.current.diffAdded}>+{change.additions}</text>
                 <text fg={props.api.theme.current.diffRemoved}>-{change.deletions}</text>
               </box>
             )}
           </For>
-          <Show when={state().changes.length > props.maxFiles}>
-            <text fg={props.api.theme.current.textMuted}>+{state().changes.length - props.maxFiles} more</text>
+          <Show when={hovered()}>
+            <text fg={props.api.theme.current.info}>ctrl+click to open the diff</text>
+          </Show>
+          <Show when={state().changes.length > props.runtime().maxFiles}>
+            <text fg={props.api.theme.current.textMuted}>
+              +{state().changes.length - props.runtime().maxFiles} more
+            </text>
           </Show>
           <Show when={state().pullRequest}>
             {(pullRequest) => (
@@ -195,14 +165,29 @@ function SourceControlPanel(props: {
 
 const tui: TuiPlugin = async (api, rawOptions) => {
   const options = pluginOptions(rawOptions)
-  const refreshMs = Math.max(MIN_REFRESH_MS, Math.floor(options.refreshMs ?? DEFAULT_REFRESH_MS))
-  const githubRefreshMs = Math.max(
-    MIN_GITHUB_REFRESH_MS,
-    Math.floor(options.githubRefreshMs ?? DEFAULT_GITHUB_REFRESH_MS),
-  )
-  const maxFiles = Math.max(1, Math.floor(options.maxFiles ?? DEFAULT_MAX_FILES))
   const whenEmpty = options.whenEmpty ?? "hide"
   const githubEnabled = options.github !== false
+  applyRepositionDefault(api.kv)
+  const [runtime, setRuntime] = createSignal<RuntimeOptions>(readRuntimeOptions(api.kv, options))
+  const reloadRuntime = () => {
+    applyRepositionDefault(api.kv)
+    const next = readRuntimeOptions(api.kv, options)
+    const current = runtime()
+    if (
+      next.refreshMs !== current.refreshMs ||
+      next.githubRefreshMs !== current.githubRefreshMs ||
+      next.maxFiles !== current.maxFiles ||
+      next.startCollapsed !== current.startCollapsed
+    ) {
+      setRuntime(next)
+    }
+    return next
+  }
+  const setStartCollapsed = (value: boolean) => {
+    api.kv.set(KEYS.startCollapsed, value)
+    reloadRuntime()
+  }
+
   const mcp = githubEnabled ? createGithubMcpClient(options.githubMcpCommand) : undefined
   const store = createSourceControlStore({
     status: (parameters) => api.client.vcs.status(parameters),
@@ -220,11 +205,12 @@ const tui: TuiPlugin = async (api, rawOptions) => {
   let directory: string | undefined
   let branch: string | undefined
   let refreshTimer: ReturnType<typeof setTimeout> | undefined
-  let localRefreshInterval: ReturnType<typeof setInterval> | undefined
-  let githubRefreshInterval: ReturnType<typeof setInterval> | undefined
+  let localTimer: ReturnType<typeof setTimeout> | undefined
+  let githubTimer: ReturnType<typeof setTimeout> | undefined
   let refreshGithub = false
   let localInFlight: Promise<void> | undefined
   let githubInFlight: Promise<void> | undefined
+  let stopped = false
 
   const updateContext = (nextSessionID: string) => {
     if (sessionID === nextSessionID) return false
@@ -282,15 +268,40 @@ const tui: TuiPlugin = async (api, rawOptions) => {
     scheduleRefresh(true)
   })
 
-  localRefreshInterval = setInterval(() => void refresh(), refreshMs)
-  if (githubEnabled) {
-    githubRefreshInterval = setInterval(() => void refresh(true), githubRefreshMs)
+  const scheduleLocalPoll = () => {
+    if (stopped) return
+    localTimer = setTimeout(async () => {
+      localTimer = undefined
+      try {
+        reloadRuntime()
+        await refresh()
+      } finally {
+        scheduleLocalPoll()
+      }
+    }, runtime().refreshMs)
   }
 
+  const scheduleGithubPoll = () => {
+    if (stopped || !githubEnabled) return
+    githubTimer = setTimeout(async () => {
+      githubTimer = undefined
+      try {
+        reloadRuntime()
+        await refresh(true)
+      } finally {
+        scheduleGithubPoll()
+      }
+    }, runtime().githubRefreshMs)
+  }
+
+  scheduleLocalPoll()
+  scheduleGithubPoll()
+
   api.lifecycle.onDispose(() => {
+    stopped = true
     if (refreshTimer) clearTimeout(refreshTimer)
-    if (localRefreshInterval) clearInterval(localRefreshInterval)
-    if (githubRefreshInterval) clearInterval(githubRefreshInterval)
+    if (localTimer) clearTimeout(localTimer)
+    if (githubTimer) clearTimeout(githubTimer)
     stopSessionIdle()
     stopEdited()
     stopWatcher()
@@ -328,7 +339,7 @@ const tui: TuiPlugin = async (api, rawOptions) => {
   if (stopCommands) api.lifecycle.onDispose(stopCommands)
 
   api.slots.register({
-    order: 600,
+    order: readRegistrationOrder(api.kv),
     slots: {
       sidebar_content(_context, props) {
         if (updateContext(props.session_id)) {
@@ -339,7 +350,8 @@ const tui: TuiPlugin = async (api, rawOptions) => {
             api={api}
             store={store}
             sessionID={props.session_id}
-            maxFiles={maxFiles}
+            runtime={runtime}
+            setStartCollapsed={setStartCollapsed}
             whenEmpty={whenEmpty}
           />
         )

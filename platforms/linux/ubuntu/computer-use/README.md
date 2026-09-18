@@ -36,7 +36,9 @@ platforms/linux/ubuntu/
     ├── plugins/
     │   ├── codex-fallback/
     │   ├── codex-usage/
-    │   └── source-control/
+    │   ├── file-manager/
+    │   ├── source-control/
+    │   └── tui-settings/
     ├── scripts/
     ├── skills/
     └── tools/
@@ -54,6 +56,8 @@ Generated and local-only paths (never committed):
 - `scripts/__pycache__/`
 - `plugins/codex-usage/node_modules/`, `plugins/codex-fallback/node_modules/`
 - `plugins/source-control/node_modules/`
+- `plugins/tui-settings/node_modules/`
+- `plugins/file-manager/node_modules/`
 - `tools/node_modules/`
 - `~/Documents/computer-assistant/memory.json` (owner-only app data)
 - `/tmp/opencode/playwright*/` (transient MCP output)
@@ -79,7 +83,8 @@ What `--apply` does:
 - Deploys all sixteen complete skill bundles to `~/.config/opencode/skills/`.
 - Deploys the repository-managed `/deploy`, `/handoff`, `/promote-skills`, and
   `/resume` commands to `~/.config/opencode/commands/`.
-- Deploys the typed desktop custom tools (`tools/desktop.ts`) to
+- Deploys the typed desktop custom tools (`tools/desktop.ts`) and the
+  screenshot tool (`tools/vision.ts`) to
   `~/.config/opencode/tools/` for global discovery.
 - Initializes the owner-only memory store at
   `~/Documents/computer-assistant/memory.json` (dir `700`, file `600`).
@@ -113,7 +118,8 @@ plugins globally or into a repository's `.opencode/` directory (and optionally
 copies the bootstrap scripts) through `scripts/deploy-plugins.sh`. `/handoff`
 refreshes `HANDOFF.md` with the current session state and regenerates the
 prompt block for a fresh chat. `/resume` reads `HANDOFF.md`, runs the read-only
-health check, reports status, and continues the pending task.
+health check, reports status, and continues the pending task with progress
+tracked in the todo list.
 
 [`plugins/codex-usage/`](plugins/codex-usage/README.md) is a local OpenCode TUI
 sidebar for the weekly Codex quota and optional Luna Reserve usage.
@@ -122,13 +128,18 @@ configurable chain of any OpenCode providers, with per-agent overrides and
 automatic return to Codex when the quota resets.
 [`plugins/source-control/`](plugins/source-control/README.md) is a local TUI
 sidebar for working-tree changes and the current branch's GitHub pull request.
+[`plugins/tui-settings/`](plugins/tui-settings/README.md) is a local TUI
+settings overlay for appearance, display, plugins, source control, and sidebar
+positioning.
+[`plugins/file-manager/`](plugins/file-manager/README.md) is a local TUI
+project tree, quick-open, and editor with atomic saves.
 
-All three are user-registered local packages, not setup-script deployments:
+All five are user-registered local packages, not setup-script deployments:
 codex-usage loads from `~/.config/opencode/tui.json`, codex-fallback from the
-`plugin` array in `~/.config/opencode/opencode.jsonc`, and source-control from
-the TUI config. Register them with `/deploy` or
-`scripts/deploy-plugins.sh`; their runtime and verification commands live in
-their READMEs.
+`plugin` array in `~/.config/opencode/opencode.jsonc`, and source-control,
+tui-settings, and file-manager from the TUI config. Register them with
+`/deploy` or `scripts/deploy-plugins.sh`; their runtime and verification
+commands live in their READMEs.
 
 ## New Chat Handoff
 
@@ -150,7 +161,7 @@ phrases, example requests, and how the skills combine.
 | `browser-assistant` | [Usage guide](skills/browser-assistant/README.md) | Share a visible isolated Playwright Firefox window with the user |
 | `browser-headless` | [Usage guide](skills/browser-headless/README.md) | Run explicitly requested non-interactive tasks in isolated headless Firefox |
 | `game-playtest` | [Usage guide](skills/game-playtest/README.md) | Test browser games with bounded input plus semantic, visual, console, and network evidence |
-| `github-operations` | [Usage guide](skills/github-operations/README.md) | Inspect GitHub through a bounded read-only MCP and perform separately approved remote operations |
+| `github-operations` | [Usage guide](skills/github-operations/README.md) | Inspect GitHub through a bounded write-capable MCP and perform approved remote operations |
 | `blender` | [Usage guide](skills/blender/README.md) | Inspect, script, render, save, reopen, and export Blender scenes safely |
 | `web-3d-asset-pipeline` | [Usage guide](skills/web-3d-asset-pipeline/README.md) | Prepare and validate GLB/glTF assets for browser runtimes |
 | `task-memory` | [Usage guide](skills/task-memory/README.md) | Store and retrieve private preferences, facts, decisions, and pending work |
@@ -178,11 +189,13 @@ phrases, example requests, and how the skills combine.
 | `scripts/check-skill-docs-self-test.py` | Isolated negative tests proving invalid skill metadata and documentation are rejected |
 | `scripts/check-doc-coverage.py` | Enforce that mapped sources update or create their documentation (completeness + change-aware) |
 | `scripts/check-doc-coverage-self-test.py` | Isolated negative tests proving the documentation gate rejects undocumented changes |
+| `scripts/check-progress-tracking.py` | Enforce the mandatory todo-tracking rule in `AGENTS.md`, the `/resume` command, and the handoff prompt |
+| `scripts/check-progress-tracking-self-test.py` | Isolated negative tests proving the progress gate rejects a missing or gutted rule surface |
 | `scripts/setup-git-hooks.sh` | Install or verify the versioned pre-push hook that runs the documentation gate |
 | `scripts/assistant-memory.py` | Private JSON memory store; record changes require `--apply`, credentials rejected |
 | `scripts/playwright-mcp.sh` | Launch the visible live Firefox MCP shared by user and agent |
 | `scripts/playwright-headless-mcp.sh` | Launch the separate isolated headless Firefox MCP |
-| `scripts/github-mcp.sh` | Launch the pinned GitHub MCP with limited read-only toolsets and fail-closed authentication |
+| `scripts/github-mcp.sh` | Launch the pinned, write-capable GitHub MCP in lockdown mode with fail-closed authentication |
 | `scripts/opencode-db-maintain.py` | Diagnose, prune, and vacuum `opencode.db` (read-only by default) |
 | `scripts/opencode-chat-backup.py` | Export chats to `~/Documents/opencode-backups/` |
 | `scripts/opencode-maintenance-cron.sh` | Weekly wrapper: chat backup always, DB cleanup when OpenCode is closed |
@@ -260,14 +273,17 @@ excluded from Git.
 
 `../github-tools/bin/github-mcp-server` is generated from the official GitHub
 MCP Server `v1.12.1` Linux x86_64 release after its published SHA-256 is
-verified. `scripts/github-mcp.sh` enables only `context`, `repos`, `issues`, and
-`pull_requests` with read-only and lockdown modes.
+verified. `scripts/github-mcp.sh` enables the `context`, `repos`, `issues`,
+`pull_requests`, `actions`, and `users` toolsets in lockdown mode, with write
+operations enabled so GitHub mutations are MCP tool calls behind the normal
+confirmation gate.
 
 The wrapper authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in
 OpenCode's launch environment, including values loaded from a project `.env`,
 falling back to the logged-in `gh` CLI, and fails closed when none is
-available. Prefer a fine-grained PAT restricted to the required repositories
-and read permissions. Never commit a token or place its value in
+available. Prefer a fine-grained PAT restricted to the required repositories,
+with read permissions for inspection and write permissions only where mutations
+are expected. Never commit a token or place its value in
 `opencode.json`; restart OpenCode after changing its launch environment.
 
 ## Memory store
@@ -294,6 +310,9 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.p
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/file-manager run check
 npm --prefix platforms/linux/ubuntu/computer-use/tools run check
 opencode debug skill
 opencode mcp list

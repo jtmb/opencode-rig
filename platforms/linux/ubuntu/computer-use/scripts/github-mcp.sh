@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start the pinned GitHub MCP with a bounded, read-only tool surface.
+# Start the pinned GitHub MCP with a bounded, write-capable tool surface.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,7 +29,10 @@ if [ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]; then
   exit 1
 fi
 
+# Write operations are enabled so GitHub mutations are MCP tool calls. The
+# wrapper stays in lockdown mode, and the agent keeps its confirmation gate
+# before publishing, merging, deleting, or changing workflows, repositories,
+# or account settings.
 exec "$MCP" stdio \
-  --toolsets=context,repos,issues,pull_requests \
-  --read-only \
+  --toolsets=context,repos,issues,pull_requests,actions,users \
   --lockdown-mode

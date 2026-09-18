@@ -71,7 +71,8 @@ system-troubleshooting  task-memory  vscode-management  web-3d-asset-pipeline
 ```
 
 The required commands are `deploy`, `handoff`, `promote-skills`, and `resume`.
-The required custom tools are `desktop` (`tools/desktop.ts`).
+The required custom tools are `desktop` (`tools/desktop.ts`) and `vision`
+(`tools/vision.ts`).
 
 ### `ensure_skill()`
 
@@ -142,6 +143,10 @@ fresh OpenCode process.
 - The command and tool lists are explicit (`REQUIRED_COMMANDS`,
   `REQUIRED_TOOLS`); adding a new command or tool source file requires adding it
   to the list here, and updating this document and the component README.
+- The `/resume` command carries the progress-tracking gate: resumed multi-step
+  work is tracked with the todo tool, and
+  [`check-progress-tracking.py`](check-progress-tracking.md) fails if the rule
+  disappears from the command, `AGENTS.md`, or the `HANDOFF.md` prompt.
 - The script is idempotent: a second `--apply` with no source changes reports
   every bundle `OK` and performs no copies.
 - Related: [`check-skill-docs.md`](check-skill-docs.md) validates the skill
