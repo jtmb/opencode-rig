@@ -77,6 +77,16 @@ function SourceControlPanel(props: {
   const collapsed = () => props.runtime().startCollapsed
   const toggle = () => props.setStartCollapsed(!collapsed())
 
+  // The row can be hit-tested to the container or to a text child; mark the
+  // event so the first handler to see it opens the diff exactly once.
+  const activateDiff = (event: { button?: number; preventDefault?: () => void; __rigHandled?: boolean }) => {
+    if (event.__rigHandled) return
+    event.__rigHandled = true
+    if (event.button !== 0) return
+    event.preventDefault?.()
+    openDiff(context)
+  }
+
   const visible = () => {
     const current = state()
     if (!current.isGit) return false
@@ -116,11 +126,7 @@ function SourceControlPanel(props: {
                 focusable
                 onMouseOver={() => setHovered(change.file)}
                 onMouseOut={() => setHovered((current) => (current === change.file ? undefined : current))}
-                onMouseDown={(event) => {
-                  if (event.button !== 0) return
-                  event.preventDefault()
-                  openDiff(context)
-                }}
+                onMouseDown={activateDiff}
                 onKeyDown={(event) => {
                   if (event.name === "return" || event.name === "space") {
                     event.preventDefault()
@@ -128,13 +134,22 @@ function SourceControlPanel(props: {
                   }
                 }}
               >
-                <text fg={statusColor(change.status, theme())}>{statusLetter(change.status)}</text>
-                <text fg={hovered() === change.file ? theme().hue.accent[200] : theme().text.default}>
+                <text fg={statusColor(change.status, theme())} onMouseDown={activateDiff}>
+                  {statusLetter(change.status)}
+                </text>
+                <text
+                  fg={hovered() === change.file ? theme().hue.accent[200] : theme().text.default}
+                  onMouseDown={activateDiff}
+                >
                   <u>{leftTruncate(change.file, 34)}</u>
                 </text>
                 <box flexGrow={1} />
-                <text fg={theme().diff.text.added}>+{change.additions}</text>
-                <text fg={theme().diff.text.removed}>-{change.deletions}</text>
+                <text fg={theme().diff.text.added} onMouseDown={activateDiff}>
+                  +{change.additions}
+                </text>
+                <text fg={theme().diff.text.removed} onMouseDown={activateDiff}>
+                  -{change.deletions}
+                </text>
               </box>
             )}
           </For>

@@ -171,9 +171,10 @@ Known live state (recorded 2026-09-18):
     jtmb/opencode-rig#3 is stacked on chore/todo-tracking-gate). CI on the
     pushed head (7f686b9): verify and GitGuardian pass. PR #1/#2 (v1 work)
     remain open; merge only on explicit request.
-  - Pending uncommitted change set: the guarded click-handler fix in
-    plugins-v2 (file-manager, source-control, rig-todo) awaiting manual click
-    verification; see "Pending verification".
+  - The guarded click-handler fix in plugins-v2 (file-manager, source-control,
+    rig-todo, plus the consumeMouseActivation helper and tests) was verified by
+    the operator on 2026-09-18 (all four targets clickable) and is committed
+    with this handoff revision.
   - Platform: Linux / Ubuntu; computer use under
     platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with
@@ -217,18 +218,14 @@ Known live state (recorded 2026-09-18):
 
 Work in progress (full detail in the "Work In Progress" section of this file):
 
-  - Verify the guarded click-handler fix by clicking a directory name, a file
-    name, a Source Control row, and the Todo header; then commit and push it to
-    PR #3. If a target is still inert, instrument the onMouseDown hit path
-    before changing more.
+  - Click-handler fix verified and committed 2026-09-18 (see the body record).
   - Next major work: the Explorer IDE plan at docs/plans/explorer-ide.md
     (Phases 0-7, full-IDE editor for the docked Explorer panel, plus the Basic
-    Memory decision loop). Start by folding the plan into the memory project
-    note projects/opencode-rig/explorer-ide, then run the Phase 0 spikes.
-  - Open questions for me (answer before implementation): parser language
-    priority; format/diagnostics on save opt-in vs default; file create/
-    rename/delete scope; side-by-side editing; parser asset vendoring; memory
-    auto-summary on session end.
+    Memory decision loop). The operator's decisions are recorded there (full
+    parser list; project-detected format/diagnostics; guarded file operations;
+    side-by-side later; pinned parser fetch script; explicit-only memory
+    capture). Start by folding the plan into the memory project note
+    projects/opencode-rig/explorer-ide, then run the Phase 0 spikes.
   - Merge PRs #1/#2/#3 only on explicit request.
 
 After the health check, give me a concise status and continue with the task I
@@ -237,43 +234,25 @@ give you. If I pasted only this handoff, ask what task I want handled.
 
 ## Work In Progress — updated 2026-09-18
 
-### Pending verification (do this first)
+### Click-handler fix (verified 2026-09-18)
 
-The last session fixed the reported mouse gaps: the file tree rows had no
-handlers, Source Control required Ctrl+click, and terminal mouse capture was
-off. The fix is **uncommitted** and awaiting the operator's physical click
-test:
+The reported mouse gaps — file-tree rows with no handlers, Source Control
+requiring Ctrl+click, and terminal mouse capture disabled — are fixed and
+verified. The operator confirmed all four targets: a directory name
+expands/collapses, a file name opens in the viewer, a Source Control row opens
+the diff viewer, and the `- Todo` header toggles.
 
-```text
-M platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx
-M platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx
-M platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx
-?? platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/mouse.ts
-?? platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/mouse.test.ts
-```
+The fix adds `consumeMouseActivation` (first-left-click-once, in
+`file-manager/src/mouse.ts` with tests) and guarded `onMouseDown` handlers on
+both the row container and its text children for the tree, quick-open results,
+Source Control rows, and the Todo header. Automated checks: file-manager 16,
+source-control 20, rig-todo 9 tests through the bounded wrapper. Terminal
+mouse capture is enabled in the pilot `cli.json` and in
+`config/v2-cli.example.json`.
 
-What changed:
-
-- Every row (tree, quick-open, Source Control, Todo header) now carries a
-  guarded `onMouseDown` on both the container and its text children, with
-  `consumeMouseActivation` marking the event so exactly one handler acts per
-  click.
-- Terminal mouse capture (`"mouse": true`) is in the pilot `cli.json` and in
-  `config/v2-cli.example.json`.
-
-Verification steps:
-
-1. Click a directory name (not the +/- glyph) → expands/collapses.
-2. Click a file name → opens in the viewer.
-3. Click a Source Control file row (make an edit first; the worktree is dirty
-   right now, so rows exist) → opens the diff viewer.
-4. Click the `- Todo` header → collapses/expands.
-
-Automated checks already pass (file-manager 16, source-control 20, rig-todo 9
-tests through the bounded wrapper). If all four clicks work, run the gates in
-AGENTS.md for these files, then commit and push to PR #3. If a target is still
-inert, instrument `onMouseDown` to log the hit renderable and event type before
-making further changes.
+Note: ydotool's virtual pointer does not move the GNOME cursor on this
+machine, so mouse verification is always a manual operator check; keyboard
+automation through `desktop_input` works and remains the automated path.
 
 ### Explorer IDE plan (approved to build next)
 
@@ -348,10 +327,11 @@ key conflicts with the host (traits + keymap layers); file safety (atomic
 saves, guards, confirmations); scope creep (phases are independently
 shippable).
 
-**Open questions.** Parser language priority; format/diagnostics opt-in or
-project-detected default; create/rename/delete in scope now; side-by-side
-editors; vendor parser assets or a pinned fetch script; automatic memory
-summary at session end.
+**Operator decisions (2026-09-18).** Full parser language list; project-detected
+format/diagnostics defaults with a per-project disable; guarded create/rename/
+delete in scope; side-by-side editors later; a pinned, checksum-verified fetch
+script for parser assets (not committed); memory capture strictly explicit.
+The plan document records these under "Operator decisions".
 
 ### OpenCode v2 stack (default since 2026-09-18)
 
@@ -404,12 +384,10 @@ summary at session end.
 
 ### Suggested next steps
 
-1. Verify the pending click-handler fix (four clicks), then run the gates and
-   commit + push to PR #3.
-2. Fold the Explorer IDE plan into the Basic Memory project note and start
-   Phase 0 once the open questions are answered.
-3. Continue Phases 1-7 with the memory loop and per-phase verification.
-4. Merge PRs #1/#2/#3 only on explicit request; retarget PR #3 to main after
+1. Fold the Explorer IDE plan into the Basic Memory project note
+   (projects/opencode-rig/explorer-ide) and start the Phase 0 spikes.
+2. Continue Phases 1-7 with the memory loop and per-phase verification.
+3. Merge PRs #1/#2/#3 only on explicit request; retarget PR #3 to main after
    PR #1/#2 merge.
 
 ## Keep This Current

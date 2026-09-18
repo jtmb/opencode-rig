@@ -23,6 +23,7 @@ import {
   tooLargeToEdit,
   type FileNode,
 } from "./model.ts"
+import { consumeMouseActivation, type MouseActivation } from "./mouse.ts"
 
 const PANEL_NAME = "file-manager.files"
 const SEARCH_DEBOUNCE_MS = 150
@@ -236,6 +237,26 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       return
     }
     await openFile(row.node.path)
+  }
+
+  // Mouse events can be hit-tested to the row box or to either text child
+  // depending on the terminal/renderable, and they bubble. consumeMouseActivation
+  // marks the event so the first handler that sees it acts exactly once.
+  const activateRow = (event: MouseActivation, action: () => void) => {
+    if (!consumeMouseActivation(event)) return
+    event.preventDefault?.()
+    action()
+  }
+
+  const activateNode = (node: FileNode) => {
+    setSelected(node.path)
+    if (node.type === "directory") void toggleDirectory(node)
+    else void openFile(node.path)
+  }
+
+  const activateResult = (result: string, index: () => number) => {
+    setResultIndex(index())
+    void openFile(result)
   }
 
   const editSelected = async () => {
@@ -508,18 +529,18 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
                       paddingLeft={row.depth * 2 + 1}
                       onMouseOver={() => setHovered(row.node.path)}
                       onMouseOut={() => setHovered((current) => (current === row.node.path ? undefined : current))}
-                      onMouseDown={(event) => {
-                        if (event.button !== 0) return
-                        event.preventDefault()
-                        setSelected(row.node.path)
-                        if (row.node.type === "directory") void toggleDirectory(row.node)
-                        else void openFile(row.node.path)
-                      }}
+                      onMouseDown={(event) => activateRow(event, () => activateNode(row.node))}
                     >
-                      <text fg={theme().text.subdued}>
+                      <text
+                        fg={theme().text.subdued}
+                        onMouseDown={(event) => activateRow(event, () => activateNode(row.node))}
+                      >
                         {row.node.type === "directory" ? (row.expanded ? "- " : "+ ") : "  "}
                       </text>
-                      <text fg={hovered() === row.node.path ? theme().hue.accent[200] : theme().text.default}>
+                      <text
+                        fg={hovered() === row.node.path ? theme().hue.accent[200] : theme().text.default}
+                        onMouseDown={(event) => activateRow(event, () => activateNode(row.node))}
+                      >
                         {row.node.name}
                       </text>
                     </box>
@@ -542,14 +563,14 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
                   paddingLeft={1}
                   onMouseOver={() => setHovered(result)}
                   onMouseOut={() => setHovered((current) => (current === result ? undefined : current))}
-                  onMouseDown={(event) => {
-                    if (event.button !== 0) return
-                    event.preventDefault()
-                    setResultIndex(index())
-                    void openFile(result)
-                  }}
+                  onMouseDown={(event) => activateRow(event, () => activateResult(result, index))}
                 >
-                  <text fg={hovered() === result ? theme().hue.accent[200] : theme().text.default}>{result}</text>
+                  <text
+                    fg={hovered() === result ? theme().hue.accent[200] : theme().text.default}
+                    onMouseDown={(event) => activateRow(event, () => activateResult(result, index))}
+                  >
+                    {result}
+                  </text>
                 </box>
               )}
             </For>

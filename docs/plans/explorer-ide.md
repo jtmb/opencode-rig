@@ -166,10 +166,11 @@ keyboard verification (via the `desktop_input` tool) + screenshots + docs gate
 ### Phase 2 — language coverage (1 day + asset build)
 
 - Build script `scripts/fetch-parsers` (pinned versions, SHA-256 verified,
-  provenance files) generating `src/parsers.ts` + `parsers/`.
-- Target languages (priority order, confirm with operator): json/jsonc, yaml,
-  toml, bash/sh, python, go, rust, sql, html, css/scss, xml, c/cpp, java,
-  ruby, php, lua, dockerfile, ini, diff; js/ts/markdown/zig already bundled.
+  provenance files) generating `src/parsers.ts` + `parsers/`; assets are
+  fetched at setup, not committed (operator decision 5).
+- Target languages (decided): json/jsonc, yaml, toml, bash/sh, python, go,
+  rust, sql, html, css/scss, xml, c/cpp, java, ruby, php, lua, dockerfile, ini,
+  diff; js/ts/markdown/zig are already bundled.
 - Extend `filetypeFor` mapping (extension + basename such as `Dockerfile`).
 - Large-file policy: highlight only under a threshold; plain text above it.
 - Tests: mapping, manifest integrity, fallback.
@@ -206,13 +207,15 @@ keyboard verification (via the `desktop_input` tool) + screenshots + docs gate
 
 - Bounded subprocess runner (timeout, output cap, cancellation, no shell
   interpolation) reused by formatters and linters.
-- Opt-in settings: format-on-save (detect prettier/biome/black/rustfmt/gofmt/
-  shfmt) and diagnostics-on-save (tsc/eslint/ruff/shellcheck) with results in
-  the output pane and gutter extmarks.
+- Project-detected defaults (operator decision 2): format-on-save when a
+  formatter is detected (prettier/biome/black/rustfmt/gofmt/shfmt) and
+  diagnostics-on-save when a linter is detected (tsc/eslint/ruff/shellcheck),
+  with a per-project disable in editor settings. Results appear in the output
+  pane and as gutter extmarks.
 - Tests: command selection, output parsing, failure/timeout handling.
 - Exit: format + diagnostics demo; screenshot; no UI stalls.
 
-### Phase 7 — optional polish (later)
+### Phase 7 — polish (later; side-by-side confirmed in scope)
 
 - Side-by-side editors (two textareas), per-language indent defaults,
   code folding (tree-sitter query), "copy path/selection", prompt-context
@@ -258,9 +261,9 @@ Basic Memory project is the durable record for this work.
 - Standing instructions: extend `AGENTS.md` and the `task-memory` skill with
   the read-before/record-after discipline and a `references/decision-records.md`
   template; the skill already keeps the no-secrets and ask-before-deleting rules.
-- Future (opt-in): a server-plugin session-idle hook that drafts a summary note
-  for review, mirroring Basic Memory's harness-capture pattern; the assistant
-  never writes personal facts silently.
+- Future: a server-plugin session-idle hook that drafts a summary note for
+  review is explicitly **not** adopted (operator decision 6); memory capture is
+  strictly explicit.
 
 ## Verification and documentation
 
@@ -291,15 +294,18 @@ Basic Memory project is the durable record for this work.
   bulk replace, never auto-save, never touch `.git` or outside the worktree.
 - **Scope creep**: phases are independently shippable and clearly optional.
 
-## Open questions for the operator
+## Operator decisions (2026-09-18)
 
-1. Language priority for vendored parsers — the list above, or a trimmed set?
-2. Format-on-save / diagnostics-on-save: enable by default (project-detected)
-   or strictly opt-in per project?
-3. Are file create/rename/delete in scope now, or should Phase 5 be read-only
-   plus git until later?
-4. Is side-by-side editing worth Phase 7, or is a single editor enough?
-5. Vendor parser assets into the repo, or generate them with a pinned,
-   checksum-verified fetch script (larger Git history vs. build step)?
-6. Should the memory loop also capture a short note automatically at session
-   end (reviewed later), or stay strictly explicit for now?
+1. **Parsers:** the full language list — json/jsonc, yaml, toml, bash/sh,
+   python, go, rust, sql, html, css/scss, xml, c/cpp, java, ruby, php, lua,
+   dockerfile, ini, diff, plus the bundled js/ts/markdown/zig.
+2. **Format/diagnostics:** project-detected default — run automatically when a
+   formatter/linter config is found, with a per-project disable. Still bounded,
+   cancellable, and never blocking the UI.
+3. **File operations:** create, rename, and delete are in scope, guarded by
+   confirmations, `.git` refusal, and no silent overwrites.
+4. **Side-by-side editors:** in scope for Phase 7 after the single editor
+   lands.
+5. **Parser assets:** fetched by a pinned, checksum-verified script and
+   generated into the package; assets are not committed to Git.
+6. **Memory capture:** strictly explicit; no automatic summary notes.
