@@ -78,6 +78,24 @@ changes continue to work. The child transport discards informational stderr so
 MCP diagnostics do not leak into the TUI. v2 has no plugin-facing MCP tool-call
 API, so this package keeps the bounded stdio client.
 
+## Theme parity
+
+v1 shipped its default `opencode` palette (Aura) while v2's built-in `opencode`
+theme is a different palette. To make the v2 panels look like v1, set
+`cli.json`:
+
+```json
+{ "theme": { "name": "aura", "mode": "dark" } }
+```
+
+With `aura`, the v2 tokens resolve to the exact v1 values used here: text
+`#edecee`, subdued `#6d6d6d`, warning `#ffca85`, info/accent `#a277ff`,
+added `#61ffca`, removed `#ff6767`, border `#2d2d2d`, background `#0f0f0f`,
+background element `#15141b`. The plugin uses `theme.hue.accent[200]` for the
+v1 `accent` (header count, hovered paths, titles), because v2's
+`text.action.primary.default` is a high-contrast foreground rather than the
+accent hue.
+
 ## Checks
 
 ```bash

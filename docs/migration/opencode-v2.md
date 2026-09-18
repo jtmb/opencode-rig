@@ -287,6 +287,14 @@ rollback) stays pending explicit approval; v1 remains the default.
   unmappable.
 - tui-settings presets are folded into v2 `source-control` as plugin options;
   the v1 slot-order override is retired (v2 has no per-slot `order`).
+- **Visual parity confirmed by resolved tokens.** v1's default `opencode` theme
+  is the Aura palette; v2's built-in `opencode` theme is different (accent
+  white, not purple). Setting `cli.json` `theme.name = "aura"` makes the v2
+  tokens equal the v1 values: text `#edecee`, subdued `#6d6d6d`, warning
+  `#ffca85`, info `#a277ff`, added `#61ffca`, removed `#ff6767`, border
+  `#2d2d2d`, background `#0f0f0f`. v1's `accent` (`#a277ff`) maps to
+  `theme.hue.accent[200]` because v2's `text.action.primary.default` is a
+  high-contrast foreground; `source-control` and `file-manager` now use it.
 - v2 config examples added at
   `config/v2-opencode.example.jsonc` and `config/v2-cli.example.json`.
   **Playwright is one MCP in v2**: only the live visible

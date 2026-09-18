@@ -476,7 +476,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   return (
     <box flexDirection="column" flexGrow={1} minHeight={0}>
       <box flexDirection="row" gap={1} paddingLeft={1} paddingRight={1}>
-        <text fg={theme().text.action.primary.default}>
+        <text fg={theme().hue.accent[200]}>
           <b>Files</b>
         </text>
         <text fg={theme().text.subdued}>{directory}</text>
@@ -547,7 +547,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
             {(current) => (
               <box flexDirection="column" flexGrow={1} minHeight={0}>
                 <box flexDirection="row" gap={1} paddingLeft={1}>
-                  <text fg={theme().text.action.primary.default}>{current().path}</text>
+                  <text fg={theme().hue.accent[200]}>{current().path}</text>
                   <Show when={dirty()}>
                     <text fg={theme().text.feedback.warning.default}>*</text>
                   </Show>
@@ -650,7 +650,7 @@ export default Plugin.define({
             }
           }}
         >
-          <text fg={context.theme.text.action.primary.default}>
+          <text fg={context.theme.hue.accent[200]}>
             <b>Explorer</b>
           </text>
         </box>

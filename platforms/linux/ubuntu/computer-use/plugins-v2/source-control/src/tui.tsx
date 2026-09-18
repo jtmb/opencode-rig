@@ -101,7 +101,7 @@ function SourceControlPanel(props: {
           <text fg={theme().text.default}>
             <b>{collapsed() ? "+" : "-"} Source Control</b>
           </text>
-          <text fg={theme().text.action.primary.default}>
+          <text fg={theme().hue.accent[200]}>
             <b> {state().changes.length}</b>
           </text>
           <text fg={theme().text.subdued}> {state().changes.length === 1 ? "change" : "changes"}</text>
@@ -129,7 +129,7 @@ function SourceControlPanel(props: {
                 }}
               >
                 <text fg={statusColor(change.status, theme())}>{statusLetter(change.status)}</text>
-                <text fg={hovered() === change.file ? theme().text.action.primary.default : theme().text.default}>
+                <text fg={hovered() === change.file ? theme().hue.accent[200] : theme().text.default}>
                   <u>{leftTruncate(change.file, 34)}</u>
                 </text>
                 <box flexGrow={1} />
