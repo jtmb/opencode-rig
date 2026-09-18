@@ -675,6 +675,148 @@ Research conclusions and evidence (2026-09-17 session):
   v2-specific skills source to drop the stray `README` skill), then Phase 5
   (full health check and PATH cutover with v1 rollback).
 
+### Full v2 completion plan (approved 2026-09-18)
+
+Decisions (best judgment):
+
+1. **Todo tool** - a new standalone `plugins-v2/rig-todo` server package with
+   `todowrite` + `todoread`. Tool-only first; a sidebar panel is deferred until
+   live use shows it is worth building.
+2. **Cutover** - v1 remains the default until the full v2 health check and live
+   plugin verification pass (Phase C). Cutover happens only on the operator's
+   explicit go; rollback is the `PATH` change plus restoring the v1 config.
+3. **Playwright = exactly one MCP in v2** - register only the live visible
+   server (`playwright-mcp.sh`); retire `playwright_headless` from the v2
+   config. Explicitly headless work is routed through the repository's
+   Playwright runtime (`platforms/linux/ubuntu/browser-tools`) from the shell.
+   A small spike confirms whether v2's built-in browser tools already cover the
+   shared-visible workflow; if they do, reconsider making the single MCP
+   headless. Default and expected outcome: live.
+4. **Basic Memory** - build the M1 wrapper, docs, and gate rows on the
+   migration branch now; register the MCP in the v2 config. v1 config is
+   untouched until cutover.
+5. **Window/input tools** - v2-only, added to `rig-tools`. The v1 package stays
+   frozen for rollback.
+
+Unchanged rules: v1 config/db/processes untouched; installs, tsc, and tests only
+through `run-bounded-command.sh`; no Firefox-launching MCPs during migration
+work; the documentation, handoff, and resource gates kept current; commit v2
+work only on `migration/opencode-v2`; PRs only on request.
+
+Already done: all five plugins ported and committed (86 tests, bounded);
+`rig-tools` live-verified; the CLI keymap bug fixed; the resource guard and
+documentation map cover `plugins-v2/`; `tui-settings` retired.
+
+#### Phase A - finish the v2 port (repo, pilot-verifiable)
+
+- **A1. Restart-verify the keymap fix.** Restart `oc2`; confirm no
+  `Keymap.Provider is missing` in the log, and that Source Control, Codex
+  Usage, and Explorer render with `/changes`, `/codex-usage`, `/files`
+  commands responding.
+- **A2. Todo tool (`plugins-v2/rig-todo`).** Package
+  `opencode-rig-todo-v2-local`, id `opencode-rig.todo`, `exports "./server"`
+  plus a root `server.ts`. `src/store.ts` (pure) normalizes items
+  `{ content, status: pending|in_progress|completed|cancelled, priority? }`,
+  renders a markdown summary, and enforces at most one `in_progress`. Tools
+  `todowrite` (replace list, returns summary) and `todoread`; state in
+  `ctx.storage` under `todo:<sessionID>`, cleared on `session.deleted`. Tests
+  cover store round-trip, normalize, summary, and the invariant. Register in
+  the pilot `opencode.jsonc`; verify both tools in the live tool catalog; add
+  to `plugins-v2/README.md`, `docs/plugins/README.md`, `documentation-map.json`
+  (handoff rule), this file, and the AGENTS.md Progress Tracking section.
+  **A2b (deferred):** optional `sidebar.content` todo panel for v1 parity.
+- **A3. Fold `tui-settings` presets into v2 `source-control`.** Options
+  (`refreshMs`, `githubRefreshMs`, `maxFiles`, `startCollapsed`, `whenEmpty`,
+  `github`, `remoteName`) documented; note that v2 has no live slot-order
+  control, so the v1 order override is retired.
+- **A4. Skills source without the stray `README` skill.** Try in order: list
+  skill directories explicitly in `skills`; a `skills-v2/` symlink farm; rename
+  `skills/README.md`. End state: exactly the 16 skills plus v2 builtins, with
+  the docs gate still passing.
+- **A5. `cli.json` parity pass.** Map what v2 supports (`theme`,
+  `prompt.paste`, `session.image_preview`, `session.grouping`, `mouse`,
+  `scroll`, `diffs.*`, `attention`) and record the v1 keys with no v2
+  equivalent in `docs/migration/opencode-v2.md`.
+- **A6. Rewrite the four global commands for v2** (`deploy`, `resume`,
+  `handoff`, `promote-skills`): v2 paths, `cli.json` object registration, the
+  v2 health-check name.
+- **A7. Deploy tooling.** `deploy-plugins.sh` v2 mode (writes `cli.json` and
+  `opencode.jsonc` object entries, `--verify-only`, never overwrites);
+  `setup-opencode.sh` v2 target (or `setup-opencode-v2.sh`) for skills,
+  commands, and config; docs + map rows for both.
+- **A8. CI.** Extend `.github/workflows/verify.yml` to run the bounded
+  `plugins-v2` checks and the new gates.
+
+#### Phase B - v2 parity, one Playwright MCP, health check
+
+- **B1. Cutover config draft** (not applied): `opencode.jsonc` with flat `mcp`
+  (github + the single `playwright`, object timeouts), the skills source, and
+  `plugins` (rig-tools, codex-fallback, rig-todo); `cli.json` with settings and
+  the three CLI plugins.
+- **B2. Playwright consolidation spike + implementation.** Spike whether v2's
+  built-in browser tools already cover the shared-visible workflow; expected
+  no, so the single MCP stays live. Register exactly one `playwright` MCP in
+  the v2 config and drop `playwright_headless`. Update the `browser-headless`
+  skill and AGENTS/README text: v2 has one Playwright MCP, and headless-only
+  work runs through the repo Playwright runtime from the shell. Verify:
+  `mcp list` shows exactly one `playwright` connected.
+- **B3. `scripts/verify-opencode-v2.sh`** (or
+  `setup-computer-assistant.sh --v2 --verify-only`): binary/version, isolated
+  paths, 16 skills, 4 commands, 6 plugins, 6+ tools, single github plus single
+  playwright MCP, config schema. Bounded and Firefox-free.
+- **B4. Docs.** Finalize `docs/migration/opencode-v2.md`; add a v2 section and
+  verification list to `AGENTS.md`; refresh HANDOFF; update
+  `documentation-map.json` and READMEs.
+- **B5. Rollback runbook.** Cutover is `PATH` + active config only; v1 binary
+  and config stay in place; document the exact revert.
+
+#### Phase C - verification and cutover (explicit approval)
+
+- **C1.** Full v2 health check; live-verify each plugin panel/command, the todo
+  tools, skills, and the four commands.
+- **C2.** GitHub MCP read plus one approved write through v2.
+- **C3.** DeepSeek and OpenAI connectivity check.
+- **C4.** Cut over only on explicit go: point `opencode` at v2, restart, smoke
+  test; v1 remains installed.
+- **C5.** Post-cutover tidy: mark v1-only docs retired; decide the fate of the
+  v1 `plugins/tui-settings` package.
+- **C6.** Merge `migration/opencode-v2` (and PR #1/#2) only when requested.
+
+#### Phase D - resume the pre-migration queue (on the default stack)
+
+- **D1. Window-listing tool.** `desktop-control.py windows` subcommand plus
+  `desktop_windows` in rig-tools; arg-builder tests; docs.
+- **D2. Bounded input tool.** Input subcommand plus `desktop_input` with
+  one-bounded-action and token gating; tests; docs.
+- **D3. Basic Memory M1.** `scripts/basic-memory-mcp.sh` bounded wrapper
+  (`systemd-run --user` + `prlimit` fallback, fail closed); register
+  `basic-memory` with the revised about-nine-tool disable list.
+- **D4. M2.** Migrate the three legacy JSON entries to notes and verify
+  searchability; rewrite the `task-memory` skill and README.
+- **D5. M3.** Docs, `documentation-map.json` rows,
+  `setup-computer-assistant.sh` version pin + verify,
+  `config/opencode.example.jsonc`.
+- **D6. M4.** Bounded write/read/search smoke; cross-session recall; all gates.
+  Delete the legacy memory system only with an explicit confirmation.
+- **D7.** Re-check the old pending-verification items as v2 tests (the v1
+  settings overlay is retired; file-manager and source-control hints are
+  re-verified in v2).
+- **D8.** Housekeeping: remove the untracked `session-ses_f4dc.md` transcript
+  (with approval); keep this file current.
+
+Order: A1 -> A2 -> A3/A4/A5 -> A6 -> A7 -> A8 -> B1/B2 -> B3/B4/B5 -> C -> D.
+Phases A and D1/D2 are independent; Basic Memory (D3-D6) can start once the v2
+config is final.
+
+Risks: v2 plugin APIs are pre-stable (pin 2.0.7, re-test on upgrades); no v2
+todo panel unless A2b is built; a single Playwright MCP trades headless
+capability for one Firefox process (mitigated by the shell Playwright runtime);
+cutover is disruptive (rollback is one `PATH` change); DeepSeek is exported by
+the launcher while OpenAI OAuth needs a one-time `/connect`.
+
+Explicitly deferred: a v2 todo sidebar panel, live sidebar reordering, and any
+v2 upgrade beyond 2.0.7.
+
 ### Suggested next steps
 
 1. Restart OpenCode, then live-verify the batch: the `/settings` overlay, the
