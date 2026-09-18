@@ -9,11 +9,11 @@ import type { TodoItem, TodoStatus } from "./store.ts"
 const POLL_MS = 1_000
 const MAX_VISIBLE = 12
 
-function glyph(status: TodoStatus): string {
-  if (status === "completed") return "✔"
-  if (status === "in_progress") return "◐"
-  if (status === "cancelled") return "✕"
-  return "○"
+function marker(status: TodoStatus): string {
+  if (status === "completed") return "[x]"
+  if (status === "in_progress") return "[~]"
+  if (status === "cancelled") return "[-]"
+  return "[ ]"
 }
 
 function TodoPanel(props: { sessionID: string }) {
@@ -78,10 +78,10 @@ function TodoPanel(props: { sessionID: string }) {
         <Show when={!collapsed()}>
           <For each={items().slice(0, MAX_VISIBLE)}>
             {(item) => (
-              <box flexDirection="row" gap={1}>
-                <text fg={markerColor(item.status)}>{glyph(item.status)}</text>
-                <text fg={contentColor(item.status)}>{item.content}</text>
-              </box>
+              <text fg={contentColor(item.status)}>
+                <span fg={markerColor(item.status)}>{marker(item.status)} </span>
+                {item.content}
+              </text>
             )}
           </For>
           <Show when={items().length > MAX_VISIBLE}>

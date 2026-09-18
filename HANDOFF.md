@@ -256,7 +256,8 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     `assistant-memory.py` were removed on 2026-09-18 with explicit approval.
     C5 tidy is done too (v2-safe project config, retired banners, tui-settings
     retained as rollback-only). The v2 UI gap fixes landed 2026-09-18: a
-    visible Todo sidebar panel (A2b), plain-click file rows in Source Control
+    visible Todo sidebar panel (A2b, fixed-width `[x]`/`[~]`/`[ ]`/`[-]`
+    markers), plain-click file rows in Source Control
     that open the diff viewer, click-through file-manager rows, and terminal
     mouse capture (`"mouse": true`) in the CLI config. Restart OpenCode once to
     activate mouse capture. The previous session transcript was removed with
