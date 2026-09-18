@@ -33,9 +33,11 @@ Restart OpenCode after changing the registration or plugin source.
 
 ## Behavior
 
-- The panel is registered in `sidebar_content` at order `50`, above the built-in
-  context panel (order `100`) and the file sidebar (order `500`), and above the
-  separate single-winner path/branch footer.
+- The panel is registered in `sidebar_content` at order `50` by default, above
+  the built-in context panel (order `100`) and the file sidebar (order `500`),
+  and above the separate single-winner path/branch footer. The
+  `local.source-control.order` key overrides the order at the next restart; the
+  `tui-settings` overlay writes it.
 - The panel starts minimized. The header expands or collapses it and persists
   the state in `local.source-control.startCollapsed`; a one-time migration
   (`local.source-control.repositioned`) minimizes installs created before the
@@ -69,8 +71,10 @@ overridden at runtime through the TUI key-value store using
 `local.source-control.<option>` keys (`local.source-control.refreshMs`,
 `local.source-control.githubRefreshMs`, `local.source-control.maxFiles`,
 `local.source-control.startCollapsed`). The plugin re-reads them on every
-refresh tick, so changes apply without restarting OpenCode. `whenEmpty`,
-`github`, `githubMcpCommand`, and `remoteName` are registration-only.
+refresh tick, so changes apply without restarting OpenCode.
+`local.source-control.order` is read only when the plugin loads, so an order
+change applies after the next restart. `whenEmpty`, `github`,
+`githubMcpCommand`, and `remoteName` are registration-only.
 
 The GitHub MCP child is launched through an adaptive user cgroup budget based
 on current host and cgroup memory availability when the user systemd manager is

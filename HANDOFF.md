@@ -208,15 +208,14 @@ Known live state (recorded 2026-09-17):
   - Local plugins: codex-usage (TUI quota and optional Luna Reserve sidebar,
     registered in ~/.config/opencode/tui.json), codex-fallback (server
     failover, registered in ~/.config/opencode/opencode.jsonc; state at
-    ~/.local/share/opencode/codex-fallback.json), and source-control (TUI
+    ~/.local/share/opencode/codex-fallback.json), source-control (TUI
     working-tree/GitHub panel, registered in ~/.config/opencode/tui.json with
-    whenEmpty "show"; repositioned to sidebar order 50 with a minimized start
-    and runtime kv overrides - implemented and checked, with the live panel,
-    Ctrl+click diff opening, and accented change-count header waiting on the
-    next restart)
-  - Planned TUI plugins (approved, not built): `tui-settings` (sidebar gear +
-    settings overlay) and `file-manager` (project tree, quick-open, in-TUI
-    editor) - see "Part 3" under Work In Progress
+    whenEmpty "show"; verified live at sidebar order 50 with the minimized
+    start and runtime kv overrides), and tui-settings (TUI settings overlay,
+    registered in ~/.config/opencode/tui.json with order 10; built and checked,
+    waiting on the next restart for live verification)
+  - Planned TUI plugins (approved, not built): `file-manager` (project tree,
+    quick-open, in-TUI editor) - see "Part 3" under Work In Progress
   - Browser runtime: @playwright/mcp 0.0.80 with isolated live and headless
     Firefox, via platforms/linux/ubuntu/browser-tools
   - GitHub MCP runtime: official v1.12.1 native amd64 release via
@@ -284,10 +283,9 @@ give you. If I pasted only this handoff, ask what task I want handled.
   GitGuardian checks pass. The `/resume` command was redeployed
   (`setup-opencode.sh --apply`), source/deployed content match, and the full
   health check is green.
-- Next planned change: the source-control reposition/minimize and runtime kv
-  overrides in "Part 3", followed by `tui-settings` (including the new
-  sidebar-positioning requirement) and `file-manager`, with Basic Memory M1-M4
-  queued.
+- Next planned change: commit/push the tui-settings work, verify it after a
+  restart, then build the computer-use custom tools (Part 4) and `file-manager`
+  (Part 3), with Basic Memory M1-M4 queued.
 - Basic Memory M0 was completed in the same session (below), and the TUI
   feature plan in "Part 3" was approved with the user.
 
@@ -420,28 +418,35 @@ Risks and tradeoffs:
 - There is no automatic capture yet; a future server-plugin hook could add
   ChatGPT-style session summarization on top of this foundation.
 
-#### Part 3 — TUI feature plan (approved 2026-09-17, not started)
+#### Part 3 — TUI feature plan (approved 2026-09-17, in progress)
 
 User decisions recorded after the deep-research session:
 
-- **Settings cog overlay** (new plugin `tui-settings`): a slim, right-aligned
-  gear row in `sidebar_content` at order `10` (the top row, above
-  source-control at 50 and the built-in context panel at 100). Click, Enter, or
-  `/settings` opens a host-dialog overlay with the sections **Appearance**
-  (theme picker through the built-in `/themes` flow and `api.theme.set`,
-  dark/light mode), **Display** (kv toggles: timestamps, thinking visibility,
-  tool details, assistant metadata, scrollbar, animations, generic tool
-  output, diff wrap mode), **Plugins** (dispatch the built-in `plugins.list`
-  manager), **Source Control** (the runtime options below), and **About**.
-  Persistence is `api.kv` only; the plugin never rewrites `tui.json`.
-- **Settings scope explicitly includes source-control options** (user choice).
+- **Settings overlay** (new plugin `tui-settings`, implemented 2026-09-17,
+  pending restart and live verification): a slim, right-aligned `Settings` row
+  in `sidebar_content` at order `10` (top of the sidebar). Click, Enter, or
+  `/settings` opens a drill-down overlay built from the host `DialogSelect`
+  (with `DialogAlert` for About) over the sections **Appearance** (theme picker
+  and dark/light via `theme.switch`/`theme.switch_mode`), **Display** (host kv
+  toggles: timestamps, thinking, tool details, assistant metadata, scrollbar,
+  animations, generic tool output, diff wrap mode), **Plugins** (loaded list
+  plus the built-in `plugins.list` manager), **Source Control** (the runtime
+  presets), **Sidebar** (visibility and positioning), and **About**.
+  Persistence is `api.kv` only; the plugin never rewrites `tui.json`. Pure
+  model logic lives in `src/settings.ts` with tests; docs in
+  `docs/plugins/tui-settings.md` and the plugin README.
 - **Sidebar positioning inside the settings overlay** (user requirement,
-  2026-09-17): the overlay must offer an option to change the positioning of
-  the additive TUI sidebar items (the gear, source-control, the Explorer row,
-  and the built-in context/mcp/lsp/todo/files panels) - reordering must be
-  responsive to terminal size so the layout stays sensible on small
-  terminals, and persisted through `api.kv` only. Research the reactive host
-  `sidebar` kv key during implementation.
+  2026-09-17; implemented with a documented API limit): the v1 TUI plugin API
+  fixes each panel's order at registration and cannot move the built-in
+  context/mcp/lsp/todo/files panels, and the host `sidebar` kv key controls
+  visibility only (`auto` shows it when the terminal width exceeds 120; `hide`
+  always hides). The overlay therefore offers visibility (immediate) and an
+  anchor position for the panels the harness owns (`Settings gear`, `Source
+  Control`), written to `local.tui-settings.order` /
+  `local.source-control.order` and applied at the next restart; the overlay
+  labels the restart requirement. Dialog size adapts to terminal width
+  (`medium` below 96 columns). A live reorder of built-in panels is not
+  achievable with this API.
 - **VS Code-like file manager** (new plugin `file-manager`): a full-screen
   `files` route (`/files`, palette command, and a keybind) with a lazy,
   ignore-aware project tree, quick-open over `client.find.files`, a tab row,
@@ -524,6 +529,24 @@ Research conclusions and evidence (2026-09-17 session):
   tree-sitter worker and bundled assets (spike first); `node:fs` saves bypass
   server permissions (containment, `.git` refusal, explicit saves only).
 
+#### Part 4 — computer-use custom tools (approved 2026-09-17, not started)
+
+- User requirement: expose the computer-use capabilities as OpenCode custom
+  tools, not only `desktop_apps`/`desktop_tree`/`desktop_find`/`desktop_act`.
+  The highest-value first tool is a screenshot wrapper around the
+  `desktop-vision` flow (ydotool shortcut, pre/post inventory, single-new-file
+  rule) that returns the PNG as a `data:` URI attachment and deletes the file.
+- The custom-tool result type supports `attachments: [{ type: "file", mime,
+  url }]`; the installed runtime forwards only `data:` URLs to the model, and
+  the built-in `read` tool is the reference implementation. The tool must read
+  the PNG in Node rather than pipe base64 through the 256 KiB Python stdout cap.
+- Also candidates: a window-listing tool (needs a new AT-SPI subcommand) and
+  bounded input tools; raw input stays gated by the one-bounded-action rule.
+- Constraints: each tool file must stay self-contained (only top-level `.ts`
+  files deploy through `setup-opencode.sh` REQUIRED_TOOLS), use the bounded
+  spawn with timeout/output cap, and carry the announce and
+  no-capture-during-credential-dialog rules in the tool description.
+
 ### Pending verification
 
 - Confirmed in this resume session: the `desktop_*` custom tools loaded in the
@@ -540,22 +563,24 @@ Research conclusions and evidence (2026-09-17 session):
   passing.
 - The `/resume` command was redeployed and the health check is green; the
   running TUI still holds the pre-restart copy until OpenCode restarts.
-- The source-control reposition/minimize and runtime kv overrides are
-  implemented and the bounded `npm run check` passes (19 tests), but the live
-  panel (order `50`, minimized start, one-time kv migration) is unverified
-  until OpenCode restarts; the Ctrl+click diff opening and accented
-  change-count header also need a dirty worktree after that restart.
+- Source-control reposition verified live after the restart: the panel is at
+  order `50` and the user confirmed the expand/collapse toggle persists through
+  `local.source-control.startCollapsed`. The Ctrl+click diff opening and
+  accented change-count header still need a dirty worktree.
+- The tui-settings overlay, sidebar visibility and positioning, and the
+  `local.source-control.order` override are implemented with bounded checks
+  passing (tui-settings 13 tests, source-control 20 tests) but are unverified
+  until the next OpenCode restart.
 
 ### Suggested next steps
 
-1. Land the source-control reposition: commit the plugin, test, and docs
-   change on chore/todo-tracking-gate (pending explicit request) and push it
-   to PR #2; after the next OpenCode restart, verify the minimized panel at
-   sidebar order `50`, the one-time kv migration, and the runtime overrides
-   with `desktop-vision`.
-2. Build `tui-settings` per Part 3: gear row at order `10`, the settings
-   overlay with the sidebar-positioning requirement, pure tests, docs,
-   registration, restart, and a `desktop-vision` check.
+1. Commit and push the tui-settings work (pending explicit request), restart
+   OpenCode, then verify the overlay (`/settings`, the `Settings` row,
+   sections, sidebar visibility and position) and the source-control order
+   override live; re-check the Ctrl+click/accent behavior with a dirty
+   worktree.
+2. Build the computer-use custom tools (Part 4): screenshot first, then
+   window listing and bounded input.
 3. Build `file-manager` per Part 3: the `files` route, tree and quick-open,
    the in-TUI editor with explicit atomic saves and containment, the external
    editor action, Explorer row at order `60`, tests, docs, registration,
@@ -566,8 +591,6 @@ Research conclusions and evidence (2026-09-17 session):
 5. Merge pull request jtmb/opencode-rig#1 (and the stacked PRs) only on
    explicit request; keep the memory-migration deletion gate for the end of
    the M2 work.
-6. Optionally exercise the source-control Ctrl+click/accent behavior with a
-   dirty worktree present.
 
 ## Keep This Current
 

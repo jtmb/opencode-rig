@@ -23,6 +23,7 @@ export type RuntimeOptions = {
 export const KEYS = {
   collapsed: "local.source-control.collapsed",
   repositioned: "local.source-control.repositioned",
+  order: "local.source-control.order",
   refreshMs: "local.source-control.refreshMs",
   githubRefreshMs: "local.source-control.githubRefreshMs",
   maxFiles: "local.source-control.maxFiles",
@@ -35,6 +36,9 @@ export const DEFAULT_GITHUB_REFRESH_MS = 120_000
 export const MIN_GITHUB_REFRESH_MS = 30_000
 export const DEFAULT_MAX_FILES = 8
 export const DEFAULT_START_COLLAPSED = true
+export const DEFAULT_ORDER = 50
+export const MIN_ORDER = 1
+export const MAX_ORDER = 999
 
 export function pluginOptions(value: unknown): PluginOptions {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return {}
@@ -101,4 +105,10 @@ export function applyRepositionDefault(kv: TuiKV): boolean {
   kv.set(KEYS.collapsed, true)
   kv.set(KEYS.repositioned, true)
   return true
+}
+
+export function readRegistrationOrder(kv: TuiKV, fallback = DEFAULT_ORDER): number {
+  const value = kv.get(KEYS.order)
+  const number = typeof value === "number" && Number.isFinite(value) ? Math.floor(value) : fallback
+  return Math.min(MAX_ORDER, Math.max(MIN_ORDER, number))
 }

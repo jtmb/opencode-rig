@@ -1,6 +1,6 @@
 # Local Plugins
 
-The repository ships three local OpenCode plugins. They are ordinary npm
+The repository ships four local OpenCode plugins. They are ordinary npm
 packages that live in the repository and are loaded directly from source; they
 are **not** deployed by the setup scripts and are **not** published to npm.
 
@@ -9,6 +9,7 @@ are **not** deployed by the setup scripts and are **not** published to npm.
 | [`codex-usage`](codex-usage.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/codex-usage/` | Collapsible sidebar panel showing weekly ChatGPT Codex quota and optional Luna Reserve remaining usage |
 | [`codex-fallback`](codex-fallback.md) | Server | `platforms/linux/ubuntu/computer-use/plugins/codex-fallback/` | Transparent failover from the Codex subscription to a configurable chain of any OpenCode providers when the quota runs out |
 | [`source-control`](source-control.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/source-control/` | Working-tree changes and the current branch's GitHub pull request in the session sidebar |
+| [`tui-settings`](tui-settings.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/tui-settings/` | Settings overlay for appearance, display, plugins, source control, and sidebar positioning |
 
 ## TUI vs. server plugins
 
@@ -23,6 +24,10 @@ OpenCode has two distinct plugin surfaces, and these packages target one each.
   client for optional GitHub pull-request status. Its `src/options.ts`
   normalizes the registration options, re-reads the runtime kv overrides on
   each poll tick, and runs the one-time minimized-start migration.
+- `tui-settings` is a TUI plugin that renders a `Settings` row and a drill-down
+  overlay over the host `DialogSelect`/`DialogAlert` components. It edits host
+  display keys, dispatches the built-in theme and plugin managers, tunes the
+  `source-control` runtime keys, and positions the harness sidebar panels.
 - A **server plugin** runs in the OpenCode server. It can hook config
   resolution, message assembly, outbound request parameters, and the event
   stream, and it can call the client API (sessions, providers, TUI). It has no
@@ -102,6 +107,25 @@ Register the source file in `~/.config/opencode/tui.json`:
 The deployment script also supports `--plugins source-control` and
 `--plugins all`. Registration is user-owned and takes effect after restart.
 
+### `tui-settings` (TUI)
+
+Register the source file in `~/.config/opencode/tui.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "plugin": [
+    [
+      "file:///absolute/path/to/tui-settings/src/tui.tsx",
+      { "order": 10 }
+    ]
+  ]
+}
+```
+
+The deployment script also supports `--plugins tui-settings` and
+`--plugins all`. Registration is user-owned and takes effect after restart.
+
 > The chain above is an example. There is no baked-in provider chain: until you
 > register a non-empty `defaultChain` (or a per-agent chain), the router is
 > inactive and the session stays on its configured model.
@@ -151,6 +175,8 @@ The packages follow the same conventions:
 - `source-control` additionally depends on the `@opentui/*` packages,
   `solid-js`, and the pinned `@modelcontextprotocol/sdk` for its bounded stdio
   GitHub client.
+- `tui-settings` additionally depends on the `@opentui/*` packages and
+  `solid-js` for its sidebar row and host-dialog overlay.
 - Every plugin's `typecheck` and `test` scripts run through the repository's
   adaptive resource guard so a check cannot take down its OpenCode parent.
 
@@ -163,6 +189,8 @@ npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback install
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control install
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings install
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings run check
 ```
 
 Node.js 22.6 or newer is required for `--experimental-strip-types`. The

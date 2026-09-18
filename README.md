@@ -58,7 +58,7 @@ automate, and keep the harness healthy.
 
 ### Local plugins that harden the harness
 
-The repo ships three local OpenCode plugins, all loaded directly from source:
+The repo ships four local OpenCode plugins, all loaded directly from source:
 
 - **`codex-usage`** — a TUI sidebar showing the remaining weekly ChatGPT Codex
   subscription quota and optional Luna Reserve usage, with refresh and details
@@ -81,7 +81,12 @@ The repo ships three local OpenCode plugins, all loaded directly from source:
   built-in diff viewer, read-only GitHub MCP calls, and an adaptive memory
   budget for its external MCP child.
 
-All three plugins are user-registered (`~/.config/opencode/tui.json` and the
+- **`tui-settings`** — a TUI settings overlay opened from a sidebar `Settings`
+  row or `/settings`. It edits display preferences, opens the built-in theme
+  and plugin managers, tunes the source-control runtime options, and positions
+  the harness sidebar panels.
+
+All four plugins are user-registered (`~/.config/opencode/tui.json` and the
 global `opencode.jsonc`) and are not deployed by the general setup scripts.
 Use `/deploy` or `deploy-plugins.sh` to register them.
 
@@ -180,6 +185,7 @@ local plugins with the global config or a repository's `.opencode/` directory.
 | [`platforms/linux/ubuntu/computer-use/plugins/codex-usage/README.md`](platforms/linux/ubuntu/computer-use/plugins/codex-usage/README.md) | Quota sidebar configuration and security model |
 | [`platforms/linux/ubuntu/computer-use/plugins/codex-fallback/README.md`](platforms/linux/ubuntu/computer-use/plugins/codex-fallback/README.md) | Fallback chains, per-agent config, and troubleshooting |
 | [`platforms/linux/ubuntu/computer-use/plugins/source-control/README.md`](platforms/linux/ubuntu/computer-use/plugins/source-control/README.md) | Source-control sidebar, GitHub status, options, and adaptive MCP containment |
+| [`platforms/linux/ubuntu/computer-use/plugins/tui-settings/README.md`](platforms/linux/ubuntu/computer-use/plugins/tui-settings/README.md) | Settings overlay, display and source-control keys, and sidebar positioning |
 | [`platforms/linux/ubuntu/browser-tools/README.md`](platforms/linux/ubuntu/browser-tools/README.md) | Pinned Playwright runtime and integration |
 | [`platforms/linux/ubuntu/github-tools/README.md`](platforms/linux/ubuntu/github-tools/README.md) | Pinned GitHub MCP runtime and policy |
 | [`AGENTS.md`](AGENTS.md) | Operating guide, source of truth, and required verification |

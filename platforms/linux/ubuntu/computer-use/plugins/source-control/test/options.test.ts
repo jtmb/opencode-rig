@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 import type { TuiKV } from "@opencode-ai/plugin/tui"
 
-import { applyRepositionDefault, KEYS, pluginOptions, readRuntimeOptions } from "../src/options.ts"
+import { applyRepositionDefault, KEYS, pluginOptions, readRegistrationOrder, readRuntimeOptions } from "../src/options.ts"
 
 function memoryKv(initial: Record<string, unknown> = {}, ready = true): TuiKV & { values: Map<string, unknown> } {
   const values = new Map(Object.entries(initial))
@@ -83,4 +83,12 @@ test("reposition migration minimizes the panel once", () => {
   const notReady = memoryKv({}, false)
   assert.equal(applyRepositionDefault(notReady), false)
   assert.equal(notReady.values.has(KEYS.collapsed), false)
+})
+
+test("reads the sidebar order override with clamping", () => {
+  assert.equal(readRegistrationOrder(memoryKv()), 50)
+  assert.equal(readRegistrationOrder(memoryKv({ [KEYS.order]: 450 })), 450)
+  assert.equal(readRegistrationOrder(memoryKv({ [KEYS.order]: 0 })), 1)
+  assert.equal(readRegistrationOrder(memoryKv({ [KEYS.order]: 1200 })), 999)
+  assert.equal(readRegistrationOrder(memoryKv({ [KEYS.order]: "top" })), 50)
 })

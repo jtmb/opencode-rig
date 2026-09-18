@@ -251,7 +251,8 @@ or CAPTCHAs for the user.
   checks; loaded directly from these paths). `setup-opencode.sh` does not
   deploy plugins.
 - The local plugin set is `codex-usage` (TUI quota sidebar), `codex-fallback`
-  (server failover), and `source-control` (TUI working-tree and GitHub panel).
+  (server failover), `source-control` (TUI working-tree and GitHub panel), and
+  `tui-settings` (TUI settings overlay and sidebar positioning).
   Their typecheck and test scripts must use the adaptive
   `scripts/run-bounded-command.sh` wrapper.
 - Plugin registration: `~/.config/opencode/tui.json` for TUI plugins and the
@@ -358,6 +359,7 @@ opencode mcp list
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings run check
 npm --prefix platforms/linux/ubuntu/computer-use/tools run check
 python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps

@@ -28,7 +28,10 @@ or source changes because TUI plugins are loaded at startup.
 The panel registers in `sidebar_content` at order `50`, above the built-in
 context panel (order `100`) and file sidebar (order `500`). The built-in
 path/branch footer occupies the separate single-winner `sidebar_footer` slot;
-the plugin deliberately does not claim the footer.
+the plugin deliberately does not claim the footer. The
+`local.source-control.order` key overrides the registration order at the next
+restart (the `tui-settings` overlay writes it); the host fixes the built-in
+panel orders, so a plugin can only choose its position relative to them.
 
 ## Local working-tree state
 
@@ -144,8 +147,10 @@ tests, so unit tests never spawn a real MCP process.
 `refreshMs`, `githubRefreshMs`, `maxFiles`, and `startCollapsed` are also
 runtime options: their `local.source-control.<option>` keys in the TUI
 key-value store override the registration options with the same names, and the
-plugin re-reads them on each refresh tick without a restart. `whenEmpty`,
-`github`, `githubMcpCommand`, and `remoteName` stay registration-only.
+plugin re-reads them on each refresh tick without a restart. The
+`local.source-control.order` key is read only at plugin load, so an order
+change applies after the next restart. `whenEmpty`, `github`, `githubMcpCommand`,
+and `remoteName` stay registration-only.
 
 ## Package checks
 

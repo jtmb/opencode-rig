@@ -33,7 +33,7 @@ Usage: deploy-plugins.sh --scope global|project [options]
 Options:
   --scope global|project   Where to deploy the plugins (required)
   --project DIR            Target repository for --scope project
-  --plugins LIST           both (default), all, source-control, codex-usage, or codex-fallback
+  --plugins LIST           both (default), all, source-control, tui-settings, codex-usage, or codex-fallback
   --bootstrap              Also copy computer-use/scripts/ into the target
   --chain a/b,c/d          defaultChain written when adding codex-fallback
   --apply                  Write changes
@@ -77,8 +77,8 @@ case "$SCOPE" in
   *) usage >&2; exit 2 ;;
 esac
 case "$PLUGINS" in
-  both|all|source-control|codex-usage|codex-fallback) ;;
-  *) echo "ERROR: --plugins must be both, all, source-control, codex-usage, or codex-fallback" >&2; exit 2 ;;
+  both|all|source-control|tui-settings|codex-usage|codex-fallback) ;;
+  *) echo "ERROR: --plugins must be both, all, source-control, tui-settings, codex-usage, or codex-fallback" >&2; exit 2 ;;
 esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -87,6 +87,7 @@ REPO_ROOT="$(cd "$COMPUTER_USE_ROOT/../../../.." && pwd)"
 TUI_MODULE="$COMPUTER_USE_ROOT/plugins/codex-usage/src/tui.tsx"
 SERVER_MODULE="$COMPUTER_USE_ROOT/plugins/codex-fallback/src/index.ts"
 SOURCE_CONTROL_MODULE="$COMPUTER_USE_ROOT/plugins/source-control/src/tui.tsx"
+TUI_SETTINGS_MODULE="$COMPUTER_USE_ROOT/plugins/tui-settings/src/tui.tsx"
 
 [ -f "$TUI_MODULE" ] || { echo "ERROR: missing plugin entrypoint: $TUI_MODULE" >&2; exit 1; }
 [ -f "$SERVER_MODULE" ] || { echo "ERROR: missing plugin entrypoint: $SERVER_MODULE" >&2; exit 1; }
@@ -335,16 +336,23 @@ PY
 want_usage=0
 want_fallback=0
 want_source_control=0
+want_tui_settings=0
 case "$PLUGINS" in
   both) want_usage=1; want_fallback=1 ;;
-  all) want_usage=1; want_fallback=1; want_source_control=1 ;;
+  all) want_usage=1; want_fallback=1; want_source_control=1; want_tui_settings=1 ;;
   codex-usage) want_usage=1 ;;
   codex-fallback) want_fallback=1 ;;
   source-control) want_source_control=1 ;;
+  tui-settings) want_tui_settings=1 ;;
 esac
 
 if [ "$want_source_control" -eq 1 ] && [ ! -f "$SOURCE_CONTROL_MODULE" ]; then
   echo "ERROR: missing plugin entrypoint: $SOURCE_CONTROL_MODULE" >&2
+  exit 1
+fi
+
+if [ "$want_tui_settings" -eq 1 ] && [ ! -f "$TUI_SETTINGS_MODULE" ]; then
+  echo "ERROR: missing plugin entrypoint: $TUI_SETTINGS_MODULE" >&2
   exit 1
 fi
 
@@ -357,6 +365,9 @@ if [ "$APPLY" -eq 1 ]; then
   fi
   if [ "$want_source_control" -eq 1 ]; then
     apply_config "$TUI_CONFIG" "https://opencode.ai/tui.json" "file://$SOURCE_CONTROL_MODULE" '{"github":true}' "source-control"
+  fi
+  if [ "$want_tui_settings" -eq 1 ]; then
+    apply_config "$TUI_CONFIG" "https://opencode.ai/tui.json" "file://$TUI_SETTINGS_MODULE" '{"order":10}' "tui-settings"
   fi
   if [ "$BOOTSTRAP" -eq 1 ]; then
     copy_scripts_apply "$SCRIPTS_DEST" || PLUGIN_STATUS=1
@@ -372,6 +383,9 @@ if [ "$want_fallback" -eq 1 ]; then
 fi
 if [ "$want_source_control" -eq 1 ]; then
   check_config "$TUI_CONFIG" "file://$SOURCE_CONTROL_MODULE" "source-control"
+fi
+if [ "$want_tui_settings" -eq 1 ]; then
+  check_config "$TUI_CONFIG" "file://$TUI_SETTINGS_MODULE" "tui-settings"
 fi
 if [ "$BOOTSTRAP" -eq 1 ]; then
   copy_scripts_check "$SCRIPTS_DEST" || PLUGIN_STATUS=1

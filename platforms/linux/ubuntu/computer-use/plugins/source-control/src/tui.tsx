@@ -5,7 +5,7 @@ import { createSignal, For, onCleanup, Show } from "solid-js"
 import { leftTruncate, statusLetter, visibleChanges, type SourceControlChange } from "./changes.ts"
 import type { GithubCheckState } from "./github.ts"
 import { createGithubMcpClient } from "./mcp.ts"
-import { applyRepositionDefault, KEYS, pluginOptions, readRuntimeOptions, type RuntimeOptions } from "./options.ts"
+import { applyRepositionDefault, KEYS, pluginOptions, readRegistrationOrder, readRuntimeOptions, type RuntimeOptions } from "./options.ts"
 import { createSourceControlStore, type SourceControlState, type SourceControlStore } from "./store.ts"
 
 const id = "local.source-control"
@@ -327,7 +327,7 @@ const tui: TuiPlugin = async (api, rawOptions) => {
   if (stopCommands) api.lifecycle.onDispose(stopCommands)
 
   api.slots.register({
-    order: 50,
+    order: readRegistrationOrder(api.kv),
     slots: {
       sidebar_content(_context, props) {
         if (updateContext(props.session_id)) {

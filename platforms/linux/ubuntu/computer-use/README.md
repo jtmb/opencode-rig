@@ -36,7 +36,8 @@ platforms/linux/ubuntu/
     ├── plugins/
     │   ├── codex-fallback/
     │   ├── codex-usage/
-    │   └── source-control/
+    │   ├── source-control/
+    │   └── tui-settings/
     ├── scripts/
     ├── skills/
     └── tools/
@@ -54,6 +55,7 @@ Generated and local-only paths (never committed):
 - `scripts/__pycache__/`
 - `plugins/codex-usage/node_modules/`, `plugins/codex-fallback/node_modules/`
 - `plugins/source-control/node_modules/`
+- `plugins/tui-settings/node_modules/`
 - `tools/node_modules/`
 - `~/Documents/computer-assistant/memory.json` (owner-only app data)
 - `/tmp/opencode/playwright*/` (transient MCP output)
@@ -123,11 +125,14 @@ configurable chain of any OpenCode providers, with per-agent overrides and
 automatic return to Codex when the quota resets.
 [`plugins/source-control/`](plugins/source-control/README.md) is a local TUI
 sidebar for working-tree changes and the current branch's GitHub pull request.
+[`plugins/tui-settings/`](plugins/tui-settings/README.md) is a local TUI
+settings overlay for appearance, display, plugins, source control, and sidebar
+positioning.
 
-All three are user-registered local packages, not setup-script deployments:
+All four are user-registered local packages, not setup-script deployments:
 codex-usage loads from `~/.config/opencode/tui.json`, codex-fallback from the
-`plugin` array in `~/.config/opencode/opencode.jsonc`, and source-control from
-the TUI config. Register them with `/deploy` or
+`plugin` array in `~/.config/opencode/opencode.jsonc`, and source-control and
+tui-settings from the TUI config. Register them with `/deploy` or
 `scripts/deploy-plugins.sh`; their runtime and verification commands live in
 their READMEs.
 
