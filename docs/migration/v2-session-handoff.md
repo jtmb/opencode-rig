@@ -6,12 +6,14 @@ can load and exercise the plugins being ported.
 ## Open v2
 
 Close the v1 OpenCode session first (it holds the 4 GB `opencode.db` and the
-MCP child processes). Then:
+MCP child processes). Then open a terminal and run the one-command launcher:
 
 ```bash
-cd ~/repos/opencode-rig
-~/.local/opt/opencode-v2/opencode-pilot
+oc2
 ```
+
+`oc2` (`~/.local/bin/oc2`) cd's into the repository and starts the pilot with a
+prompt that reads this handoff and begins the migration work.
 
 The launcher runs the isolated pilot:
 
