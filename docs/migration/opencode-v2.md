@@ -265,6 +265,37 @@ via the config-dir symlink source, and the `rig-todo` plugin restores
 `todowrite`/`todoread`. Phase 5 (full health check and PATH cutover with v1
 rollback) stays pending explicit approval; v1 remains the default.
 
+## Phase 4 results (2026-09-18)
+
+- `rig-todo` added as the sixth v2 package: `todowrite`/`todoread` are live in
+  the pilot (v2.0.7 ships neither), with session-scoped storage and the
+  one-in-progress invariant.
+- CLI keymap fix: `context.keymap.layer(...)` is registered inside an
+  `append: "app"` slot render in `source-control`, `codex-usage`, and
+  `file-manager`; direct calls threw `Keymap.Provider is missing` in 2.0.7 and
+  aborted the whole plugin setup.
+- Skills: the v2 source is the config-dir `skills/` symlink farm (16 links), so
+  discovery returns exactly the 16 skills plus the 2 built-ins, with no stray
+  `README` skill. The v1 deployed `~/.config/opencode/skills/` is already
+  README-free.
+- `cli.json` adds `prompt.paste: "full"` and `session.image_preview: true`.
+  `theme` stays at the v2 default (the v1 `opencode` theme has no v2
+  equivalent); `timestamps`, `tool_details_visibility`,
+  `assistant_metadata_visibility`, and `generic_tool_output_visibility` remain
+  unmappable.
+- tui-settings presets are folded into v2 `source-control` as plugin options;
+  the v1 slot-order override is retired (v2 has no per-slot `order`).
+- v2 config examples added at
+  `config/v2-opencode.example.jsonc` and `config/v2-cli.example.json`.
+  **Playwright is one MCP in v2**: only the live visible
+  `playwright-mcp.sh` is registered; headless-only work runs through the
+  repository Playwright runtime from the shell. The repo project config keeps
+  the two v1 MCPs until cutover.
+- Still remaining: a v2 setup/verify script and health check, the AGENTS/README
+  v2 sections, CI coverage for `plugins-v2`, the rollback runbook, and Phase 5
+  cutover. Then the queued pre-migration work (desktop window/input tools and
+  Basic Memory M1-M4).
+
 ## Risks
 
 - New major with pre-stable plugin and hook surfaces; names and shapes can

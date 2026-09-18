@@ -1,0 +1,30 @@
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "animations": true,
+  "session": {
+    "sidebar": "auto",
+    "thinking": "hide",
+    "scrollbar": true,
+    "image_preview": true
+  },
+  "diffs": {
+    "wrap": "word"
+  },
+  "prompt": {
+    "paste": "full"
+  },
+  "plugins": [
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/source-control",
+      "options": { "github": true, "whenEmpty": "show" }
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage",
+      "options": { "refreshMs": 60000, "timeoutMs": 10000 }
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+      "options": {}
+    }
+  ]
+}

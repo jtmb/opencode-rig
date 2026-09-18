@@ -211,6 +211,13 @@ phrases, example requests, and how the skills combine.
   project-level Playwright MCP registrations. The GitHub MCP is registered
   globally by `setup-computer-assistant.sh`; its env-backed block is documented
   in [`docs/scripts/github-mcp.md`](../../../../docs/scripts/github-mcp.md).
+- [`config/v2-opencode.example.jsonc`](config/v2-opencode.example.jsonc) and
+  [`config/v2-cli.example.json`](config/v2-cli.example.json) are the OpenCode v2
+  (2.0.x) equivalents. v2 uses the `plugins` object form, the flat `mcp` map
+  with no numeric `timeout`, the `rig-tools`/`rig-todo`/`codex-fallback`
+  server plugins, and the three CLI plugins in `cli.json`. v2 registers exactly
+  **one** Playwright MCP (the live visible wrapper); headless-only work runs
+  through the repository Playwright runtime from the shell.
 - [`config/maintenance.cron.example`](config/maintenance.cron.example)
   documents the weekly maintenance schedule and required cron `PATH`.
 - Plugin registration examples live in
