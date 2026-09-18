@@ -258,8 +258,10 @@ guard. Phase 4 has begun: `check-plugin-resource-guards.py` also scans
 `plugins-v2/`, and `documentation-map.json` maps the v2 workspace to
 `plugins-v2/README.md`.
 
-Still to do in Phase 4: add v2 setup/verify scripts and health checks and update
-`AGENTS.md`. The tui-settings presets are folded into v2 `source-control`
+Still to do in Phase 4: v2 deploy tooling (`deploy-plugins.sh` v2 mode and/or
+`setup-opencode-v2.sh`), the `verify-opencode-v2.sh` health check, rewriting the
+four global command bodies for v2, the `AGENTS.md` v2 section, and CI coverage
+for `plugins-v2`. The tui-settings presets are folded into v2 `source-control`
 (`plugins-v2/source-control/README.md`), the stray `README` skill is resolved
 via the config-dir symlink source, and the `rig-todo` plugin restores
 `todowrite`/`todoread`. Phase 5 (full health check and PATH cutover with v1
@@ -311,6 +313,30 @@ rollback) stays pending explicit approval; v1 remains the default.
 
 ## Rollback
 
-v1 stays installed and configured throughout. The cutover is a `PATH` change and
-the v2 config lives in an isolated directory until the final step, so reverting
-is restoring the previous `PATH` and config directory.
+v1 stays installed and configured throughout, so rollback never depends on
+rebuilding anything.
+
+Cutover (Phase 5, explicit approval only):
+
+1. Confirm the v2 health check and live plugin verification pass.
+2. Keep the v1 binary (`~/.opencode/bin/opencode`) and the v1 config directory
+   (`~/.config/opencode/`) exactly as they are. Record their current hashes.
+3. Point the default `opencode` on `PATH` at the v2 binary (for example, a
+   `~/.local/bin/opencode` shim or a `PATH` entry ahead of `~/.opencode/bin`),
+   and start v2 with its own config directory. v2 must not read the v1 config
+   until the config is translated and the operator accepts the one-time
+   translation.
+4. Smoke test: version, skills (16), commands (4), six plugins, both todo tools,
+   the desktop/vision tools, and one MCP read.
+
+Revert (any time):
+
+1. Remove or repoint the `opencode` shim so `~/.opencode/bin/opencode` (v1) is
+   first on `PATH` again.
+2. Restore the v1 config directory from the recorded backup if it was moved.
+   Leaving the v2 config in its isolated directory is enough; v1 never reads it.
+3. Restart OpenCode and re-run `setup-computer-assistant.sh --verify-only`.
+
+The v2 config lives in an isolated directory until the final step, and v1's
+config, database, and kv are never modified by migration work, so the revert is
+a `PATH` change plus an optional config restore.
