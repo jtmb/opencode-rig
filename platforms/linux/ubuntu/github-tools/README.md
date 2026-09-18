@@ -10,8 +10,11 @@ from Git. The current pin is the official GitHub release `v1.12.1`:
 - SHA-256: `e45c73a26a3c4cd643b40360db06f442de1e73a60d4eaf9e8639204ec3b95d3b`
 - Release: <https://github.com/github/github-mcp-server/releases/tag/v1.12.1>
 
-The computer-use wrapper starts the server with only the `context`, `repos`,
-`issues`, and `pull_requests` toolsets, plus read-only and lockdown modes. It
+The computer-use wrapper starts the server with the `context`, `repos`,
+`issues`, `pull_requests`, `actions`, and `users` toolsets in lockdown mode.
+Write operations are enabled so GitHub mutations are MCP tool calls, and the
+agent keeps its confirmation gate before publishing, merging, deleting, or
+changing workflows, repositories, or security settings. It
 authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` (or `GH_TOKEN`) in OpenCode's
 launch environment, including values loaded from a project `.env`, falling back
 to the logged-in `gh` CLI, and never stores the credential in this repository or

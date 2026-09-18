@@ -71,7 +71,8 @@ system-troubleshooting  task-memory  vscode-management  web-3d-asset-pipeline
 ```
 
 The required commands are `deploy`, `handoff`, `promote-skills`, and `resume`.
-The required custom tools are `desktop` (`tools/desktop.ts`).
+The required custom tools are `desktop` (`tools/desktop.ts`) and `vision`
+(`tools/vision.ts`).
 
 ### `ensure_skill()`
 

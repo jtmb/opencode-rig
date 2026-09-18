@@ -92,6 +92,7 @@ REQUIRED_COMMANDS=(
 )
 REQUIRED_TOOLS=(
   desktop
+  vision
 )
 
 check_required_skill_sources() {

@@ -31,8 +31,9 @@ global `github` MCP through
 Before OpenCode starts, provide a credential either by setting
 `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in its environment, or by logging
 in with the `gh` CLI (`gh auth login`), which the wrapper reads automatically.
-Use a fine-grained PAT restricted to the needed repositories with read-only
-permissions for normal MCP use. Do not place the token in `opencode.json`, a
+Use a fine-grained PAT restricted to the needed repositories, with read
+permissions for inspection and write permissions only where mutations are
+expected. Do not place the token in `opencode.json`, a
 repository file, chat, or task memory.
 
 The agent can verify installation and connection without displaying a token:
@@ -58,9 +59,10 @@ Example requests:
 - "Show me the failed checks on this pull request."
 - "Prepare an issue comment, but do not publish it."
 
-Read-only requests normally use MCP tools. GitHub Actions, releases, and remote
-mutations may use the authenticated `gh` CLI because the MCP wrapper exposes a
-deliberately limited read-only tool surface.
+Read-only requests normally use MCP tools. Mutations also use MCP tools now
+that the wrapper enables write toolsets, but only after the agent inspects the
+target and asks immediately before the action. The authenticated `gh` CLI
+remains the fallback for functionality the MCP does not cover.
 
 ## Worked workflow and expected result
 
@@ -81,9 +83,11 @@ approved remote change plus its canonical URL.
 
 ## Verification and known limitations
 
-The default MCP surface is restricted to `context`, `repos`, `issues`, and
-`pull_requests`, with read-only and lockdown modes enabled. This reduces context
-size, blocks MCP write tools, and filters some untrusted public issue content.
+The default MCP surface is restricted to `context`, `repos`, `issues`,
+`pull_requests`, `actions`, and `users`, with lockdown mode enabled. Write
+operations are enabled so mutations are MCP tool calls behind the confirmation
+gate. The bounded toolset list keeps context size and blast radius controlled
+and filters some untrusted public issue content.
 
 Known limitations:
 
@@ -104,12 +108,14 @@ Known limitations:
 - `401` or `403`: check token expiration, selected repositories, permissions,
   organization SSO authorization, and organization MCP policy without printing
   the token.
-- Tools are missing: verify the request belongs to one of the four configured
-  toolsets. Do not silently broaden the MCP surface.
+- Tools are missing: verify the request belongs to one of the six configured
+  toolsets. Widening the list is a deliberate change that needs explicit
+  approval.
 - Repository content is hidden: lockdown mode may filter public contributions
   from users without push access.
-- Mutation is unavailable: use a reviewed, authenticated `gh` command only for
-  an explicit user request and retain the normal confirmation gate.
+- Mutation is available through the MCP, but only after the agent inspects the
+  target and asks immediately before the action; use `gh` only for
+  functionality the MCP does not cover.
 
 ## Safety, confirmation, and elevation
 

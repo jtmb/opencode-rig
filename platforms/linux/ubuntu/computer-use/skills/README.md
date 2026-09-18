@@ -30,8 +30,9 @@ comma-separated tags; the category/tag index below is derived from each
   `browser-headless` handles explicitly requested invisible browser work.
 - `game-playtest` adds canvas/WebGL screenshots, bounded gameplay input, and
   browser diagnostics for game QA.
-- `github-operations` uses a limited read-only GitHub MCP for routine context
-  and preserves confirmation gates for any separate remote mutation.
+- `github-operations` uses the GitHub MCP for context and approved mutations,
+  preserving confirmation gates for publishing, merging, and other remote
+  changes.
 - `blender` owns safe Blender scene work. `web-3d-asset-pipeline` turns DCC
   sources into verified browser-ready GLB/glTF artifacts.
 - `task-memory` carries durable context across sessions so setup is not

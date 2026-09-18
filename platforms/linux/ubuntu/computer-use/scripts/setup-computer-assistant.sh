@@ -7,8 +7,9 @@
 # - installs/enables ydotool and adds the user to input (synthetic input access)
 # - enables isolated Playwright browser MCPs in the project opencode.json
 #   (project-only, never global; no normal-browser cookies)
-# - installs a checksum-pinned GitHub MCP and enables its global, read-only
-#   wrapper (credentials remain outside the repository and config)
+# - installs a checksum-pinned GitHub MCP and enables its global, write-capable
+#   wrapper in lockdown mode (credentials remain outside the repository and
+#   config; mutations keep the confirmation gate)
 #
 # Default is read-only verification. Use --apply to install/configure.
 set -euo pipefail

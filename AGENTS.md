@@ -171,13 +171,14 @@ coordinates. Never run an uncontrolled click or key loop.
 
 - Load `github-operations` for GitHub repository, issue, pull request, review,
   release, or Actions work.
-- Prefer the `github` MCP (registered globally) for bounded reads. Its wrapper
-  exposes only `context`, `repos`, `issues`, and `pull_requests` in read-only
-  and lockdown modes.
-- Use `gh` only for functionality outside that MCP surface or an explicitly
-  requested remote mutation. Inspect the target first and retain the immediate
-  confirmation gate for publishing, merging, deleting, workflow/deployment, or
-  account/repository/security changes.
+- Prefer the `github` MCP (registered globally) for GitHub reads and mutations.
+  Its wrapper exposes the `context`, `repos`, `issues`, `pull_requests`,
+  `actions`, and `users` toolsets in lockdown mode; write operations are
+  enabled.
+- Keep the immediate confirmation gate for publishing, merging, deleting,
+  workflow/deployment, or account/repository/security changes even though the
+  MCP can perform them. Inspect the target first. Use `gh` only for
+  functionality the MCP does not cover.
 - Never print, store, request in chat, or pass a GitHub credential in command
   arguments. The MCP wrapper resolves its credential from
   `GITHUB_PERSONAL_ACCESS_TOKEN`, `GH_TOKEN`, or the logged-in `gh` CLI; let the
@@ -308,8 +309,9 @@ or CAPTCHAs for the user.
    `BROWSER_MCP_VERSION` in
    `platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh`.
 6. GitHub MCP stays pinned to the official amd64 release and published
-   checksum in `setup-computer-assistant.sh`. Keep its wrapper read-only and
-   toolset-limited unless the user explicitly approves a broader design.
+   checksum in `setup-computer-assistant.sh`. Its wrapper runs in lockdown mode
+   with a deliberately bounded toolset list; widen that list only with explicit
+   approval because every toolset adds schema context to each request.
 7. Keep root and component README files, `HANDOFF.md`, script help, skills,
    plugin READMEs and registration examples, and configuration examples
    synchronized with behavioral or path changes.

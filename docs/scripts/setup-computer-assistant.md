@@ -27,8 +27,8 @@ need review before running on a new machine:
   grants synthetic-input access).
 - Enables isolated Playwright browser MCPs in the **project** `opencode.json`
   (project-only, never global; no normal-browser cookies).
-- Installs a checksum-pinned GitHub MCP and enables its global, read-only
-  wrapper.
+- Installs a checksum-pinned GitHub MCP and enables its global, write-capable
+  wrapper in lockdown mode.
 
 ## Pins and paths
 

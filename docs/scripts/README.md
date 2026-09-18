@@ -28,7 +28,7 @@ lists them at a glance and covers the operating environment.
 |--------|----------|--------------|
 | `playwright-mcp.sh` | [`playwright-mcp.md`](playwright-mcp.md) | Launches the visible, user-shared Firefox MCP |
 | `playwright-headless-mcp.sh` | [`playwright-headless-mcp.md`](playwright-headless-mcp.md) | Launches the isolated, invisible Firefox MCP |
-| `github-mcp.sh` | [`github-mcp.md`](github-mcp.md) | Launches the pinned read-only GitHub MCP |
+| `github-mcp.sh` | [`github-mcp.md`](github-mcp.md) | Launches the pinned, write-capable GitHub MCP in lockdown mode |
 
 ### Desktop and memory tools
 

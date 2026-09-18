@@ -1,15 +1,15 @@
 # Desktop custom tools
 
 The `computer-use/tools/` package wraps `desktop-control.py` in four typed
-OpenCode custom tools. They are the preferred way for the assistant to inspect
-and operate GNOME controls: the argument schema is validated before the script
-runs, failures are surfaced with the exit code, and no MCP server or extra
-process is involved.
+OpenCode custom tools and adds a `vision_capture` screenshot tool. They are the
+preferred way for the assistant to inspect and operate GNOME controls: the
+argument schema is validated before the script runs, failures are surfaced with
+the exit code, and no MCP server or extra process is involved.
 
 ## Why custom tools instead of MCP
 
 OpenCode loads every MCP tool schema into context on each request. The desktop
-workflow is a small, fixed surface, so a local TypeScript file with four tools
+workflow is a small, fixed surface, so a local TypeScript file with a few tools
 is cheaper and stricter than a general-purpose MCP server. `bash` remains the
 fallback for anything the tools do not cover.
 
@@ -17,8 +17,10 @@ fallback for anything the tools do not cover.
 
 | Path | Role |
 |------|------|
-| `platforms/linux/ubuntu/computer-use/tools/desktop.ts` | Tool definitions and the pure argument builder |
+| `platforms/linux/ubuntu/computer-use/tools/desktop.ts` | Desktop tool definitions and the pure argument builder |
+| `platforms/linux/ubuntu/computer-use/tools/vision.ts` | Screenshot capture tool and its pure helpers |
 | `platforms/linux/ubuntu/computer-use/tools/test/desktop.test.ts` | Argument-construction and failure-formatting tests |
+| `platforms/linux/ubuntu/computer-use/tools/test/vision.test.ts` | Screenshot helper tests (key sequences, new-file detection, size, PNG header) |
 | `platforms/linux/ubuntu/computer-use/tools/package.json` | Pinned `@opencode-ai/plugin`, `typescript`, and bounded check scripts |
 | `platforms/linux/ubuntu/computer-use/tools/tsconfig.json` | Strict typecheck configuration |
 
@@ -27,7 +29,7 @@ fallback for anything the tools do not cover.
 ## Tool names
 
 OpenCode derives a tool name from the file name plus the export name:
-`desktop.ts` exporting `apps` becomes `desktop_apps`. The four exports are:
+`desktop.ts` exporting `apps` becomes `desktop_apps`. The exports are:
 
 | Export | Tool | Wraps |
 |--------|------|-------|
@@ -35,6 +37,7 @@ OpenCode derives a tool name from the file name plus the export name:
 | `tree` | `desktop_tree` | `desktop-control.py tree` |
 | `find` | `desktop_find` | `desktop-control.py find` |
 | `act` | `desktop_act` | `desktop-control.py action`, `focus`, or `set-text` |
+| `capture` | `vision_capture` | The `desktop-vision` screenshot shortcut through `ydotool` |
 
 The script path is resolved at import time as
 `~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/desktop-control.py`.
@@ -52,6 +55,20 @@ Adjust it (and re-run the deployment) if your checkout lives elsewhere.
 - Verb-specific fields are rejected on the wrong verb, so an `action` call can
   never quietly carry `text`, and a preview token cannot be passed without
   `apply`.
+
+### Screenshot capture
+
+`vision_capture` triggers GNOME's configured screenshot shortcut through the
+private `ydotool` service (`Shift+Print` for `mode: "screen"`, `Alt+Print` for
+`mode: "window"`), waits for exactly one new PNG in `~/Pictures/Screenshots/`,
+reads it in Node, deletes the file, and returns the image as a `data:` URI
+attachment with a short text summary. It refuses to guess when zero or multiple
+new files appear, and it fails closed with an instruction to use PrintScreen
+when the ydotool socket is unavailable. Announce the capture before calling it
+and never call it while a password, MFA, payment, or PolicyKit dialog is open.
+Files above 6 MiB are reported but not attached. This replaces the ad hoc
+screenshot bash flow; the `desktop-vision` skill's announce-and-delete rules
+still apply.
 
 ### Preview and apply
 
@@ -73,10 +90,10 @@ before trusting the result.
 ## Deployment
 
 `setup-opencode.sh --apply` copies the explicit `REQUIRED_TOOLS` list
-(`desktop.ts`) content-aware into `~/.config/opencode/tools/`, with the same
-symbolic-link guards used for skills and commands. `--verify-only` fails when a
-deployed tool is missing or stale. The copy is what OpenCode loads, so restart
-OpenCode after a change; running sessions do not hot-reload tools.
+(`desktop.ts`, `vision.ts`) content-aware into `~/.config/opencode/tools/`, with
+the same symbolic-link guards used for skills and commands. `--verify-only`
+fails when a deployed tool is missing or stale. The copy is what OpenCode loads,
+so restart OpenCode after a change; running sessions do not hot-reload tools.
 
 ## Checks
 

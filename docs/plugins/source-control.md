@@ -57,7 +57,9 @@ The header toggles the collapsed state and persists it in
 reposition, so the panel starts minimized once and the persisted toggle stays
 sticky afterwards. Each visible file row opens the built-in `diff.open`
 command on Ctrl+click, or with Enter/Space when the row is focused; a plain
-click only selects the row.
+click only selects the row. File paths are underlined to signal that they are
+interactive, and hovering a row highlights the path and reveals a
+`ctrl+click to open the diff` hint.
 If the command is not registered, the plugin falls back to the built-in `diff`
 route with `mode: git`, the current session ID, and the previous route for
 return navigation.

@@ -66,6 +66,7 @@ function SourceControlPanel(props: {
   whenEmpty: "hide" | "show"
 }) {
   const [state, setState] = createSignal<SourceControlState>(props.store.getState())
+  const [hovered, setHovered] = createSignal<string | undefined>(undefined)
   const stop = props.store.subscribe(setState)
 
   onCleanup(stop)
@@ -110,6 +111,8 @@ function SourceControlPanel(props: {
                 flexDirection="row"
                 gap={1}
                 focusable
+                onMouseOver={() => setHovered(change.file)}
+                onMouseOut={() => setHovered((current) => (current === change.file ? undefined : current))}
                 onMouseDown={(event) => {
                   if (!event.modifiers.ctrl) return
                   event.preventDefault()
@@ -123,13 +126,22 @@ function SourceControlPanel(props: {
                 }}
               >
                 <text fg={statusColor(change.status, props.api.theme.current)}>{statusLetter(change.status)}</text>
-                <text fg={props.api.theme.current.text}>{leftTruncate(change.file, 34)}</text>
+                <text
+                  fg={
+                    hovered() === change.file ? props.api.theme.current.accent : props.api.theme.current.text
+                  }
+                >
+                  <u>{leftTruncate(change.file, 34)}</u>
+                </text>
                 <box flexGrow={1} />
                 <text fg={props.api.theme.current.diffAdded}>+{change.additions}</text>
                 <text fg={props.api.theme.current.diffRemoved}>-{change.deletions}</text>
               </box>
             )}
           </For>
+          <Show when={hovered()}>
+            <text fg={props.api.theme.current.info}>ctrl+click to open the diff</text>
+          </Show>
           <Show when={state().changes.length > props.runtime().maxFiles}>
             <text fg={props.api.theme.current.textMuted}>
               +{state().changes.length - props.runtime().maxFiles} more

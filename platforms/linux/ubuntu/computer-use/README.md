@@ -83,7 +83,8 @@ What `--apply` does:
 - Deploys all sixteen complete skill bundles to `~/.config/opencode/skills/`.
 - Deploys the repository-managed `/deploy`, `/handoff`, `/promote-skills`, and
   `/resume` commands to `~/.config/opencode/commands/`.
-- Deploys the typed desktop custom tools (`tools/desktop.ts`) to
+- Deploys the typed desktop custom tools (`tools/desktop.ts`) and the
+  screenshot tool (`tools/vision.ts`) to
   `~/.config/opencode/tools/` for global discovery.
 - Initializes the owner-only memory store at
   `~/Documents/computer-assistant/memory.json` (dir `700`, file `600`).
@@ -160,7 +161,7 @@ phrases, example requests, and how the skills combine.
 | `browser-assistant` | [Usage guide](skills/browser-assistant/README.md) | Share a visible isolated Playwright Firefox window with the user |
 | `browser-headless` | [Usage guide](skills/browser-headless/README.md) | Run explicitly requested non-interactive tasks in isolated headless Firefox |
 | `game-playtest` | [Usage guide](skills/game-playtest/README.md) | Test browser games with bounded input plus semantic, visual, console, and network evidence |
-| `github-operations` | [Usage guide](skills/github-operations/README.md) | Inspect GitHub through a bounded read-only MCP and perform separately approved remote operations |
+| `github-operations` | [Usage guide](skills/github-operations/README.md) | Inspect GitHub through a bounded write-capable MCP and perform approved remote operations |
 | `blender` | [Usage guide](skills/blender/README.md) | Inspect, script, render, save, reopen, and export Blender scenes safely |
 | `web-3d-asset-pipeline` | [Usage guide](skills/web-3d-asset-pipeline/README.md) | Prepare and validate GLB/glTF assets for browser runtimes |
 | `task-memory` | [Usage guide](skills/task-memory/README.md) | Store and retrieve private preferences, facts, decisions, and pending work |
@@ -194,7 +195,7 @@ phrases, example requests, and how the skills combine.
 | `scripts/assistant-memory.py` | Private JSON memory store; record changes require `--apply`, credentials rejected |
 | `scripts/playwright-mcp.sh` | Launch the visible live Firefox MCP shared by user and agent |
 | `scripts/playwright-headless-mcp.sh` | Launch the separate isolated headless Firefox MCP |
-| `scripts/github-mcp.sh` | Launch the pinned GitHub MCP with limited read-only toolsets and fail-closed authentication |
+| `scripts/github-mcp.sh` | Launch the pinned, write-capable GitHub MCP in lockdown mode with fail-closed authentication |
 | `scripts/opencode-db-maintain.py` | Diagnose, prune, and vacuum `opencode.db` (read-only by default) |
 | `scripts/opencode-chat-backup.py` | Export chats to `~/Documents/opencode-backups/` |
 | `scripts/opencode-maintenance-cron.sh` | Weekly wrapper: chat backup always, DB cleanup when OpenCode is closed |
@@ -272,14 +273,17 @@ excluded from Git.
 
 `../github-tools/bin/github-mcp-server` is generated from the official GitHub
 MCP Server `v1.12.1` Linux x86_64 release after its published SHA-256 is
-verified. `scripts/github-mcp.sh` enables only `context`, `repos`, `issues`, and
-`pull_requests` with read-only and lockdown modes.
+verified. `scripts/github-mcp.sh` enables the `context`, `repos`, `issues`,
+`pull_requests`, `actions`, and `users` toolsets in lockdown mode, with write
+operations enabled so GitHub mutations are MCP tool calls behind the normal
+confirmation gate.
 
 The wrapper authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in
 OpenCode's launch environment, including values loaded from a project `.env`,
 falling back to the logged-in `gh` CLI, and fails closed when none is
-available. Prefer a fine-grained PAT restricted to the required repositories
-and read permissions. Never commit a token or place its value in
+available. Prefer a fine-grained PAT restricted to the required repositories,
+with read permissions for inspection and write permissions only where mutations
+are expected. Never commit a token or place its value in
 `opencode.json`; restart OpenCode after changing its launch environment.
 
 ## Memory store

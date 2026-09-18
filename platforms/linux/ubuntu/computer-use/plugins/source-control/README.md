@@ -46,7 +46,9 @@ Restart OpenCode after changing the registration or plugin source.
   a muted `change`/`changes` label.
 - Changed files are sorted by path, capped by `maxFiles` (default `8`), and
   activate the built-in `diff.open` viewer on Ctrl+click (or Enter/Space when
-  focused); a plain click only selects the row.
+  focused); a plain click only selects the row. File paths are underlined to
+  show they are interactive, and hovering a row highlights the path and shows a
+  `ctrl+click to open the diff` hint.
 - `/changes` opens details, and `Refresh Source Control` refreshes both local
   and GitHub data.
 - GitHub is read-only and optional. The panel hides the GitHub row when the

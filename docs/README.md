@@ -57,7 +57,7 @@ pieces fit together?*
 | [`scripts/setup-git-hooks.md`](scripts/setup-git-hooks.md) | Installing the pre-push hook that enforces the documentation gate |
 | [`scripts/playwright-mcp.md`](scripts/playwright-mcp.md) | The visible, user-shared Playwright Firefox launcher |
 | [`scripts/playwright-headless-mcp.md`](scripts/playwright-headless-mcp.md) | The isolated headless Playwright Firefox launcher |
-| [`scripts/github-mcp.md`](scripts/github-mcp.md) | The pinned, read-only, lockdown-protected GitHub MCP launcher |
+| [`scripts/github-mcp.md`](scripts/github-mcp.md) | The pinned, write-capable, lockdown-protected GitHub MCP launcher |
 | [`scripts/opencode-db-maintain.md`](scripts/opencode-db-maintain.md) | Database statistics, event-log pruning, VACUUM, and hardening |
 | [`scripts/opencode-chat-backup.md`](scripts/opencode-chat-backup.md) | Full-fidelity chat export with a pruning manifest |
 | [`scripts/opencode-maintenance-cron.md`](scripts/opencode-maintenance-cron.md) | The weekly wrapper that combines backup and cleanup |
