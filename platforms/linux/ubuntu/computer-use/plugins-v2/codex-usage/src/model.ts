@@ -14,12 +14,12 @@ export function messageModel(message: unknown): SessionModel | undefined {
 
   if (isRecord(message.model)) {
     const providerID = message.model.providerID
-    const modelID = message.model.modelID
+    const modelID = message.model.modelID ?? message.model.id
     if (typeof providerID === "string" && typeof modelID === "string") return { providerID, modelID }
   }
 
   const providerID = message.providerID
-  const modelID = message.modelID
+  const modelID = message.modelID ?? message.id
   return typeof providerID === "string" && typeof modelID === "string" ? { providerID, modelID } : undefined
 }
 
