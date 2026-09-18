@@ -241,9 +241,19 @@ Ported and verified in the v2.0.7 pilot:
   so only the v1 harness-specific Source Control presets remain to be folded
   into the v2 source-control plugin.
 
-Remaining in Phase 2: port `source-control` (working-tree and pull-request
-`sidebar.content` panel) using `ctx.client.vcs` and the GitHub MCP path. It is
-the last unported plugin.
+Remaining in Phase 2: none. `source-control` landed as the last port, and the
+per-plugin test totals are rig-tools 20, codex-fallback 27, source-control 20,
+codex-usage 8, file-manager 11 (86 total), all through the bounded resource
+guard. Phase 4 has begun: `check-plugin-resource-guards.py` also scans
+`plugins-v2/`, and `documentation-map.json` maps the v2 workspace to
+`plugins-v2/README.md`.
+
+Still to do in Phase 4: fold the tui-settings Source Control presets into the
+v2 source-control plugin, add v2 setup/verify scripts and health checks, update
+`AGENTS.md`, and replace the repo-level `skills` source with one that does not
+pick up `skills/README.md` as a skill. Phase 5 (full health check and PATH
+cutover with v1 rollback) stays pending explicit approval; v1 remains the
+default.
 
 ## Risks
 

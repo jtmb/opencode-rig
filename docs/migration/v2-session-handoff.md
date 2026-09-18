@@ -65,11 +65,12 @@ Current state:
   documented `mcp.servers` nesting and silently drops the whole MCP block on a
   numeric `timeout`; use an object), skills pointed at the repo skills, the
   four global commands copied in, `cli.json` seeded from v1 kv.
-- Phase 2 (in progress): plugins-v2/ workspace has four ported plugins.
-  rig-tools and codex-fallback (server) and codex-usage and file-manager (CLI)
-  typecheck, pass their tests, and load in the pilot. file-manager contributes
-  a docked session.panel; tui-settings is retired in favor of the built-in
-  `/settings`. source-control is the last unported plugin.
+- Phase 2 (done): plugins-v2/ workspace has all five ports. rig-tools and
+  codex-fallback (server) and source-control, codex-usage, and file-manager
+  (CLI) typecheck, pass their tests (86 total), and load in the pilot.
+  file-manager contributes a docked session.panel; tui-settings is retired in
+  favor of the built-in `/settings`, with its Source Control presets still to
+  fold into source-control.
 - Local plugin registration uses the object form `{ "package": "<absolute
   directory>", "options": {} }` plus a root `server.ts` / `tui.tsx` shim; a
   bare package-name string makes v2 try to install it from npm.
@@ -102,8 +103,9 @@ Phase 2 order and goals (status 2026-09-18):
    `ctx.session.hook("context")` / `ctx.session.hook("retry")`; per-agent
    overrides live under plugin options `agents`; routing is logged instead of
    toasted (server plugins have no TUI toast).
-3. TODO source-control (CLI): port the working-tree/PR panel to a
-   `sidebar.content` slot using `ctx.client.vcs` / `ctx.data.location.vcs`.
+3. DONE source-control (CLI): the working-tree/PR panel is a `sidebar.content`
+   slot using `ctx.client.vcs` / `ctx.data.location.vcs` and the bounded stdio
+   GitHub MCP client (the v2 workspace now depends on the MCP SDK).
 4. DONE codex-usage (CLI): weekly quota panel on a `sidebar.content` slot.
 5. DONE file-manager (CLI): tree/viewer/editor as a `session.panel`
    contribution opened with `ctx.ui.panel.open`, `toggleFullscreen` on `f`.
