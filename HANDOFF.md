@@ -234,8 +234,11 @@ Known live state (recorded 2026-09-18):
     (owner-only) is still authoritative until the M2 migration. Basic Memory
     0.23.2 is installed via uv tool: project `computer-assistant` at
     ~/Documents/computer-assistant/basic-memory (default, auto-update
-    disabled); M0 is verified (bounded reindex and a bounded MCP stdio smoke
-    recording 21 tools). See Work In Progress
+    disabled). M1 is verified: the `basic-memory` MCP runs under
+    scripts/basic-memory-mcp.sh (adaptive 20%/25% cgroup budget, prlimit
+    fallback, fail closed) and the v2 config hides 12 of its 21 tools with
+    `permissions` deny entries, leaving nine core note tools. See Work In
+    Progress
   - Optional 3D: Blender 5.0.1 with python3-numpy for glTF (Draco unavailable)
   - Maintenance cron: runs the repository maintenance script
   - Superseded paths (do not use): the ~/scripts/ computer-use copies and
@@ -251,11 +254,12 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     single live Playwright MCP, verification C1-C3, cutover with a rollback
     record). No left dock exists in either version, so the Explorer panel
     docks right
-  - Queued next: Basic Memory M1-M4 (the legacy JSON memory stays
-    authoritative until the M2 migration), the untracked session-ses_f4dc.md
-    cleanup (with approval), and the C5 post-cutover tidy (translate the repo
-    project `opencode.json` for v2, retire v1-only docs). The D1/D2 window and
-    input tools landed on 2026-09-18
+  - In progress: Basic Memory M2 next - migrate the three legacy JSON entries
+    as notes and rewrite the task-memory skill (M1 landed: bounded wrapper and
+    the 9-tool registration). The legacy JSON memory stays authoritative until
+    the migration is verified; deletion still needs explicit confirmation.
+    Also queued: the untracked session-ses_f4dc.md cleanup (with approval) and
+    the C5 post-cutover tidy
   - PR #1/#2 merge only on explicit request; v1 rollback is one PATH/shim
     change and is recorded in docs/migration/opencode-v2.md
 
@@ -309,9 +313,10 @@ give you. If I pasted only this handoff, ask what task I want handled.
   commands, todo/desktop/vision tools, panels by screenshot, GitHub MCP read +
   approved write) and the C4 cutover with the single live Playwright MCP; the
   D1/D2 window-listing and bounded input tools (25 rig-tools tests green, live
-  input apply verified with a screenshot, docs updated).
-- Pending: Basic Memory M1-M4, the transcript cleanup, and the C5 post-cutover
-  tidy; merge PR #1/#2 only on explicit request.
+  input apply verified with a screenshot, docs updated); Basic Memory M1 (the
+  bounded `basic-memory-mcp.sh` wrapper and the 9-tool v2 registration).
+- Pending: Basic Memory M2-M4, the transcript cleanup, and the C5
+  post-cutover tidy; merge PR #1/#2 only on explicit request.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -361,7 +366,7 @@ Decisions made with the user after research:
   vision), deployment plus `--verify-only` for both setup scripts, and a live
   fresh-process `opencode run` calling `desktop_apps` against real AT-SPI data.
 
-#### Part 2 — Basic Memory adoption (M0 complete, M1-M4 next)
+#### Part 2 — Basic Memory adoption (M0 and M1 complete, M2-M4 next)
 
 Chosen after comparing free local MCP memory servers: Basic Memory v0.23.2
 (AGPL-3.0, personal use fine) beats Engram (keyword-only search), the official
@@ -392,6 +397,21 @@ M0 findings (2026-09-17, resume session):
 - M1 planning note: revise the disable list from the earlier draft - this
   version also exposes `basic_memory_diagnostics`, `read_content`, `view_note`,
   and `list_directory` beyond the originally listed groups.
+
+M1 findings (2026-09-18):
+
+- `scripts/basic-memory-mcp.sh` launches `basic-memory mcp --project
+  computer-assistant` under an adaptive user-cgroup budget (20% of effective
+  memory, 25% of swap, 64 MiB floor) with `systemd-run --user --pipe --wait
+  --collect`, a `prlimit --as` fallback, and fail-closed behavior when no
+  limiter exists. A bounded stdio smoke recorded `Basic Memory 4.0.0b1` and
+  21 tools.
+- The `basic-memory` MCP is registered in the v2 config (flat `mcp` map) and
+  connects (`opencode mcp list`). v2 hides tools with `permissions` deny
+  entries rather than a v1 `tools` map: 12 rarely used tools were denied,
+  leaving nine core tools, and the live v2 catalog confirms
+  `basic-memory (9 tools)`.
+- Docs: `docs/scripts/basic-memory-mcp.md` plus the scripts index row.
 
 Then:
 
