@@ -752,17 +752,18 @@ README notes, Phase 4 recorded complete).
 
 #### Phase B - v2 parity, one Playwright MCP, health check
 
-- **B1. Cutover config draft** (not applied): `opencode.jsonc` with flat `mcp`
-  (github + the single `playwright`, object timeouts), the skills source, and
-  `plugins` (rig-tools, codex-fallback, rig-todo); `cli.json` with settings and
-  the three CLI plugins.
-- **B2. Playwright consolidation spike + implementation.** Spike whether v2's
-  built-in browser tools already cover the shared-visible workflow; expected
-  no, so the single MCP stays live. Register exactly one `playwright` MCP in
-  the v2 config and drop `playwright_headless`. Update the `browser-headless`
-  skill and AGENTS/README text: v2 has one Playwright MCP, and headless-only
-  work runs through the repo Playwright runtime from the shell. Verify:
-  `mcp list` shows exactly one `playwright` connected.
+- **B1. Cutover config draft. DONE 2026-09-18.** Landed as
+  `config/v2-opencode.example.jsonc` and `config/v2-cli.example.json`:
+  `opencode.jsonc` with the flat `mcp` map (github + the single `playwright`,
+  object timeouts), the skills source, and `plugins` (rig-tools, rig-todo,
+  codex-fallback); `cli.json` with settings and the three CLI plugins.
+- **B2. Playwright consolidation spike + implementation. PARTIAL 2026-09-18.**
+  The spike conclusion and the one-live-MCP decision are done, the cutover
+  example declares exactly one `playwright`, and AGENTS/README state the
+  model. Remaining for cutover: register the single `playwright` MCP in the
+  running v2 config (the pilot omits it during migration), update the
+  `browser-headless` skill text, and verify `mcp list` shows exactly one
+  `playwright` connected.
 - **B3. `scripts/verify-opencode-v2.sh`. DONE 2026-09-18** (landed as
   `scripts/verify-opencode-v2.sh`): binary/version, isolated paths, 16 skills,
   4 commands, 6 plugins, plugin entry shims, MCP declarations (one github, at
@@ -788,6 +789,19 @@ README notes, Phase 4 recorded complete).
   v1 `plugins/tui-settings` package.
 - **C6.** Merge `migration/opencode-v2` (and PR #1/#2) only when requested.
 
+Phase C results (2026-09-18, partial): C1-C3 verified in the live pilot -
+`verify-opencode-v2.sh` and `setup-opencode-v2.sh --verify-only` are green;
+all six plugins load; the four commands are discovered; discovery shows the 16
+repo skills plus 2 built-ins; both todo tools, `desktop_apps`, and
+`vision_capture` were exercised live (the capture attachment arrived and its
+PNG was deleted); file-manager's docked Files panel, the Source Control row
+with real worktree data, the MCP `github Connected` row, and the `Explorer`
+row were confirmed by screenshot; and a GitHub MCP read (`get_me`) plus one
+approved write (PR #2 comment 5725307311) succeeded. OpenAI OAuth is not
+mapped in the pilot (a one-time `/connect` is needed), and the Codex Usage row
+loaded but was not in frame. C4 cutover remains unstarted and needs explicit
+approval.
+
 #### Phase D - resume the pre-migration queue (on the default stack)
 
 - **D1. Window-listing tool.** `desktop-control.py windows` subcommand plus
@@ -811,9 +825,11 @@ README notes, Phase 4 recorded complete).
   (with approval); keep this file current.
 
 Order: A1 -> A2 -> A3/A4/A5 -> A6 -> A7 -> A8 -> B1/B2 -> B3/B4/B5 -> C -> D.
-A1-A8 and B3-B5 are done; Phase C (verification and cutover) remains and needs
-explicit approval. Phases A and D1/D2 are independent; Basic Memory (D3-D6)
-can start once the v2 config is final.
+A1-A8 and B1/B3/B4/B5 are done; B2 is partial (the one live Playwright MCP is
+decided and in the cutover example, but the pilot registration and the
+`browser-headless` text land at cutover). Phase C: C1-C3 verified 2026-09-18;
+C4 cutover awaits explicit approval. Phases A and D1/D2 are independent;
+Basic Memory (D3-D6) can start once the v2 config is final.
 
 Risks: v2 plugin APIs are pre-stable (pin 2.0.7, re-test on upgrades); no v2
 todo panel unless A2b is built; a single Playwright MCP trades headless
@@ -826,11 +842,10 @@ v2 upgrade beyond 2.0.7.
 
 ### Suggested next steps
 
-1. Run Phase 5 verification in the pilot: the six plugins, both todo tools,
-   the desktop/vision tools, one v2 GitHub MCP read plus one approved write,
-   and a DeepSeek/OpenAI connectivity check; then present the cutover decision
-   for explicit approval (PATH change; rollback in
-   `docs/migration/opencode-v2.md`).
+1. Phase 5 C1-C3 verified 2026-09-18. The C4 cutover needs explicit approval
+   and three pieces: a PATH wrapper that starts v2 with its own config
+   directory, the single live Playwright MCP registered in the v2 config
+   (B2), and the `browser-headless` skill text update for the one-MCP model.
 2. After cutover, resume the pre-migration queue: desktop window-listing and
    bounded input tools, then Basic Memory M1-M4; delete the legacy memory only
    with the explicit confirmation at the M2 gate.

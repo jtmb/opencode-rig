@@ -328,6 +328,19 @@ rollback) stays pending explicit approval; v1 remains the default.
   cutover, the queued pre-migration work (desktop window/input tools and
   Basic Memory M1-M4).
 
+## Phase 5 results (2026-09-18, partial)
+
+C1-C3 passed in the live pilot: both v2 health checks are green; all six
+plugins load; the four commands and the 16 repo skills (plus 2 built-ins) are
+discovered; both todo tools, `desktop_apps`, and `vision_capture` were
+exercised (the capture attachment arrived and its PNG was deleted); the docked
+Files panel, the Source Control row with real worktree data, the connected
+`github` MCP row, and the `Explorer` row were confirmed by screenshot; and a
+GitHub MCP read plus one approved write (PR #2 comment 5725307311) succeeded.
+OpenAI OAuth is not mapped in the pilot. B2's remaining pieces (single
+Playwright MCP registration in the running config and the `browser-headless`
+text) and the C4 cutover await explicit approval.
+
 ## Risks
 
 - New major with pre-stable plugin and hook surfaces; names and shapes can
