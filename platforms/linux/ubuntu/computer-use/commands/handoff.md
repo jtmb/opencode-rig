@@ -10,13 +10,15 @@ Refresh the repository handoff so a new OpenCode session can continue this work.
    Work In Progress section.
 2. Inspect the current state read-only:
    - `git log --oneline -6`, `git status --short`, and the active branch
+   - the running stack (v1 or the v2 pilot) and, for v2, the result of
+     `platforms/linux/ubuntu/computer-use/scripts/verify-opencode-v2.sh`
    - every source changed since the handoff was recorded (code, configs,
      commands, plans) and whether its checks were run
 3. Update the generated parts of `HANDOFF.md` to match reality:
    - the copy-paste prompt: skill/MCP/plugin counts, global commands, the
      health check, and the current task pointer
    - known live state: branch, latest local commit, clean or dirty worktree,
-     and deployed components
+     and the deployed v1 and v2 components
    - Work In Progress: completed work, durable decisions (user choices and
      research conclusions), the current task with concrete next steps,
      verification status, blockers, and risks

@@ -112,14 +112,16 @@ changing plugin registration/TUI configuration. Running sessions do not
 hot-reload them.
 
 After restart, `/promote-skills` validates the canonical skill documentation,
-deploys every complete bundle globally through `setup-opencode.sh --apply`, and
-verifies source parity plus OpenCode discovery. `/deploy` registers the local
-plugins globally or into a repository's `.opencode/` directory (and optionally
-copies the bootstrap scripts) through `scripts/deploy-plugins.sh`. `/handoff`
-refreshes `HANDOFF.md` with the current session state and regenerates the
-prompt block for a fresh chat. `/resume` reads `HANDOFF.md`, runs the read-only
-health check, reports status, and continues the pending task with progress
-tracked in the todo list.
+deploys every complete bundle through `setup-opencode.sh --apply` (v1) or
+`setup-opencode-v2.sh --apply` (v2 pilot), and verifies source parity plus
+discovery. `/deploy` registers the local plugins globally or into a
+repository's `.opencode/` directory (and optionally copies the bootstrap
+scripts) through `scripts/deploy-plugins.sh`, and with `--v2` registers the
+six `plugins-v2` packages into a v2 config directory. `/handoff` refreshes
+`HANDOFF.md` with the current session state and regenerates the prompt block
+for a fresh chat. `/resume` reads `HANDOFF.md`, runs the read-only health check
+for the running stack, reports status, and continues the pending task with
+progress tracked in the todo list.
 
 [`plugins/codex-usage/`](plugins/codex-usage/README.md) is a local OpenCode TUI
 sidebar for the weekly Codex quota and optional Luna Reserve usage.

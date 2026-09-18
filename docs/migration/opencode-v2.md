@@ -321,9 +321,12 @@ rollback) stays pending explicit approval; v1 remains the default.
   `opencode.jsonc`, CLI plugins in `cli.json`), preserves existing options,
   and rejects `--scope project`/`--bootstrap`. Both were exercised against a
   disposable config directory (seed, link, register, idempotent re-run).
-- Still remaining: rewriting the four global command bodies and the
-  `AGENTS.md` v2 section, then Phase 5 cutover. After cutover, the queued
-  pre-migration work (desktop window/input tools and Basic Memory M1-M4).
+- A6 commands: the four global commands are stack-aware - they detect the v2
+  pilot and use `verify-opencode-v2.sh`, `setup-opencode-v2.sh`, and
+  `deploy-plugins.sh --v2`, falling back to the v1 paths otherwise.
+- Still remaining: the `AGENTS.md` v2 section, then Phase 5 cutover. After
+  cutover, the queued pre-migration work (desktop window/input tools and
+  Basic Memory M1-M4).
 
 ## Risks
 

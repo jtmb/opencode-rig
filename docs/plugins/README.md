@@ -309,20 +309,28 @@ fabricated quota value.
 ## Deploying the plugins
 
 The repository ships a `/deploy` command and a `deploy-plugins.sh` script that
-register the plugins with an OpenCode installation. Registration references this
-checkout with `file://` URLs; the plugin sources are not copied.
+register the plugins with an OpenCode installation. v1 registration references
+this checkout with `file://` URLs; the plugin sources are not copied. The v2
+mode (`--v2`) registers the `plugins-v2` packages as absolute-path object
+entries instead.
 
 - **Global** deploys to `~/.config/opencode/tui.json` (TUI) and
   `~/.config/opencode/opencode.jsonc` or `.json` (server).
 - **Project** deploys to `<repo>/.opencode/tui.json` (TUI) and
   `<repo>/.opencode/opencode.json` (server).
-- `--bootstrap` additionally copies the provisioning scripts into the target.
+- **v2** deploys the six `plugins-v2` packages to
+  `<config-dir>/opencode.jsonc` (server) and `<config-dir>/cli.json` (CLI);
+  the default config directory is the isolated pilot under
+  `~/.opencode-v2-pilot/`.
+- `--bootstrap` additionally copies the provisioning scripts into the target
+  (v1 only).
 
 Run `/deploy` for an interactive, question-driven flow, or invoke the script
 directly. Both default to read-only verification; writes require `--apply`.
-Neither overwrites existing `plugin` entries or their options, and both refuse
+Neither overwrites existing plugin entries or their options, and both refuse
 to rewrite a config that contains JSONC comments (they cannot be preserved by a
-plain JSON edit).
+plain JSON edit). The four global commands themselves are stack-aware and pick
+the v1 or v2 health check and deploy path at run time.
 
 Full behavior, options, targets, and exit codes are documented in
 [`docs/scripts/deploy-plugins.md`](../scripts/deploy-plugins.md).

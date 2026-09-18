@@ -5,21 +5,35 @@ agent: build
 
 Resume the assistant's work from the repository handoff.
 
+Determine the running harness first: the OpenCode v2 pilot runs from
+`~/.local/opt/opencode-v2/opencode` with config under `~/.opencode-v2-pilot/`
+(it sets `OPENCODE_CONFIG_DIR` and the pilot XDG paths); a plain `opencode`
+session is v1. Use the matching health check in step 3.
+
 1. Read `HANDOFF.md` in full first. It is the primary resume source: the
    copy-paste prompt, the known live state, and the Work In Progress plan.
-   Do not start any other work before reading it.
+   Do not start any other work before reading it. In the v2 pilot, also read
+   `docs/migration/v2-session-handoff.md`.
 2. Then read these files, in order:
    - `AGENTS.md`
    - `README.md`
    - `platforms/linux/ubuntu/computer-use/README.md`
    - `platforms/linux/ubuntu/computer-use/skills/README.md`
    - `docs/README.md`
-3. Run the read-only health check:
+3. Run the read-only health check for the running stack:
 
-   `platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only`
+   - v2 pilot:
+     `platforms/linux/ubuntu/computer-use/scripts/verify-opencode-v2.sh`
+   - v1:
+     `platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only`
 
-   If it passes, do not reinstall. If it fails, diagnose the specific failed
-   check before repairing anything.
+   Run v1 checks outside the pilot environment (unset `OPENCODE_CONFIG_DIR`,
+   `OPENCODE_DISABLE_PROJECT_CONFIG`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, and
+   `XDG_CACHE_HOME`), because the v1 binary would otherwise read the pilot
+   config and database.
+
+   If a health check passes, do not reinstall. If it fails, diagnose the
+   specific failed check before repairing anything.
 4. Inspect the live state read-only: `git log --oneline -6`,
    `git status --short`, and the current branch.
 5. Give a concise status: branch, latest commit, worktree state, the pending
