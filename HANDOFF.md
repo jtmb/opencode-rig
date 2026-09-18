@@ -212,8 +212,9 @@ Known live state (recorded 2026-09-18):
   - Global custom tools: `desktop.ts` exporting `desktop_apps`, `desktop_tree`,
     `desktop_find`, and `desktop_act`, plus `vision.ts` exporting
     `vision_capture` (screenshot as a data-URI image attachment), in
-    ~/.config/opencode/tools/ for v1; v2 registers the same five through the
-    rig-tools server plugin
+    ~/.config/opencode/tools/ for v1; v2 registers the desktop and vision tools
+    plus `desktop_windows` and `desktop_input` through the rig-tools server
+    plugin (seven tools)
   - Local plugins: v1 runs codex-usage (TUI quota and optional Luna Reserve
     sidebar), codex-fallback (server failover), source-control (working-tree
     and GitHub panel), tui-settings (settings menu launcher), and file-manager
@@ -250,12 +251,11 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     single live Playwright MCP, verification C1-C3, cutover with a rollback
     record). No left dock exists in either version, so the Explorer panel
     docks right
-  - Queued next: the computer-use window-listing and bounded input tools
-    (D1/D2), then Basic Memory M1-M4 (D3-D6; the legacy JSON memory stays
-    authoritative until the M2 migration), then the untracked
-    session-ses_f4dc.md cleanup (with approval). Post-cutover tidy (C5):
-    translate the repo project `opencode.json` for v2 and mark v1-only docs
-    retired
+  - Queued next: Basic Memory M1-M4 (the legacy JSON memory stays
+    authoritative until the M2 migration), the untracked session-ses_f4dc.md
+    cleanup (with approval), and the C5 post-cutover tidy (translate the repo
+    project `opencode.json` for v2, retire v1-only docs). The D1/D2 window and
+    input tools landed on 2026-09-18
   - PR #1/#2 merge only on explicit request; v1 rollback is one PATH/shim
     change and is recorded in docs/migration/opencode-v2.md
 
@@ -288,7 +288,8 @@ give you. If I pasted only this handoff, ask what task I want handled.
   (08bc281), the v2 health check (d32bcf7), CI coverage (167df04), the v2
   deploy tooling (`setup-opencode-v2.sh` plus `deploy-plugins.sh --v2`), the
   stack-aware command rewrites (A6), the `verify-opencode-v2.sh` shellcheck
-  fix, the B4 docs, and the Phase 5 verification/cutover records.
+  fix, the B4 docs, the Phase 5 verification/cutover records, and the D1/D2
+  window and input tools.
 - v1 work stays on PRs #1/#2 as recorded in the prompt above; merge only on
   explicit request. The untracked `session-ses_f4dc.md` transcript sits at the
   repository root; remove it only with approval (Phase D8).
@@ -306,9 +307,11 @@ give you. If I pasted only this handoff, ask what task I want handled.
   stack-aware command rewrites (A6); the AGENTS.md v2 section and Phase 4
   completion (B4); Phase 5 C1-C3 verification (health checks, skills,
   commands, todo/desktop/vision tools, panels by screenshot, GitHub MCP read +
-  approved write) and the C4 cutover with the single live Playwright MCP.
-- Pending: the D queue (window/input tools, Basic Memory M1-M4, transcript
-  cleanup, post-cutover tidy); merge PR #1/#2 only on explicit request.
+  approved write) and the C4 cutover with the single live Playwright MCP; the
+  D1/D2 window-listing and bounded input tools (25 rig-tools tests green, live
+  input apply verified with a screenshot, docs updated).
+- Pending: Basic Memory M1-M4, the transcript cleanup, and the C5 post-cutover
+  tidy; merge PR #1/#2 only on explicit request.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -820,10 +823,15 @@ not in frame. C5 tidy and C6 merges remain.
 
 #### Phase D - resume the pre-migration queue (on the default stack)
 
-- **D1. Window-listing tool.** `desktop-control.py windows` subcommand plus
-  `desktop_windows` in rig-tools; arg-builder tests; docs.
-- **D2. Bounded input tool.** Input subcommand plus `desktop_input` with
-  one-bounded-action and token gating; tests; docs.
+- **D1. Window-listing tool. DONE 2026-09-18.** `desktop-control.py windows`
+  lists frames, windows, dialogs, alerts, and choosers with app, states,
+  bounds, and completeness; `desktop_windows` wraps it in rig-tools with
+  arg-builder tests and docs.
+- **D2. Bounded input tool. DONE 2026-09-18.** `desktop-control.py input`
+  sends one allowlisted key/chord or up to 256 printable ASCII characters
+  through the private ydotool socket, gated by a preview token bound to the
+  payload and the focused window; `desktop_input` wraps it in rig-tools with
+  tests, and a live apply (type then BackSpace) was verified with a screenshot.
 - **D3. Basic Memory M1.** `scripts/basic-memory-mcp.sh` bounded wrapper
   (`systemd-run --user` + `prlimit` fallback, fail closed); register
   `basic-memory` with the revised about-nine-tool disable list.
@@ -842,8 +850,8 @@ not in frame. C5 tidy and C6 merges remain.
 
 Order: A1 -> A2 -> A3/A4/A5 -> A6 -> A7 -> A8 -> B1/B2 -> B3/B4/B5 -> C -> D.
 A1-A8 and B1-B5 are done; Phase C C1-C4 are done 2026-09-18 (v2 is the default;
-rollback recorded). Remaining: C5 post-cutover tidy and C6 merges (on request),
-then the Phase D queue.
+rollback recorded); D1/D2 are done. Remaining: C5 post-cutover tidy and C6
+merges (on request), then D3-D8.
 
 Risks: v2 plugin APIs are pre-stable (pin 2.0.7, re-test on upgrades); no v2
 todo panel unless A2b is built; a single Playwright MCP trades headless
@@ -858,14 +866,11 @@ v2 upgrade beyond 2.0.7.
 
 1. Post-cutover tidy (C5): translate the repository project `opencode.json`
    for v2 (or keep the project config disabled), mark v1-only docs retired,
-   and decide the fate of the v1 `plugins/tui-settings` package. OpenCode
-   should be restarted once so the new v2 default, MCP list, and skill text
-   load cleanly.
-2. Resume the pre-migration queue: desktop window-listing and bounded input
-   tools (D1/D2), then Basic Memory M1-M4 (D3-D6); delete the legacy memory
-   only with the explicit confirmation at the M2 gate.
+   and decide the fate of the v1 `plugins/tui-settings` package.
+2. Resume the memory queue: Basic Memory M1-M4 (D3-D6); delete the legacy JSON
+   memory only with the explicit confirmation at the M2 gate.
 3. Merge PRs #1/#2 only on explicit request; remove `session-ses_f4dc.md` with
-   approval.
+   approval (D8).
 4. Keep the v2 docs and HANDOFF current and re-test the v2 port on any 2.0.x
    upgrade.
 

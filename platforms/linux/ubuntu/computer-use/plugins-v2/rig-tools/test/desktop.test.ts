@@ -82,6 +82,64 @@ test("set-text requires text and forwards the token when applying", () => {
   })
 })
 
+test("windows builds the read-only window list with optional filters", () => {
+  assert.deepEqual(buildDesktopArgs({ verb: "windows" }), { args: ["windows"] })
+  assert.deepEqual(
+    buildDesktopArgs({ verb: "windows", app: "firefox", showing: true, maxDepth: 3, maxNodes: 100 }),
+    { args: ["windows", "--app", "firefox", "--showing", "--max-depth", "3", "--max-nodes", "100"] },
+  )
+})
+
+test("input key builds a preview command", () => {
+  assert.deepEqual(
+    buildDesktopArgs({ verb: "input", kind: "key", key: "ctrl+s" }),
+    { args: ["input", "--kind", "key", "--key", "ctrl+s"] },
+  )
+})
+
+test("input type builds a preview command and applies with the token", () => {
+  assert.deepEqual(
+    buildDesktopArgs({ verb: "input", kind: "type", text: "hello world" }),
+    { args: ["input", "--kind", "type", "--text", "hello world"] },
+  )
+  assert.deepEqual(
+    buildDesktopArgs({ verb: "input", kind: "type", text: "hello", apply: true, expectToken: "tok" }),
+    { args: ["input", "--kind", "type", "--text", "hello", "--expect-token", "tok", "--apply"] },
+  )
+})
+
+test("input requires a kind and the matching payload", () => {
+  const missingKind = buildDesktopArgs({ verb: "input" })
+  assert.ok("error" in missingKind)
+  assert.match(missingKind.error, /requires kind/)
+
+  const missingKey = buildDesktopArgs({ verb: "input", kind: "key" })
+  assert.ok("error" in missingKey)
+  assert.match(missingKey.error, /requires key/)
+
+  const missingText = buildDesktopArgs({ verb: "input", kind: "type" })
+  assert.ok("error" in missingText)
+  assert.match(missingText.error, /requires non-empty text/)
+
+  const keyWithText = buildDesktopArgs({ verb: "input", kind: "key", key: "ctrl+s", text: "nope" })
+  assert.ok("error" in keyWithText)
+  assert.match(keyWithText.error, /text is only valid with kind=type/)
+
+  const typeWithKey = buildDesktopArgs({ verb: "input", kind: "type", text: "ok", key: "ctrl+s" })
+  assert.ok("error" in typeWithKey)
+  assert.match(typeWithKey.error, /key is only valid with kind=key/)
+})
+
+test("input apply requires the preview token", () => {
+  const result = buildDesktopArgs({ verb: "input", kind: "key", key: "Return", apply: true })
+  assert.ok("error" in result)
+  assert.match(result.error, /requires expectToken/)
+
+  const tokenOnly = buildDesktopArgs({ verb: "input", kind: "key", key: "Return", expectToken: "tok" })
+  assert.ok("error" in tokenOnly)
+  assert.match(tokenOnly.error, /only valid together with apply/)
+})
+
 test("describes a maxbuffer failure", () => {
   assert.match(describeDesktopFailure({ code: "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" }), /exceeded/)
 })

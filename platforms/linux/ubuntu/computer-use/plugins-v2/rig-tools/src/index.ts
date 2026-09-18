@@ -111,6 +111,25 @@ export default Plugin.define({
       })
 
       editor.add({
+        name: "desktop_windows",
+        description:
+          "List top-level GNOME windows (frames, dialogs, alerts) across applications as JSON, including the owning app, title, states (active/focused/showing), bounds, and traversal completeness. Read-only. Use it to find the active window, confirm a window opened or closed, or choose the app for desktop_act.",
+        input: {
+          type: "object",
+          properties: {
+            app: APP_PROPERTY,
+            showing: SHOWING_PROPERTY,
+            maxDepth: MAX_DEPTH_PROPERTY,
+            maxNodes: MAX_NODES_PROPERTY,
+          },
+          additionalProperties: false,
+        },
+        async execute(raw) {
+          return { content: await executeDesktop({ ...(raw as DesktopCommandInput), verb: "windows" }) }
+        },
+      })
+
+      editor.add({
         name: "desktop_act",
         description:
           "Invoke an accessibility action, move keyboard focus, or replace an editable field's text in a GNOME application over AT-SPI. Mutations are previews by default and return a short-lived target_token; call again with apply=true and that expectToken to execute, then verify the result with a fresh desktop screenshot. Protected password fields are refused.",
@@ -151,6 +170,43 @@ export default Plugin.define({
         },
         async execute(raw) {
           return { content: await executeDesktop(raw as DesktopCommandInput) }
+        },
+      })
+
+      editor.add({
+        name: "desktop_input",
+        description:
+          "Send exactly one bounded input action through the private ydotool service: a key or chord (kind=key, e.g. ctrl+s, Return, alt+F4) or printable ASCII text (kind=type, max 256 characters). Preview by default; the preview returns a short-lived target_token bound to the focused window, and calling again with apply=true and that expectToken executes it. Verify the result with a fresh desktop screenshot before continuing. Never use it for passwords or other secrets, and confirm before a key press that submits, publishes, purchases, or deletes.",
+        input: {
+          type: "object",
+          properties: {
+            kind: {
+              type: "string",
+              enum: ["key", "type"],
+              description: "key: one key or chord; type: printable ASCII text",
+            },
+            key: {
+              type: "string",
+              description: "Key or chord for kind=key, e.g. ctrl+s, Return, alt+F4",
+            },
+            text: {
+              type: "string",
+              description: "Text for kind=type (printable ASCII, max 256 characters)",
+            },
+            apply: {
+              type: "boolean",
+              description: "Execute the input instead of previewing it; requires expectToken",
+            },
+            expectToken: {
+              type: "string",
+              description: "target_token returned by the immediately preceding preview call",
+            },
+          },
+          required: ["kind"],
+          additionalProperties: false,
+        },
+        async execute(raw) {
+          return { content: await executeDesktop({ ...(raw as DesktopCommandInput), verb: "input" }) }
         },
       })
 

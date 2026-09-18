@@ -9,6 +9,7 @@ export const DESKTOP_CONTROL_TIMEOUT_MS = 30_000
 export const DESKTOP_CONTROL_MAX_OUTPUT_BYTES = 256 * 1024
 
 export type DesktopMutationVerb = "action" | "focus" | "set-text"
+export type DesktopCommandVerb = "apps" | "tree" | "find" | "windows" | "input" | DesktopMutationVerb
 
 export interface DesktopMatchInput {
   app?: string
@@ -22,7 +23,7 @@ export interface DesktopMatchInput {
 }
 
 export interface DesktopCommandInput extends DesktopMatchInput {
-  verb: "apps" | "tree" | "find" | DesktopMutationVerb
+  verb: DesktopCommandVerb
   all?: boolean
   includeText?: boolean
   action?: string
@@ -30,6 +31,8 @@ export interface DesktopCommandInput extends DesktopMatchInput {
   waitSeconds?: number
   apply?: boolean
   expectToken?: string
+  kind?: "key" | "type"
+  key?: string
 }
 
 export type DesktopArgResult = { args: string[] } | { error: string }
@@ -70,6 +73,41 @@ export function buildDesktopArgs(input: DesktopCommandInput): DesktopArgResult {
       pushMatcher(args, input)
       pushBounds(args, input)
       if (input.includeText) args.push("--include-text")
+      return { args }
+    }
+
+    case "windows": {
+      if (input.app) args.push("--app", input.app)
+      if (input.showing) args.push("--showing")
+      pushBounds(args, input)
+      return { args }
+    }
+
+    case "input": {
+      if (input.kind !== "key" && input.kind !== "type") {
+        return { error: "input requires kind 'key' or 'type'" }
+      }
+      if (input.kind === "key") {
+        if (!input.key) return { error: "input kind=key requires key, e.g. ctrl+s" }
+        if (input.text !== undefined) return { error: "text is only valid with kind=type" }
+      } else {
+        if (input.text === undefined || input.text === "") {
+          return { error: "input kind=type requires non-empty text" }
+        }
+        if (input.key !== undefined) return { error: "key is only valid with kind=key" }
+      }
+      if (input.expectToken !== undefined && !input.apply) {
+        return { error: "expectToken is only valid together with apply=true" }
+      }
+      if (input.apply && !input.expectToken) {
+        return { error: "apply=true requires expectToken from the preview result" }
+      }
+      args.push("--kind", input.kind)
+      if (input.kind === "key" && input.key) args.push("--key", input.key)
+      if (input.kind === "type" && input.text !== undefined) args.push("--text", input.text)
+      if (input.apply && input.expectToken) {
+        args.push("--expect-token", input.expectToken, "--apply")
+      }
       return { args }
     }
 

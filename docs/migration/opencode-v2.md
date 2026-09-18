@@ -337,9 +337,9 @@ exercised (the capture attachment arrived and its PNG was deleted); the docked
 Files panel, the Source Control row with real worktree data, the connected
 `github` MCP row, and the `Explorer` row were confirmed by screenshot; and a
 GitHub MCP read plus one approved write (PR #2 comment 5725307311) succeeded.
-OpenAI OAuth is not mapped in the pilot. B2's remaining pieces (single
-Playwright MCP registration in the running config and the `browser-headless`
-text) and the C4 cutover await explicit approval.
+OpenAI OAuth is not mapped in the pilot. B2's remaining pieces (the single
+Playwright MCP registration and the `browser-headless` text) landed with the
+cutover, which is recorded below.
 
 ## Cutover executed (2026-09-18)
 
