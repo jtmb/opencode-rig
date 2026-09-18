@@ -301,10 +301,13 @@ rollback) stays pending explicit approval; v1 remains the default.
   `playwright-mcp.sh` is registered; headless-only work runs through the
   repository Playwright runtime from the shell. The repo project config keeps
   the two v1 MCPs until cutover.
-- Still remaining: a v2 setup/verify script and health check, the AGENTS/README
-  v2 sections, CI coverage for `plugins-v2`, the rollback runbook, and Phase 5
-  cutover. Then the queued pre-migration work (desktop window/input tools and
-  Basic Memory M1-M4).
+- `verify-opencode-v2.sh` adds a read-only v2 health check (binary, config, 16
+  skills, commands, six plugins, single-Playwright assertion, aura theme) that
+  never connects an MCP.
+- Still remaining: a v2 deploy mode in `deploy-plugins.sh`/`setup-opencode.sh`,
+  rewriting the four command bodies, the `AGENTS.md` v2 section, CI coverage
+  for `plugins-v2`, and Phase 5 cutover. Then the queued pre-migration work
+  (desktop window/input tools and Basic Memory M1-M4).
 
 ## Risks
 

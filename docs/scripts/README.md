@@ -22,6 +22,12 @@ lists them at a glance and covers the operating environment.
 |--------|----------|--------------|
 | `deploy-plugins.sh` | [`deploy-plugins.md`](deploy-plugins.md) | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
 
+### Verification
+
+| Script | Document | What it does |
+|--------|----------|--------------|
+| `verify-opencode-v2.sh` | [`verify-opencode-v2.md`](verify-opencode-v2.md) | Read-only health check for the isolated OpenCode v2 pilot (binary, config, 16 skills, commands, six plugins, single Playwright MCP, aura theme); never connects an MCP |
+
 ### MCP launchers
 
 | Script | Document | What it does |
