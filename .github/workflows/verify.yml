@@ -59,6 +59,21 @@ jobs:
             npm --prefix "$package" run check
           done
 
+      - name: Local v2 plugin checks
+        run: |
+          set -euo pipefail
+          workspace=platforms/linux/ubuntu/computer-use/plugins-v2
+          npm --prefix "$workspace" ci --ignore-scripts
+          for package in \
+            codex-fallback \
+            codex-usage \
+            source-control \
+            file-manager \
+            rig-tools \
+            rig-todo; do
+            npm --prefix "$workspace/$package" run check
+          done
+
       - name: Documentation gate self-test
         run: python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage-self-test.py
 

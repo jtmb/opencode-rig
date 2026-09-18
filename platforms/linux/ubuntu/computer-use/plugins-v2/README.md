@@ -52,6 +52,12 @@ runs `typecheck` then `test`, and both route through
 `scripts/run-bounded-command.sh`. `check-plugin-resource-guards.py` enforces
 that wiring for this directory too.
 
+The `verify` GitHub Actions job installs this workspace with
+`npm ci --ignore-scripts` and runs all six package checks, so CI exercises the
+same commands as a local run. Workspace membership lives in `package.json`;
+add a package there and refresh `package-lock.json` through the bounded
+wrapper when introducing one.
+
 ```bash
 cd platforms/linux/ubuntu/computer-use/plugins-v2/<package>
 npm run check

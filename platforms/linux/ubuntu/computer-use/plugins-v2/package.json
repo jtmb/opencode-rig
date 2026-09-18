@@ -9,7 +9,8 @@
     "codex-usage",
     "source-control",
     "file-manager",
-    "rig-tools"
+    "rig-tools",
+    "rig-todo"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",

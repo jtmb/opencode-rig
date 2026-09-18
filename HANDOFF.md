@@ -173,20 +173,16 @@ Changing this project:
   - Tell me to restart OpenCode after skills, commands, plugins, or MCP
     configuration change.
 
-Known live state (recorded 2026-09-17):
+Known live state (recorded 2026-09-18):
 
   - Repository: ~/repos/opencode-rig, public; main is protected. Pull request
     jtmb/opencode-rig#1 (branch docs/handoff-blender-note) is open against main,
-    mergeable, with the required `verify` check passed; merge only on explicit
-    request. The current checkout is branch chore/todo-tracking-gate, stacked on
-    docs/handoff-blender-note, at commit 76b8294 (pushed; HEAD equals origin);
-    the only working-tree change is this HANDOFF refresh (intentionally left
-    uncommitted). Pull request jtmb/opencode-rig#2 (base
-    docs/handoff-blender-note) is open, mergeable, and its `verify` and
-    GitGuardian checks pass. The stacked branch carries the /handoff and /resume
-    commands, the progress-tracking gate, the desktop and vision custom tools,
-    the source-control reposition and row affordance, and the tui-settings and
-    file-manager plugins
+    mergeable, with the required `verify` check passed, and PR #2 (base
+    docs/handoff-blender-note) is open and green; merge only on explicit
+    request. The current checkout is branch migration/opencode-v2 (local, no
+    upstream), carrying the OpenCode v2 port; v1 remains the default and
+    untouched. The only working-tree changes are this HANDOFF update and the
+    untracked session-ses_f4dc.md transcript
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
   - Documentation gate: documentation-map.json and check-doc-coverage.py, with a
     local pre-push hook (core.hooksPath=.githooks) and the required "verify" CI
@@ -195,34 +191,32 @@ Known live state (recorded 2026-09-17):
     command, and this prompt; enforced by check-progress-tracking.py plus its
     self-test in the required `verify` CI job and the AGENTS.md verification
     list
-  - Deploy state: `/resume`, the skills, and both custom tools are deployed and
-    source-matched; the full `setup-computer-assistant.sh --verify-only` health
-    check is green. The running TUI still holds the pre-restart skills,
-    commands, tools, plugins, and GitHub MCP until OpenCode restarts
+  - Deploy state: v1 `/deploy`, `/handoff`, `/promote-skills`, `/resume`, the
+    skills, and both custom tools are deployed and source-matched; the v1
+    `setup-computer-assistant.sh --verify-only` health check must run outside
+    the pilot environment because its `opencode` child would otherwise read the
+    pilot config and database. The v2 pilot loads all six plugins and the four
+    commands, and `verify-opencode-v2.sh` is green
+  - v2 pilot: v2.0.7 at ~/.local/opt/opencode-v2/ with the `oc2` launcher and
+    isolated config/data under ~/.opencode-v2-pilot/; the pilot declares one
+    `github` MCP and no Playwright MCP yet (one live Playwright MCP is
+    registered at cutover). Plugins: rig-tools, rig-todo, and codex-fallback
+    (server); source-control, codex-usage, and file-manager (CLI). tui-settings
+    is retired in favor of v2's built-in `/settings`
   - Skills deployed: 16/16
   - Global commands deployed: /deploy, /handoff, /promote-skills, /resume
   - Global custom tools: `desktop.ts` exporting `desktop_apps`, `desktop_tree`,
     `desktop_find`, and `desktop_act`, plus `vision.ts` exporting
     `vision_capture` (screenshot as a data-URI image attachment), in
-    ~/.config/opencode/tools/; deployed by `setup-opencode.sh` and verified
-    loaded by a fresh OpenCode process (the running TUI needs a restart)
-  - Local plugins: codex-usage (TUI quota and optional Luna Reserve sidebar,
-    registered in ~/.config/opencode/tui.json), codex-fallback (server
-    failover, registered in ~/.config/opencode/opencode.jsonc; state at
-    ~/.local/share/opencode/codex-fallback.json), source-control (TUI
-    working-tree/GitHub panel, registered in ~/.config/opencode/tui.json with
-    whenEmpty "show"; verified live at sidebar order 50 with the minimized
-    start and runtime kv overrides, and newly underlined file rows with a
-    hover hint pending restart), tui-settings (TUI `/settings` launcher for the
-    built-in OpenCode settings menu plus the harness-only source-control and
-    sidebar options; registered in ~/.config/opencode/tui.json. Revised
-    2026-09-17: the sidebar `Settings` row and the duplicate
-    Appearance/Display/Plugins/About sections were removed; checks green,
-    pending a restart to load), and file-manager (TUI project
-    tree/quick-open/editor, registered in ~/.config/opencode/tui.json with
-    order 60; built and checked, waiting on the same restart)
-  - No planned TUI plugins remain; both approved plugins (`tui-settings` and
-    `file-manager`) are built - see "Part 3" under Work In Progress
+    ~/.config/opencode/tools/ for v1; v2 registers the same five through the
+    rig-tools server plugin
+  - Local plugins: v1 runs codex-usage (TUI quota and optional Luna Reserve
+    sidebar), codex-fallback (server failover), source-control (working-tree
+    and GitHub panel), tui-settings (settings menu launcher), and file-manager
+    (project tree and editor) from ~/.config/opencode/tui.json and
+    ~/.config/opencode/opencode.jsonc; all are built, checked, and verified
+    live after the 2026-09-17 restart. The v2 pilot runs the six plugins-v2
+    packages and uses the built-in `/settings` instead of tui-settings
   - Browser runtime: @playwright/mcp 0.0.80 with isolated live and headless
     Firefox, via platforms/linux/ubuntu/browser-tools
   - GitHub MCP runtime: official v1.12.1 native amd64 release via
@@ -242,21 +236,21 @@ Known live state (recorded 2026-09-17):
 
 Work in progress (full detail in the "Work In Progress" section of this file):
 
-  - Everything through commit 76b8294 is committed and pushed; PR #2 is open
-    and its required `verify` check and GitGuardian check pass.
-  - The next action is a restart, then live verification of the settings
-    overlay, file-manager, source-control row hint, `vision_capture`, and the
-    write-capable GitHub MCP.
-  - Queued after that: the computer-use window-listing and bounded input tools,
-    then Basic Memory M1-M4 (the legacy JSON memory stays authoritative until
-    the M2 migration).
-  - Planned: migration to OpenCode v2 (2.0.x) so the Explorer can be a docked
-    `session.panel` instead of a full-screen route. See
-    `docs/migration/opencode-v2.md` on branch `migration/opencode-v2`. v1
-    (1.18.31) remains the default until the v2 stack passes the same health
-    checks; there is no left dock in either version, so the panel docks right.
-  - Pending verification: the whole batch awaits the next restart; the
-    progress-tracking gate and the PR #2 CI checks are green.
+  - The OpenCode v2 port is the active work: branch migration/opencode-v2
+    (local; no upstream), pilot v2.0.7 under ~/.opencode-v2-pilot/. All six
+    plugins-v2 packages pass their bounded checks and load in the pilot, and
+    the four global commands are discovered. The A1 keymap fix is verified
+    after a fresh pilot start
+  - Phase 4 remaining: a v2 deploy mode in deploy-plugins.sh/setup-opencode.sh,
+    v2 rewrites of the four global command bodies, and the AGENTS.md v2
+    section. CI coverage for plugins-v2 landed in this session (A8)
+  - Phase 5 (full v2 health check and PATH cutover with v1 rollback) waits on
+    an explicit operator go; v1 (1.18.31) remains the default until then, with
+    no left dock in either version, so the Explorer panel docks right
+  - Queued after cutover: the computer-use window-listing and bounded input
+    tools, then Basic Memory M1-M4 (the legacy JSON memory stays authoritative
+    until the M2 migration), then the untracked session-ses_f4dc.md cleanup
+    (with approval)
 
 After the health check, give me a concise status and continue with the task I
 give you. If I pasted only this handoff, ask what task I want handled.
@@ -266,53 +260,42 @@ give you. If I pasted only this handoff, ask what task I want handled.
 
 ### Checkout state
 
-- Branch docs/handoff-blender-note (main is protected). Committed history began
-  at f574842 with the preserved Luna Reserve and configuration baseline, the
-  source-control plugin, the adaptive resource guard, and the GitHub MCP
-  log-suppression fix. The branch is pushed to origin with this session's work;
-  pull request jtmb/opencode-rig#1 is open against main and its required
-  `verify` check has passed (mergeable, clean) - it waits only on an explicit
-  merge request.
-- This session committed the `/handoff` and `/resume` commands with their docs
-  and setup registration; the desktop custom-tools package (`tools/`), its
-  `setup-opencode.sh` deployment, the resource-guard extension, and its docs;
-  the source-control Ctrl+click and header-count changes; and this HANDOFF.md
-  rewrite.
-- All committed work on PR #1 passes the documentation gate and self-tests,
-  shell/Python validation, the bounded checks for the plugins and the tools
-  package, setup verification (`setup-opencode.sh` and
-  `setup-computer-assistant.sh`), the deployed tool loading check, and the real
-  read-only GitHub MCP smoke test.
-- The resumed session (2026-09-17) landed the progress-tracking gate as commit
-  67909ab on branch chore/todo-tracking-gate (stacked on
-  docs/handoff-blender-note): the AGENTS.md section and Start Here step, the
-  `commands/resume.md` step, the prompt expectation,
-  `check-progress-tracking.py` and its self-test, the CI step in
-  `.github/workflows/verify.yml`, the docs and index rows, and the component
-  README. The branch is pushed; pull request jtmb/opencode-rig#2 (base
-  docs/handoff-blender-note) is open, mergeable, and its `verify` and
-  GitGuardian checks pass. The `/resume` command was redeployed
-  (`setup-opencode.sh --apply`), source/deployed content match, and the full
-  health check is green.
-- This session committed and pushed aba7cc9 (tui-settings + source-control
-  order override), b826cd3 (file-manager), and 76b8294 (vision_capture +
-  write-capable GitHub MCP + source-control row hint). PR #2 head is 76b8294
-  and its `verify` and GitGuardian checks pass.
-- Next planned change: restart OpenCode and live-verify the batch, then build
-  the remaining computer-use tools (window listing and bounded input), with
-  Basic Memory M1-M4 queued.
-- Basic Memory M0 was completed in the same session (below), and the TUI
-  feature plan in "Part 3" was approved with the user.
+- The current checkout is branch `migration/opencode-v2` (local; no upstream),
+  where the OpenCode v2 port lives. v1 stays the default and untouched:
+  `~/.opencode/bin/opencode` (1.18.31), `~/.config/opencode/`, and the
+  `~/.local/share/opencode/opencode.db` are unchanged this session.
+- The v2 pilot is v2.0.7 at `~/.local/opt/opencode-v2/` with all state under
+  `~/.opencode-v2-pilot/` (config, data, state, cache). `oc2` starts it with
+  the v2 session prompt; `verify-opencode-v2.sh` is the read-only health check
+  and is green. The v2 session handoff lives at
+  `docs/migration/v2-session-handoff.md`; the plan and phase results live at
+  `docs/migration/opencode-v2.md`.
+- v2 commits on the branch: Phase 2 ports, the CLI keymap fix (6d76817),
+  rig-todo plus the tui-settings presets folded into source-control (3a9c8ad),
+  the config-dir skills source (170a68a), v2 config examples (18d3a45), the
+  cutover and rollback runbook (a4671a1), source-control colour parity
+  (08bc281), the v2 health check (d32bcf7), and the CI coverage with the
+  rig-todo workspace addition from this session.
+- v1 work stays on PRs #1/#2 as recorded in the prompt above; merge only on
+  explicit request. The untracked `session-ses_f4dc.md` transcript sits at the
+  repository root; remove it only with approval (Phase D8).
+- Basic Memory M0 is complete (below); the TUI feature plan in "Part 3" was
+  approved with the user and is implemented for v1.
 
-### Current todo status (2026-09-17)
+### Current todo status (2026-09-18)
 
-- Completed: tui-settings build; file-manager build; commits aba7cc9, b826cd3,
-  and 76b8294 pushed to PR #2 (CI green); `vision_capture` tool; write-capable
-  GitHub MCP; source-control underline/hover hint.
-- Pending: restart and live-verify the batch (settings overlay, file-manager,
-  source-control hint, `vision_capture`, GitHub write tools); build the
-  remaining computer-use tools (window listing, bounded input); resume Basic
-  Memory M1-M4; merge PR #1/#2 only on explicit request.
+- Completed: the six v2 plugin ports with bounded checks; the pilot loads all
+  six and discovers the four commands; A1 restart verification (no
+  `Keymap.Provider is missing`; `plugin list` shows all six; `command.list`
+  shows deploy/handoff/promote-skills/resume); rig-todo; tui-settings presets
+  folded into source-control; the config-dir skills source; `cli.json` parity;
+  v2 config examples; colour parity; the cutover/rollback runbook; the
+  `verify-opencode-v2.sh` health check; CI coverage for `plugins-v2` with the
+  rig-todo workspace fix.
+- Pending: the v2 deploy mode, the four v2 command bodies, the AGENTS.md v2
+  section; then Phase 5 cutover on explicit approval; then the window/input
+  tools and Basic Memory M1-M4; merge PR #1/#2 only on explicit request;
+  remove `session-ses_f4dc.md` with approval.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -703,17 +686,21 @@ through `run-bounded-command.sh`; no Firefox-launching MCPs during migration
 work; the documentation, handoff, and resource gates kept current; commit v2
 work only on `migration/opencode-v2`; PRs only on request.
 
-Already done: all five plugins ported and committed (86 tests, bounded);
-`rig-tools` live-verified; the CLI keymap bug fixed; the resource guard and
-documentation map cover `plugins-v2/`; `tui-settings` retired.
+Already done: all six plugins ported and committed (90 bounded tests: 86
+across the first five packages plus 4 for rig-todo); `rig-tools`, `rig-todo`,
+and the CLI plugins live-verified; the CLI keymap bug fixed and
+restart-verified (A1); the resource guard and documentation map cover
+`plugins-v2/`; `tui-settings` retired; A2-A5 landed (rig-todo, presets folded,
+config-dir skills source, `cli.json` parity); A8 CI coverage landed.
 
 #### Phase A - finish the v2 port (repo, pilot-verifiable)
 
-- **A1. Restart-verify the keymap fix.** Restart `oc2`; confirm no
-  `Keymap.Provider is missing` in the log, and that Source Control, Codex
-  Usage, and Explorer render with `/changes`, `/codex-usage`, `/files`
-  commands responding.
-- **A2. Todo tool (`plugins-v2/rig-todo`).** Package
+- **A1. Restart-verify the keymap fix. DONE 2026-09-18.** Restart `oc2`;
+  confirm no `Keymap.Provider is missing` in the log, and that Source Control,
+  Codex Usage, and Explorer render with `/changes`, `/codex-usage`, `/files`
+  commands responding. Verified: no keymap errors after the fix, `plugin list`
+  shows all six local plugins, and `command.list` includes the four commands.
+- **A2. Todo tool (`plugins-v2/rig-todo`). DONE 2026-09-18.** Package
   `opencode-rig-todo-v2-local`, id `opencode-rig.todo`, `exports "./server"`
   plus a root `server.ts`. `src/store.ts` (pure) normalizes items
   `{ content, status: pending|in_progress|completed|cancelled, priority? }`,
@@ -725,27 +712,31 @@ documentation map cover `plugins-v2/`; `tui-settings` retired.
   to `plugins-v2/README.md`, `docs/plugins/README.md`, `documentation-map.json`
   (handoff rule), this file, and the AGENTS.md Progress Tracking section.
   **A2b (deferred):** optional `sidebar.content` todo panel for v1 parity.
-- **A3. Fold `tui-settings` presets into v2 `source-control`.** Options
+- **A3. Fold `tui-settings` presets into v2 `source-control`. DONE 2026-09-18.** Options
   (`refreshMs`, `githubRefreshMs`, `maxFiles`, `startCollapsed`, `whenEmpty`,
   `github`, `remoteName`) documented; note that v2 has no live slot-order
   control, so the v1 order override is retired.
-- **A4. Skills source without the stray `README` skill.** Try in order: list
+- **A4. Skills source without the stray `README` skill. DONE 2026-09-18.** Try in order: list
   skill directories explicitly in `skills`; a `skills-v2/` symlink farm; rename
   `skills/README.md`. End state: exactly the 16 skills plus v2 builtins, with
-  the docs gate still passing.
-- **A5. `cli.json` parity pass.** Map what v2 supports (`theme`,
+  the docs gate still passing. Resolved with the config-dir `skills/` symlink
+  farm (16 links) instead of `skills-v2/`.
+- **A5. `cli.json` parity pass. DONE 2026-09-18.** Map what v2 supports (`theme`,
   `prompt.paste`, `session.image_preview`, `session.grouping`, `mouse`,
   `scroll`, `diffs.*`, `attention`) and record the v1 keys with no v2
-  equivalent in `docs/migration/opencode-v2.md`.
+  equivalent in `docs/migration/opencode-v2.md`; the Phase 4 results carry the
+  mapping, with `aura` as the parity theme.
 - **A6. Rewrite the four global commands for v2** (`deploy`, `resume`,
   `handoff`, `promote-skills`): v2 paths, `cli.json` object registration, the
-  v2 health-check name.
+  v2 health-check name. PENDING.
 - **A7. Deploy tooling.** `deploy-plugins.sh` v2 mode (writes `cli.json` and
   `opencode.jsonc` object entries, `--verify-only`, never overwrites);
   `setup-opencode.sh` v2 target (or `setup-opencode-v2.sh`) for skills,
-  commands, and config; docs + map rows for both.
-- **A8. CI.** Extend `.github/workflows/verify.yml` to run the bounded
-  `plugins-v2` checks and the new gates.
+  commands, and config; docs + map rows for both. PENDING.
+- **A8. CI. DONE 2026-09-18.** `.github/workflows/verify.yml` installs the
+  `plugins-v2` workspace with `npm ci --ignore-scripts` and runs the six
+  bounded package checks; the `rig-todo` workspace entry and lockfile were
+  fixed so CI and local runs cover the same six packages.
 
 #### Phase B - v2 parity, one Playwright MCP, health check
 
@@ -760,15 +751,18 @@ documentation map cover `plugins-v2/`; `tui-settings` retired.
   skill and AGENTS/README text: v2 has one Playwright MCP, and headless-only
   work runs through the repo Playwright runtime from the shell. Verify:
   `mcp list` shows exactly one `playwright` connected.
-- **B3. `scripts/verify-opencode-v2.sh`** (or
-  `setup-computer-assistant.sh --v2 --verify-only`): binary/version, isolated
-  paths, 16 skills, 4 commands, 6 plugins, 6+ tools, single github plus single
-  playwright MCP, config schema. Bounded and Firefox-free.
+- **B3. `scripts/verify-opencode-v2.sh`. DONE 2026-09-18** (landed as
+  `scripts/verify-opencode-v2.sh`): binary/version, isolated paths, 16 skills,
+  4 commands, 6 plugins, plugin entry shims, MCP declarations (one github, at
+  most one playwright), aura theme, and the cutover example. Bounded and
+  Firefox-free.
 - **B4. Docs.** Finalize `docs/migration/opencode-v2.md`; add a v2 section and
   verification list to `AGENTS.md`; refresh HANDOFF; update
-  `documentation-map.json` and READMEs.
-- **B5. Rollback runbook.** Cutover is `PATH` + active config only; v1 binary
-  and config stay in place; document the exact revert.
+  `documentation-map.json` and READMEs. PENDING (HANDOFF refresh continues
+  each session).
+- **B5. Rollback runbook. DONE 2026-09-18** (cutover is `PATH` + active config
+  only; v1 binary and config stay in place; the exact revert is documented in
+  `docs/migration/opencode-v2.md`).
 
 #### Phase C - verification and cutover (explicit approval)
 
@@ -805,8 +799,9 @@ documentation map cover `plugins-v2/`; `tui-settings` retired.
   (with approval); keep this file current.
 
 Order: A1 -> A2 -> A3/A4/A5 -> A6 -> A7 -> A8 -> B1/B2 -> B3/B4/B5 -> C -> D.
-Phases A and D1/D2 are independent; Basic Memory (D3-D6) can start once the v2
-config is final.
+A1-A5, A8, B3, and B5 are done; A6, A7, and B4 remain before Phase C. Phases A
+and D1/D2 are independent; Basic Memory (D3-D6) can start once the v2 config is
+final.
 
 Risks: v2 plugin APIs are pre-stable (pin 2.0.7, re-test on upgrades); no v2
 todo panel unless A2b is built; a single Playwright MCP trades headless
@@ -819,20 +814,19 @@ v2 upgrade beyond 2.0.7.
 
 ### Suggested next steps
 
-1. Restart OpenCode, then live-verify the batch: the `/settings` overlay, the
-   `Settings` and `Explorer` rows, sidebar visibility/position, the
-   source-control order override and underline/hover hint, the file-manager
-   tree/viewer/editor/save/external editor, `vision_capture`, and a GitHub MCP
-   read plus one approved write. Re-check the Ctrl+click/accent behavior with a
-   dirty worktree.
-2. Build the remaining computer-use tools (Part 4): window listing and bounded
-   input.
-3. Resume Basic Memory M1-M4: wrapper `scripts/basic-memory-mcp.sh`, global
-   registration with the revised disable list, migration, then legacy removal
-   only at the end with the explicit delete confirmation.
-4. Merge pull request jtmb/opencode-rig#1 (and the stacked PRs) only on
-   explicit request; keep the memory-migration deletion gate for the end of
-   the M2 work.
+1. Finish v2 Phase 4: add the v2 deploy mode to
+   `deploy-plugins.sh`/`setup-opencode.sh`, rewrite the four global command
+   bodies for v2, and add the `AGENTS.md` v2 section; keep the documentation
+   gate and this file current.
+2. Run Phase 5 verification in the pilot: the six plugins, both todo tools,
+   the desktop/vision tools, and one MCP read; then ask for the explicit
+   cutover go (PATH change; rollback documented in
+   `docs/migration/opencode-v2.md`).
+3. After cutover, resume the pre-migration queue: desktop window-listing and
+   bounded input tools, then Basic Memory M1-M4; delete the legacy memory only
+   with the explicit confirmation at the M2 gate.
+4. Merge PRs #1/#2 only on explicit request; remove `session-ses_f4dc.md` with
+   approval.
 
 ## Keep This Current
 

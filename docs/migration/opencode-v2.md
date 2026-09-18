@@ -304,10 +304,18 @@ rollback) stays pending explicit approval; v1 remains the default.
 - `verify-opencode-v2.sh` adds a read-only v2 health check (binary, config, 16
   skills, commands, six plugins, single-Playwright assertion, aura theme) that
   never connects an MCP.
+- A1 restart verification: the fresh v2.0.7 start produced no
+  `Keymap.Provider is missing` errors, `plugin list` shows all six local
+  plugins, and the command catalog includes `deploy`, `handoff`,
+  `promote-skills`, and `resume`.
+- A8 CI coverage: `.github/workflows/verify.yml` installs the `plugins-v2`
+  workspace with `npm ci --ignore-scripts` and runs the six bounded package
+  checks. `rig-todo` was added to the workspace list and lockfile so CI and
+  local checks cover the same six packages.
 - Still remaining: a v2 deploy mode in `deploy-plugins.sh`/`setup-opencode.sh`,
-  rewriting the four command bodies, the `AGENTS.md` v2 section, CI coverage
-  for `plugins-v2`, and Phase 5 cutover. Then the queued pre-migration work
-  (desktop window/input tools and Basic Memory M1-M4).
+  rewriting the four command bodies, and the `AGENTS.md` v2 section, then
+  Phase 5 cutover. After cutover, the queued pre-migration work (desktop
+  window/input tools and Basic Memory M1-M4).
 
 ## Risks
 
