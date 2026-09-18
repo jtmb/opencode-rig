@@ -1,7 +1,7 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
 import type { Context, PanelInput } from "@opencode/plugin/tui/context"
-import { SyntaxStyle, type TextareaRenderable } from "@opentui/core"
+import { SyntaxStyle, getTreeSitterClient, type TextareaRenderable } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { spawn } from "node:child_process"
@@ -24,6 +24,7 @@ import {
   type FileNode,
 } from "./model.ts"
 import { consumeMouseActivation, type MouseActivation } from "./mouse.ts"
+import { registerParsers, spikeParserAssets } from "./parsers.ts"
 
 const PANEL_NAME = "file-manager.files"
 const SEARCH_DEBOUNCE_MS = 150
@@ -259,9 +260,54 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     void openFile(result)
   }
 
+  // Spike: the editable textarea has no tree-sitter filetype hook in 0.5.11,
+  // so highlights are computed through the host client and applied manually.
+  let highlightTimer: ReturnType<typeof setTimeout> | undefined
+
+  const styleIdFor = (capture: string): number | undefined => {
+    const exact = syntaxStyle.getStyleId(capture)
+    if (exact !== null && exact !== undefined) return exact
+    const fallback = syntaxStyle.getStyleId(capture.split(".")[0])
+    if (fallback !== null && fallback !== undefined) return fallback
+    const base = syntaxStyle.getStyleId("default")
+    return base === null || base === undefined ? undefined : base
+  }
+
+  const applyHighlights = async () => {
+    const area = textareaRef
+    const current = tab()
+    if (!area || !current) return
+    const filetype = filetypeFor(current.path)
+    const buffer = area.editBuffer
+    if (!filetype) {
+      buffer.clearAllHighlights()
+      return
+    }
+    try {
+      const result = await getTreeSitterClient().highlightOnce(buffer.getText(), filetype)
+      const highlights = result.highlights ?? []
+      buffer.clearAllHighlights()
+      for (const [start, end, capture] of highlights) {
+        const styleId = styleIdFor(capture)
+        if (styleId === undefined) continue
+        buffer.addHighlightByCharRange({ start, end, styleId })
+      }
+    } catch {
+      buffer.clearAllHighlights()
+    }
+  }
+
+  const scheduleHighlight = () => {
+    if (highlightTimer) clearTimeout(highlightTimer)
+    highlightTimer = setTimeout(() => void applyHighlights(), 120)
+  }
+
   const editSelected = async () => {
     await openSelected()
-    if (tab()) setMode("edit")
+    if (tab()) {
+      setMode("edit")
+      scheduleHighlight()
+    }
   }
 
   const externalSelected = async () => {
@@ -490,6 +536,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   onCleanup(() => {
     stopWatcher()
     if (searchTimer) clearTimeout(searchTimer)
+    if (highlightTimer) clearTimeout(highlightTimer)
     syntaxStyle.destroy()
   })
 
@@ -620,6 +667,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
                       onContentChange={() => {
                         const active = tab()
                         if (active && textareaRef) setTab({ ...active, content: textareaRef.editBuffer.getText() })
+                        scheduleHighlight()
                       }}
                     />
                   </line_number>
@@ -642,6 +690,8 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
 export default Plugin.define({
   id: "opencode-rig.file-manager",
   setup(context) {
+    void registerParsers(spikeParserAssets())
+
     const stopPanel = context.ui.slot({
       append: "session.panel",
       render: (panel) => (

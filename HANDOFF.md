@@ -228,7 +228,9 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     already recorded in Basic Memory: projects/opencode-rig/explorer-ide,
     decisions/adrs-explorer-ide-scope, and
     feedback/2026-09-18/direct-status-checks-and-question-tool-usage.
-    Next action: run the Phase 0 spikes.
+    Phase 0 is done (parser registration + manual editor highlighting work;
+    ctrl+z is the host terminal-suspend binding). Next action: Phase 1, the
+    editor core (multi-tab, save/save-all, status bar, persistence).
   - Merge PRs #1/#2/#3 only on explicit request.
 
 After the health check, give me a concise status and continue with the task I
@@ -286,8 +288,12 @@ Explorer panel.
 
 **Phases.**
 
-- **0. Spikes** — register one extra parser from the plugin; confirm textarea
-  highlighting, traits/keybindings, and mouse/selection coexistence.
+- **0. Spikes. DONE 2026-09-18.** Parser registration via
+  `addFiletypeParser` and the manual `highlightOnce` +
+  `addHighlightByCharRange` editor pipeline both work (JSON verified live in
+  the viewer and editor); `ctrl+z` is the host's terminal-suspend binding, so
+  Phase 3 must bind editor undo to free chords; mouse click-to-position still
+  needs a manual operator check.
 - **1. Editor core** — multi-tab model + tab strip, save/save-all/close/reopen,
   dirty/discard guards, status bar (`L:C`), go-to-line, tab persistence.
 - **2. Language coverage** — pinned, checksum-verified parser assets + manifest,
@@ -387,9 +393,9 @@ The plan document records these under "Operator decisions".
 
 ### Suggested next steps
 
-1. Start the Phase 0 spikes (plan, decisions, and workflow feedback are
-   recorded in Basic Memory).
-2. Continue Phases 1-7 with the memory loop and per-phase verification.
+1. Start Phase 1 (editor core): the tray/tab model, save/save-all/close/
+   reopen, status bar, and persistence. Phase 0 is done.
+2. Continue Phases 2-7 with the memory loop and per-phase verification.
 3. Merge PRs #1/#2/#3 only on explicit request; retarget PR #3 to main after
    PR #1/#2 merge.
 

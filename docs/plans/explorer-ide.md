@@ -56,6 +56,12 @@ edited, created, and navigated.
   (`capture: escape|navigate|submit|tab`, `status`) for key ownership.
 - Custom `keyBindings`/`keyAliasMap`.
 
+**Phase 0 correction:** the editable buffer has no tree-sitter filetype hook in
+0.5.11. `syntaxStyle` alone does not parse; the editor must compute highlights
+with `getTreeSitterClient().highlightOnce(content, filetype)` and apply them via
+`clearAllHighlights()` + `addHighlightByCharRange()`. The read-only `Code`
+renderable does this internally through its `filetype` prop.
+
 Available companion renderables: `CodeRenderable` (read-only highlighted code),
 `LineNumberRenderable` (already used as `<line_number>`), `DiffRenderable`,
 `TabSelectRenderable`, `SelectRenderable`, `ScrollBoxRenderable`,
@@ -143,15 +149,33 @@ Each phase is a bounded change: pure tests + bounded package checks + live
 keyboard verification (via the `desktop_input` tool) + screenshots + docs gate
 + a memory ADR/status update. Phases land separately.
 
-### Phase 0 — spikes (0.5 day)
+### Phase 0 — spikes (DONE 2026-09-18)
 
-1. Register one extra parser (e.g. JSON) from the plugin package with
-   `addDefaultParsers` and confirm highlighting in the editor.
-2. Confirm `TextareaRenderable` syntax highlighting + `traits` + custom
-   keybindings do not conflict with the host keymap or prompt editor.
-3. Confirm mouse click-to-position/selection coexists with the row handlers.
-   Exit: a screenshot of a highlighted editable file and a short write-up
-   (decision note + gotchas).
+1. **Parser registration works.** `client.addFiletypeParser({ filetype, wasm,
+   queries: { highlights } })` after `client.initialize()` registers a parser
+   with the host's shared client; the read-only viewer then highlights JSON
+   through its `Code` renderable. Spike assets came from
+   `/tmp/opencode/parsers/json/` (tree-sitter-json v0.24.8; wasm sha256
+   `d2119fb9…`, highlights sha256 `05115244…`); Phase 2 replaces this with the
+   pinned fetch script and generated manifest.
+2. **Editor highlighting works via a manual pipeline.** On open/edit,
+   `highlightOnce(buffer.getText(), filetype)` returns `[start, end, capture]`
+   tuples; the editor clears and re-applies them as `addHighlightByCharRange`
+   ranges, resolving captures with a dotted-name fallback
+   (`string.special.key` → `string` → `default`). Re-highlight is debounced
+   (120 ms) on content change, and a missing parser falls back to plain text.
+3. **Key ownership works, with one conflict.** Typing inserts text (no command
+   interception), Backspace/Escape behave, and highlighting survives edits.
+   **Gotcha:** `ctrl+z` is the host's `terminal.suspend` binding and suspended
+   the TUI instead of undoing. Phase 3 must bind editor undo/redo to free
+   chords (for example `alt+z`/`alt+shift+z`) or override that host binding.
+4. **Mouse:** ydotool cannot drive the GNOME pointer on this machine, so
+   click-to-position/selection in the editor still needs the operator's manual
+   check.
+5. **Files:** `src/parsers.ts` and the editor highlight pipeline in
+   `src/tui.tsx` land as the Phase 2/3 foundation, with `.json`/`.jsonc` added
+   to `filetypeFor`. Evidence: highlighted viewer and editor screenshots; no
+   writes to tracked files (the test edit was discarded).
 
 ### Phase 1 — editor core (1–2 days)
 

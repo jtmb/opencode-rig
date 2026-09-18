@@ -27,6 +27,8 @@ const FILETYPE_BY_EXTENSION: Record<string, string> = {
   ".mts": "typescript",
   ".cts": "typescript",
   ".tsx": "typescriptreact",
+  ".json": "json",
+  ".jsonc": "json",
   ".md": "markdown",
   ".markdown": "markdown",
   ".zig": "zig",
