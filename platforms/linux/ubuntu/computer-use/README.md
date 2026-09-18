@@ -59,7 +59,7 @@ Generated and local-only paths (never committed):
 - `plugins/tui-settings/node_modules/`
 - `plugins/file-manager/node_modules/`
 - `tools/node_modules/`
-- `~/Documents/computer-assistant/memory.json` (owner-only app data)
+- `~/Documents/computer-assistant/basic-memory/` (owner-only memory project data)
 - `/tmp/opencode/playwright*/` (transient MCP output)
 - `~/Pictures/Screenshots/*.png` (viewed once, then deleted)
 
@@ -112,14 +112,16 @@ changing plugin registration/TUI configuration. Running sessions do not
 hot-reload them.
 
 After restart, `/promote-skills` validates the canonical skill documentation,
-deploys every complete bundle globally through `setup-opencode.sh --apply`, and
-verifies source parity plus OpenCode discovery. `/deploy` registers the local
-plugins globally or into a repository's `.opencode/` directory (and optionally
-copies the bootstrap scripts) through `scripts/deploy-plugins.sh`. `/handoff`
-refreshes `HANDOFF.md` with the current session state and regenerates the
-prompt block for a fresh chat. `/resume` reads `HANDOFF.md`, runs the read-only
-health check, reports status, and continues the pending task with progress
-tracked in the todo list.
+deploys every complete bundle through `setup-opencode.sh --apply` (v1) or
+`setup-opencode-v2.sh --apply` (v2 pilot), and verifies source parity plus
+discovery. `/deploy` registers the local plugins globally or into a
+repository's `.opencode/` directory (and optionally copies the bootstrap
+scripts) through `scripts/deploy-plugins.sh`, and with `--v2` registers the
+six `plugins-v2` packages into a v2 config directory. `/handoff` refreshes
+`HANDOFF.md` with the current session state and regenerates the prompt block
+for a fresh chat. `/resume` reads `HANDOFF.md`, runs the read-only health check
+for the running stack, reports status, and continues the pending task with
+progress tracked in the todo list.
 
 [`plugins/codex-usage/`](plugins/codex-usage/README.md) is a local OpenCode TUI
 sidebar for the weekly Codex quota and optional Luna Reserve usage.
@@ -130,7 +132,7 @@ automatic return to Codex when the quota resets.
 sidebar for working-tree changes and the current branch's GitHub pull request.
 [`plugins/tui-settings/`](plugins/tui-settings/README.md) is a local TUI
 settings overlay for appearance, display, plugins, source control, and sidebar
-positioning.
+positioning (v1 only; retired in v2 in favor of the built-in `/settings`).
 [`plugins/file-manager/`](plugins/file-manager/README.md) is a local TUI
 project tree, quick-open, and editor with atomic saves.
 
@@ -183,7 +185,8 @@ phrases, example requests, and how the skills combine.
 | `scripts/check-plugin-resource-guards-self-test.py` | Verify a bounded child can terminate without taking down its parent |
 | `scripts/setup-live-dictation.sh` | Reproduce and verify local incremental Vosk dictation on `Alt+X` without login autostart |
 | `scripts/setup-opencode.sh` | Verify by default; with `--apply`, persist `OPENCODE_ENABLE_EXA=1`, recursively deploy complete skill bundles, and deploy repository-managed global commands and typed desktop custom tools |
-| `scripts/deploy-plugins.sh` | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
+| `scripts/setup-opencode-v2.sh` | Verify by default; with `--apply`, link the 16 skill bundles, deploy the four global commands, and seed the v2 config into an isolated v2 config directory |
+| `scripts/deploy-plugins.sh` | Register the local v1 plugins globally or into a repository's `.opencode/`, or the v2 packages into a config directory (`--v2`); optionally copy the bootstrap scripts |
 | `scripts/desktop-control.py` | AT-SPI inspection with traversal status, short-lived target tokens, focus/text verification, and protected-field refusal |
 | `scripts/check-skill-docs.py` | Read-only validation for skill metadata, usage guides, deployed-set links, unsafe modes, symlinks, and generated artifacts |
 | `scripts/check-skill-docs-self-test.py` | Isolated negative tests proving invalid skill metadata and documentation are rejected |
@@ -211,6 +214,21 @@ phrases, example requests, and how the skills combine.
   project-level Playwright MCP registrations. The GitHub MCP is registered
   globally by `setup-computer-assistant.sh`; its env-backed block is documented
   in [`docs/scripts/github-mcp.md`](../../../../docs/scripts/github-mcp.md).
+- [`config/v2-opencode.example.jsonc`](config/v2-opencode.example.jsonc) and
+  [`config/v2-cli.example.json`](config/v2-cli.example.json) are the OpenCode v2
+  (2.0.x) equivalents. v2 uses the `plugins` object form, the flat `mcp` map
+  with no numeric `timeout`, the `rig-tools`/`rig-todo`/`codex-fallback`
+  server plugins, and the three CLI plugins in `cli.json`. v2 registers exactly
+  **one** Playwright MCP (the live visible wrapper); headless-only work runs
+  through the repository Playwright runtime from the shell. It also registers
+  the bounded `basic-memory` MCP with `permissions` deny entries that hide 12
+  rarely used tools, leaving nine core note tools. `cli.json` enables terminal
+  mouse capture (`"mouse": true`) and registers the `rig-todo` sidebar panel in
+  addition to the three CLI plugins.
+- [`config/v2-plugin-roles.json`](config/v2-plugin-roles.json) is the canonical
+  six-package v2 role catalog. `deploy-plugins.sh --v2` and
+  `verify-opencode-v2.sh` validate and consume it, including the dual server/CLI
+  role owned by `rig-todo`.
 - [`config/maintenance.cron.example`](config/maintenance.cron.example)
   documents the weekly maintenance schedule and required cron `PATH`.
 - Plugin registration examples live in
@@ -269,6 +287,13 @@ Neither inherits cookies or tabs from the normal Firefox profile. Browser
 binaries download into `../browser-tools/browsers/` on first `--apply` and are
 excluded from Git.
 
+The repository project `opencode.json` registers both v1 MCPs for this
+checkout and deliberately carries no numeric `timeout` (v2 silently drops an
+entire MCP block on a numeric timeout). The v2 launcher keeps project config
+disabled, because v2 registers only the single live `playwright` MCP from its
+own config; translating the project file to a one-MCP v2 shape can follow once
+v1 rollback is no longer needed.
+
 ## GitHub runtime
 
 `../github-tools/bin/github-mcp-server` is generated from the official GitHub
@@ -288,13 +313,15 @@ are expected. Never commit a token or place its value in
 
 ## Memory store
 
-`scripts/assistant-memory.py` manages `~/Documents/computer-assistant/memory.json`.
-Record writes preview by default and require `--apply`; store initialization
-is the documented exception. Categories: `preference`,
-`system`, `workflow`, `decision`, `pending`. Sources: `user`, `observed`,
-`verified`. Obvious credential shapes are rejected, but that is only a
-guardrail — never store passwords, tokens, keys, payment details, or full
-private conversations.
+The memory system of record is **Basic Memory** 0.23.2: owner-only Markdown
+plus a local SQLite index for the `computer-assistant` project at
+`~/Documents/computer-assistant/basic-memory/`, served through the bounded
+`basic-memory` MCP (`scripts/basic-memory-mcp.sh`, adaptive cgroup budget,
+`prlimit` fallback, fail closed). Writes through `write_note`/`edit_note` apply
+directly, so durable personal facts and decisions are confirmed first, and
+deleting a note always needs an explicit confirmation. The legacy JSON store
+(`assistant-memory.py` and `~/Documents/computer-assistant/memory.json`) was
+removed on 2026-09-18 after the verified M2 migration.
 
 ## Verification
 

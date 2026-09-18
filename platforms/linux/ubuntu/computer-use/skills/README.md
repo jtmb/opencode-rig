@@ -151,9 +151,11 @@ Example requests:
 - "Run this browser smoke test without opening a window."
 - "Download this public artifact in the background."
 
-Requires: `playwright_headless` MCP entry pointing at
-`../scripts/playwright-headless-mcp.sh` and the same pinned browser runtime.
-It has a separate isolated context and shares no state with the live window.
+Requires: on v1, the `playwright_headless` MCP entry pointing at
+`../scripts/playwright-headless-mcp.sh`; on v2, exactly one live `playwright`
+MCP plus the pinned repository runtime driven from the shell through
+`../scripts/run-bounded-command.sh`. Both run an isolated context that shares
+no state with the live window.
 
 ### game-playtest
 
@@ -203,7 +205,7 @@ permission changes retain explicit user handling and confirmation gates.
 ### task-memory
 
 Store and retrieve durable user preferences, verified computer facts,
-workflow decisions, and pending tasks in a private local memory file.
+workflow decisions, and pending tasks in the local Basic Memory knowledge base.
 
 Use when the user says remember, forget, continue later, what did we decide,
 or when durable context would prevent repeated setup. Never store credentials
@@ -215,9 +217,12 @@ Example requests:
 - "What did we decide about screenshots?"
 - "Continue where we left off yesterday."
 
-Requires: `scripts/assistant-memory.py`, owner-only store at
-`~/Documents/computer-assistant/memory.json` (dir `700`, file `600`).
-Writes preview by default and require `--apply`.
+Requires: the `basic-memory` MCP tools (`search_notes`, `build_context`,
+`read_note`, `write_note`, `edit_note`, `delete_note`) served by
+`scripts/basic-memory-mcp.sh` under an adaptive memory budget, with the
+owner-only project at `~/Documents/computer-assistant/basic-memory/` (dir
+`700`). Writes apply directly, so confirm durable personal facts first;
+deletion always needs an explicit confirmation.
 
 ### app-setup
 

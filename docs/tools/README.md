@@ -1,5 +1,10 @@
 # Desktop custom tools
 
+> **v1 / rollback only.** The OpenCode v2 stack exposes the same desktop and
+> vision tools (plus `desktop_windows` and `desktop_input`) through the
+> `rig-tools` server plugin under `plugins-v2/rig-tools/`. This package is
+> retained for the v1 rollback stack, and `setup-opencode.sh` still deploys it.
+
 The `computer-use/tools/` package wraps `desktop-control.py` in four typed
 OpenCode custom tools and adds a `vision_capture` screenshot tool. They are the
 preferred way for the assistant to inspect and operate GNOME controls: the

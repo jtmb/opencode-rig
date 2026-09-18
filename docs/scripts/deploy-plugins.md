@@ -4,8 +4,10 @@ Deploys the local OpenCode plugins to an OpenCode installation, and optionally
 copies the bootstrap scripts into the target. It is the engine behind the
 [`/deploy` command](../plugins/README.md) and is also directly runnable.
 
-Registration **references this checkout** with `file://` URLs; it does not copy
-the plugin sources. Existing plugin entries and their options are preserved.
+v1 registration **references this checkout** with `file://` URLs; it does not
+copy the plugin sources. With `--v2`, the `plugins-v2` packages register as
+absolute-path object entries in a v2 config directory. Existing plugin entries
+and their options are preserved in both modes.
 
 ```bash
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --verify-only
@@ -15,16 +17,20 @@ the plugin sources. Existing plugin entries and their options are preserved.
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --plugins source-control --apply
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --plugins all --apply
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --plugins codex-fallback --chain a/b,c/d --apply
+./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --v2 --plugins all --verify-only
+./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --v2 --config-dir ~/.opencode-v2-pilot/config --plugins all --apply
 ```
 
 ## Options
 
 | Option | Default | Meaning |
 |--------|---------|---------|
-| `--scope global\|project` | required | Deploy to the user's global config or one repository |
+| `--scope global\|project` | required without `--v2` | Deploy to the user's global config or one repository |
+| `--v2` | off | Register the `plugins-v2` packages in a v2 config directory |
+| `--config-dir DIR` | `$OPENCODE_V2_CONFIG_DIR`, else `$OPENCODE_V2_PILOT_DIR/config`, else `~/.opencode-v2-pilot/config` | v2 target directory (requires `--v2`) |
 | `--project DIR` | required for `project` | Target repository; `.opencode/` is created inside it |
-| `--plugins both\|all\|source-control\|tui-settings\|file-manager\|codex-usage\|codex-fallback` | `both` | Which plugins to register; `both` preserves the Codex pair and `all` includes source-control, tui-settings, and file-manager |
-| `--bootstrap` | off | Also copy `computer-use/scripts/` into the target |
+| `--plugins` | `both` | v1: `both`, `all`, `source-control`, `tui-settings`, `file-manager`, `codex-usage`, `codex-fallback`. v2: `both`, `all`, `server`, `cli`, or one of `rig-tools`, `rig-todo`, `codex-fallback`, `source-control`, `codex-usage`, `file-manager` |
+| `--bootstrap` | off | Also copy `computer-use/scripts/` into the target (v1 only) |
 | `--chain a/b,c/d` | — | `defaultChain` written when adding `codex-fallback` |
 | `--apply` | — | Write changes |
 | `--verify-only` | yes | Check only (default) |
@@ -32,6 +38,8 @@ the plugin sources. Existing plugin entries and their options are preserved.
 
 `--apply` and `--verify-only` are mutually exclusive. Missing `--scope`, a
 missing or non-directory `--project`, or an unknown `--plugins` value exits `2`.
+With `--v2`, `--scope project` and `--bootstrap` exit `2`, and `--config-dir`
+without `--v2` exits `2`.
 
 ## Targets
 
@@ -119,6 +127,45 @@ source-control, through the `local.tui-settings.order` and
 The file-manager TUI entry is written with `{ "order": 60 }` so the `Explorer`
 row sits below Source Control and above the built-in context panel.
 
+## v2 mode (`--v2`)
+
+`--v2` reads the canonical role catalog from
+`computer-use/config/v2-plugin-roles.json` and registers its six packages as
+object entries with absolute package paths. The catalog records the package
+path, role entrypoint, and expected config file; it is validated before any
+deployment work. Override it for an isolated test with
+`OPENCODE_V2_ROLE_CATALOG`.
+
+| Kind | Catalog-selected roles | Config file | Key |
+|------|---------|-------------|-----|
+| server | packages declaring the `server` role | `<config-dir>/opencode.jsonc` | `plugins` |
+| CLI | packages declaring the `cli` role | `<config-dir>/cli.json` | `plugins` |
+
+```json
+{ "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools", "options": {} }
+```
+
+`--plugins all` selects every catalog package and every role, `server` and `cli`
+select only that role, and a single package name selects every role owned by
+that package; `both` keeps the Codex pair. This distinction means selecting
+`server` does not unexpectedly add the Todo CLI panel, while selecting
+`rig-todo` or `all` registers both Todo roles. Deduplication compares canonical
+paths and rejects duplicate, malformed, or non-canonical entries before a
+write. New entries receive `options: {}`; `source-control` is added with
+`{ "github": true, "whenEmpty": "show" }` for v1 parity, and `--chain` writes
+`defaultChain` for `codex-fallback`. Existing entries keep their options. A
+missing config is created with the correct `$schema`; targets are strict JSON,
+so a config with comments is reported instead of rewritten.
+
+`--v2` never touches the v1 config: the default target is the isolated pilot
+config directory. Registration changes take effect after OpenCode restarts.
+
+Run the disposable deployment regression suite with:
+
+```bash
+python3 platforms/linux/ubuntu/computer-use/scripts/deploy-plugins-self-test.py
+```
+
 ## Bootstrap script copy (`--bootstrap`)
 
 Copies every regular file under `computer-use/scripts/` into:
@@ -144,6 +191,8 @@ item:
 
 - `OK: <plugin> plugin registered in <path>` — the module is present.
 - `MISSING/STALE: <plugin> plugin not registered in <path>` — absent.
+- `MISSING/STALE: <plugin> config not found: <path>` (v2) — seed the config
+  first with `setup-opencode-v2.sh --apply`.
 - `MISSING/STALE: <plugin> config is not editable JSON (comments?)` — present
   but not safely editable.
 - `OK: bootstrap scripts current in <dest>` — every source file is present and
@@ -158,7 +207,7 @@ any requested item is still missing, so it is usable as a gate.
 |------|---------|
 | `0` | Verification passed, or apply plus verification passed |
 | `1` | A plugin is missing, a config is not editable, or the bootstrap copy is incomplete; also used for a missing plugin entrypoint |
-| `2` | Invalid usage (missing `--scope`, bad `--project`, unknown `--plugins`, conflicting mode flags) |
+| `2` | Invalid usage (missing `--scope`, bad `--project`, unknown `--plugins`, conflicting mode flags, v2/project mixups) |
 
 ## Side effects to expect
 
@@ -168,11 +217,13 @@ any requested item is still missing, so it is usable as a gate.
   `package.json`, a lockfile, `node_modules/`, and a `.gitignore`. The deploy
   script does not create these; OpenCode does. Add them to the target repo's
   `.gitignore` if they should not be committed.
-- Deployment is not reversible by this script. Remove the `file://` entry (and
-  copied scripts, if any) by hand to undeploy.
+- Deployment is not reversible by this script. Remove the `file://` entry (v1)
+  or the object entry (v2) and copied scripts, if any, by hand to undeploy.
 
 ## Related
 
 - [`docs/plugins/README.md`](../plugins/README.md#deploying-the-plugins) — the
   `/deploy` command and the plugin registration model.
-- [`setup-opencode.md`](setup-opencode.md) — deploys skills and global commands.
+- [`setup-opencode.md`](setup-opencode.md) — deploys v1 skills and global commands.
+- [`setup-opencode-v2.md`](setup-opencode-v2.md) — deploys the v2 skills,
+  commands, and config this mode registers into.

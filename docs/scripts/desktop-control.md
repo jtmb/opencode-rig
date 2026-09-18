@@ -5,14 +5,20 @@ the primary "hands" tool for desktop work: it prefers named, accessible
 controls over screen coordinates, which is essential on a fractionally scaled
 Wayland desktop where screenshot pixels are not reliable click targets.
 
+It also lists top-level windows (`windows`) and can send one bounded key or
+text action through the private ydotool service (`input`) when accessibility
+data is insufficient.
+
 ```bash
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py tree --app firefox
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py find --app firefox --name "Search" --role entry
+python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py windows --showing
+python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py input --kind key --key ctrl+s
 ```
 
 Read-only commands are the default. Mutating commands (`action`, `focus`,
-`set-text`) require a fresh preview token and `--apply`.
+`set-text`, `input`) require a fresh preview token and `--apply`.
 
 ## Requirements
 
@@ -51,6 +57,23 @@ Finds elements by accessible `--name` and/or `--role`, with the same
 `--max-depth` (30) / `--max-nodes` (5000) bounds and `--include-text`. It
 requires at least one of name/role.
 
+### `windows` (read-only)
+
+Lists top-level windows — `frame`, `window`, `dialog`, `alert`, and chooser
+roles — across every application, or one `--app`. Each entry carries the owning
+`app`, name, role, `states`, `bounds`, and derived `showing` and `active`
+flags, so it is the way to find the active window, confirm whether a window
+opened or closed, or choose the app for a later `action`.
+
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `--app` | all apps | Restrict the scan to one application |
+| `--showing` | off | Only windows that are both `showing` and `visible` |
+| `--max-depth` | 4 | Traversal depth bound per application |
+| `--max-nodes` | 2000 | Traversal node bound per application |
+
+Output is `{ "complete": bool, "scanned_apps": N, "windows": [...] }`.
+
 ### `action` (mutation)
 
 Invokes an advertised accessibility action (`--action`, default `click`) on the
@@ -66,8 +89,27 @@ Moves keyboard focus to the matched element and waits up to `--wait-seconds`
 Replaces an editable field's text with `--text`, then waits for a readback
 match.
 
-`action`, `focus`, and `set-text` all share the `--expect-token`/`--apply`
-workflow described below.
+### `input` (mutation)
+
+Sends exactly one bounded input action through the user-owned ydotool service:
+
+- `--kind key --key <chord>` presses and releases one chord. Modifiers are
+  `ctrl`, `shift`, `alt`, `super`, and `meta`; the non-modifier key must be a
+  letter, digit, or named key (`Return`, `Escape`, `Tab`, `BackSpace`,
+  `Delete`, arrows, `Home`/`End`, `PageUp`/`PageDown`, `F1`–`F12`, common
+  punctuation names).
+- `--kind type --text <text>` types up to 256 printable ASCII characters with
+  escape interpretation disabled; control characters are refused, so `Return`,
+  `Tab`, and arrows must be sent as explicit keys.
+
+A preview returns a `target_token` bound to the payload **and** the currently
+active window; the token expires after 30 seconds and becomes stale if the
+focused window changes. `--apply --expect-token` sends exactly one `ydotool`
+invocation through the socket at `$YDOTOOL_SOCKET` or
+`$XDG_RUNTIME_DIR/.ydotool_socket` and reports the dispatch as unverified.
+
+`action`, `focus`, `set-text`, and `input` all share the `--expect-token`/
+`--apply` workflow described below.
 
 ## Element matching
 
@@ -136,6 +178,11 @@ to the exact element that was previewed:
 This ties a mutation to a freshly observed element and fails safely if the UI
 changed in between.
 
+`input` uses the same gesture with a payload-and-context fingerprint: the token
+covers the action payload (kind plus key or text) and the currently active
+window's app and title. It is invalidated by a window change and by age, and
+each apply performs exactly one ydotool invocation.
+
 ## Verification behavior
 
 - `action` reports `"outcome": "unverified"` and a `next_step` telling you to
@@ -145,6 +192,9 @@ changed in between.
   outcome is unknown.
 - `set-text` focuses first, sets the contents, then waits for a readback equal to
   the requested text. A mismatch is an error, not a silent success.
+- `input` dispatches exactly one ydotool action and reports
+  `"outcome": "unverified"` together with the focused window it was bound to;
+  confirm the result with a fresh screenshot before continuing.
 
 ## Exit codes
 
@@ -171,7 +221,10 @@ to synthesize clicks.
   window. Verify with a fresh observation before retrying.
 - Unsaved-change sheets may advertise actions that do nothing; use visible
   keyboard-focus controls and verify dismissal.
-- This script only reads and drives the accessibility tree. It does not take
-  screenshots; pair it with the `desktop-vision` skill for visual proof.
-- Related: [`assistant-memory.md`](assistant-memory.md),
-  [`setup-computer-assistant.md`](setup-computer-assistant.md).
+- This script only reads and drives the accessibility tree and, for `input`, the
+  private ydotool service. It does not take screenshots; pair it with the
+  `desktop-vision` skill for visual proof.
+- `input` fails closed when the ydotool service or its private socket is
+  unavailable; it never changes input permissions or device access, and it
+  never sends passwords or other secrets.
+- Related: [`setup-computer-assistant.md`](setup-computer-assistant.md).

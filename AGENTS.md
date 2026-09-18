@@ -90,6 +90,9 @@ paste. Keep it synchronized with this guide and the actual runtime.
 - This is an enforced gate, not a suggestion: `check-progress-tracking.py`
   fails when this section, the `/resume` command, or the `HANDOFF.md`
   copy-paste prompt loses the progress-tracking requirement.
+- OpenCode v2.0.7 ships no built-in todo tool, so the v2 stack registers
+  `todowrite`/`todoread` from the `plugins-v2/rig-todo` server plugin. The rule
+  is identical in v1 and v2; use whichever pair the running harness exposes.
 - Single-step requests are exempt.
 
 ## Privilege Elevation
@@ -153,6 +156,9 @@ coordinates. Never run an uncontrolled click or key loop.
 - `playwright_headless` is a separate isolated, invisible browser. Use it only
   when the user explicitly requests headless/background execution or the task
   is clearly non-interactive.
+- The v2 stack registers exactly one live `playwright` MCP; there, route
+  explicitly headless work through the repository Playwright runtime from the
+  shell instead of adding a second MCP.
 - If the user interacts with the live window, wait for their handoff and take
   a fresh snapshot before acting. Never assume page state remained unchanged.
 - List tabs and preserve unrelated tabs. Refresh the snapshot after navigation,
@@ -186,16 +192,21 @@ coordinates. Never run an uncontrolled click or key loop.
 
 ### Memory
 
-- Store: `~/Documents/computer-assistant/memory.json` (directory `700`, file
-  `600`), managed only by
-  `platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py`.
-- Reads are narrow and task-relevant. Record writes preview by default and
-  require `--apply`; store initialization is the documented exception.
+- Store: the Basic Memory knowledge base for the `computer-assistant` project
+  at `~/Documents/computer-assistant/basic-memory/` (owner-only Markdown plus a
+  local SQLite index), served by the bounded `basic-memory` MCP launched from
+  `platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh`.
+- Read narrowly with `recent_activity`, `search_notes`, `build_context`, and
+  `read_note`; do not dump the knowledge base into a conversation.
+- `write_note` and `edit_note` apply directly. Confirm before recording a
+  personal fact or durable decision, replace obsolete facts instead of
+  accumulating contradictions, and ask before deleting any note.
 - Store only explicit durable preferences, verified system facts, tested
   workflows, approved decisions, and concrete pending work.
-- Never store passwords, API keys, tokens, private keys, payment details,
-  dictated private content, or whole chats. Script detection is only a
-  guardrail.
+- Never store passwords, API keys, tokens, private keys, payment details, MFA
+  codes, dictated private content, or whole chats.
+- The legacy JSON store and `assistant-memory.py` were removed on 2026-09-18
+  after the verified M2 migration; do not recreate or write to them.
 
 ## Confirmation Gates
 
@@ -225,6 +236,35 @@ or CAPTCHAs for the user.
   state.
 - Never retain screenshots. Never upload local content without explicit scope.
 
+## OpenCode v2 Stack (pilot)
+
+The v2 port lives on branch `migration/opencode-v2` and runs in an isolated
+pilot until the operator approves the one-time cutover. v1 remains the default,
+and v2 work never modifies v1 config, data, or processes.
+
+- Binary: `~/.local/opt/opencode-v2/opencode` (pin 2.0.7) with the `oc2`
+  launcher; all state stays under `~/.opencode-v2-pilot/`.
+- Config: pilot `opencode.jsonc` (flat `mcp` map; `timeout` must be an object,
+  a numeric value silently drops the whole MCP block) plus `cli.json`.
+- Plugins: six packages under
+  `platforms/linux/ubuntu/computer-use/plugins-v2/` (server: `rig-tools`,
+  `rig-todo`, `codex-fallback`; CLI: `source-control`, `codex-usage`,
+  `file-manager`), registered as absolute-path object entries.
+- Deployment: `scripts/setup-opencode-v2.sh` (skill links, commands, starting
+  config) and `scripts/deploy-plugins.sh --v2` (plugin registration).
+- Verification: `scripts/verify-opencode-v2.sh` and
+  `scripts/setup-opencode-v2.sh --verify-only`; both are bounded and never
+  connect an MCP, so they never launch Firefox. The six `plugins-v2` packages
+  run their bounded checks in the `verify` CI job.
+- Exactly one Playwright MCP is registered in v2 (the live visible wrapper);
+  explicitly headless work runs through the repository Playwright runtime from
+  the shell instead of a second MCP.
+- Progress tracking in v2 is served by `rig-todo` (`todowrite`/`todoread`,
+  `plugins-v2/rig-todo/`) because 2.0.7 ships neither tool.
+- Cutover is a `PATH` change plus starting v2 with its own config directory,
+  and it happens only on explicit approval; the rollback runbook is in
+  `docs/migration/opencode-v2.md`.
+
 ## Source Of Truth
 
 - Skill sources:
@@ -251,6 +291,13 @@ or CAPTCHAs for the user.
   `platforms/linux/ubuntu/computer-use/plugins/<name>/` (source, README, and
   checks; loaded directly from these paths). `setup-opencode.sh` does not
   deploy plugins.
+- OpenCode v2 plugin packages:
+  `platforms/linux/ubuntu/computer-use/plugins-v2/<name>/` (isolated pilot; six
+  packages checked in CI through the same bounded wrapper). The v2 deployment
+  surface is `scripts/setup-opencode-v2.sh` (skill links, commands, and
+  starting config) and `scripts/verify-opencode-v2.sh` (read-only pilot health
+  check); `deploy-plugins.sh --v2` registers the packages. v1 remains the
+  default until the approved cutover in `docs/migration/opencode-v2.md`.
 - The local plugin set is `codex-usage` (TUI quota sidebar), `codex-fallback`
   (server failover), `source-control` (TUI working-tree and GitHub panel),
   `tui-settings` (TUI settings overlay and sidebar positioning), and
@@ -356,6 +403,8 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking-self
 ./platforms/linux/ubuntu/computer-use/scripts/setup-git-hooks.sh --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --verify-only
+./platforms/linux/ubuntu/computer-use/scripts/setup-opencode-v2.sh --verify-only
+./platforms/linux/ubuntu/computer-use/scripts/verify-opencode-v2.sh
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
 opencode debug skill
 opencode mcp list
@@ -365,7 +414,7 @@ npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run chec
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings run check
 npm --prefix platforms/linux/ubuntu/computer-use/plugins/file-manager run check
 npm --prefix platforms/linux/ubuntu/computer-use/tools run check
-python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
+./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps
 ```
 

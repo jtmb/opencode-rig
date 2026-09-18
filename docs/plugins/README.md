@@ -1,16 +1,44 @@
 # Local Plugins
 
-The repository ships five local OpenCode plugins. They are ordinary npm
+> **The v1 plugin set is rollback-only.** The default stack is OpenCode v2,
+> which runs the six `plugins-v2/` packages; the packages documented here are
+> retained so a `PATH` rollback keeps working. The v2 equivalents are
+> `tui-settings` → the built-in `/settings`, and the other four concerns →
+> their `plugins-v2/` ports.
+
+The repository ships five local **v1 rollback** plugins. They are ordinary npm
 packages that live in the repository and are loaded directly from source; they
-are **not** deployed by the setup scripts and are **not** published to npm.
+are **not** deployed by the v2 setup scripts and are **not** published to npm.
 
 | Plugin | Kind | Directory | Purpose |
 |--------|------|-----------|---------|
 | [`codex-usage`](codex-usage.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/codex-usage/` | Collapsible sidebar panel showing weekly ChatGPT Codex quota and optional Luna Reserve remaining usage |
-| [`codex-fallback`](codex-fallback.md) | Server | `platforms/linux/ubuntu/computer-use/plugins/codex-fallback/` | Transparent failover from the Codex subscription to a configurable chain of any OpenCode providers when the quota runs out |
+| [`codex-fallback`](codex-fallback.md) | Server | `platforms/linux/ubuntu/computer-use/plugins/codex-fallback/` | v1 rollback plugin; the active v2 port is documented below |
 | [`source-control`](source-control.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/source-control/` | Working-tree changes and the current branch's GitHub pull request in the session sidebar |
 | [`tui-settings`](tui-settings.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/tui-settings/` | Settings overlay for appearance, display, plugins, source control, and sidebar positioning |
 | [`file-manager`](file-manager.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/file-manager/` | Full-screen project tree, quick-open, and an in-TUI editor with explicit saves |
+
+## OpenCode v2 ports
+
+OpenCode 2.0.x uses a new plugin API, so the plugins have parallel ports under
+`platforms/linux/ubuntu/computer-use/plugins-v2/` rather than edits to the v1
+packages. The v2 workspace has its own `node_modules`, tsconfig base, and
+[README](../../platforms/linux/ubuntu/computer-use/plugins-v2/README.md), and
+each package registers through the object form in `opencode.jsonc` (server) or
+`cli.json` (CLI). v1 remains the default until the migration cutover.
+
+| v2 package | Kind | Replaces |
+| --- | --- | --- |
+| `rig-tools` | server | v1 `tools/desktop.ts` + `tools/vision.ts` custom tools |
+| `rig-todo` | server | new: v2.0.7 ships no `todowrite`/`todoread` |
+| [`codex-fallback`](codex-fallback.md) | server | [v2 component README](../../platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback/README.md) |
+| `source-control` | CLI | v1 `source-control` |
+| `codex-usage` | CLI | v1 `codex-usage` |
+| `file-manager` | CLI | v1 `file-manager`, now a docked `session.panel` instead of a full-screen route |
+
+There is no `tui-settings` port: v2's built-in `/settings` covers appearance,
+display, plugins, and keybinds, and its Source Control presets move into the
+v2 `source-control` plugin.
 
 ## TUI vs. server plugins
 
@@ -34,11 +62,10 @@ OpenCode has two distinct plugin surfaces, and these packages target one each.
   `client.file.list`, searches with `client.find.files`, renders files with
   `line_number` + `code` highlighting, and edits with a `textarea` that saves
   atomically through `node:fs` under a `realpath` containment check.
-- A **server plugin** runs in the OpenCode server. It can hook config
-  resolution, message assembly, outbound request parameters, and the event
-  stream, and it can call the client API (sessions, providers, TUI). It has no
-  rendering surface of its own. `codex-fallback` is a server plugin whose entry
-  point is `src/index.ts`.
+- A **v1 server plugin** runs in the OpenCode 1 server and has no rendering
+  surface of its own. The active v2 `codex-fallback` port uses
+  `ctx.session.hook("context" | "retry")` and the supported
+  `ctx.session.switchModel()` API; see [`codex-fallback.md`](codex-fallback.md).
 
 The TUI plugins are registered in `tui.json`, while the server plugin is
 registered in `opencode.jsonc` (see below), so enabling one does not enable the
@@ -287,20 +314,28 @@ fabricated quota value.
 ## Deploying the plugins
 
 The repository ships a `/deploy` command and a `deploy-plugins.sh` script that
-register the plugins with an OpenCode installation. Registration references this
-checkout with `file://` URLs; the plugin sources are not copied.
+register the plugins with an OpenCode installation. v1 registration references
+this checkout with `file://` URLs; the plugin sources are not copied. The v2
+mode (`--v2`) registers the `plugins-v2` packages as absolute-path object
+entries instead.
 
 - **Global** deploys to `~/.config/opencode/tui.json` (TUI) and
   `~/.config/opencode/opencode.jsonc` or `.json` (server).
 - **Project** deploys to `<repo>/.opencode/tui.json` (TUI) and
   `<repo>/.opencode/opencode.json` (server).
-- `--bootstrap` additionally copies the provisioning scripts into the target.
+- **v2** deploys the six `plugins-v2` packages to
+  `<config-dir>/opencode.jsonc` (server) and `<config-dir>/cli.json` (CLI);
+  the default config directory is the isolated pilot under
+  `~/.opencode-v2-pilot/`.
+- `--bootstrap` additionally copies the provisioning scripts into the target
+  (v1 only).
 
 Run `/deploy` for an interactive, question-driven flow, or invoke the script
 directly. Both default to read-only verification; writes require `--apply`.
-Neither overwrites existing `plugin` entries or their options, and both refuse
+Neither overwrites existing plugin entries or their options, and both refuse
 to rewrite a config that contains JSONC comments (they cannot be preserved by a
-plain JSON edit).
+plain JSON edit). The four global commands themselves are stack-aware and pick
+the v1 or v2 health check and deploy path at run time.
 
 Full behavior, options, targets, and exit codes are documented in
 [`docs/scripts/deploy-plugins.md`](../scripts/deploy-plugins.md).

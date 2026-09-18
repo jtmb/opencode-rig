@@ -7,16 +7,14 @@
       "command": [
         "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"
       ],
-      "enabled": true,
-      "timeout": 30000
+      "enabled": true
     },
     "playwright_headless": {
       "type": "local",
       "command": [
         "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/playwright-headless-mcp.sh"
       ],
-      "enabled": true,
-      "timeout": 30000
+      "enabled": true
     }
   }
 }

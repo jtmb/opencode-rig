@@ -14,13 +14,22 @@ lists them at a glance and covers the operating environment.
 |--------|----------|--------------|
 | `setup-computer-assistant.sh` | [`setup-computer-assistant.md`](setup-computer-assistant.md) | Full-stack provisioning and verification (system packages, skills, memory, Playwright, GitHub MCP) |
 | `setup-opencode.sh` | [`setup-opencode.md`](setup-opencode.md) | Persists `OPENCODE_ENABLE_EXA` and deploys skills and global commands content-aware |
+| `setup-opencode-v2.sh` | [`setup-opencode-v2.md`](setup-opencode-v2.md) | Deploys the v2 skill links, commands, and starting config into an isolated v2 config directory |
 | `setup-live-dictation.sh` | [`setup-live-dictation.md`](setup-live-dictation.md) | Optional checksum-pinned Vosk dictation runtime and `Alt+X` shortcut |
 
 ### Plugin deployment
 
 | Script | Document | What it does |
 |--------|----------|--------------|
-| `deploy-plugins.sh` | [`deploy-plugins.md`](deploy-plugins.md) | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
+| `deploy-plugins.sh` | [`deploy-plugins.md`](deploy-plugins.md) | Register the local plugins globally or into a repository's `.opencode/` (v1), or the v2 packages into a config directory, optionally copying the bootstrap scripts |
+| `deploy-plugins-self-test.py` | [`deploy-plugins-self-test.md`](deploy-plugins-self-test.md) | Exercises v2 selection, dual-role registration, malformed entries, and idempotent deployment in temporary configs |
+| `v2-plugin-catalog.py` | [`v2-plugin-catalog.md`](v2-plugin-catalog.md) | Validates and normalizes the canonical six-package v2 role catalog |
+
+### Verification
+
+| Script | Document | What it does |
+|--------|----------|--------------|
+| `verify-opencode-v2.sh` | [`verify-opencode-v2.md`](verify-opencode-v2.md) | Read-only health check for the isolated OpenCode v2 pilot (binary, config, 16 skills, commands, six plugins, single Playwright MCP, aura theme); never connects an MCP |
 
 ### MCP launchers
 
@@ -34,8 +43,8 @@ lists them at a glance and covers the operating environment.
 
 | Script | Document | What it does |
 |--------|----------|--------------|
-| `desktop-control.py` | [`desktop-control.md`](desktop-control.md) | AT-SPI app inspection and mutation with dry-run tokens |
-| `assistant-memory.py` | [`assistant-memory.md`](assistant-memory.md) | Owner-only JSON memory store |
+| `desktop-control.py` | [`desktop-control.md`](desktop-control.md) | AT-SPI app/window inspection and mutation, plus bounded ydotool key/text input, with dry-run tokens |
+| `basic-memory-mcp.sh` | [`basic-memory-mcp.md`](basic-memory-mcp.md) | Launches the bounded Basic Memory MCP server (adaptive user-cgroup budget, `prlimit` fallback, fail closed) |
 
 ### Documentation validation
 
@@ -105,6 +114,6 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking-self-test.py
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
-python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
+./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only
 python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps
 ```

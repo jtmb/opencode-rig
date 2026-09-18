@@ -109,6 +109,17 @@ are deployed; the package's `node_modules/` and tests stay in the repository.
 OpenCode discovers the deployed files by filename at startup, which is why a
 restart is required after a tool change.
 
+## Stack-aware global commands
+
+The four deployed commands (`/deploy`, `/handoff`, `/promote-skills`,
+`/resume`) work on both stacks. Each starts by determining the running harness:
+the v2 pilot (config under `~/.opencode-v2-pilot/`) uses
+`verify-opencode-v2.sh` and `setup-opencode-v2.sh`, while a plain `opencode`
+session uses `setup-computer-assistant.sh --verify-only` and this script.
+`/deploy` additionally offers the v2 target, which delegates to
+`deploy-plugins.sh --v2`. The command bodies therefore stay identical when
+deployed to v1 or v2.
+
 ## Verification semantics
 
 `verify()` returns a status flag and prints one line per finding:
@@ -150,4 +161,5 @@ fresh OpenCode process.
 - The script is idempotent: a second `--apply` with no source changes reports
   every bundle `OK` and performs no copies.
 - Related: [`check-skill-docs.md`](check-skill-docs.md) validates the skill
-  documentation that this script deploys.
+  documentation that this script deploys;
+  [`setup-opencode-v2.md`](setup-opencode-v2.md) is the v2 counterpart.

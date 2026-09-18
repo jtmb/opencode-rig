@@ -1,9 +1,11 @@
 # `check-plugin-resource-guards.py`
 
 Checks every local plugin package under
-`platforms/linux/ubuntu/computer-use/plugins/` plus the desktop custom-tools
-package at `platforms/linux/ubuntu/computer-use/tools/package.json`, requiring
-each package's `typecheck` and `test` npm scripts to reference
+`platforms/linux/ubuntu/computer-use/plugins/` and
+`platforms/linux/ubuntu/computer-use/plugins-v2/` plus the desktop
+custom-tools package at
+`platforms/linux/ubuntu/computer-use/tools/package.json`, requiring each
+package's `typecheck` and `test` npm scripts to reference
 `run-bounded-command.sh`. A missing `tools/package.json` is reported as a
 failure, so the custom-tools package cannot silently disappear.
 

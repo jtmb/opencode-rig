@@ -1,0 +1,70 @@
+{
+  "$schema": "https://opencode.ai/v2/plugin-role-catalog.json",
+  "version": 1,
+  "plugins": [
+    {
+      "name": "rig-tools",
+      "path": "plugins-v2/rig-tools",
+      "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
+        }
+      }
+    },
+    {
+      "name": "rig-todo",
+      "path": "plugins-v2/rig-todo",
+      "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
+        },
+        "cli": {
+          "entrypoint": "tui.tsx",
+          "config": "cli.json"
+        }
+      }
+    },
+    {
+      "name": "codex-fallback",
+      "path": "plugins-v2/codex-fallback",
+      "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
+        }
+      }
+    },
+    {
+      "name": "source-control",
+      "path": "plugins-v2/source-control",
+      "roles": {
+        "cli": {
+          "entrypoint": "tui.tsx",
+          "config": "cli.json"
+        }
+      }
+    },
+    {
+      "name": "codex-usage",
+      "path": "plugins-v2/codex-usage",
+      "roles": {
+        "cli": {
+          "entrypoint": "tui.tsx",
+          "config": "cli.json"
+        }
+      }
+    },
+    {
+      "name": "file-manager",
+      "path": "plugins-v2/file-manager",
+      "roles": {
+        "cli": {
+          "entrypoint": "tui.tsx",
+          "config": "cli.json"
+        }
+      }
+    }
+  ]
+}

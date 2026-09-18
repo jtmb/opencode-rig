@@ -1,5 +1,10 @@
 # `tui-settings` TUI plugin
 
+> **v1 / rollback only.** Retired in the OpenCode v2 stack, where the built-in
+> `/settings` replaces it; retained while v1 is available for rollback. The
+> harness-specific Source Control presets were folded into
+> [`plugins-v2/source-control`](../../plugins-v2/source-control/README.md).
+
 `tui-settings` adds a slim, right-aligned `Settings` row to the OpenCode
 session sidebar and a settings overlay that edits the host's display
 preferences, opens the built-in theme and plugin managers, tunes the

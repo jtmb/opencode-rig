@@ -95,6 +95,14 @@ All five plugins are user-registered (`~/.config/opencode/tui.json` and the
 global `opencode.jsonc`) and are not deployed by the general setup scripts.
 Use `/deploy` or `deploy-plugins.sh` to register them.
 
+A parallel **OpenCode v2 port** ships six `plugins-v2` packages in an isolated
+pilot under `~/.opencode-v2-pilot/`: the same five concerns plus `rig-todo`,
+which restores the todo tools that 2.0.x omits. v1 remains the default until
+the approved cutover; deploy with `setup-opencode-v2.sh` and
+`deploy-plugins.sh --v2`, verify with `verify-opencode-v2.sh`, and read
+[`docs/migration/opencode-v2.md`](docs/migration/opencode-v2.md) for the plan
+and rollback runbook.
+
 ### Browser automation, live and headless
 
 `browser-tools` pins `@playwright/mcp@0.0.80` with a locked dependency graph:
@@ -104,6 +112,10 @@ Use `/deploy` or `deploy-plugins.sh` to register them.
 - a **separate headless context** for clearly non-interactive work;
 - transient output under `/tmp/opencode/`, and image responses omitted by
   default to keep context small.
+
+OpenCode v1 registers both contexts as `playwright` and `playwright_headless`.
+The v2 stack registers exactly one live `playwright` MCP; headless-only work
+runs through the same pinned runtime from the shell.
 
 ### GitHub without the blast radius
 
@@ -131,8 +143,9 @@ arguments and the same preview-token apply flow.
 
 - **Blender 5.0.1** with `python3-numpy` for glTF import/export, versioned
   saves, renders, and clean reimport checks.
-- **Task memory** in `~/Documents/computer-assistant/memory.json`: owner-only,
-  preview-by-default writes, credential shapes rejected.
+- **Task memory** in a local Basic Memory knowledge base
+  (`~/Documents/computer-assistant/basic-memory/`): owner-only Markdown plus a
+  SQLite index, served through a memory-bounded MCP with nine core note tools.
 - **Weekly maintenance cron** that backs up chats to
   `~/Documents/opencode-backups/` and reclaims database space while OpenCode is
   closed, with an `@reboot` catch-up run.
