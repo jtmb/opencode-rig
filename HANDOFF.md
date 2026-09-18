@@ -179,8 +179,9 @@ Known live state (recorded 2026-09-18):
     jtmb/opencode-rig#1 (branch docs/handoff-blender-note) is open against main,
     mergeable, with the required `verify` check passed, and PR #2 (base
     docs/handoff-blender-note) is open and green; merge only on explicit
-    request. The current checkout is branch migration/opencode-v2 (local, no
-    upstream), carrying the OpenCode v2 port; the cutover ran 2026-09-18, so
+    request. The current checkout is branch migration/opencode-v2 (pushed; pull
+    request jtmb/opencode-rig#3 is stacked on chore/todo-tracking-gate);
+    the cutover ran 2026-09-18, so
     new shells start the v2 stack via the shim while v1 stays installed and
     untouched for rollback. The working tree is clean
   - Platform: Linux / Ubuntu; computer use under platforms/linux/ubuntu/computer-use
@@ -938,9 +939,9 @@ v2 upgrade beyond 2.0.7.
 
 ### Suggested next steps
 
-1. Push `migration/opencode-v2` and open a stacked PR (base
-   `chore/todo-tracking-gate`); retarget it to `main` after PR #1/#2 merge, and
-   merge only on explicit request.
+1. PR #3 (migration/opencode-v2, base chore/todo-tracking-gate) is open;
+   retarget it to `main` after PR #1/#2 merge, and merge only on explicit
+   request. CI runs the full gate including the plugins-v2 checks.
 2. Keep the v2 docs and HANDOFF current and re-test on any 2.0.x upgrade;
    translate the repository project config to the one-MCP v2 shape once v1
    rollback is no longer needed.
