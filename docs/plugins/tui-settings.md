@@ -1,5 +1,9 @@
 # `tui-settings`
 
+> **v1 / rollback only.** `tui-settings` is retired in the OpenCode v2 stack,
+> where the built-in `/settings` covers appearance, display, plugins, and
+> keybinds. The package is retained only while v1 is available for rollback.
+
 `tui-settings` is a local OpenCode TUI plugin that adds a `Settings` entry to
 the session sidebar and a drill-down settings overlay. It edits host display
 preferences, dispatches the built-in theme and plugin managers, adjusts the

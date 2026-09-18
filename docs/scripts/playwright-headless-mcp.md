@@ -1,5 +1,10 @@
 # `playwright-headless-mcp.sh` (Headless Browser)
 
+> **v1 / rollback only.** The OpenCode v2 stack registers exactly one live
+> `playwright` MCP; explicitly headless work runs through the repository
+> Playwright runtime from the shell. This launcher remains for the v1 rollback
+> stack.
+
 Launches the pinned Playwright MCP in an **isolated, invisible Firefox**
 browser. This is the `playwright_headless` MCP that OpenCode registers
 project-only. It is used only when the user explicitly asks for headless or

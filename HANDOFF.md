@@ -219,10 +219,9 @@ Known live state (recorded 2026-09-18):
     sidebar), codex-fallback (server failover), source-control (working-tree
     and GitHub panel), tui-settings (settings menu launcher), and file-manager
     (project tree and editor) from ~/.config/opencode/tui.json and
-    ~/.config/opencode/opencode.jsonc; all are built, checked, and verified
-    live after the 2026-09-17 restart. The v2 stack (default) runs the six
-    plugins-v2 packages and uses the built-in `/settings` instead of
-    tui-settings
+    ~/.config/opencode/opencode.jsonc; all are v1 rollback-only now. The v2
+    stack (default) runs the six plugins-v2 packages and uses the built-in
+    `/settings` instead of tui-settings
   - Browser runtime: @playwright/mcp 0.0.80 via
     platforms/linux/ubuntu/browser-tools; v1 registers live + headless MCPs,
     v2 exactly one live `playwright` MCP
@@ -255,8 +254,9 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     registration, the migrated and verified notes, the docs/map/setup pin, and
     the fresh-process recall check. The retired legacy JSON store and
     `assistant-memory.py` were removed on 2026-09-18 with explicit approval.
-    Queued next: the untracked session-ses_f4dc.md cleanup (with approval) and
-    the C5 post-cutover tidy
+    C5 tidy is done too (v2-safe project config, retired banners, tui-settings
+    retained as rollback-only). Queued next: the untracked session-ses_f4dc.md
+    cleanup (with approval)
   - PR #1/#2 merge only on explicit request; v1 rollback is one PATH/shim
     change and is recorded in docs/migration/opencode-v2.md
 
@@ -289,8 +289,8 @@ give you. If I pasted only this handoff, ask what task I want handled.
   (08bc281), the v2 health check (d32bcf7), CI coverage (167df04), the v2
   deploy tooling (`setup-opencode-v2.sh` plus `deploy-plugins.sh --v2`), the
   stack-aware command rewrites (A6), the `verify-opencode-v2.sh` shellcheck
-  fix, the B4 docs, the Phase 5 verification/cutover records, and the D1/D2
-  window and input tools.
+  fix, the B4 docs, the Phase 5 verification/cutover records, the D1/D2
+  window and input tools, and the Basic Memory M1-M4 adoption plus C5 tidy.
 - v1 work stays on PRs #1/#2 as recorded in the prompt above; merge only on
   explicit request. The untracked `session-ses_f4dc.md` transcript sits at the
   repository root; remove it only with approval (Phase D8).
@@ -316,8 +316,7 @@ give you. If I pasted only this handoff, ask what task I want handled.
   skill rewritten); Basic Memory M3 (docs/memory.md, map/handoff rows, setup
   pin and verify, v2 config example); Basic Memory M4 (fresh-process recall
   and the legacy removal with explicit confirmation).
-- Pending: the transcript cleanup and the C5 post-cutover tidy; merge PR #1/#2
-  only on explicit request.
+- Pending: the transcript cleanup; merge PR #1/#2 only on explicit request.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -879,7 +878,23 @@ shows `github` and the single `playwright` connected, and the v1 binary/config
 hashes are unchanged (recorded at
 `~/.opencode-v2-pilot/cutover-v1-hashes.txt`). OpenAI OAuth is not mapped in
 v2 (a one-time `/connect` is needed), and the Codex Usage row loaded but was
-not in frame. C5 tidy and C6 merges remain.
+not in frame.
+
+C5 tidy (2026-09-18):
+
+- The repository project `opencode.json` no longer carries numeric MCP
+  `timeout` values (v2 silently drops an entire MCP block on one) and is
+  documented as the v1 registration; the v2 launcher keeps project config
+  disabled, so v2 uses only the single live `playwright` MCP from its own
+  config. A one-MCP v2 project file can follow once v1 rollback is no longer
+  needed.
+- v1-only docs carry retired banners: `docs/plugins/tui-settings.md`,
+  `docs/tools/README.md`, and `docs/scripts/playwright-headless-mcp.md`; the
+  plugins index notes that the v1 plugin set is rollback-only.
+- Decision: the `plugins/tui-settings` package is retained as a rollback-only
+  package until v1 is no longer needed; nothing new depends on it, and v2 uses
+  the built-in `/settings`.
+- C6 merges remain (on explicit request).
 
 #### Phase D - resume the pre-migration queue (on the default stack)
 
@@ -910,8 +925,8 @@ not in frame. C5 tidy and C6 merges remain.
 
 Order: A1 -> A2 -> A3/A4/A5 -> A6 -> A7 -> A8 -> B1/B2 -> B3/B4/B5 -> C -> D.
 A1-A8 and B1-B5 are done; Phase C C1-C4 are done 2026-09-18 (v2 is the default;
-rollback recorded); D1/D2 are done. Remaining: C5 post-cutover tidy and C6
-merges (on request), then D3-D8.
+rollback recorded); D1/D2 are done; C5 tidy and M0-M4 are done. Remaining: C6
+merges (on request), the transcript cleanup, and any v2 upgrade re-test.
 
 Risks: v2 plugin APIs are pre-stable (pin 2.0.7, re-test on upgrades); no v2
 todo panel unless A2b is built; a single Playwright MCP trades headless
@@ -924,14 +939,12 @@ v2 upgrade beyond 2.0.7.
 
 ### Suggested next steps
 
-1. Post-cutover tidy (C5): translate the repository project `opencode.json`
-   for v2 (or keep the project config disabled), mark v1-only docs retired,
-   and decide the fate of the v1 `plugins/tui-settings` package.
-2. The memory migration is complete (M0-M4; legacy removed). No action.
-3. Merge PRs #1/#2 only on explicit request; remove `session-ses_f4dc.md` with
-   approval (D8).
-4. Keep the v2 docs and HANDOFF current and re-test the v2 port on any 2.0.x
-   upgrade.
+1. Push `migration/opencode-v2` and open a PR when you want CI to verify the
+   whole branch; merge PRs #1/#2 only on explicit request.
+2. Remove `session-ses_f4dc.md` with approval (D8).
+3. Keep the v2 docs and HANDOFF current and re-test on any 2.0.x upgrade;
+   translate the repository project config to the one-MCP v2 shape once v1
+   rollback is no longer needed.
 
 ## Keep This Current
 

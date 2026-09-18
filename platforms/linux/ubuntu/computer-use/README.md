@@ -132,7 +132,7 @@ automatic return to Codex when the quota resets.
 sidebar for working-tree changes and the current branch's GitHub pull request.
 [`plugins/tui-settings/`](plugins/tui-settings/README.md) is a local TUI
 settings overlay for appearance, display, plugins, source control, and sidebar
-positioning.
+positioning (v1 only; retired in v2 in favor of the built-in `/settings`).
 [`plugins/file-manager/`](plugins/file-manager/README.md) is a local TUI
 project tree, quick-open, and editor with atomic saves.
 
@@ -280,6 +280,13 @@ user and agent. `playwright_headless` launches a separate invisible context.
 Neither inherits cookies or tabs from the normal Firefox profile. Browser
 binaries download into `../browser-tools/browsers/` on first `--apply` and are
 excluded from Git.
+
+The repository project `opencode.json` registers both v1 MCPs for this
+checkout and deliberately carries no numeric `timeout` (v2 silently drops an
+entire MCP block on a numeric timeout). The v2 launcher keeps project config
+disabled, because v2 registers only the single live `playwright` MCP from its
+own config; translating the project file to a one-MCP v2 shape can follow once
+v1 rollback is no longer needed.
 
 ## GitHub runtime
 

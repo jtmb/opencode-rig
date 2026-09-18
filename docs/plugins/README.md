@@ -1,5 +1,11 @@
 # Local Plugins
 
+> **The v1 plugin set is rollback-only.** The default stack is OpenCode v2,
+> which runs the six `plugins-v2/` packages; the packages documented here are
+> retained so a `PATH` rollback keeps working. The v2 equivalents are
+> `tui-settings` → the built-in `/settings`, and the other four concerns →
+> their `plugins-v2/` ports.
+
 The repository ships five local OpenCode plugins. They are ordinary npm
 packages that live in the repository and are loaded directly from source; they
 are **not** deployed by the setup scripts and are **not** published to npm.
