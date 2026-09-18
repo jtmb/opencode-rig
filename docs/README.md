@@ -46,6 +46,12 @@ pieces fit together?*
 |----------|--------|
 | [`memory.md`](memory.md) | The Basic Memory knowledge base: layout, exposed tools, registration, operations, and the legacy retirement |
 
+### Plans
+
+| Document | Covers |
+|----------|--------|
+| [`plans/explorer-ide.md`](plans/explorer-ide.md) | The approved plan to grow the v2 `file-manager` Explorer into a full IDE editor, including the Basic Memory decision loop, phases, and open questions |
+
 ### Scripts
 
 | Document | Covers |
