@@ -22,10 +22,13 @@ The launcher runs the isolated pilot:
 - data/state/cache/db under `~/.opencode-v2-pilot/`
 - `OPENCODE_DISABLE_AUTOUPDATE=1`
 
-If v2 reports no provider credentials, run
-`~/.local/opt/opencode-v2/opencode-pilot auth login` and sign in yourself. The
-pilot data directory is separate from v1, so credentials do not carry over
-automatically.
+Provider credentials: the pilot wrapper exports API-key credentials from the v1
+store (`~/.local/share/opencode/auth.json`) as `<PROVIDER>_API_KEY`. DeepSeek
+therefore works automatically and is the pilot's default model
+(`deepseek/deepseek-v4-flash`), verified with a live call. The v1 OpenAI
+credential is OAuth and is not mapped; connect it once in the v2 TUI with
+`/connect` if OpenAI models are needed. The `oc2` launcher restarts the pilot
+service so it inherits the exported keys.
 
 To stop the pilot's background service after a session:
 
