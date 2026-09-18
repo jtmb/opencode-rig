@@ -10,6 +10,7 @@ isolated: one `node_modules` at this directory, a shared
 | Package | Kind | Surfaces |
 | --- | --- | --- |
 | [`rig-tools`](rig-tools/README.md) | server | `desktop_apps`, `desktop_tree`, `desktop_find`, `desktop_act`, `vision_capture` |
+| [`rig-todo`](rig-todo/README.md) | server | `todowrite`, `todoread` (v2 has no built-in todo tool) |
 | [`codex-fallback`](codex-fallback/README.md) | server | `session.context` and `session.retry` model routing |
 | [`source-control`](source-control/README.md) | CLI | working-tree and pull-request `sidebar.content` panel |
 | [`codex-usage`](codex-usage/README.md) | CLI | weekly Codex quota `sidebar.content` panel |
@@ -58,7 +59,8 @@ npm run check
 
 ## Status
 
-All five packages typecheck, pass their ported tests, and load in the v2.0.7
-pilot. `rig-tools` is verified live (its tools appear in a v2 session).
-`file-manager` is the reason for the migration: v2's `session.panel` is a
-host-sized, focusable, resizable dock that replaces the v1 full-screen route.
+All six packages typecheck, pass their ported tests, and load in the v2.0.7
+pilot. `rig-tools` and `rig-todo` are verified live (their tools appear in a v2
+session). `file-manager` is the reason for the migration: v2's `session.panel`
+is a host-sized, focusable, resizable dock that replaces the v1 full-screen
+route.

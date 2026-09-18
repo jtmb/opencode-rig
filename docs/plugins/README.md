@@ -24,6 +24,7 @@ each package registers through the object form in `opencode.jsonc` (server) or
 | v2 package | Kind | Replaces |
 | --- | --- | --- |
 | `rig-tools` | server | v1 `tools/desktop.ts` + `tools/vision.ts` custom tools |
+| `rig-todo` | server | new: v2.0.7 ships no `todowrite`/`todoread` |
 | `codex-fallback` | server | v1 `codex-fallback` |
 | `source-control` | CLI | v1 `source-control` |
 | `codex-usage` | CLI | v1 `codex-usage` |

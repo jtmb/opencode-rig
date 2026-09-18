@@ -90,6 +90,9 @@ paste. Keep it synchronized with this guide and the actual runtime.
 - This is an enforced gate, not a suggestion: `check-progress-tracking.py`
   fails when this section, the `/resume` command, or the `HANDOFF.md`
   copy-paste prompt loses the progress-tracking requirement.
+- OpenCode v2.0.7 ships no built-in todo tool, so the v2 stack registers
+  `todowrite`/`todoread` from the `plugins-v2/rig-todo` server plugin. The rule
+  is identical in v1 and v2; use whichever pair the running harness exposes.
 - Single-step requests are exempt.
 
 ## Privilege Elevation
