@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { consumeMouseActivation } from "../src/mouse.ts"
+import { consumeMouseActivation, editorCursorPosition } from "../src/mouse.ts"
 
 test("the first left activation is consumed", () => {
   assert.equal(consumeMouseActivation({ button: 0 }), true)
@@ -29,4 +29,31 @@ test("preventDefault is left to the caller", () => {
   assert.equal(consumeMouseActivation(event), true)
   event.preventDefault()
   assert.equal(prevented, 1)
+})
+
+test("editor clicks map to bounded rows and columns", () => {
+  assert.deepEqual(
+    editorCursorPosition(
+      { x: 13, y: 12, button: 0 },
+      { x: 10, y: 8, scrollY: 1, lineCount: 3, lines: ["zero", "one", "two"] },
+    ),
+    { row: 2, column: 3 },
+  )
+  assert.deepEqual(
+    editorCursorPosition(
+      { x: 0, y: 0 },
+      { x: 10, y: 8, scrollY: 0, lineCount: 3, lines: ["zero", "one", "two"] },
+    ),
+    { row: 0, column: 0 },
+  )
+})
+
+test("editor clicks ignore non-primary buttons", () => {
+  assert.equal(
+    editorCursorPosition(
+      { x: 10, y: 8, button: 2 },
+      { x: 10, y: 8, scrollY: 0, lineCount: 1, lines: ["text"] },
+    ),
+    undefined,
+  )
 })

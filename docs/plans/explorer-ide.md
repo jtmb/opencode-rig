@@ -122,7 +122,7 @@ file-manager/
     tui.tsx        panel layout: tab strip, tree, editor/preview, status bar, output
     model.ts       tree/filetype/path/containment (existing, extended)
     mouse.ts       once-per-click activation (existing)
-    tabs.ts        open-tab model: content, original, cursor, dirty, MRU, closed stack
+    tabs.ts        open-tab model: content, original, dirty, active path, closed stack
     edit.ts        indent/dedent/comment/duplicate/move-line, find/replace, go-to-line
     search.ts      project content search (rg) parsing + replace planning
     git.ts         status letters + `git diff --unified=0` gutter computation
@@ -177,15 +177,32 @@ keyboard verification (via the `desktop_input` tool) + screenshots + docs gate
    to `filetypeFor`. Evidence: highlighted viewer and editor screenshots; no
    writes to tracked files (the test edit was discarded).
 
-### Phase 1 — editor core (1–2 days)
+### Phase 1 — editor core (DONE 2026-09-18)
 
-- `tabs.ts` model: open/close/reopen, dirty tracking, MRU, per-tab view state.
-- Tab strip + tab switching commands; save, save-all, close (discard guard),
-  reopen closed; dirty indicators.
-- Status bar (path, dirty, `L:C`, filetype); go-to-line.
-- Persist tabs/preferences per session.
-- Tests: tab model, dirty, close/reopen, preference round-trip.
-- Exit: edit two files, switch, save one, discard-guard the other; screenshot.
+- `tabs.ts` model: open/activate/replace/close/reopen, dirty baselines,
+  closed-path stack, safe persistence serialization, and malformed-state
+  filtering.
+- Tab strip + `alt+left`/`alt+right` switching; `ctrl+s` save,
+  `ctrl+shift+s` save-all, `alt+w` close with a two-step discard guard, and
+  `alt+t` reopen closed; dirty indicators remain visible in the strip/status.
+- Status bar shows path, dirty state, `L:C`, and filetype; `ctrl+g` opens a
+  bounded go-to-line dialog.
+- Persist open paths and active path per session through `context.storage`;
+  restoration reloads files safely and refresh uses a replace path so clean
+  tabs actually reflect disk changes.
+- Editor click-to-position now maps primary-button coordinates to bounded
+  logical rows/columns; the pure mapping has unit coverage. This machine's
+  ydotool virtual pointer did not produce observable GNOME clicks, so physical
+  pointer delivery remains an environment limitation rather than an untested
+  code path.
+- Tests: 27 file-manager tests pass. Live verification covered two-file
+  editing, tab switching, save, save-all, dirty-close/discard preservation,
+  reopen, persistence, go-to-line, JSON highlighting, and tree refresh using
+  temporary files; tracked files are clean.
+
+Exit criteria met: two temporary files were edited and saved, another dirty
+edit was discard-guarded without changing disk content, and the tab strip and
+status bar were verified in screenshots.
 
 ### Phase 2 — language coverage (1 day + asset build)
 

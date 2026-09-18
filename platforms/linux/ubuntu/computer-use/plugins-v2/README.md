@@ -70,3 +70,11 @@ pilot. `rig-tools` and `rig-todo` are verified live (their tools appear in a v2
 session). `file-manager` is the reason for the migration: v2's `session.panel`
 is a host-sized, focusable, resizable dock that replaces the v1 full-screen
 route.
+
+The file-manager now has the Phase 1 editor core: a persistent per-session tab
+strip, dirty baselines, save/save-all, guarded close and reopen, status-bar
+`L:C`/filetype reporting, go-to-line, and bounded editor click-to-position
+mapping. Its keyboard controls are `ctrl+s`, `ctrl+shift+s`, `alt+left/right`,
+`alt+w`, `alt+t`, and `ctrl+g`; the package check covers 27 tests. Parser
+highlighting remains fail-soft and uses the Phase 0 shared tree-sitter client
+foundation while the pinned multi-language asset fetch is deferred to Phase 2.

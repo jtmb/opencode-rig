@@ -229,8 +229,10 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     decisions/adrs-explorer-ide-scope, and
     feedback/2026-09-18/direct-status-checks-and-question-tool-usage.
     Phase 0 is done (parser registration + manual editor highlighting work;
-    ctrl+z is the host terminal-suspend binding). Next action: Phase 1, the
-    editor core (multi-tab, save/save-all, status bar, persistence).
+    ctrl+z is the host terminal-suspend binding). Phase 1 is also complete:
+    tabs, save/save-all, guarded close/reopen, status, persistence, go-to-line,
+    and editor click-position mapping are shipped and live-verified. Next:
+    Phase 2 language coverage.
   - Merge PRs #1/#2/#3 only on explicit request.
 
 After the health check, give me a concise status and continue with the task I
@@ -272,10 +274,11 @@ Explorer panel.
 
 **Researched constraints (evidence in the plan).**
 
-- `TextareaRenderable` already provides syntax highlighting, full
-  cursor/selection APIs, undo/redo, go-to-line, custom keybindings, extmarks
-  (gutter), and traits for key ownership; `Code`, `LineNumber`, `TabSelect`,
-  `Select`, and `ScrollBox` are available.
+- `TextareaRenderable` provides cursor/selection APIs, undo/redo, go-to-line,
+  custom keybindings, extmarks (gutter), and traits for key ownership, but its
+  0.5.11 `syntaxStyle` has no tree-sitter filetype hook; the editor computes
+  highlights through `highlightOnce` and applies ranges manually. `Code`,
+  `LineNumber`, `TabSelect`, `Select`, and `ScrollBox` are available.
 - Only javascript, typescript, markdown, and zig parsers ship bundled;
   `addDefaultParsers()` accepts extra `wasm` + `highlights.scm` assets, so
   coverage grows by vendoring pinned parsers.
@@ -292,10 +295,14 @@ Explorer panel.
   `addFiletypeParser` and the manual `highlightOnce` +
   `addHighlightByCharRange` editor pipeline both work (JSON verified live in
   the viewer and editor); `ctrl+z` is the host's terminal-suspend binding, so
-  Phase 3 must bind editor undo to free chords; mouse click-to-position still
-  needs a manual operator check.
-- **1. Editor core** — multi-tab model + tab strip, save/save-all/close/reopen,
-  dirty/discard guards, status bar (`L:C`), go-to-line, tab persistence.
+  Phase 3 must bind editor undo to free chords; the physical pointer remains
+  unavailable through this machine's ydotool, but the editor click mapping is
+  now implemented and unit-tested.
+- **1. Editor core. DONE 2026-09-18.** Multi-tab model + tab strip,
+  save/save-all/close/reopen, dirty/discard guards, status bar (`L:C`),
+  go-to-line, per-session path persistence, disk refresh, and bounded editor
+  click-to-position mapping. Live checks covered two-file save-all and a
+  discarded dirty edit without changing the tracked repository.
 - **2. Language coverage** — pinned, checksum-verified parser assets + manifest,
   extended filetype map, large-file highlight policy.
 - **3. Editing power** — find/replace, indent/dedent, comment toggle,
@@ -387,15 +394,16 @@ The plan document records these under "Operator decisions".
   chord or up to 256 printable ASCII characters through the private ydotool
   socket, bound to the focused window.
 - Terminal mouse capture is enabled (`"mouse": true`). Note: ydotool's virtual
-  pointer does not move the GNOME cursor on this machine, so mouse verification
-  is always a manual, operator-driven check; keyboard input through
+  pointer does not move the GNOME cursor on this machine. The editor now has a
+  bounded click-to-position handler with pure tests, while physical pointer
+  delivery remains an environment limitation; keyboard input through
   `desktop_input` works and is the automation path.
 
 ### Suggested next steps
 
-1. Start Phase 1 (editor core): the tray/tab model, save/save-all/close/
-   reopen, status bar, and persistence. Phase 0 is done.
-2. Continue Phases 2-7 with the memory loop and per-phase verification.
+1. Start Phase 2 (language coverage): pinned checksum-verified parser fetch,
+   manifest, extended filetype map, and large-file highlight policy.
+2. Continue Phases 3-7 with the memory loop and per-phase verification.
 3. Merge PRs #1/#2/#3 only on explicit request; retarget PR #3 to main after
    PR #1/#2 merge.
 
