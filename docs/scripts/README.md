@@ -14,13 +14,14 @@ lists them at a glance and covers the operating environment.
 |--------|----------|--------------|
 | `setup-computer-assistant.sh` | [`setup-computer-assistant.md`](setup-computer-assistant.md) | Full-stack provisioning and verification (system packages, skills, memory, Playwright, GitHub MCP) |
 | `setup-opencode.sh` | [`setup-opencode.md`](setup-opencode.md) | Persists `OPENCODE_ENABLE_EXA` and deploys skills and global commands content-aware |
+| `setup-opencode-v2.sh` | [`setup-opencode-v2.md`](setup-opencode-v2.md) | Deploys the v2 skill links, commands, and starting config into an isolated v2 config directory |
 | `setup-live-dictation.sh` | [`setup-live-dictation.md`](setup-live-dictation.md) | Optional checksum-pinned Vosk dictation runtime and `Alt+X` shortcut |
 
 ### Plugin deployment
 
 | Script | Document | What it does |
 |--------|----------|--------------|
-| `deploy-plugins.sh` | [`deploy-plugins.md`](deploy-plugins.md) | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
+| `deploy-plugins.sh` | [`deploy-plugins.md`](deploy-plugins.md) | Register the local plugins globally or into a repository's `.opencode/` (v1), or the v2 packages into a config directory, optionally copying the bootstrap scripts |
 
 ### Verification
 

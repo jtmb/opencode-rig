@@ -47,6 +47,7 @@ pieces fit together?*
 | [`scripts/README.md`](scripts/README.md) | Index grouped by role plus the conventions every script follows |
 | [`scripts/setup-computer-assistant.md`](scripts/setup-computer-assistant.md) | Full-stack provisioning: system packages, skills, memory, browser and GitHub MCP runtimes |
 | [`scripts/setup-opencode.md`](scripts/setup-opencode.md) | `OPENCODE_ENABLE_EXA` persistence and content-aware deployment of skills, commands, and custom tools |
+| [`scripts/setup-opencode-v2.md`](scripts/setup-opencode-v2.md) | Deploying the v2 skill links, commands, and starting config into an isolated v2 config directory |
 | [`scripts/deploy-plugins.md`](scripts/deploy-plugins.md) | Registering the local plugins globally or into a repository, plus the `/deploy` command and optional bootstrap copy |
 | [`scripts/setup-live-dictation.md`](scripts/setup-live-dictation.md) | Checksum-pinned Vosk dictation runtime and the `Alt+X` shortcut |
 | [`scripts/desktop-control.md`](scripts/desktop-control.md) | AT-SPI inspection and mutation with traversal bounds and short-lived target tokens |

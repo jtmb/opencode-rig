@@ -183,7 +183,8 @@ phrases, example requests, and how the skills combine.
 | `scripts/check-plugin-resource-guards-self-test.py` | Verify a bounded child can terminate without taking down its parent |
 | `scripts/setup-live-dictation.sh` | Reproduce and verify local incremental Vosk dictation on `Alt+X` without login autostart |
 | `scripts/setup-opencode.sh` | Verify by default; with `--apply`, persist `OPENCODE_ENABLE_EXA=1`, recursively deploy complete skill bundles, and deploy repository-managed global commands and typed desktop custom tools |
-| `scripts/deploy-plugins.sh` | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
+| `scripts/setup-opencode-v2.sh` | Verify by default; with `--apply`, link the 16 skill bundles, deploy the four global commands, and seed the v2 config into an isolated v2 config directory |
+| `scripts/deploy-plugins.sh` | Register the local v1 plugins globally or into a repository's `.opencode/`, or the v2 packages into a config directory (`--v2`); optionally copy the bootstrap scripts |
 | `scripts/desktop-control.py` | AT-SPI inspection with traversal status, short-lived target tokens, focus/text verification, and protected-field refusal |
 | `scripts/check-skill-docs.py` | Read-only validation for skill metadata, usage guides, deployed-set links, unsafe modes, symlinks, and generated artifacts |
 | `scripts/check-skill-docs-self-test.py` | Isolated negative tests proving invalid skill metadata and documentation are rejected |

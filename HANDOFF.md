@@ -241,9 +241,9 @@ Work in progress (full detail in the "Work In Progress" section of this file):
     plugins-v2 packages pass their bounded checks and load in the pilot, and
     the four global commands are discovered. The A1 keymap fix is verified
     after a fresh pilot start
-  - Phase 4 remaining: a v2 deploy mode in deploy-plugins.sh/setup-opencode.sh,
-    v2 rewrites of the four global command bodies, and the AGENTS.md v2
-    section. CI coverage for plugins-v2 landed in this session (A8)
+  - Phase 4 remaining: the v2 command rewrites (A6) and the AGENTS.md v2
+    section (B4). The v2 deploy tooling (A7) and CI coverage (A8) landed in
+    this session
   - Phase 5 (full v2 health check and PATH cutover with v1 rollback) waits on
     an explicit operator go; v1 (1.18.31) remains the default until then, with
     no left dock in either version, so the Explorer panel docks right
@@ -274,8 +274,8 @@ give you. If I pasted only this handoff, ask what task I want handled.
   rig-todo plus the tui-settings presets folded into source-control (3a9c8ad),
   the config-dir skills source (170a68a), v2 config examples (18d3a45), the
   cutover and rollback runbook (a4671a1), source-control colour parity
-  (08bc281), the v2 health check (d32bcf7), and the CI coverage with the
-  rig-todo workspace addition from this session.
+  (08bc281), the v2 health check (d32bcf7), CI coverage (167df04), and the v2
+  deploy tooling (`setup-opencode-v2.sh` plus `deploy-plugins.sh --v2`).
 - v1 work stays on PRs #1/#2 as recorded in the prompt above; merge only on
   explicit request. The untracked `session-ses_f4dc.md` transcript sits at the
   repository root; remove it only with approval (Phase D8).
@@ -291,11 +291,12 @@ give you. If I pasted only this handoff, ask what task I want handled.
   folded into source-control; the config-dir skills source; `cli.json` parity;
   v2 config examples; colour parity; the cutover/rollback runbook; the
   `verify-opencode-v2.sh` health check; CI coverage for `plugins-v2` with the
-  rig-todo workspace fix.
-- Pending: the v2 deploy mode, the four v2 command bodies, the AGENTS.md v2
-  section; then Phase 5 cutover on explicit approval; then the window/input
-  tools and Basic Memory M1-M4; merge PR #1/#2 only on explicit request;
-  remove `session-ses_f4dc.md` with approval.
+  rig-todo workspace fix; the v2 deploy tooling (`setup-opencode-v2.sh` and
+  `deploy-plugins.sh --v2`) with its docs.
+- Pending: the four v2 command bodies (A6) and the AGENTS.md v2 section (B4),
+  then Phase 5 cutover on explicit approval; then the window/input tools and
+  Basic Memory M1-M4; merge PR #1/#2 only on explicit request; remove
+  `session-ses_f4dc.md` with approval.
 
 ### Approved plans — desktop tools, Basic Memory, and TUI features
 
@@ -691,7 +692,8 @@ across the first five packages plus 4 for rig-todo); `rig-tools`, `rig-todo`,
 and the CLI plugins live-verified; the CLI keymap bug fixed and
 restart-verified (A1); the resource guard and documentation map cover
 `plugins-v2/`; `tui-settings` retired; A2-A5 landed (rig-todo, presets folded,
-config-dir skills source, `cli.json` parity); A8 CI coverage landed.
+config-dir skills source, `cli.json` parity); A7 deploy tooling and A8 CI
+coverage landed.
 
 #### Phase A - finish the v2 port (repo, pilot-verifiable)
 
@@ -729,10 +731,13 @@ config-dir skills source, `cli.json` parity); A8 CI coverage landed.
 - **A6. Rewrite the four global commands for v2** (`deploy`, `resume`,
   `handoff`, `promote-skills`): v2 paths, `cli.json` object registration, the
   v2 health-check name. PENDING.
-- **A7. Deploy tooling.** `deploy-plugins.sh` v2 mode (writes `cli.json` and
-  `opencode.jsonc` object entries, `--verify-only`, never overwrites);
-  `setup-opencode.sh` v2 target (or `setup-opencode-v2.sh`) for skills,
-  commands, and config; docs + map rows for both. PENDING.
+- **A7. Deploy tooling. DONE 2026-09-18.** `deploy-plugins.sh --v2` writes
+  object entries into the v2 `opencode.jsonc` (server plugins) and `cli.json`
+  (CLI plugins), preserves existing options, and never overwrites;
+  `setup-opencode-v2.sh` links the skills, deploys the commands, seeds missing
+  configs, and delegates to the v2 health check. Docs:
+  `docs/scripts/setup-opencode-v2.md` plus the updated `deploy-plugins.md`, and
+  the handoff rule covers both v2 scripts.
 - **A8. CI. DONE 2026-09-18.** `.github/workflows/verify.yml` installs the
   `plugins-v2` workspace with `npm ci --ignore-scripts` and runs the six
   bounded package checks; the `rig-todo` workspace entry and lockfile were
@@ -799,7 +804,7 @@ config-dir skills source, `cli.json` parity); A8 CI coverage landed.
   (with approval); keep this file current.
 
 Order: A1 -> A2 -> A3/A4/A5 -> A6 -> A7 -> A8 -> B1/B2 -> B3/B4/B5 -> C -> D.
-A1-A5, A8, B3, and B5 are done; A6, A7, and B4 remain before Phase C. Phases A
+A1-A5, A7, A8, B3, and B5 are done; A6 and B4 remain before Phase C. Phases A
 and D1/D2 are independent; Basic Memory (D3-D6) can start once the v2 config is
 final.
 
@@ -814,10 +819,10 @@ v2 upgrade beyond 2.0.7.
 
 ### Suggested next steps
 
-1. Finish v2 Phase 4: add the v2 deploy mode to
-   `deploy-plugins.sh`/`setup-opencode.sh`, rewrite the four global command
-   bodies for v2, and add the `AGENTS.md` v2 section; keep the documentation
-   gate and this file current.
+1. Finish v2 Phase 4: rewrite the four global command bodies for v2 (A6) and
+   add the `AGENTS.md` v2 section (B4); keep the documentation gate and this
+   file current. Deploy with `setup-opencode-v2.sh` and
+   `deploy-plugins.sh --v2`.
 2. Run Phase 5 verification in the pilot: the six plugins, both todo tools,
    the desktop/vision tools, and one MCP read; then ask for the explicit
    cutover go (PATH change; rollback documented in

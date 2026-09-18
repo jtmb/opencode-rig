@@ -73,7 +73,8 @@ the browser manifests, the GitHub tools, the Git hooks, and the map itself. The
 single `additional` rule (`handoff`) requires `HANDOFF.md` to be updated
 whenever an environment-defining artifact changes: the map and hooks, CI
 workflows, global commands, plugin registration, the skills catalog, the
-setup/MCP/deploy scripts, the browser manifests, or the GitHub tools README.
+setup/MCP/deploy scripts (including the v2 `setup-opencode-v2.sh` and
+`verify-opencode-v2.sh`), the browser manifests, or the GitHub tools README.
 
 ## Options
 

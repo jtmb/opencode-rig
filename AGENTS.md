@@ -254,6 +254,13 @@ or CAPTCHAs for the user.
   `platforms/linux/ubuntu/computer-use/plugins/<name>/` (source, README, and
   checks; loaded directly from these paths). `setup-opencode.sh` does not
   deploy plugins.
+- OpenCode v2 plugin packages:
+  `platforms/linux/ubuntu/computer-use/plugins-v2/<name>/` (isolated pilot; six
+  packages checked in CI through the same bounded wrapper). The v2 deployment
+  surface is `scripts/setup-opencode-v2.sh` (skill links, commands, and
+  starting config) and `scripts/verify-opencode-v2.sh` (read-only pilot health
+  check); `deploy-plugins.sh --v2` registers the packages. v1 remains the
+  default until the approved cutover in `docs/migration/opencode-v2.md`.
 - The local plugin set is `codex-usage` (TUI quota sidebar), `codex-fallback`
   (server failover), `source-control` (TUI working-tree and GitHub panel),
   `tui-settings` (TUI settings overlay and sidebar positioning), and
@@ -359,6 +366,8 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking-self
 ./platforms/linux/ubuntu/computer-use/scripts/setup-git-hooks.sh --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh
 ./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --verify-only
+./platforms/linux/ubuntu/computer-use/scripts/setup-opencode-v2.sh --verify-only
+./platforms/linux/ubuntu/computer-use/scripts/verify-opencode-v2.sh
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
 opencode debug skill
 opencode mcp list

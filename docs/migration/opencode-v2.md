@@ -312,10 +312,18 @@ rollback) stays pending explicit approval; v1 remains the default.
   workspace with `npm ci --ignore-scripts` and runs the six bounded package
   checks. `rig-todo` was added to the workspace list and lockfile so CI and
   local checks cover the same six packages.
-- Still remaining: a v2 deploy mode in `deploy-plugins.sh`/`setup-opencode.sh`,
-  rewriting the four command bodies, and the `AGENTS.md` v2 section, then
-  Phase 5 cutover. After cutover, the queued pre-migration work (desktop
-  window/input tools and Basic Memory M1-M4).
+- A7 deploy tooling: `setup-opencode-v2.sh` links the 16 skill bundles,
+  deploys the four commands, seeds `opencode.jsonc`/`cli.json` only when
+  missing, refuses the v1 config directory without an explicit override, and
+  delegates the pilot health check to `verify-opencode-v2.sh`.
+  `deploy-plugins.sh --v2` registers `all`, `server`, `cli`, `both`, or one of
+  the six packages as object entries in the v2 config (server plugins in
+  `opencode.jsonc`, CLI plugins in `cli.json`), preserves existing options,
+  and rejects `--scope project`/`--bootstrap`. Both were exercised against a
+  disposable config directory (seed, link, register, idempotent re-run).
+- Still remaining: rewriting the four global command bodies and the
+  `AGENTS.md` v2 section, then Phase 5 cutover. After cutover, the queued
+  pre-migration work (desktop window/input tools and Basic Memory M1-M4).
 
 ## Risks
 
