@@ -28,7 +28,11 @@ Override the paths with environment variables:
   enabled local wrappers; global Playwright and all legacy flat same-name MCP
   keys are absent.
 - Repository `opencode.json` declares exactly one enabled project Playwright
-  server using the exact local wrapper, with no global-only MCP registrations.
+  server using either the exact checkout-local wrapper path or the
+  workspace-relative `./platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh`
+  command, with no global-only MCP registrations. The relative form uses
+  OpenCode's default workspace `cwd`; the setup assistant's generated absolute
+  form remains valid for an installed checkout.
 - `cli.json` has `session.permissions` exactly `prompt`.
 - Every catalog-declared server and CLI role is declared in its expected config,
   with canonical package paths, no duplicate or malformed entries, and an

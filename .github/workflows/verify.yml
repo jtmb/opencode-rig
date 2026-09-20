@@ -22,12 +22,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install locked v2 dependencies
+      - name: Install locked test dependencies
         run: |
           set -euo pipefail
           workspace=platforms/linux/ubuntu/computer-use/plugins-v2
+          browser_tools=platforms/linux/ubuntu/browser-tools
           wrapper=platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh
           bash "$wrapper" -- npm --prefix "$workspace" ci --ignore-scripts
+          bash "$wrapper" -- npm --prefix "$browser_tools" ci --ignore-scripts
 
       - name: Focused repository QA self-test
         run: python3 platforms/linux/ubuntu/computer-use/scripts/check-repository-qa-self-test.py

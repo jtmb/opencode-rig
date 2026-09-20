@@ -140,10 +140,13 @@ commit or push was performed.
   independently reviewed background records. Canonical repository QA passes all
   twelve package checks, every self-test, policy/documentation/deployment gates,
   format/link validation, and Git whitespace checks.
+- PR #3 CI portability is bounded: CI installs both locked v2 workspaces before
+  package QA, and the checked-in Playwright MCP command is workspace-relative;
+  the verifier also accepts the setup assistant's checkout-local absolute form.
 - `integrated-browser` package typecheck/tests and disposable role-deployment
   self-tests pass; its pinned headed Chromium runtime and controller now pass
   live launch, navigation, rendering, accessible interaction, and cleanup.
-- Final authenticated runtime evidence reports OpenCode 2.0.7, PID `70902`,
+- Final authenticated runtime evidence reports OpenCode 2.0.7, PID `253389`,
   92 active plugins, zero failures, and three connected MCPs.
 - The protected `platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/README.md`
   remains unchanged at SHA-256

@@ -48,7 +48,8 @@ extras are reported and preserved. JSONC validation accepts line/block comments
 and trailing commas but rejects malformed input and duplicate keys. The focused
 `setup-opencode-self-test.py` exercises these safety and idempotence guarantees,
 including the real prepare → plugin registration → final verification sequence
-for clean and stale targets.
+for clean and stale targets. It also keeps the checked-in project Playwright MCP
+command workspace-relative so the same verification works from another checkout.
 
 The parser installer requires the locked `tree-sitter-wasm@2.0.1` package and
 validates the manifest schema, unique safe aliases/filetypes, source

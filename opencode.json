@@ -174,7 +174,7 @@
       "playwright": {
         "type": "local",
         "command": [
-          "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"
+          "./platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"
         ],
         "disabled": false,
         "timeout": {

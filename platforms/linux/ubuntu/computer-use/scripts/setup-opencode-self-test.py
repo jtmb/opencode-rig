@@ -91,6 +91,11 @@ with tempfile.TemporaryDirectory(prefix="opencode-setup-self-test-", dir=test_ro
         XDG_RUNTIME_DIR=str(runtime),
     )
 
+    project = _jsonc.load_jsonc(str(ROOT / "opencode.json"))
+    assert project["mcp"]["servers"]["playwright"]["command"] == [
+        "./platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"
+    ]
+
     # Seed parser assets with the pinned package, then exercise the real
     # prepare -> plugin registration -> final health-check sequence.
     run(["node", str(PARSER), "--target", str(parsers)], env=env)
