@@ -72,9 +72,8 @@ export default Plugin.define({
     const pendingSwitches = new Map<string, { target: ModelRef; staleSeen: boolean }>()
     let catalogCache: { at: number; value?: Catalog } = { at: 0 }
 
-    // Options may carry an `agents` map; per-agent codexFallback overrides that
-    // lived in the V1 agent config have no V2 equivalent, so they are supplied
-    // here instead.
+    // Per-agent fallback policy is supplied through this plugin's `agents`
+    // option so routing stays local to the plugin configuration.
     if (isRecord(ctx.options.agents)) {
       for (const [name, raw] of Object.entries(ctx.options.agents)) {
         const parsed = parseAgentFallback(raw)
@@ -126,6 +125,7 @@ export default Plugin.define({
       const result = pickTier({
         chain: effective.chain,
         startIndex,
+        wrap: true,
         isCooling: (key) => state.cooling(key),
         isAvailable: (tier) => isTierAvailable(catalog, tier),
       })
@@ -201,7 +201,7 @@ export default Plugin.define({
         return undefined
       }
 
-      const quotaDriven = !isTierFailure && (failure.kind === "quota" || snapshot?.limitReached === true)
+      const quotaDriven = failure.kind === "quota" || snapshot?.limitReached === true
       const until = quotaDriven
         ? snapshot?.resetsAt && snapshot.resetsAt > Date.now()
           ? snapshot.resetsAt

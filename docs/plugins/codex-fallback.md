@@ -9,7 +9,7 @@ messages itself.
 - Source: `platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback/`
 - Entry point: `src/index.ts`
 - Component README: [`plugins-v2/codex-fallback/README.md`](../../platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback/README.md)
-- Companion: [`codex-usage`](codex-usage.md) supplies the shared usage reader
+- Companion: [`codex-usage`](../../platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/README.md) supplies the shared usage reader
   and parser.
 
 Read [`plugins/README.md`](README.md) for the shared plugin security model and
@@ -25,7 +25,7 @@ path and preserves the configured options:
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
     {
-      "package": "file:///absolute/path/to/plugins-v2/codex-fallback/src/index.ts",
+      "package": "/absolute/path/to/plugins-v2/codex-fallback",
       "options": {
         "defaultChain": ["deepseek/deepseek-v4-flash", "opencode/big-pickle"],
         "agents": {
@@ -79,8 +79,7 @@ advances normally.
 | `debug` | boolean | `false` | Enable informational `[codex-fallback]` logs. Warnings remain visible. |
 
 `enabled: false` is accepted inside an agent override as an alias for
-`mode: "off"`. The old v1 mutable config and toast options are not used by the
-v2 implementation.
+`mode: "off"`.
 
 ## Routing behavior
 
@@ -99,12 +98,15 @@ availability is unknown and the chain is attempted (fail-open behavior).
 
 ### Retry routing
 
-For a matching provider failure, the `retry` hook:
+For a matching failure from any registered/connected provider, the `retry` hook:
 
 1. classifies quota, rate-limit, server, and abort signals;
-2. refreshes the OpenAI quota endpoint for an OpenAI primary when needed;
+2. recognizes provider-wide quota signals, including DeepSeek balance exhaustion
+   and typed OpenCode Zen free/go usage exhaustion; the OpenAI quota endpoint is
+   refreshed for an OpenAI primary when needed;
 3. cools the failed model until a reported reset or bounded fallback timeout;
-4. selects the next usable chain tier; and
+4. selects the next usable chain tier, wrapping the configured chain at most
+   once so every tier has a path to another healthy tier; and
 5. calls `ctx.session.switchModel()` before setting
    `{ retry: true, delay: 250 }`.
 

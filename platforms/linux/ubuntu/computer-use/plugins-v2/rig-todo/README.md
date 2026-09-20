@@ -18,9 +18,10 @@ Items are `{ content, status, priority? }` with
 
 ## Panel (CLI)
 
-`tui.tsx` contributes a `sidebar.content` panel with a `- Todo n/m` header and
-the item list using fixed-width markers (`[x]` completed, `[~]` in progress,
-`[ ]` pending, `[-]` cancelled), matching the tool summary format.
+`tui.tsx` contributes a panel after `sidebar.content` with a `- Todo n/m` header
+and the item list using fixed-width markers (`[x]` completed, `[~]` in
+progress, `[ ]` pending, `[-]` cancelled), matching the tool summary format.
+The outside-slot placement keeps Todo visible when the content slot is replaced.
 Clicking the header collapses or expands it. The panel hides itself when the
 list is empty.
 

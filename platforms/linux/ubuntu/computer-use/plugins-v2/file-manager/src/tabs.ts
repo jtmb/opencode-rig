@@ -93,6 +93,11 @@ export function activateTab(state: TabsState, path: string): TabsState {
   return state.open.some((entry) => entry.path === path) ? { ...state, active: path } : state
 }
 
+/** Normal navigation never discards a buffer; guards belong to destructive operations. */
+export function switchTab(state: TabsState, path: string): TabsState {
+  return activateTab(state, path)
+}
+
 export function updateTab(state: TabsState, path: string, content: string): TabsState {
   if (!state.open.some((entry) => entry.path === path)) return state
   return {

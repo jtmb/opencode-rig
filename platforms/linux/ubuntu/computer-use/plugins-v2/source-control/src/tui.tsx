@@ -345,7 +345,7 @@ export default Plugin.define({
     })
 
     const stopSidebar = context.ui.slot({
-      append: "sidebar.content",
+      append: "sidebar.footer",
       render: ({ sessionID: nextSessionID }) => {
         if (updateContext(nextSessionID)) void refresh(true)
         return (

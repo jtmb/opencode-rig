@@ -107,7 +107,7 @@ export default Plugin.define({
   id: "opencode-rig.todo-panel",
   setup(context) {
     const stopSidebar = context.ui.slot({
-      append: "sidebar.content",
+      after: "sidebar.content",
       render: ({ sessionID }) => <TodoPanel sessionID={sessionID} />,
     })
     return () => stopSidebar()

@@ -3,6 +3,7 @@ import { homedir } from "node:os"
 import { join } from "node:path"
 
 export const DEFAULT_USAGE_ENDPOINT = "https://chatgpt.com/backend-api/wham/usage"
+export const DEFAULT_DEEPSEEK_BALANCE_ENDPOINT = "https://api.deepseek.com/user/balance"
 
 export type CodexUsageWindow = {
   id: "primary" | "secondary"
@@ -39,6 +40,23 @@ export type OpenAICredential = {
   expiresAt?: number
 }
 
+export type DeepSeekCredential = {
+  apiKey: string
+}
+
+export type DeepSeekBalance = {
+  currency: string
+  totalBalance: string
+  grantedBalance?: string
+  toppedUpBalance?: string
+}
+
+export type DeepSeekBalanceSnapshot = {
+  fetchedAt: number
+  available: boolean
+  balances: DeepSeekBalance[]
+}
+
 export function overallWeeklyWindow(snapshot: CodexUsageSnapshot) {
   const overall = snapshot.buckets.find((bucket) => bucket.id === "codex")
   if (!overall) return undefined
@@ -65,6 +83,18 @@ export class CodexUsageError extends Error {
   constructor(message: string, code: UsageErrorCode, retryAt?: number) {
     super(message)
     this.name = "CodexUsageError"
+    this.code = code
+    this.retryAt = retryAt
+  }
+}
+
+export class DeepSeekUsageError extends Error {
+  readonly code: UsageErrorCode
+  readonly retryAt?: number
+
+  constructor(message: string, code: UsageErrorCode, retryAt?: number) {
+    super(message)
+    this.name = "DeepSeekUsageError"
     this.code = code
     this.retryAt = retryAt
   }
@@ -156,6 +186,30 @@ export async function readOpenAICredential(authPath = defaultAuthPath()): Promis
   if (!accountId) throw new CodexUsageError("Could not determine the ChatGPT account for this login.", "auth")
 
   return { accessToken, accountId, expiresAt }
+}
+
+export async function readDeepSeekCredential(authPath = defaultAuthPath()): Promise<DeepSeekCredential> {
+  let raw: string
+  try {
+    raw = await readFile(authPath, "utf8")
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new DeepSeekUsageError("DeepSeek login not found. Run `opencode auth login`.", "auth")
+    }
+    throw new DeepSeekUsageError("Could not read the OpenCode authentication file.", "auth")
+  }
+
+  let file: unknown
+  try {
+    file = JSON.parse(raw)
+  } catch {
+    throw new DeepSeekUsageError("The OpenCode authentication file is invalid.", "auth")
+  }
+
+  const deepseek = isRecord(file) && isRecord(file.deepseek) ? file.deepseek : undefined
+  const apiKey = deepseek?.type === "api" ? text(deepseek.key) : undefined
+  if (!apiKey) throw new DeepSeekUsageError("DeepSeek API login is unavailable.", "auth")
+  return { apiKey }
 }
 
 function windowLabel(minutes: number | undefined, fallback: string) {
@@ -286,6 +340,85 @@ function retryAt(response: Response, now: number) {
   if (Number.isFinite(seconds)) return now + Math.max(0, seconds) * 1000
   const date = Date.parse(value)
   return Number.isFinite(date) ? date : now + 60_000
+}
+
+function balanceAmount(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number") return undefined
+  const result = safeText(String(value))
+  return result && /^-?\d+(?:\.\d+)?$/.test(result) ? result : undefined
+}
+
+export function parseDeepSeekBalance(payload: unknown, now = Date.now()): DeepSeekBalanceSnapshot {
+  if (!isRecord(payload) || typeof payload.is_available !== "boolean" || !Array.isArray(payload.balance_infos)) {
+    throw new DeepSeekUsageError("DeepSeek returned invalid balance data.", "response")
+  }
+
+  const balances: DeepSeekBalance[] = []
+  for (const value of payload.balance_infos.slice(0, 8)) {
+    if (!isRecord(value)) continue
+    const currency = safeText(value.currency)
+    const totalBalance = balanceAmount(value.total_balance)
+    if (!currency || !/^[A-Za-z0-9._-]{1,16}$/.test(currency) || totalBalance === undefined) continue
+    const grantedBalance = balanceAmount(value.granted_balance)
+    const toppedUpBalance = balanceAmount(value.topped_up_balance)
+    balances.push({
+      currency: currency.toUpperCase(),
+      totalBalance,
+      ...(grantedBalance !== undefined ? { grantedBalance } : {}),
+      ...(toppedUpBalance !== undefined ? { toppedUpBalance } : {}),
+    })
+  }
+
+  if (balances.length === 0) {
+    throw new DeepSeekUsageError("DeepSeek returned no readable balances.", "response")
+  }
+  return { fetchedAt: now, available: payload.is_available, balances }
+}
+
+export async function fetchDeepSeekBalance(
+  credential: DeepSeekCredential,
+  options: {
+    endpoint?: string
+    signal?: AbortSignal
+    fetchImpl?: typeof fetch
+    now?: number
+  } = {},
+) {
+  const now = options.now ?? Date.now()
+  let response: Response
+  try {
+    response = await (options.fetchImpl ?? fetch)(options.endpoint ?? DEFAULT_DEEPSEEK_BALANCE_ENDPOINT, {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${credential.apiKey}`,
+        "User-Agent": "opencode-provider-usage/0.1.0",
+      },
+      signal: options.signal,
+    })
+  } catch (error) {
+    if (options.signal?.aborted) throw error
+    throw new DeepSeekUsageError("Could not reach the DeepSeek balance service.", "network")
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    throw new DeepSeekUsageError("DeepSeek login is no longer authorized. Log in again.", "auth")
+  }
+  if (response.status === 429) {
+    const next = retryAt(response, now)
+    throw new DeepSeekUsageError("DeepSeek balance checks are temporarily rate limited.", "rate-limit", next)
+  }
+  if (!response.ok) {
+    throw new DeepSeekUsageError(`DeepSeek balance service returned HTTP ${response.status}.`, "network")
+  }
+
+  let payload: unknown
+  try {
+    payload = await response.json()
+  } catch {
+    throw new DeepSeekUsageError("DeepSeek returned unreadable balance data.", "response")
+  }
+  return parseDeepSeekBalance(payload, now)
 }
 
 export async function fetchCodexUsage(

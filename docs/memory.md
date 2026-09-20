@@ -14,7 +14,7 @@ deletion confirmation.
 | Index | project SQLite database under the same directory |
 | Embedding model | FastEmbed `bge-small-en-v1.5`, cached in `~/.cache/huggingface` |
 | Launcher | `scripts/basic-memory-mcp.sh` (adaptive user-cgroup budget, `prlimit` fallback, fail closed) |
-| Registration | v2 config flat `mcp` map, server name `basic-memory` |
+| Registration | v2 `mcp.servers` entry named `basic-memory` |
 
 ## Tools
 
@@ -46,6 +46,34 @@ The hidden tools are the schema tools, project/workspace management,
   accumulating contradictions, and ask before deleting a note.
 - Never store passwords, API keys, tokens, private keys, payment details, MFA
   codes, dictated private content, or whole chats.
+
+## Project rule reconciliation
+
+The `orchestration-policy` server plugin performs the Open Rig lookup
+deterministically. Its project configuration binds the `computer-assistant`
+knowledge base directory to the `open-rig` and `opencode-rig` tags. Every new
+session starts due; the hook reads only regular, non-symlink Markdown files in
+that directory, selects tagged `decision` and `preference` notes, and injects
+only size-bounded contents as untrusted reference data. It does not launch a
+second Basic Memory process, and unrelated projects are not searched
+implicitly.
+
+After review, the agent calls `rule_reconciliation` with an aligned, resolved,
+or conflicting outcome. Recognized repository mutation tools remain blocked
+until that audit succeeds. Reported conflicts require an observed question-tool
+round trip and an explicit resolution. The next check becomes due after the
+configured number of user turns: `reconciliationIntervalTurns`, default `10`,
+bounded from `1` through `100`.
+
+The audit stores the project, bindings, lookup digest, note count, outcome, and
+conflict resolution in plugin storage. It does not write, delete, or overwrite
+Basic Memory. A service restart loses in-memory turn counters and safely makes
+the next request due as a new-session check.
+
+A failed lookup cannot be marked aligned. It is treated as a conflict and can
+proceed only after the question tool records the operator's explicit resolution,
+which avoids both silent fail-open behavior and an unresolvable fail-closed
+deadlock.
 
 ## Operations
 

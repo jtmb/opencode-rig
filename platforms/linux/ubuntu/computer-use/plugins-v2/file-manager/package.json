@@ -10,7 +10,9 @@
   "scripts": {
     "check": "npm run typecheck && npm test",
     "test": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts",
-    "typecheck": "bash ../../scripts/run-bounded-command.sh -- ../node_modules/.bin/tsc --noEmit"
+    "typecheck": "bash ../../scripts/run-bounded-command.sh -- ../node_modules/.bin/tsc --noEmit",
+    "parsers:install": "bash ../../scripts/run-bounded-command.sh -- node scripts/install-parsers.mjs",
+    "parsers:verify": "bash ../../scripts/run-bounded-command.sh -- node scripts/install-parsers.mjs --verify-only"
   },
   "dependencies": {
     "@opencode/plugin": "2.0.7"

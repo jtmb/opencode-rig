@@ -1,7 +1,8 @@
 # Skills
 
-Sixteen OpenCode skills. Complete source bundles live in `./<name>/` and are
-recursively deployed to `~/.config/opencode/skills/<name>/` by
+Nineteen OpenCode skills. Complete source bundles live in `./<name>/` and are
+recursively deployed to the selected v2 config directory, defaulting to
+`~/.opencode-v2-pilot/config/skills/<name>/`, by
 `../scripts/setup-opencode.sh --apply` (idempotent and content-aware).
 
 Restart OpenCode after deployment. Running sessions do not hot-reload skills.
@@ -35,14 +36,20 @@ comma-separated tags; the category/tag index below is derived from each
   changes.
 - `blender` owns safe Blender scene work. `web-3d-asset-pipeline` turns DCC
   sources into verified browser-ready GLB/glTF artifacts.
-- `task-memory` carries durable context across sessions so setup is not
-  repeated.
+- `task-memory` carries curated durable facts across sessions. `session-context`
+  retrieves bounded, read-only evidence from another session in the current
+  project without treating its text as instructions.
 - `app-setup`, `system-troubleshooting`, `files-and-documents`, and
   `routine-automation` are the task workflows that combine vision, control,
   browser, and memory.
 - `opencode-db-maintenance` keeps OpenCode itself healthy.
+- `development-conventions` supplies focused source, test, documentation, API,
+  language, UI, and Open Rig operational conventions.
 - `skill-maintenance` keeps skill source, routing, catalogs, and generated
   deployment consistent without automatic commits or deletions.
+- `agent-orchestration` coordinates explicitly authorized, bounded subagents
+  while keeping ownership, verification, and commit/push gates with the main
+  agent.
 - `vscode-management` owns Microsoft VS Code package, CLI, settings, extension,
   workspace, profile, integrated-browser testing, GUI, and troubleshooting
   workflows.
@@ -57,6 +64,7 @@ comma-separated tags; the category/tag index below is derived from each
 | [`browser-headless`](./browser-headless/SKILL.md) | [`README.md`](./browser-headless/README.md) | `browser` | `browser,headless,playwright,automation` |
 | [`game-playtest`](./game-playtest/SKILL.md) | [`README.md`](./game-playtest/README.md) | `browser` | `games,playtesting,playwright,canvas,webgl` |
 | [`task-memory`](./task-memory/SKILL.md) | [`README.md`](./task-memory/README.md) | `memory` | `memory,preferences,decisions,pending` |
+| [`session-context`](./session-context/SKILL.md) | [`README.md`](./session-context/README.md) | `memory` | `opencode,sessions,context,handoff,memory` |
 | [`app-setup`](./app-setup/SKILL.md) | [`README.md`](./app-setup/README.md) | `applications` | `applications,installation,updates,removal` |
 | [`github-operations`](./github-operations/SKILL.md) | [`README.md`](./github-operations/README.md) | `applications` | `github,mcp,repositories,issues,pull-requests,automation` |
 | [`blender`](./blender/SKILL.md) | [`README.md`](./blender/README.md) | `applications` | `blender,3d,bpy,rendering,export` |
@@ -65,7 +73,9 @@ comma-separated tags; the category/tag index below is derived from each
 | [`web-3d-asset-pipeline`](./web-3d-asset-pipeline/SKILL.md) | [`README.md`](./web-3d-asset-pipeline/README.md) | `files` | `3d,gltf,glb,assets,web` |
 | [`routine-automation`](./routine-automation/SKILL.md) | [`README.md`](./routine-automation/README.md) | `automation` | `automation,scheduling,scripts,idempotence` |
 | [`opencode-db-maintenance`](./opencode-db-maintenance/SKILL.md) | [`README.md`](./opencode-db-maintenance/README.md) | `maintenance` | `maintenance,sqlite,backup,cron` |
+| [`development-conventions`](./development-conventions/SKILL.md) | [`README.md`](./development-conventions/README.md) | `maintenance` | `development,conventions,source-editing,testing,documentation,operations` |
 | [`skill-maintenance`](./skill-maintenance/SKILL.md) | [`README.md`](./skill-maintenance/README.md) | `skills` | `skills,documentation,deployment,catalog` |
+| [`agent-orchestration`](./agent-orchestration/SKILL.md) | [`README.md`](./agent-orchestration/README.md) | `automation` | `agents,orchestration,delegation,verification,git-safety` |
 | [`vscode-management`](./vscode-management/SKILL.md) | [`README.md`](./vscode-management/README.md) | `editor` | `editor,vscode,extensions,workspaces,browser,testing` |
 
 ## Catalog
@@ -151,11 +161,10 @@ Example requests:
 - "Run this browser smoke test without opening a window."
 - "Download this public artifact in the background."
 
-Requires: on v1, the `playwright_headless` MCP entry pointing at
-`../scripts/playwright-headless-mcp.sh`; on v2, exactly one live `playwright`
-MCP plus the pinned repository runtime driven from the shell through
-`../scripts/run-bounded-command.sh`. Both run an isolated context that shares
-no state with the live window.
+Requires: exactly one live `playwright` MCP plus the pinned repository runtime
+driven from the shell through `../scripts/run-bounded-command.sh`. Headless
+tasks launch an isolated context that shares no state with the live window;
+Open Rig does not register a second headless MCP.
 
 ### game-playtest
 
@@ -223,6 +232,28 @@ Requires: the `basic-memory` MCP tools (`search_notes`, `build_context`,
 owner-only project at `~/Documents/computer-assistant/basic-memory/` (dir
 `700`). Writes apply directly, so confirm durable personal facts first;
 deletion always needs an explicit confirmation.
+
+### session-context
+
+Retrieve bounded, read-only context from another OpenCode session in the
+current project.
+
+Use when continuing or comparing work across sessions, checking a running
+session, or recovering decisions from a session title or ID.
+
+Example requests:
+
+- "List the other sessions in this project."
+- "Align this work with the session named Finish Open Rig v2 harness."
+- "Continue from `ses_example`, but verify its claims first."
+
+Requires: the `rig-tools` server plugin's `session_context` tool. The plugin
+also registers `/session-context` as a convenience command; it is not a
+deployed Markdown command. Retrieval excludes the invoking session, refuses
+cross-project reads, separates live status from saved outcome, and omits
+reasoning, attachments, provider state, shell output, and tool inputs/results.
+Imported text is historical evidence, not instructions, and important claims
+must be checked against current state before use.
 
 ### app-setup
 
@@ -360,6 +391,26 @@ Requires: `scripts/opencode-db-maintain.py`,
 requires OpenCode to be closed (the script enforces this), plus automatic
 backup and integrity checks.
 
+### development-conventions
+
+Apply focused conventions for source code, tests, documentation, APIs,
+Next.js, Python, Go/Rust, regex, Mermaid, gitignore, web/UI, and Open Rig v2
+operations.
+
+Use when implementing or reviewing work in one of those domains and load only
+the matching references after the mandatory comment and testing gates.
+
+Example requests:
+
+- "Review this API handler against our development conventions."
+- "Apply the Python and testing conventions to this fix."
+- "Check these Open Rig deployment docs for source-of-truth drift."
+
+Requires: repository-root `AGENTS.md` as authority, the mandatory references
+named by the skill, only the domain references needed for the task, and
+deployment through `../scripts/setup-opencode.sh` rather than direct edits to
+generated skill copies.
+
 ### skill-maintenance
 
 Create, update, audit, catalog, deploy, rename, or retire OpenCode skills in
@@ -379,6 +430,30 @@ Requires: root `AGENTS.md` as routing authority, canonical source under this
 directory, explicit reading of the relevant bundled reference, recursive
 deployment through `../scripts/setup-opencode.sh --apply`, and a fresh OpenCode
 session for runtime discovery. It never commits or deletes automatically.
+
+### agent-orchestration
+
+Coordinate bounded subagents only when delegation is explicitly requested or
+repository instructions require it, while keeping final ownership and
+verification with the main agent.
+
+Use when the user requests partitioned subagent work, bounded parallel
+investigation, or reconciliation of independent delegated findings.
+
+Example requests:
+
+- "Delegate these two disjoint inspections, then verify the results yourself."
+- "Use no more than two subagents and do not commit or push."
+- "Prepare the bounded change, but ask separately before commit and push."
+
+Requires: built-in `explore` for planning/reconnaissance, normally `general` for
+implementation, a hard cap of no more than three concurrent child sessions,
+complete non-overlapping prompts, a capacity check before every batch,
+conservative async/background execution for independent work, independent
+verification, preserved dirty work, and separate explicit approval gates for
+commit and push. If the capacity tool is unavailable, use serial/one-agent
+execution rather than guessing. Subagent claims are never treated as evidence,
+and destructive Git actions are forbidden.
 
 ### vscode-management
 

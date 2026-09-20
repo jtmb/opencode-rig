@@ -57,3 +57,22 @@ test("advances past a failed tier and reports exhaustion", () => {
   assert.equal(exhausted.skipped.length, 1)
   assert.equal(exhausted.skipped[0]?.reason, "unavailable")
 })
+
+test("wraps once so every configured tier has a fallback path", () => {
+  const wrapped = pickTier({
+    chain,
+    startIndex: 3,
+    wrap: true,
+    isCooling: (key) => key === "opencode/big-pickle",
+  })
+  assert.deepEqual(wrapped.tier, flash)
+
+  const bounded = pickTier({
+    chain,
+    startIndex: 2,
+    wrap: true,
+    isCooling: () => true,
+  })
+  assert.equal(bounded.tier, undefined)
+  assert.equal(bounded.skipped.length, chain.length)
+})

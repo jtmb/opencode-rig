@@ -63,9 +63,9 @@ version, archive URL, and checksum in the setup script. Do not use `latest`.
 
 ## Integration
 
-- Registered as the MCP named `github` in the **global** config
-  (`~/.config/opencode/opencode.jsonc` when present, otherwise
-  `opencode.json`), global-only, with a 30 s timeout.
+- Registered as the MCP named `github` in the isolated Open Rig **global**
+  config (`$OPENCODE_V2_CONFIG_DIR/opencode.jsonc` when present, otherwise
+  `opencode.json`), global-only, with a 30 s startup timeout.
 - When a token is present, `setup-computer-assistant.sh --verify-only` confirms
   `opencode mcp list` reports it connected. Without a token, verification
   reports authentication as pending instead of failing.
@@ -78,15 +78,16 @@ the local MCP, use this global `opencode.json`/`opencode.jsonc` entry shape:
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "github": {
-      "type": "local",
-      "command": [
-        "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"
-      ],
-      "enabled": true,
-      "timeout": 30000,
-      "environment": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+    "servers": {
+      "github": {
+        "type": "local",
+        "command": [
+          "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"
+        ],
+        "timeout": { "startup": 30000 },
+        "environment": {
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+        }
       }
     }
   }

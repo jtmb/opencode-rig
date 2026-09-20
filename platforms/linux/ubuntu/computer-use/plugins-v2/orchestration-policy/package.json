@@ -1,0 +1,22 @@
+{
+  "name": "opencode-rig-orchestration-policy-v2-local",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenCode v2 policy hooks for bounded background subagent orchestration.",
+  "exports": {
+    "./server": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "npm run typecheck && npm test",
+    "test": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "bash ../../scripts/run-bounded-command.sh -- ../node_modules/.bin/tsc --noEmit"
+  },
+  "dependencies": {
+    "@opencode/plugin": "2.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.6",
+    "typescript": "5.9.3"
+  }
+}

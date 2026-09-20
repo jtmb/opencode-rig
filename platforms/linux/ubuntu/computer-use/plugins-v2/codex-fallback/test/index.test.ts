@@ -24,6 +24,8 @@ type Harness = {
 
 const availableModels = [
   { providerID: "primary", modelID: "source" },
+  { providerID: "deepseek", modelID: "deepseek-chat" },
+  { providerID: "opencode", modelID: "big-pickle" },
   { providerID: "fake", modelID: "tier-1" },
   { providerID: "fake", modelID: "tier-2" },
   { providerID: "manual", modelID: "choice" },
@@ -134,6 +136,7 @@ async function runRetry(
   sessionID: string,
   model: ModelRef,
   attempt: number,
+  error: unknown = { name: "APIError", data: { message: "usage limit reached", statusCode: 429 } },
 ): Promise<Record<string, any>> {
   const hook = harness.hooks.get("retry")
   assert.ok(hook)
@@ -141,7 +144,7 @@ async function runRetry(
     sessionID,
     agent: "build",
     model: eventModel(model),
-    error: { name: "APIError", data: { message: "usage limit reached", statusCode: 429 } },
+    error,
     attempt,
     decision: { retry: false },
   }
@@ -180,6 +183,69 @@ test("routes a failed fake-provider turn through tier one and then tier two", as
       { providerID: "fake", id: "tier-1", variant: "fast" },
       { providerID: "fake", id: "tier-2", variant: "deep" },
     ])
+  } finally {
+    await harness.dispose()
+  }
+})
+
+test("routes a DeepSeek balance failure through the configured chain", async () => {
+  const harness = await makeHarness()
+  try {
+    const sessionID = "ses_deepseek"
+    const source = { providerID: "deepseek", modelID: "deepseek-chat" }
+    await runContext(harness, sessionID, source)
+    const retry = await runRetry(harness, sessionID, source, 1, {
+      name: "APIError",
+      data: { message: "Insufficient Balance" },
+    })
+
+    assert.equal(retry.decision.retry, true)
+    assert.deepEqual(harness.switches[0]?.model, {
+      providerID: "fake",
+      id: "tier-1",
+      variant: "fast",
+    })
+  } finally {
+    await harness.dispose()
+  }
+})
+
+test("routes OpenCode Zen typed free-usage exhaustion through the configured chain", async () => {
+  const harness = await makeHarness()
+  try {
+    const sessionID = "ses_zen"
+    const source = { providerID: "opencode", modelID: "big-pickle" }
+    await runContext(harness, sessionID, source)
+    const retry = await runRetry(harness, sessionID, source, 1, {
+      name: "APIError",
+      data: { type: "freeUsageExceeded" },
+    })
+
+    assert.equal(retry.decision.retry, true)
+    assert.deepEqual(harness.switches[0]?.model, {
+      providerID: "fake",
+      id: "tier-1",
+      variant: "fast",
+    })
+  } finally {
+    await harness.dispose()
+  }
+})
+
+test("wraps from the final configured tier without selecting the failed model again", async () => {
+  const harness = await makeHarness()
+  try {
+    const sessionID = "ses_wrapped_tier"
+    const source = { providerID: "fake", modelID: "tier-2", variant: "deep" }
+    await runContext(harness, sessionID, source)
+    const retry = await runRetry(harness, sessionID, source, 1)
+
+    assert.equal(retry.decision.retry, true)
+    assert.deepEqual(harness.switches[0]?.model, {
+      providerID: "fake",
+      id: "tier-1",
+      variant: "fast",
+    })
   } finally {
     await harness.dispose()
   }

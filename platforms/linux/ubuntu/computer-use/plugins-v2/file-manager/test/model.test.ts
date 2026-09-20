@@ -3,6 +3,7 @@ import test from "node:test"
 
 import {
   MAX_EDIT_BYTES,
+  fileNodesFromDirectoryEntries,
   filetypeFor,
   flattenTree,
   isBinaryContent,
@@ -21,7 +22,7 @@ import {
 
 function node(path: string, type: "file" | "directory", ignored = false): FileNode {
   const name = path.includes("/") ? path.slice(path.lastIndexOf("/") + 1) : path
-  return { name, path, absolute: `/project/${path}`, type, ignored }
+  return { name, path, type, ignored }
 }
 
 test("normalizes relative paths to posix form", () => {
@@ -42,7 +43,7 @@ test("checks containment with path resolution", () => {
   assert.equal(isContained("/project", "/project/src/a.ts"), true)
   assert.equal(isContained("/project", "/project"), true)
   assert.equal(isContained("/project", "/project-other/a.ts"), false)
-  assert.equal(isContained("/project", "/etc/passwd"), false)
+  assert.equal(isContained("/project", "/tmp/absolute-file.txt"), false)
   assert.equal(isContained("/project", "/project/../secret"), false)
 })
 
@@ -52,6 +53,20 @@ test("sorts directories before files and then by name", () => {
     sortEntries(entries).map((entry) => entry.path),
     ["assets", "src", "a.ts", "b.ts"],
   )
+})
+
+test("adapts bounded PathGuard listings without retaining absolute paths", () => {
+  const nodes = fileNodesFromDirectoryEntries([
+    { name: "z.ts", relative: "z.ts", type: "file", size: 1, mtimeMs: 1, mode: 0o644 },
+    { name: "src", relative: "src", type: "directory", size: 0, mtimeMs: 1, mode: 0o755 },
+    { name: "a.ts", relative: "a.ts", type: "file", size: 1, mtimeMs: 1, mode: 0o644 },
+  ])
+  assert.deepEqual(nodes, [
+    { name: "src", path: "src", type: "directory", ignored: false },
+    { name: "a.ts", path: "a.ts", type: "file", ignored: false },
+    { name: "z.ts", path: "z.ts", type: "file", ignored: false },
+  ])
+  assert.equal("absolute" in nodes[0], false)
 })
 
 test("filters ignored entries unless requested", () => {
@@ -93,13 +108,13 @@ test("flattens the tree by expansion state", () => {
   )
 })
 
-test("maps only bundled grammar extensions to filetypes", () => {
+test("maps the approved editor filetype matrix", () => {
   assert.equal(filetypeFor("src/tui.tsx"), "typescriptreact")
   assert.equal(filetypeFor("a/b/c.ts"), "typescript")
   assert.equal(filetypeFor("readme.md"), "markdown")
   assert.equal(filetypeFor("main.zig"), "zig")
-  assert.equal(filetypeFor("script.py"), undefined)
-  assert.equal(filetypeFor("Makefile"), undefined)
+  assert.equal(filetypeFor("script.py"), "python")
+  assert.equal(filetypeFor("Makefile"), "make")
 })
 
 test("detects dirty state, binary content, and oversize files", () => {
@@ -112,7 +127,7 @@ test("detects dirty state, binary content, and oversize files", () => {
 })
 
 test("normalizes quick-open results and drops protected paths", () => {
-  const results = ["src/a.ts", "./src/a.ts", "../escape.ts", "/etc/passwd", ".git/config", "", "src/b.ts"]
+  const results = ["src/a.ts", "./src/a.ts", "../escape.ts", "/tmp/absolute-file.txt", ".git/config", "", "src/b.ts"]
   assert.deepEqual(normalizeSearchResults(results, 10), ["src/a.ts", "src/b.ts"])
   assert.deepEqual(normalizeSearchResults(["a", "b", "c"], 2), ["a", "b"])
 })

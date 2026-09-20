@@ -1,0 +1,5 @@
+{
+  "name": "development-conventions",
+  "description": "Apply action-oriented conventions for source code, tests, documentation, APIs, Next.js, Python, Go/Rust, regex, Mermaid, gitignore, web/UI, and Open Rig v2 operations. Use for implementation or review in those domains.",
+  "tags": ["development", "conventions", "source-editing", "testing", "documentation", "operations"]
+}

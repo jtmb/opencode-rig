@@ -13,13 +13,15 @@ const QUOTA_PATTERNS = [
   /usage[_ -]?limit/i,
   /usage_limit_reached/i,
   /insufficient_quota/i,
+  /insufficient[_ -]?(?:balance|credits?|funds)/i,
+  /(?:balance|credits?) (?:is |are )?(?:depleted|exhausted)/i,
   /quota[_ -]?exceed/i,
   /exceeded your current quota/i,
   /out of (?:extra )?usage/i,
   /hit your .{0,40}usage limit/i,
   /billing hard limit/i,
   /(?:weekly|daily|monthly|5[- ]?hour) limit (?:reached|exceeded)/i,
-  /freeusage|gousage/i,
+  /(?:free|go)[_ -]?usage(?:[_ -]?(?:limit|exhaust(?:ed|ion)|exceed(?:ed)?|deplet(?:ed|ion)))?/i,
 ]
 
 const RETRYABLE_PATTERNS = [
@@ -45,9 +47,20 @@ function errorText(error: unknown): string {
     const message = error.message
     if (typeof name === "string") parts.push(name)
     if (typeof message === "string") parts.push(message)
+    for (const key of ["type", "code", "reason", "errorType"]) {
+      if (typeof error[key] === "string") parts.push(error[key] as string)
+    }
     const data = error.data
     if (isRecord(data)) {
       if (typeof data.message === "string") parts.push(data.message)
+      for (const key of ["type", "code", "reason", "errorType"]) {
+        if (typeof data[key] === "string") parts.push(data[key])
+      }
+      if (isRecord(data.error)) {
+        for (const key of ["type", "code", "reason"]) {
+          if (typeof data.error[key] === "string") parts.push(data.error[key] as string)
+        }
+      }
       if (typeof data.responseBody === "string") parts.push(data.responseBody)
     }
   }

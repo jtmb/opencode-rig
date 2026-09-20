@@ -1,0 +1,14 @@
+{
+  "qaCommand": [
+    "python3",
+    "platforms/linux/ubuntu/computer-use/scripts/check-repository-qa.py"
+  ],
+  "documentationCommand": [
+    "python3",
+    "platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py",
+    "--staged"
+  ],
+  "timeoutMs": 600000,
+  "tokenTtlMs": 300000,
+  "requiredPaths": ["HANDOFF.md", "ROADMAP.md"]
+}

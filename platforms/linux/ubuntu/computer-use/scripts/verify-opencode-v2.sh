@@ -15,6 +15,32 @@ PLUGINS="$REPO/platforms/linux/ubuntu/computer-use/plugins-v2"
 COMPUTER_USE_ROOT="$REPO/platforms/linux/ubuntu/computer-use"
 ROLE_CATALOG="${OPENCODE_V2_ROLE_CATALOG:-$COMPUTER_USE_ROOT/config/v2-plugin-roles.json}"
 CATALOG_TOOL="$REPO/platforms/linux/ubuntu/computer-use/scripts/v2-plugin-catalog.py"
+JSONC_HELPER="$REPO/platforms/linux/ubuntu/computer-use/scripts/setup-opencode-jsonc.py"
+
+preflight_config_paths() {
+  python3 - "$CONFIG" "$CONFIG/opencode.jsonc" "$CONFIG/cli.json" "$REPO/opencode.json" <<'PY'
+import os
+import sys
+
+root, *files = sys.argv[1:]
+def check(path, label):
+    absolute = os.path.abspath(path)
+    if os.path.islink(absolute):
+        raise SystemExit(f"refusing symlinked {label}: {path}")
+    parent = os.path.dirname(absolute)
+    while parent != os.path.dirname(parent):
+        if os.path.islink(parent):
+            raise SystemExit(f"refusing symlink ancestor for {label}: {path}")
+        parent = os.path.dirname(parent)
+for path in [root, *files]:
+    check(path, "config root" if path == root else "config file")
+PY
+}
+
+if ! preflight_config_paths; then
+  printf 'FAIL: unsafe v2 config path\n' >&2
+  exit 1
+fi
 
 status=0
 ok() { printf 'OK: %s\n' "$*"; }
@@ -53,14 +79,18 @@ else
   fail "v2 plugin role catalog or validator missing"
 fi
 
-python3 - "$CONFIG" "$PLUGINS" "$REPO" "$catalog_json" <<'PY'
+if python3 - "$CONFIG" "$PLUGINS" "$REPO" "$catalog_json" "$JSONC_HELPER" <<'PY'
 import json
+import importlib.util
 import os
-import re
 import sys
 
-config, plugins_root, repo, catalog_text = sys.argv[1:5]
+config, plugins_root, repo, catalog_text, helper_path = sys.argv[1:6]
 failures: list[str] = []
+spec = importlib.util.spec_from_file_location("setup_opencode_jsonc", helper_path)
+helper = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(helper)
 
 
 def ok(message: str) -> None:
@@ -72,21 +102,24 @@ def fail(message: str) -> None:
 
 
 def load_jsonc(path: str):
-    text = open(path, encoding="utf-8").read()
-    text = re.sub(r"(?m)^\s*//.*$", "", text)
-    return json.loads(text)
+    return helper.load_jsonc(path)
 
 
 try:
     server = load_jsonc(os.path.join(config, "opencode.jsonc"))
-except (OSError, ValueError) as error:
+except (OSError, ValueError, json.JSONDecodeError) as error:
     server = {}
     failures.append(f"cannot read server config: {error}")
 try:
-    cli = json.load(open(os.path.join(config, "cli.json"), encoding="utf-8"))
-except (OSError, ValueError) as error:
+    cli = load_jsonc(os.path.join(config, "cli.json"))
+except (OSError, ValueError, json.JSONDecodeError) as error:
     cli = {}
     failures.append(f"cannot read cli config: {error}")
+try:
+    project = load_jsonc(os.path.join(repo, "opencode.json"))
+except (OSError, ValueError, json.JSONDecodeError) as error:
+    project = {}
+    failures.append(f"cannot read project config: {error}")
 try:
     catalog = json.loads(catalog_text)
 except ValueError as error:
@@ -96,12 +129,27 @@ except ValueError as error:
 skills_dir = os.path.join(config, "skills")
 try:
     skills = [name for name in os.listdir(skills_dir) if os.path.isdir(os.path.join(skills_dir, name))]
-    if len(skills) == 16:
-        ok(f"skills source has 16 entries")
+    if len(skills) == 19:
+        ok(f"skills source has 19 entries")
     else:
-        fail(f"skills source has {len(skills)} entries (expected 16)")
+        fail(f"skills source has {len(skills)} entries (expected 19)")
 except OSError:
     fail(f"skills source missing: {skills_dir}")
+
+try:
+    skill_symlinks = []
+    for root, dirs, files in os.walk(skills_dir, followlinks=False):
+        skill_symlinks.extend(
+            os.path.join(root, name)
+            for name in dirs + files
+            if os.path.islink(os.path.join(root, name))
+        )
+    if skill_symlinks:
+        fail(f"skills source/deployed tree contains symlinks: {skill_symlinks}")
+    else:
+        ok("skills source/deployed tree contains no symlinks")
+except OSError as error:
+    fail(f"cannot inspect skills for symlinks: {error}")
 
 commands_dir = os.path.join(config, "commands")
 try:
@@ -113,19 +161,47 @@ try:
 except OSError:
     fail(f"commands dir missing: {commands_dir}")
 
-mcp = server.get("mcp", {})
-if isinstance(mcp, dict):
-    if "github" in mcp:
-        ok("github MCP declared")
+mcp_config = server.get("mcp", {})
+mcp = mcp_config.get("servers", {}) if isinstance(mcp_config, dict) else {}
+if not isinstance(mcp_config, dict) or not isinstance(mcp, dict):
+    fail("mcp.servers is not an object")
+else:
+    github_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh")
+    basic_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh")
+    playwright_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh")
+    for name, wrapper in (("github", github_wrapper), ("basic-memory", basic_wrapper)):
+        entry = mcp.get(name)
+        if isinstance(entry, dict) and entry.get("command") == [wrapper] and entry.get("disabled", False) is not True:
+            ok(f"global {name} MCP declared with exact local wrapper")
+        else:
+            fail(f"global {name} MCP is not the exact enabled local wrapper")
+    if any(name in mcp for name in ("playwright",)):
+        fail("global Playwright MCP must be absent")
     else:
-        fail("github MCP not declared")
-    play = [name for name in mcp if "playwright" in name]
-    if len(play) == 1:
-        ok("exactly one playwright MCP declared")
-    elif not play:
-        print("NOTICE: pilot declares no playwright MCP (expected until cutover; never register two)")
-    else:
-        fail(f"more than one playwright MCP declared: {play}")
+        ok("global Playwright MCP absent")
+    for name in ("github", "playwright", "basic-memory"):
+        if name in mcp_config:
+            fail(f"legacy flat MCP key remains: mcp.{name}")
+        else:
+            ok(f"legacy flat MCP key absent: mcp.{name}")
+
+session = cli.get("session") if isinstance(cli, dict) else None
+if isinstance(session, dict) and session.get("permissions") == "prompt":
+    ok("CLI session permissions are prompt")
+else:
+    fail("CLI session.permissions must be prompt")
+
+project_mcp_config = project.get("mcp", {}) if isinstance(project, dict) else {}
+project_servers = project_mcp_config.get("servers", {}) if isinstance(project_mcp_config, dict) else {}
+project_playwright = project_servers.get("playwright") if isinstance(project_servers, dict) else None
+if isinstance(project_playwright, dict) and project_playwright.get("command") == [playwright_wrapper] and project_playwright.get("disabled", False) is not True:
+    ok("project Playwright MCP uses exact local wrapper")
+else:
+    fail("project Playwright MCP is not the exact enabled local wrapper")
+if isinstance(project_servers, dict) and any(name in project_servers for name in ("github", "basic-memory")):
+    fail("global-only MCP remains nested in project config")
+if isinstance(project_mcp_config, dict) and any(name in project_mcp_config for name in ("github", "playwright", "basic-memory")):
+    fail("legacy flat MCP key remains in project config")
 
 expected = {"server": {}, "cli": {}}
 for plugin in catalog.get("plugins", []) if isinstance(catalog, dict) else []:
@@ -198,27 +274,31 @@ for role, actual in actual_by_role.items():
 
 theme = cli.get("theme")
 if isinstance(theme, dict) and theme.get("name") == "aura":
-    ok("theme is aura (v1 colour parity)")
+    ok("theme is aura")
 else:
     fail(f"theme is not aura: {theme!r}")
 
 example = os.path.join(repo, "platforms/linux/ubuntu/computer-use/config/v2-opencode.example.jsonc")
 try:
-    example_mcp = load_jsonc(example).get("mcp", {})
+    example_config = load_jsonc(example).get("mcp", {})
+    example_mcp = example_config.get("servers", {}) if isinstance(example_config, dict) else {}
     example_play = [name for name in example_mcp if "playwright" in name]
     if example_play == ["playwright"]:
-        ok("v2 cutover example declares exactly one playwright MCP")
+        ok("v2 example declares exactly one playwright MCP")
     else:
-        fail(f"v2 cutover example playwright declarations: {example_play or '<none>'}")
-except (OSError, ValueError) as error:
-    fail(f"cannot read v2 cutover example: {error}")
+        fail(f"v2 example playwright declarations: {example_play or '<none>'}")
+except (OSError, ValueError, json.JSONDecodeError) as error:
+    fail(f"cannot read v2 example: {error}")
 
 for message in failures:
     print(f"FAIL: {message}", file=sys.stderr)
 sys.exit(1 if failures else 0)
 PY
-py_status=$?
-[ "$py_status" -eq 0 ] || status=1
+then
+  :
+else
+  status=1
+fi
 
 if [ "$status" -eq 0 ]; then
   echo "OK: v2 pilot health check passed"

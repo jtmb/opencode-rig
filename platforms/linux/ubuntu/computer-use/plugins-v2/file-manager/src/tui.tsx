@@ -1,25 +1,38 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
 import type { Context, PanelInput } from "@opencode/plugin/tui/context"
-import { SyntaxStyle, getTreeSitterClient, type TextareaRenderable } from "@opentui/core"
+import type { FileDiffInfo } from "@opencode/client"
+import { SyntaxStyle, getTreeSitterClient, type ScrollBoxRenderable, type TextareaRenderable } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { spawn } from "node:child_process"
-import { basename } from "node:path"
 
-import { EXPLORER_SLASH } from "./commands.ts"
+import { explorerBinding, EXPLORER_SLASH } from "./commands.ts"
 import {
   MAX_EDIT_BYTES,
   SEARCH_LIMIT,
+  fileNodesFromDirectoryEntries,
   filetypeFor,
   flattenTree,
   nextIndex,
   normalizeSearchResults,
   tooLargeToEdit,
+  truncateToCellWidth,
   type FileNode,
 } from "./model.ts"
 import { consumeMouseActivation, editorCursorPosition, type MouseActivation } from "./mouse.ts"
-import { registerParsers, spikeParserAssets } from "./parsers.ts"
+import { managedParserAssets, parserAvailability, parserHighlightRangeToUtf16, registerParsers } from "./parsers.ts"
+import { ExplorerTabs, ExplorerTree } from "./presentation.ts"
+import {
+  diffSourceLabel,
+  effectiveDiffView,
+  mergeRepositoryNodes,
+  nextRepositoryFile,
+  normalizeDiffFiles,
+  patchHunkRows,
+  type DiffSource,
+  type DiffView,
+} from "./repository.ts"
 import { beginGeneration, invalidateGeneration, isCurrentGeneration, type GenerationToken } from "./generation.ts"
 import {
   createPathGuard,
@@ -54,9 +67,11 @@ import {
 
 const PANEL_NAME = "file-manager.files"
 const SEARCH_DEBOUNCE_MS = 150
-const TREE_WIDTH = 36
+let parserReady: Promise<unknown> = Promise.resolve()
+let availableParsers = parserAvailability()
 
 type Mode = "tree" | "view" | "edit" | "search"
+type ViewerFocus = "files" | "content"
 
 function errorMessage(error: unknown): string {
   return error instanceof Error && error.message ? error.message : String(error)
@@ -95,14 +110,27 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const syntaxStyle = createSyntaxStyle(context.theme)
 
   const [children, setChildren] = createSignal<Map<string, FileNode[]>>(new Map())
+  const [diffs, setDiffs] = createSignal<Map<string, FileDiffInfo>>(new Map())
+  const [diffSource, setDiffSource] = createSignal<DiffSource>("working")
+  const [diffView, setDiffView] = createSignal<DiffView>("split")
+  const [diffLoading, setDiffLoading] = createSignal(false)
+  const [diffError, setDiffError] = createSignal("")
   const [expanded, setExpanded] = createSignal<Set<string>>(new Set())
   const [selected, setSelected] = createSignal("")
+  const [viewPath, setViewPath] = createSignal("")
+  const [viewerFocus, setViewerFocus] = createSignal<ViewerFocus>("files")
+  const [treeVisible, setTreeVisible] = createSignal(true)
+  const [allChanges, setAllChanges] = createSignal(true)
+  const [reviewed, setReviewed] = createSignal<ReadonlySet<string>>(new Set())
+  const [selectedHunk, setSelectedHunk] = createSignal(-1)
   const [hovered, setHovered] = createSignal<string | undefined>(undefined)
   const [tabs, setTabs] = createSignal<TabsState>(EMPTY_TABS)
   const [mode, setMode] = createSignal<Mode>("tree")
   const [cursor, setCursor] = createSignal<{ line: number; column: number }>({ line: 0, column: 0 })
+  const cursorByPath = new Map<string, { line: number; column: number }>()
   const [closeArmed, setCloseArmed] = createSignal<DirtyGuard | undefined>(undefined)
   const [panelCloseArmed, setPanelCloseArmed] = createSignal("")
+  const [parserStates, setParserStates] = createSignal(availableParsers)
   const [refreshArmed, setRefreshArmed] = createSignal("")
   const [restored, setRestored] = createSignal(false)
   const [workspace, updateWorkspace] = context.storage.store("workspace", {
@@ -115,6 +143,8 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const [escapeArmed, setEscapeArmed] = createSignal<DirtyGuard | undefined>(undefined)
   let searchTimer: ReturnType<typeof setTimeout> | undefined
   let textareaRef: TextareaRenderable | undefined
+  let searchScrollBox: ScrollBoxRenderable | undefined
+  let contentScrollBox: ScrollBoxRenderable | undefined
   let pathGuard: PathGuard | undefined
   const directoryGenerations = new Map<string, number>()
   const fileGenerations = new Map<string, number>()
@@ -134,9 +164,21 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     const index = rows().findIndex((row) => row.node.path === selected())
     return index < 0 ? 0 : index
   })
+  createEffect(() => {
+    const result = results()[resultIndex()]
+    if (result && searchScrollBox) searchScrollBox.scrollChildIntoView(`explorer-search-row:${encodeURIComponent(result)}`)
+  })
   const activeTab = createMemo(() => tabs().open.find((entry) => entry.path === tabs().active))
+  const viewedTab = createMemo(() => tabs().open.find((entry) => entry.path === viewPath()))
+  const visibleDiffs = createMemo(() => [...diffs().values()].sort((left, right) => left.file.localeCompare(right.file)))
+  const selectedDiff = createMemo(() => diffs().get(viewPath()))
+  const canToggleDiffView = createMemo(() => allChanges() || selectedDiff()?.status === "modified")
+  const headerDiffView = createMemo(() => {
+    const current = selectedDiff()
+    return current && !allChanges() ? effectiveDiffView(current.status, diffView()) : diffView()
+  })
   const dirty = createMemo(() => {
-    const current = activeTab()
+    const current = viewedTab()
     return current ? isDirtyTab(current) : false
   })
 
@@ -145,25 +187,15 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     try {
       const guard = await getPathGuard()
       const safeDirectory = relative ? guard.normalize(relative) : ""
-      const response = await context.client.file.list({ location: { directory }, path: safeDirectory })
-      const nodes = (
-        await Promise.all(
-          response.data.map(async (entry): Promise<FileNode | undefined> => {
-            try {
-              const inspected = await guard.inspect(entry.path)
-              return {
-                name: basename(inspected.relative),
-                path: inspected.relative,
-                absolute: inspected.canonical,
-                type: inspected.info.isDirectory() ? "directory" : "file",
-                ignored: false,
-              }
-            } catch {
-              return undefined
-            }
-          }),
-        )
-      ).filter((entry): entry is FileNode => entry !== undefined)
+      let physical: FileNode[]
+      try {
+        physical = fileNodesFromDirectoryEntries(await guard.listDirectory(safeDirectory))
+      } catch (error) {
+        const virtual = mergeRepositoryNodes(safeDirectory, [], diffs())
+        if (virtual.length === 0) throw error
+        physical = []
+      }
+      const nodes = mergeRepositoryNodes(safeDirectory, physical, diffs())
       if (!isCurrentGeneration(directoryGenerations, generation)) return
       setChildren((current) => {
         const next = new Map(current)
@@ -173,6 +205,24 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     } catch (error) {
       if (!isCurrentGeneration(directoryGenerations, generation)) return
       setStatus(`Cannot list ${relative || "."}: ${errorMessage(error)}`)
+    }
+  }
+
+  const loadDiffs = async (source = diffSource()) => {
+    setDiffLoading(true)
+    setDiffError("")
+    try {
+      const files = source === "last-turn"
+        ? await context.client.session.diff({ sessionID: props.sessionID, context: 12 })
+        : (await context.client.vcs.diff({ location: { directory }, mode: source, context: 12 })).data
+      setDiffs(normalizeDiffFiles(files))
+      await Promise.all([...children().keys()].map((key) => loadDirectory(key)))
+    } catch (error) {
+      const message = errorMessage(error)
+      setDiffError(message)
+      setStatus(`Diff refresh failed: ${message}`)
+    } finally {
+      setDiffLoading(false)
     }
   }
 
@@ -216,22 +266,23 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const openFile = async (relative: string) => {
-    const loaded = await readFileTab(relative)
-    if (!loaded) return
-    const current = activeTab()
-    if (current && current.path !== loaded.path && isDirtyTab(current)) {
-      const guard = dirtyGuard(current)
-      if (!sameDirtyGuard(closeArmed(), guard)) {
-        setCloseArmed(guard)
-        setStatus("Unsaved changes: open the file again to keep this buffer open")
-        return
-      }
+    const changed = diffs().get(relative)
+    const loaded = changed?.status === "deleted" ? undefined : await readFileTab(relative)
+    if (!loaded && !changed) return
+    if (loaded) {
+      // Navigation keeps dirty buffers open. Only close/discard/reload/panel
+      // exit use the destructive confirmation guards.
+      setTabs((state) => openTab(state, loaded))
     }
-    setTabs((state) => openTab(state, loaded))
+    setSelected(relative)
+    setViewPath(loaded?.path ?? relative)
     setMode("view")
+    setViewerFocus("content")
+    setAllChanges(false)
+    setSelectedHunk(-1)
     setEscapeArmed(undefined)
     setCloseArmed(undefined)
-    setStatus("")
+    if (loaded || changed?.status === "deleted") setStatus("")
   }
 
   const reloadFile = async (relative: string) => {
@@ -307,7 +358,13 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const closeActive = () => {
-    const current = activeTab()
+    const current = viewedTab()
+    if (!current) {
+      setViewPath("")
+      setMode("tree")
+      setViewerFocus("files")
+      return
+    }
     if (!current) return
     if (dirty()) {
       const guard = dirtyGuard(current)
@@ -318,10 +375,12 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       }
     }
     setTabs((state) => closeTab(state, current.path))
+    setViewPath(tabs().active)
     setCloseArmed(undefined)
     setEscapeArmed(undefined)
     setStatus("")
     if (!activeTab()) setMode("tree")
+    else setMode("view")
   }
 
   const closePanel = () => {
@@ -335,12 +394,6 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const reopenClosed = async () => {
-    const current = activeTab()
-    if (current && isDirtyTab(current) && !sameDirtyGuard(closeArmed(), dirtyGuard(current))) {
-      setCloseArmed(dirtyGuard(current))
-      setStatus("Unsaved changes: reopen the file again to keep this buffer open")
-      return
-    }
     const popped = takeClosed(tabs())
     setTabs(popped.state)
     if (popped.path) await openFile(popped.path)
@@ -348,32 +401,17 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const switchTab = (delta: number) => {
-    const current = activeTab()
-    if (current && isDirtyTab(current)) {
-      const guard = dirtyGuard(current)
-      if (!sameDirtyGuard(closeArmed(), guard)) {
-        setCloseArmed(guard)
-        setStatus("Unsaved changes: switch tabs again to keep this buffer open")
-        return
-      }
-    }
     setTabs((state) => nextTab(state, delta))
+    setViewPath(tabs().active)
     setCloseArmed(undefined)
     setEscapeArmed(undefined)
     if (mode() === "edit") scheduleHighlight()
   }
 
   const activatePath = (path: string) => {
-    const current = activeTab()
-    if (current && current.path !== path && isDirtyTab(current)) {
-      const guard = dirtyGuard(current)
-      if (!sameDirtyGuard(closeArmed(), guard)) {
-        setCloseArmed(guard)
-        setStatus("Unsaved changes: select this tab again to keep the buffer open")
-        return
-      }
-    }
     setTabs((state) => activateTab(state, path))
+    setViewPath(path)
+    setMode("view")
     setCloseArmed(undefined)
     setEscapeArmed(undefined)
   }
@@ -410,7 +448,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const openExternal = async () => {
-    const current = activeTab()
+    const current = viewedTab()
     if (!current) return
     if (isDirtyTab(current)) {
       setStatus("Save or discard unsaved changes before opening an external editor")
@@ -499,8 +537,8 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     void openFile(result)
   }
 
-  // Spike: the editable textarea has no tree-sitter filetype hook in 0.5.11,
-  // so highlights are computed through the host client and applied manually.
+  // The editable textarea has no tree-sitter filetype hook in 0.5.11, so
+  // highlights are computed through the host client and applied manually.
   let highlightTimer: ReturnType<typeof setTimeout> | undefined
 
   const styleIdFor = (capture: string): number | undefined => {
@@ -513,6 +551,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const applyHighlights = async () => {
+    await parserReady
     const generation = { key: "editor", value: highlightGenerations.get("editor") ?? 0 }
     const area = textareaRef
     const current = activeTab()
@@ -538,15 +577,18 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
         return
       }
       const highlights = result.highlights ?? []
+      if (result.warning || result.error) setStatus(`${pathAtRequest}: ${result.warning ?? result.error}`)
       buffer.clearAllHighlights()
+      const offsetMode = process.env.RIG_TREE_SITTER_OFFSETS === "bytes" ? "bytes" : "characters"
       for (const [start, end, capture] of highlights) {
         const styleId = styleIdFor(capture)
         if (styleId === undefined) continue
-        buffer.addHighlightByCharRange({ start, end, styleId })
+        buffer.addHighlightByCharRange({ ...parserHighlightRangeToUtf16(content, start, end, offsetMode), styleId })
       }
-    } catch {
+    } catch (error) {
       if (!isCurrentGeneration(highlightGenerations, generation) || textareaRef !== area || buffer.getText() !== content) return
       buffer.clearAllHighlights()
+      setStatus(`${pathAtRequest}: syntax highlighting unavailable (${errorMessage(error)})`)
     }
   }
 
@@ -559,16 +601,20 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   }
 
   const editSelected = async () => {
-    await openSelected()
-    if (activeTab()) {
+    const row = rows()[selectedIndex()]
+    if (!row || row.node.type !== "file") return
+    await openFile(row.node.path)
+    if (viewedTab()?.path === row.node.path) {
       setMode("edit")
       scheduleHighlight()
     }
   }
 
   const externalSelected = async () => {
-    await openSelected()
-    if (activeTab()) await openExternal()
+    const row = rows()[selectedIndex()]
+    if (!row || row.node.type !== "file") return
+    await openFile(row.node.path)
+    if (viewedTab()?.path === row.node.path) await openExternal()
   }
 
   const expandSelected = async () => {
@@ -596,8 +642,8 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       return
     }
     setRefreshArmed("")
-    await Promise.all([...children().keys()].map((key) => loadDirectory(key)))
-    const current = activeTab()
+    await loadDiffs()
+    const current = viewedTab()
     if (current) {
       if (dirty()) setStatus("File changed on disk; save or reopen to refresh")
       else await reloadFile(current.path)
@@ -645,6 +691,72 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     )
   }
 
+  const jumpFile = async (delta: number) => {
+    const target = nextRepositoryFile(rows(), viewPath() || selected(), delta)
+    if (!target) return
+    setSelected(target)
+    await openFile(target)
+  }
+
+  const jumpHunk = (delta: number) => {
+    const changed = diffs().get(viewPath())
+    if (!changed) {
+      setStatus("Hunk navigation is available for changed files")
+      return
+    }
+    const hunks = patchHunkRows(changed.patch)
+    if (hunks.length === 0) return
+    const current = selectedHunk()
+    const next = current < 0
+      ? (delta > 0 ? 0 : hunks.length - 1)
+      : (current + delta + hunks.length) % hunks.length
+    setSelectedHunk(next)
+    contentScrollBox?.scrollTo(Math.max(0, hunks[next] - 1))
+  }
+
+  const toggleReviewed = () => {
+    const path = viewPath() || selected()
+    if (!path) return
+    setReviewed((current) => {
+      const next = new Set(current)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }
+
+  const toggleDiffView = () => setDiffView((value) => value === "split" ? "unified" : "split")
+
+  const switchDiffSource = async () => {
+    const source = await context.ui.dialog.select<DiffSource>({
+      title: "Switch source",
+      current: diffSource(),
+      options: [
+        { title: "Working tree", value: "working", description: "Show current Git changes" },
+        { title: "Main branch", value: "branch", description: "Show changes compared with the main branch" },
+        { title: "Last turn", value: "last-turn", description: "Show changes from the last assistant turn" },
+      ],
+    })
+    if (!source) return
+    setDiffSource(source)
+    setAllChanges(true)
+    setViewPath("")
+    setMode("view")
+    setViewerFocus("content")
+    await loadDiffs(source)
+  }
+
+  const showHelp = () => context.ui.dialog.alert({
+    title: "Explorer shortcuts",
+    message: [
+      "Tab focus files/content · j/k move or scroll · Enter open/toggle",
+      "n/p next/previous file · ]/[ next/previous hunk",
+      "a all/selected changes · v split/unified · t file tree · d source",
+      "m mark reviewed · / search · e edit · o external editor · r refresh",
+      "Ctrl+S save · q close · Esc back",
+    ].join("\n"),
+  })
+
   useKeyboard((key) => {
     if (!props.panel.focused) return
     const name = key.name
@@ -687,12 +799,105 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       return
     }
 
+    if (mode() !== "edit" && mode() !== "search") {
+      if (name === "q") {
+        key.preventDefault()
+        key.stopPropagation()
+        closePanel()
+        return
+      }
+      if (name === "tab") {
+        key.preventDefault()
+        key.stopPropagation()
+        if (viewerFocus() === "files") {
+          setViewerFocus("content")
+          setMode("view")
+        } else {
+          setTreeVisible(true)
+          setViewerFocus("files")
+          setMode("tree")
+        }
+        return
+      }
+      if (name === "t") {
+        key.preventDefault()
+        key.stopPropagation()
+        setTreeVisible((value) => !value)
+        setViewerFocus((value) => value === "files" ? "content" : value)
+        setMode("view")
+        return
+      }
+      if (name === "v") {
+        key.preventDefault()
+        key.stopPropagation()
+        toggleDiffView()
+        return
+      }
+      if (name === "a") {
+        key.preventDefault()
+        key.stopPropagation()
+        setAllChanges((value) => !value)
+        setViewerFocus("content")
+        setMode("view")
+        return
+      }
+      if (name === "d") {
+        key.preventDefault()
+        key.stopPropagation()
+        void switchDiffSource()
+        return
+      }
+      if (name === "m") {
+        key.preventDefault()
+        key.stopPropagation()
+        toggleReviewed()
+        return
+      }
+      if (name === "?" || (key.shift && name === "/")) {
+        key.preventDefault()
+        key.stopPropagation()
+        void showHelp()
+        return
+      }
+      if (name === "n") {
+        key.preventDefault()
+        key.stopPropagation()
+        void jumpFile(1)
+        return
+      }
+      if (name === "p") {
+        key.preventDefault()
+        key.stopPropagation()
+        void jumpFile(-1)
+        return
+      }
+      if (name === "]") {
+        key.preventDefault()
+        key.stopPropagation()
+        jumpHunk(1)
+        return
+      }
+      if (name === "[") {
+        key.preventDefault()
+        key.stopPropagation()
+        jumpHunk(-1)
+        return
+      }
+      if (viewerFocus() === "content" && (name === "pagedown" || name === "pageup")) {
+        key.preventDefault()
+        key.stopPropagation()
+        contentScrollBox?.scrollBy(name === "pagedown" ? (contentScrollBox.height || 8) : -(contentScrollBox.height || 8))
+        return
+      }
+    }
+
     if (mode() === "search") {
       if (name === "escape") {
         key.preventDefault()
         key.stopPropagation()
         invalidateGeneration(searchGenerations, "query")
         setMode("tree")
+        setViewerFocus("files")
         setResults([])
         return
       }
@@ -729,6 +934,7 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
         if (current) setTabs((state) => updateTab(state, current.path, current.original))
         setEscapeArmed(undefined)
         setMode("view")
+        setViewerFocus("content")
         setStatus("")
       }
       return
@@ -739,6 +945,8 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       key.stopPropagation()
       if (mode() === "view") {
         setMode("tree")
+        setTreeVisible(true)
+        setViewerFocus("files")
         setStatus("")
         return
       }
@@ -750,14 +958,30 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       if (name === "e" || name === "i") {
         key.preventDefault()
         key.stopPropagation()
-        setMode("edit")
-        scheduleHighlight()
+        if (viewedTab()) {
+          setMode("edit")
+          scheduleHighlight()
+        } else {
+          setStatus("This diff-only file cannot be edited")
+        }
         return
       }
       if (name === "o") {
         key.preventDefault()
         key.stopPropagation()
         void openExternal()
+        return
+      }
+      if (name === "up" || name === "k") {
+        key.preventDefault()
+        key.stopPropagation()
+        contentScrollBox?.scrollBy(-1)
+        return
+      }
+      if (name === "down" || name === "j") {
+        key.preventDefault()
+        key.stopPropagation()
+        contentScrollBox?.scrollBy(1)
       }
       return
     }
@@ -807,6 +1031,8 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     if (name === "/" || (key.ctrl && name === "p")) {
       key.preventDefault()
       key.stopPropagation()
+      setTreeVisible(true)
+      setViewerFocus("files")
       setMode("search")
       setResults([])
       setResultIndex(0)
@@ -833,17 +1059,19 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
       } catch {
         return
       }
-      const current = activeTab()
+      const current = viewedTab()
       if (current && (changed === current.path || current.path.endsWith(`/${changed}`) || changed.endsWith(`/${current.path}`))) {
         if (dirty()) setStatus("File changed on disk; save or reopen to refresh")
         else await reloadFile(current.path)
       }
-      await Promise.all([...children().keys()].map((key) => loadDirectory(key)))
+      await loadDiffs()
     })()
   })
 
   onMount(() => {
+    void parserReady.then(() => setParserStates(new Map(availableParsers)))
     void (async () => {
+      await loadDiffs()
       await loadDirectory("")
       const first = rows()[0]
       if (first) setSelected(first.node.path)
@@ -869,6 +1097,11 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     persistTimer = setTimeout(persistWorkspace, 400)
   })
 
+  createEffect(() => {
+    const path = tabs().active
+    setCursor(path ? (cursorByPath.get(path) ?? { line: 0, column: 0 }) : { line: 0, column: 0 })
+  })
+
   onCleanup(() => {
     stopWatcher()
     invalidateGeneration(searchGenerations, "query")
@@ -881,169 +1114,232 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
   })
 
   const theme = () => context.theme
+  const treeWidth = () => Math.max(24, Math.min(36, Math.floor(props.panel.width * 0.25)))
 
   return (
     <box flexDirection="column" flexGrow={1} minHeight={0}>
-      <box flexDirection="row" gap={1} paddingLeft={1} paddingRight={1}>
-        <text fg={theme().hue.accent[200]}>
-          <b>Files</b>
-        </text>
-        <text fg={theme().text.subdued}>{directory}</text>
+      <box flexDirection="row" height={1} flexShrink={0} overflow="hidden" gap={1} paddingLeft={1} paddingRight={1}>
+        <text fg={theme().text.default}><b>Explorer</b></text>
+        <text fg={theme().text.subdued}>{diffSourceLabel(diffSource())}</text>
         <box flexGrow={1} />
-        <text fg={theme().text.subdued}>{status()}</text>
+        <Show when={diffLoading()}><text fg={theme().text.subdued}>Loading…</text></Show>
+        <Show when={diffError()}><text fg={theme().text.feedback.error.default}>Diff unavailable</text></Show>
+        <Show when={status()}><text fg={theme().text.subdued}>{truncateToCellWidth(status(), 42)}</text></Show>
+        <Show when={allChanges() || selectedDiff()}>
+          <Show when={canToggleDiffView()} fallback={
+            <text fg={theme().text.subdued}>[Diff: full width]</text>
+          }>
+            <box
+              focusable
+              onMouseDown={(event) => activateRow(event, toggleDiffView)}
+              onKeyDown={(event) => {
+                if (event.name !== "return" && event.name !== "space") return
+                event.preventDefault()
+                toggleDiffView()
+              }}
+            >
+              <text fg={theme().hue.accent[200]}><u>[Diff: {headerDiffView() === "split" ? "side by side" : "full width"}]</u></text>
+            </box>
+          </Show>
+        </Show>
+        <text fg={theme().text.subdued}>{visibleDiffs().length} changed</text>
       </box>
 
-      <Show when={tabs().open.length > 0}>
-        <box flexDirection="row" gap={1} paddingLeft={1} paddingRight={1}>
-          <For each={tabs().open}>
-            {(entry) => (
-              <box
-                flexDirection="row"
-                backgroundColor={entry.path === tabs().active ? theme().background.surface.offset : undefined}
-                onMouseDown={(event) => activateRow(event, () => activatePath(entry.path))}
-              >
-                <text fg={entry.path === tabs().active ? theme().hue.accent[200] : theme().text.default}>
-                  {basename(entry.path)}
-                </text>
-                <Show when={isDirtyTab(entry)}>
-                  <text fg={theme().text.feedback.warning.default}> •</text>
-                </Show>
-              </box>
-            )}
-          </For>
-        </box>
+      <Show when={mode() === "edit" && tabs().open.length > 0}>
+        <ExplorerTabs
+          paths={() => tabs().open.map((entry) => ({ path: entry.path, dirty: isDirtyTab(entry) }))}
+          active={() => tabs().active}
+          palette={{ accent: theme().hue.accent[200], text: theme().text.default, subdued: theme().text.subdued, selected: theme().background.surface.offset }}
+          onActivate={activatePath}
+        />
       </Show>
 
       <box flexDirection="row" flexGrow={1} minHeight={0}>
-        <box
-          flexDirection="column"
-          width={TREE_WIDTH}
-          flexShrink={0}
-          borderStyle="single"
-          borderColor={theme().border.default}
-        >
-          <Show
-            when={mode() === "search"}
-            fallback={
-              <Show
-                when={rows().length > 0}
-                fallback={<text fg={theme().text.subdued}> Loading...</text>}
-              >
-                <For each={rows()}>
-                  {(row) => (
-                    <box
-                      flexDirection="row"
-                      backgroundColor={selected() === row.node.path ? theme().background.surface.offset : undefined}
-                      paddingLeft={row.depth * 2 + 1}
-                      onMouseOver={() => setHovered(row.node.path)}
-                      onMouseOut={() => setHovered((current) => (current === row.node.path ? undefined : current))}
-                      onMouseDown={(event) => activateRow(event, () => activateNode(row.node))}
-                    >
-                      <text
-                        fg={theme().text.subdued}
-                        onMouseDown={(event) => activateRow(event, () => activateNode(row.node))}
-                      >
-                        {row.node.type === "directory" ? (row.expanded ? "- " : "+ ") : "  "}
-                      </text>
-                      <text
-                        fg={hovered() === row.node.path ? theme().hue.accent[200] : theme().text.default}
-                        onMouseDown={(event) => activateRow(event, () => activateNode(row.node))}
-                      >
-                        {row.node.name}
-                      </text>
-                    </box>
-                  )}
-                </For>
-              </Show>
-            }
+        <Show when={treeVisible()}>
+          <box
+            flexDirection="column"
+            width={treeWidth()}
+            minWidth={24}
+            maxWidth={36}
+            flexShrink={0}
+            borderStyle="single"
+            borderColor={viewerFocus() === "files" ? theme().hue.accent[200] : theme().border.default}
           >
-            <input
-              focused
-              placeholder="Search files"
-              onInput={(value) => runSearch(value)}
-              onSubmit={() => void openSearchResult()}
-            />
-            <For each={results()}>
-              {(result, index) => (
-                <box
-                  flexDirection="row"
-                  backgroundColor={index() === resultIndex() ? theme().background.surface.offset : undefined}
-                  paddingLeft={1}
-                  onMouseOver={() => setHovered(result)}
-                  onMouseOut={() => setHovered((current) => (current === result ? undefined : current))}
-                  onMouseDown={(event) => activateRow(event, () => activateResult(result, index))}
-                >
-                  <text
-                    fg={hovered() === result ? theme().hue.accent[200] : theme().text.default}
+            <Show
+              when={mode() === "search"}
+              fallback={<ExplorerTree
+                rows={() => rows()}
+                selected={() => selected()}
+                reviewed={reviewed}
+                width={() => Math.max(0, treeWidth() - 2)}
+                palette={{ accent: theme().hue.accent[200], text: theme().text.default, subdued: theme().text.subdued, selected: theme().background.surface.offset }}
+                onHover={(path) => setHovered(path)}
+                onActivate={(row) => activateNode(row.node)}
+              />}
+            >
+              <input
+                focused
+                placeholder="Search files"
+                onInput={(value) => runSearch(value)}
+                onSubmit={() => void openSearchResult()}
+              />
+              <scrollbox ref={(value) => (searchScrollBox = value)} flexGrow={1} minHeight={0} overflow="hidden"><For each={results()}>
+                {(result, index) => (
+                  <box
+                    id={`explorer-search-row:${encodeURIComponent(result)}`}
+                    height={1}
+                    flexShrink={0}
+                    overflow="hidden"
+                    flexDirection="row"
+                    backgroundColor={index() === resultIndex() ? theme().background.surface.offset : undefined}
+                    paddingLeft={1}
+                    onMouseOver={() => setHovered(result)}
+                    onMouseOut={() => setHovered((current) => (current === result ? undefined : current))}
                     onMouseDown={(event) => activateRow(event, () => activateResult(result, index))}
                   >
-                    {result}
-                  </text>
-                </box>
-              )}
-            </For>
-          </Show>
-        </box>
+                    <text
+                      fg={hovered() === result ? theme().hue.accent[200] : theme().text.default}
+                      onMouseDown={(event) => activateRow(event, () => activateResult(result, index))}
+                    >
+                      {truncateToCellWidth(result, Math.max(4, treeWidth() - 3))}
+                    </text>
+                  </box>
+                )}
+              </For></scrollbox>
+            </Show>
+          </box>
+        </Show>
 
         <box
           flexDirection="column"
           flexGrow={1}
           minHeight={0}
           borderStyle="single"
-          borderColor={theme().border.default}
+          borderColor={viewerFocus() === "content" ? theme().hue.accent[200] : theme().border.default}
         >
-          <Show keyed when={tabs().active} fallback={<text fg={theme().text.subdued}> Select a file to view or edit</text>}>
+          <Show when={mode() === "edit" && viewedTab()} fallback={
+            <Show when={allChanges() || !viewPath()} fallback={
+              <Show when={diffs().get(viewPath())} fallback={
+                <Show when={viewedTab()} fallback={<text fg={theme().text.subdued}> Select a file to view or edit</text>}>
+                  {(current) => (
+                    <box flexDirection="column" flexGrow={1} minHeight={0}>
+                      <box flexDirection="row" paddingLeft={1} paddingRight={1}>
+                        <text fg={theme().text.default}>{current().path}</text>
+                        <box flexGrow={1} />
+                        <Show when={isDirtyTab(current())}><text fg={theme().text.feedback.warning.default}>unsaved</text></Show>
+                      </box>
+                      <scrollbox ref={(value) => (contentScrollBox = value)} flexGrow={1} minHeight={0}>
+                        <line_number fg={theme().text.subdued} minWidth={3} paddingRight={1}>
+                          <code content={current().content} filetype={filetypeFor(current().path)} syntaxStyle={syntaxStyle} conceal={false} fg={theme().text.default} />
+                        </line_number>
+                      </scrollbox>
+                    </box>
+                  )}
+                </Show>
+              }>
+                {(changed) => (
+                  <box flexDirection="column" flexGrow={1} minHeight={0}>
+                    <box flexDirection="row" gap={1} paddingLeft={1} paddingRight={1}>
+                      <text fg={reviewed().has(changed().file) ? theme().text.subdued : theme().text.default}>{changed().file}</text>
+                      <box flexGrow={1} />
+                      <text fg={theme().diff.text.added}>+{changed().additions}</text>
+                      <text fg={theme().diff.text.removed}>-{changed().deletions}</text>
+                    </box>
+                    <scrollbox ref={(value) => (contentScrollBox = value)} flexGrow={1} minHeight={0}>
+                      <diff
+                        diff={changed().patch}
+                        view={effectiveDiffView(changed().status, diffView())}
+                        filetype={filetypeFor(changed().file)}
+                        syntaxStyle={syntaxStyle}
+                        showLineNumbers={true}
+                        wrapMode="char"
+                        fg={theme().text.default}
+                        addedBg={theme().diff.background.added}
+                        removedBg={theme().diff.background.removed}
+                        contextBg={theme().diff.background.context}
+                        addedSignColor={theme().diff.highlight.added}
+                        removedSignColor={theme().diff.highlight.removed}
+                        lineNumberFg={theme().diff.lineNumber.text}
+                        addedLineNumberBg={theme().diff.lineNumber.background.added}
+                        removedLineNumberBg={theme().diff.lineNumber.background.removed}
+                      />
+                    </scrollbox>
+                  </box>
+                )}
+              </Show>
+            }>
+              <Show when={!diffLoading() && visibleDiffs().length === 0}>
+                <text fg={theme().text.subdued}>No changes. Select any repository file from the tree.</text>
+              </Show>
+              <scrollbox ref={(value) => (contentScrollBox = value)} flexGrow={1} minHeight={0}>
+                <For each={visibleDiffs()}>
+                  {(changed, index) => (
+                    <box flexDirection="column">
+                      <Show when={index() > 0}><text fg={theme().border.default}>────────────────────────────────────────</text></Show>
+                      <box flexDirection="row" gap={1} paddingLeft={1} paddingRight={1}>
+                        <text fg={reviewed().has(changed.file) ? theme().text.subdued : theme().text.default}>{changed.file}</text>
+                        <box flexGrow={1} />
+                        <text fg={theme().diff.text.added}>+{changed.additions}</text>
+                        <text fg={theme().diff.text.removed}>-{changed.deletions}</text>
+                      </box>
+                      <diff
+                        diff={changed.patch}
+                        view={effectiveDiffView(changed.status, diffView())}
+                        filetype={filetypeFor(changed.file)}
+                        syntaxStyle={syntaxStyle}
+                        showLineNumbers={true}
+                        wrapMode="char"
+                        fg={theme().text.default}
+                        addedBg={theme().diff.background.added}
+                        removedBg={theme().diff.background.removed}
+                        contextBg={theme().diff.background.context}
+                        addedSignColor={theme().diff.highlight.added}
+                        removedSignColor={theme().diff.highlight.removed}
+                        lineNumberFg={theme().diff.lineNumber.text}
+                        addedLineNumberBg={theme().diff.lineNumber.background.added}
+                        removedLineNumberBg={theme().diff.lineNumber.background.removed}
+                      />
+                    </box>
+                  )}
+                </For>
+              </scrollbox>
+            </Show>
+          }>
+            {(current) => (
               <box flexDirection="column" flexGrow={1} minHeight={0}>
                 <box flexDirection="row" gap={1} paddingLeft={1}>
-                  <text fg={theme().hue.accent[200]}>{activeTab()!.path}</text>
-                  <Show when={dirty()}>
-                    <text fg={theme().text.feedback.warning.default}>*</text>
-                  </Show>
+                  <text fg={theme().hue.accent[200]}>{current().path}</text>
+                  <Show when={isDirtyTab(current())}><text fg={theme().text.feedback.warning.default}>*</text></Show>
                 </box>
-                <Show
-                  when={mode() === "edit"}
-                  fallback={
-                    <scrollbox flexGrow={1} minHeight={0}>
-                      <line_number fg={theme().text.subdued} minWidth={3} paddingRight={1}>
-                        <code
-                          content={activeTab()!.content}
-                          filetype={filetypeFor(activeTab()!.path)}
-                          syntaxStyle={syntaxStyle}
-                          conceal={false}
-                          fg={theme().text.default}
-                        />
-                      </line_number>
-                    </scrollbox>
-                  }
-                >
-                  <line_number fg={theme().text.subdued} minWidth={3} paddingRight={1} flexGrow={1}>
-                    <textarea
-                      ref={(value) => {
-                        textareaRef = value
-                      }}
-                      focused
-                      initialValue={activeTab()!.content}
-                      syntaxStyle={syntaxStyle}
-                      onCursorChange={(event) => setCursor({ line: event.line, column: event.visualColumn })}
-                      onMouseDown={placeCursor}
-                      onContentChange={() => {
-                        const area = textareaRef
-                        const active = activeTab()
-                        if (active && area) setTabs((state) => updateTab(state, active.path, area.editBuffer.getText()))
-                        scheduleHighlight()
-                      }}
-                    />
-                  </line_number>
-                </Show>
+                <line_number fg={theme().text.subdued} minWidth={3} paddingRight={1} flexGrow={1}>
+                  <textarea
+                    ref={(value) => { textareaRef = value }}
+                    focused
+                    initialValue={current().content}
+                    syntaxStyle={syntaxStyle}
+                    onCursorChange={(event) => {
+                      const position = { line: event.line, column: event.visualColumn }
+                      cursorByPath.set(current().path, position)
+                      setCursor(position)
+                    }}
+                    onMouseDown={placeCursor}
+                    onContentChange={() => {
+                      const area = textareaRef
+                      if (area) setTabs((state) => updateTab(state, current().path, area.editBuffer.getText()))
+                      scheduleHighlight()
+                    }}
+                  />
+                </line_number>
               </box>
+            )}
           </Show>
         </box>
       </box>
 
-      <Show when={activeTab()}>
+      <Show when={!allChanges() && viewedTab()}>
         {(current) => (
-          <box flexDirection="row" gap={1} paddingLeft={1} paddingRight={1}>
-            <text fg={theme().text.subdued}>
+          <box flexDirection="row" height={1} flexShrink={0} overflow="hidden" gap={1} paddingLeft={1} paddingRight={1}>
+            <scrollbox flexGrow={1} minWidth={0} scrollX={true} scrollY={false} overflow="hidden"><text fg={theme().text.subdued}>
               {current().path}
               {dirty() ? " • unsaved" : ""}
               {" • Ln "}
@@ -1052,15 +1348,16 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
               {cursor().column + 1}
               {" • "}
               {filetypeFor(current().path) ?? "text"}
-            </text>
+              {parserStates().get(filetypeFor(current().path) ?? "") === "unavailable" ? " (plain text; parser unavailable)" : ""}
+            </text></scrollbox>
           </box>
         )}
       </Show>
 
-      <box paddingLeft={1}>
-        <text fg={theme().text.subdued}>
-          enter open · e edit · o external · / search · ctrl+s save · ctrl+shift+s save all · alt+←/→ tab · alt+w close · alt+t reopen · ctrl+g goto · f fullscreen · esc back
-        </text>
+      <box height={1} flexShrink={0} overflow="hidden" paddingLeft={1}>
+        <scrollbox flexGrow={1} minWidth={0} scrollX={true} scrollY={false} overflow="hidden"><text fg={theme().text.subdued}>
+          tab focus · n/p file · ]/[ hunk · a all/one · v split/unified · t tree · d source · m reviewed · ? help · e edit · q close
+        </text></scrollbox>
       </box>
     </box>
   )
@@ -1069,7 +1366,11 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
 export default Plugin.define({
   id: "opencode-rig.file-manager",
   setup(context) {
-    void registerParsers(spikeParserAssets())
+    parserReady = registerParsers(managedParserAssets()).then((registrations) => {
+      availableParsers = parserAvailability(registrations)
+      const missing = registrations.filter((entry) => !entry.registered)
+      if (missing.length > 0) console.warn(`[file-manager] syntax fallback: ${missing.map((entry) => `${entry.filetype} (${entry.reason})`).join(", ")}`)
+    })
 
     const stopPanel = context.ui.slot({
       append: "session.panel",
@@ -1091,11 +1392,11 @@ export default Plugin.define({
               title: "Open Explorer",
               description: "Open the project file tree and editor panel.",
               group: "Files",
-              bind: "ctrl+shift+e",
+              bind: explorerBinding(context.options),
               palette: true,
               slash: EXPLORER_SLASH,
               run: () => {
-                context.ui.panel.open(PANEL_NAME)
+                context.ui.panel.open(PANEL_NAME, { presentation: "fullscreen" })
               },
             },
           ],
@@ -1105,18 +1406,18 @@ export default Plugin.define({
     })
 
     const stopSidebar = context.ui.slot({
-      append: "sidebar.content",
+      before: "sidebar.content",
       render: () => (
         <box
           flexDirection="row"
           focusable
           onMouseDown={() => {
-            context.ui.panel.open(PANEL_NAME)
+            context.ui.panel.open(PANEL_NAME, { presentation: "fullscreen" })
           }}
           onKeyDown={(event) => {
             if (event.name === "return" || event.name === "space") {
               event.preventDefault()
-              context.ui.panel.open(PANEL_NAME)
+              context.ui.panel.open(PANEL_NAME, { presentation: "fullscreen" })
             }
           }}
         >

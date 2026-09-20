@@ -1,12 +1,19 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
 import type { Context } from "@opencode/plugin/tui/context"
-import { createEffect, createSignal, onCleanup, Show } from "solid-js"
+import { createSignal, For, onCleanup, Show } from "solid-js"
 
-import { formatDetails, percent, relativeTime, updatedAgo } from "./format.ts"
-import { isCodexSubscriptionModel, latestSessionModel, type SessionModel } from "./model.ts"
+import {
+  compactReset,
+  formatDetails,
+  percent,
+  providerPanelDetail,
+  providerStatusLabel,
+  usageUpdatedLabel,
+} from "./format.ts"
 import { createUsageStore, type UsageState, type UsageStore } from "./store.ts"
 import { lunaReserveWindow, overallWeeklyWindow, type CodexUsageWindow } from "./usage.ts"
+import type { ProviderState } from "./providers.ts"
 
 type Theme = Context["theme"]
 
@@ -28,72 +35,79 @@ function WindowRow(props: {
   window: CodexUsageWindow
   theme: () => Theme
   now: () => number
-  compact?: boolean
 }) {
-  if (props.compact) {
-    return (
-      <box flexDirection="row" gap={1}>
-        <text fg={props.theme().text.subdued}>{props.label}</text>
-        <text fg={usageColor(props.window.leftPercent, props.theme())}>
-          <b>{percent(props.window.leftPercent)} left</b>
-        </text>
-      </box>
-    )
-  }
-
   return (
-    <box flexDirection="column" gap={0}>
+    <box flexDirection="row" paddingLeft={1}>
       <text fg={props.theme().text.subdued}>{props.label}</text>
       <text fg={usageColor(props.window.leftPercent, props.theme())}>
-        <b>{percent(props.window.leftPercent)} remaining</b>
+        <b> {percent(props.window.leftPercent)} left</b>
       </text>
-      <text fg={props.theme().text.subdued}>{relativeTime(props.window.resetsAt, props.now())}</text>
+      <text fg={props.theme().text.subdued}> · {compactReset(props.window.resetsAt, props.now())}</text>
     </box>
   )
 }
 
-function UsagePanel(props: { store: UsageStore; sessionID: string; refreshMs: number }) {
+function ProviderRow(props: {
+  provider: ProviderState
+  snapshot: UsageState["snapshot"]
+  theme: () => Theme
+  now: () => number
+}) {
+  const color = () => props.provider.status === "available"
+    ? props.theme().text.feedback.success.default
+    : props.provider.status === "quota-exhausted"
+      ? props.theme().text.feedback.error.default
+      : props.provider.status === "cooling" || props.provider.status === "usage-unavailable" || props.provider.status === "stale"
+      ? props.theme().text.feedback.warning.default
+      : props.theme().text.subdued
+  const weekly = () => props.provider.id === "codex" && props.snapshot
+    ? overallWeeklyWindow(props.snapshot)
+    : undefined
+  const reserve = () => props.provider.id === "codex" && props.snapshot
+    ? lunaReserveWindow(props.snapshot)
+    : undefined
+  const showDetail = () => props.provider.id !== "codex" || weekly() === undefined
+  return (
+    <box flexDirection="column" gap={0}>
+      <box flexDirection="row">
+        <text fg={props.theme().text.default}><b>{props.provider.label}</b></text>
+        <box flexGrow={1} />
+        <text fg={color()}><b>{providerStatusLabel(props.provider.status)}</b></text>
+      </box>
+      <Show when={weekly()}>{(window) => <WindowRow label="Weekly" window={window()} theme={props.theme} now={props.now} />}</Show>
+      <Show when={reserve()}>{(window) => <WindowRow label="Reserve" window={window()} theme={props.theme} now={props.now} />}</Show>
+      <Show when={showDetail()}>
+        <box paddingLeft={1}>
+          <text fg={props.theme().text.subdued}>{providerPanelDetail(props.provider)}</text>
+        </box>
+      </Show>
+    </box>
+  )
+}
+
+function UsagePanel(props: { store: UsageStore; sessionID: string; refreshMs: number; syncProviders: () => Promise<void> }) {
   const context = usePlugin()
   const [state, setState] = createSignal<UsageState>(props.store.getState())
   const [settings, updateSettings] = context.storage.store("settings", { initial: { collapsed: false } })
   const [now, setNow] = createSignal(Date.now())
-  const [activeModel, setActiveModel] = createSignal<SessionModel | undefined>(undefined)
   const theme = () => context.theme
   const stop = props.store.subscribe(setState)
   const clock = setInterval(() => setNow(Date.now()), 30_000)
   const poll = setInterval(() => {
-    if (isCodexSubscriptionModel(activeModel())) void props.store.refresh()
+    void props.syncProviders().then(() => props.store.refresh())
   }, props.refreshMs)
 
-  const syncModel = async () => {
-    try {
-      await context.data.session.message.sync(props.sessionID)
-      setActiveModel(latestSessionModel(context.data.session.message.list(props.sessionID)))
-    } catch {
-      // A session without synced messages keeps the last known model.
-    }
-  }
-  void syncModel()
+  void props.syncProviders().then(() => props.store.refresh())
 
-  const stopModelSwitch = context.data.on("session.model.selected", (event) => {
-    if (event.data.sessionID !== props.sessionID) return
-    setActiveModel({ providerID: event.data.model.providerID, modelID: event.data.model.id })
-  })
   const stopIdle = context.data.on("session.idle", (event) => {
     if (event.data.sessionID !== props.sessionID) return
-    void syncModel()
-    if (isCodexSubscriptionModel(activeModel())) void props.store.refresh(true)
-  })
-
-  createEffect(() => {
-    if (isCodexSubscriptionModel(activeModel())) void props.store.refresh()
+    void props.syncProviders().then(() => props.store.refresh(true))
   })
 
   onCleanup(() => {
     stop()
     clearInterval(clock)
     clearInterval(poll)
-    stopModelSwitch()
     stopIdle()
   })
 
@@ -105,8 +119,7 @@ function UsagePanel(props: { store: UsageStore; sessionID: string; refreshMs: nu
   }
 
   const visible = () => {
-    const snapshot = state().snapshot
-    return isCodexSubscriptionModel(activeModel()) && snapshot !== undefined && overallWeeklyWindow(snapshot) !== undefined
+    return (state().providers?.length ?? 0) > 0
   }
 
   return (
@@ -123,26 +136,21 @@ function UsagePanel(props: { store: UsageStore; sessionID: string; refreshMs: nu
           }}
         >
           <text fg={theme().text.default}>
-            <b>{collapsed() ? "+" : "-"} Codex Usage</b>
+            <b>{collapsed() ? "+" : "-"} Provider Usage</b>
           </text>
         </box>
 
         <Show when={!collapsed()}>
-          <Show when={state().snapshot}>
-            {(snapshot) => (
-              <box flexDirection="column" gap={0}>
-                <Show when={overallWeeklyWindow(snapshot())}>
-                  {(window) => <WindowRow label="Weekly limit" window={window()} theme={theme} now={now} />}
-                </Show>
-                <Show when={lunaReserveWindow(snapshot())}>
-                  {(window) => <WindowRow label="Luna Reserve" compact window={window()} theme={theme} now={now} />}
-                </Show>
-                <Show when={state().status === "error" && state().message}>
-                  <text fg={theme().text.feedback.warning.default}>Last refresh failed; showing saved values.</text>
-                </Show>
-                <text fg={theme().text.subdued}>{updatedAgo(snapshot().fetchedAt, now())}</text>
-              </box>
-            )}
+          <For each={state().providers ?? []}>
+            {(provider) => <ProviderRow provider={provider} snapshot={state().snapshot} theme={theme} now={now} />}
+          </For>
+          <Show when={state().status === "error" && state().message}>
+            <text fg={theme().text.feedback.warning.default}>Refresh failed; saved values retained.</text>
+          </Show>
+          <Show when={state().snapshot || state().deepSeekBalance}>
+            <text fg={theme().text.subdued}>
+              {usageUpdatedLabel(state(), now())}
+            </text>
           </Show>
         </Show>
       </box>
@@ -157,7 +165,17 @@ export default Plugin.define({
     const store = createUsageStore({
       timeoutMs: positiveNumber(context.options.timeoutMs),
       supportsLunaReserve: true,
+      deepSeekEndpoint:
+        typeof context.options.deepSeekEndpoint === "string" ? context.options.deepSeekEndpoint : undefined,
     })
+    const syncProviders = async () => {
+      try {
+        const result = await context.client.provider.list({ location: context.location ?? context.data.location.default() })
+        store.updateProviders(result.data)
+      } catch {
+        store.updateProviders(undefined)
+      }
+    }
 
     const stopKeymap = context.ui.slot({
       append: "app",
@@ -165,48 +183,50 @@ export default Plugin.define({
         context.keymap.layer(() => ({
           mode: "global",
           commands: [
-        {
-          id: "codex-usage.refresh",
-          title: "Refresh Codex usage",
-          description: "Refresh ChatGPT Codex subscription limits.",
-          group: "Codex",
-          palette: true,
-          run: async (input) => {
-            const state = await store.refresh(true)
-            context.ui.toast.show({
-              variant: state.status === "ready" ? "success" : "warning",
-              title: "Codex usage",
-              message:
-                state.status === "ready"
-                  ? "Usage limits refreshed."
-                  : (state.message ?? "Refresh failed."),
-            })
-            void input
-          },
-        },
-        {
-          id: "codex-usage.details",
-          title: "Codex usage details",
-          description: "Show exact Codex limits and reset times.",
-          group: "Codex",
-          palette: true,
-          slash: { name: "codex-usage", aliases: ["usage-left"] },
-          run: async () => {
-            await context.ui.dialog.alert({
-              title: "Codex usage",
-              message: formatDetails(store.getState()),
-            })
-          },
-        },
-      ],
-    }))
+            {
+              id: "codex-usage.refresh",
+              title: "Refresh provider usage",
+              description: "Refresh Codex quota, DeepSeek balance, and provider status.",
+              group: "Providers",
+              palette: true,
+              run: async (input) => {
+                await syncProviders()
+                const state = await store.refresh(true)
+                context.ui.toast.show({
+                  variant: state.status === "ready" ? "success" : "warning",
+                  title: "Provider usage",
+                  message:
+                    state.status === "ready"
+                      ? "Usage limits refreshed."
+                      : (state.message ?? "Refresh failed."),
+                })
+                void input
+              },
+            },
+            {
+              id: "codex-usage.details",
+              title: "Provider usage details",
+              description: "Show verified Codex limits, DeepSeek balance, and provider statuses.",
+              group: "Providers",
+              palette: true,
+              slash: { name: "provider-usage", aliases: ["codex-usage", "usage-left"] },
+              run: async () => {
+                await syncProviders()
+                await context.ui.dialog.alert({
+                  title: "Provider usage",
+                  message: formatDetails(store.getState()),
+                })
+              },
+            },
+          ],
+        }))
         return null as never
       },
     })
 
     const stopSlot = context.ui.slot({
-      append: "sidebar.content",
-      render: ({ sessionID }) => <UsagePanel store={store} sessionID={sessionID} refreshMs={refreshMs} />,
+      append: "sidebar.footer",
+      render: ({ sessionID }) => <UsagePanel store={store} sessionID={sessionID} refreshMs={refreshMs} syncProviders={syncProviders} />,
     })
 
     return () => {

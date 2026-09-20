@@ -37,6 +37,31 @@ test("classifies insufficient quota responses as quota", () => {
   assert.equal(info?.kind, "quota")
 })
 
+test("classifies provider balance exhaustion as quota", () => {
+  for (const message of [
+    "Insufficient Balance",
+    "insufficient credits",
+    "insufficient-funds",
+    "Account credits are exhausted",
+  ]) {
+    const info = classifyFailure({ name: "APIError", data: { message } })
+    assert.equal(info?.kind, "quota", message)
+    assert.equal(shouldTrigger(info, "quota"), true, message)
+  }
+})
+
+test("classifies typed free and go usage exhaustion as quota", () => {
+  for (const error of [
+    { name: "APIError", data: { type: "freeUsageExceeded" } },
+    { name: "APIError", data: { type: "go_usage_exhausted" } },
+    { name: "APIError", data: { error: { code: "free-usage-limit" } } },
+  ]) {
+    const info = classifyFailure(error)
+    assert.equal(info?.kind, "quota", JSON.stringify(error))
+    assert.equal(shouldTrigger(info, "quota"), true, JSON.stringify(error))
+  }
+})
+
 test("classifies transient rate limits separately", () => {
   const info = classifyFailure({
     name: "APIError",

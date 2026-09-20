@@ -9,17 +9,14 @@ metadata:
 
 # Headless Browser
 
-Use the MCP tools that the running stack provides:
-
-- v1 (`playwright_headless` MCP): `playwright_headless_browser_*` tools. The
-  server launches an isolated Firefox context without a visible window and
-  shares no state with the live Playwright window or the user's normal browser.
-- v2 (OpenCode 2.0.x): exactly one Playwright MCP is registered (the live
-  visible one), so run headless-only work from the shell through the pinned
-  repository runtime instead: a bounded `node` script that imports `playwright`
-  from `platforms/linux/ubuntu/browser-tools/node_modules`, invoked through
-  `platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh`. Never
-  register a second Playwright MCP.
+Open Rig registers exactly one Playwright MCP for the live visible browser.
+Run headless-only work from the shell through the pinned repository runtime
+instead: use a bounded `node` script that imports `playwright` from
+`platforms/linux/ubuntu/browser-tools/node_modules`, invoked through
+`platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh`. The
+script must launch an isolated headless Firefox context, share no state with
+the live Playwright window or the user's normal browser, and close the context
+when finished. Never register a second Playwright MCP.
 
 ## Workflow
 
@@ -58,9 +55,10 @@ Switch to `browser-assistant` and the `playwright` MCP server when:
 - Preserve reversible draft state while diagnosing failures; do not refresh,
   navigate away, close, or resubmit solely to force a clearer result.
 
-If the server or runtime is unavailable, run `opencode mcp list` and inspect
-the Playwright entries (`playwright_headless` on v1; exactly one `playwright`
-on v2). Do not silently substitute the live browser.
+If the runtime is unavailable, verify the pinned browser package and Firefox
+installation under `platforms/linux/ubuntu/browser-tools/`. `opencode mcp
+list` should still show exactly one `playwright` entry for the live browser.
+Do not register a headless MCP or silently substitute the live browser.
 
 ## Usage guide
 

@@ -14,21 +14,26 @@ SCRIPT = Path(__file__).resolve().with_name("deploy-plugins.sh")
 CATALOG_TOOL = Path(__file__).resolve().with_name("v2-plugin-catalog.py")
 COMPUTER_USE_ROOT = SCRIPT.parent.parent
 PLUGIN_ROOT = COMPUTER_USE_ROOT / "plugins-v2"
-SERVER_NAMES = ["rig-tools", "rig-todo", "codex-fallback"]
-CLI_NAMES = ["rig-todo", "source-control", "codex-usage", "file-manager"]
+SERVER_NAMES = ["orchestration-policy", "git-tool", "integrated-browser", "repo-learning", "rig-tools", "rig-todo", "codex-fallback"]
+CLI_NAMES = ["rig-todo", "repo-learning", "source-control", "codex-usage", "file-manager", "integrated-browser", "resource-monitor"]
 PACKAGE_ROLES = {
+    "orchestration-policy": {"server"},
+    "git-tool": {"server"},
+    "integrated-browser": {"server", "cli"},
+    "repo-learning": {"server", "cli"},
     "rig-tools": {"server"},
     "rig-todo": {"server", "cli"},
     "codex-fallback": {"server"},
     "source-control": {"cli"},
     "codex-usage": {"cli"},
     "file-manager": {"cli"},
+    "resource-monitor": {"cli"},
 }
 
 
 def run(*arguments: str, expected: int = 0) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(
-        [str(SCRIPT), "--v2", *arguments],
+        [str(SCRIPT), *arguments],
         check=False,
         capture_output=True,
         text=True,
@@ -45,8 +50,40 @@ def read_names(config_dir: Path, filename: str) -> set[str]:
     path = config_dir / filename
     if not path.exists():
         return set()
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = load_jsonc(path)
     return {Path(entry["package"]).name for entry in data.get("plugins", [])}
+
+
+def load_jsonc(path: Path) -> object:
+    text = path.read_text(encoding="utf-8")
+    cleaned = []
+    i = 0
+    quoted = False
+    escaped = False
+    while i < len(text):
+        char = text[i]
+        if quoted:
+            cleaned.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quoted = False
+            i += 1
+        elif char == '"':
+            quoted = True; cleaned.append(char); i += 1
+        elif text.startswith("//", i):
+            end = text.find("\n", i + 2); i = len(text) if end < 0 else end
+        elif text.startswith("/*", i):
+            end = text.find("*/", i + 2)
+            if end < 0: raise ValueError("unterminated comment")
+            i = end + 2
+        else:
+            cleaned.append(char); i += 1
+    compact = "".join(cleaned)
+    compact = compact.replace(",\n}", "\n}").replace(",\n]", "\n]")
+    return json.loads(compact)
 
 
 def assert_selection(config_dir: Path, server: set[str], cli: set[str]) -> None:
@@ -102,7 +139,14 @@ def main() -> int:
         if before != after:
             raise AssertionError("idempotent deployment rewrote a config")
         run("--config-dir", str(all_dir), "--plugins", "all", "--verify-only")
-
+        if load_jsonc(all_dir / "cli.json")["session"]["permissions"] != "prompt":
+            raise AssertionError("rig-tools deployment did not enable prompt permissions")
+        orchestration = next(
+            entry for entry in load_jsonc(all_dir / "opencode.jsonc")["plugins"]
+            if Path(entry["package"]).name == "orchestration-policy"
+        )
+        if orchestration["options"].get("maxConcurrent") != 3 or orchestration["options"].get("backgroundOnly") is not True:
+            raise AssertionError("orchestration policy defaults were not deployed")
         server_dir = tmp / "server"
         run("--config-dir", str(server_dir), "--plugins", "server", "--apply")
         assert_selection(server_dir, set(SERVER_NAMES), set())
@@ -192,21 +236,47 @@ def main() -> int:
             raise AssertionError("wrong-role v2 entry was not rejected")
 
         jsonc_dir = tmp / "jsonc"
-        write_config(jsonc_dir / "opencode.jsonc", {"plugins": []})
+        jsonc_dir.mkdir()
         (jsonc_dir / "opencode.jsonc").write_text(
-            '{\n  // comments are intentionally unsupported by deployment\n  "plugins": []\n}\n',
+            '{\n  "description": "https://example.test/* not a comment // nor this",\n'
+            '  /* keep semantic settings */\n  "plugins": [],\n}\n',
             encoding="utf-8",
         )
-        jsonc = run(
+        original = (jsonc_dir / "opencode.jsonc").read_bytes()
+        run(
             "--config-dir",
             str(jsonc_dir),
             "--plugins",
             "rig-tools",
-            "--apply",
+            "--verify-only",
             expected=1,
         )
-        if "not editable JSON" not in jsonc.stderr:
-            raise AssertionError("JSONC deployment was not rejected safely")
+        if (jsonc_dir / "opencode.jsonc").read_bytes() != original:
+            raise AssertionError("verify-only rewrote JSONC")
+        os.chmod(jsonc_dir / "opencode.jsonc", 0o600)
+        run("--config-dir", str(jsonc_dir), "--plugins", "rig-tools", "--apply")
+        if (jsonc_dir / "opencode.jsonc").stat().st_mode & 0o777 != 0o600:
+            raise AssertionError("config mode was not preserved")
+        if load_jsonc(jsonc_dir / "opencode.jsonc")["description"] != "https://example.test/* not a comment // nor this":
+            raise AssertionError("string comment markers were corrupted")
+        if list(jsonc_dir.glob(".deploy.*")):
+            raise AssertionError("temporary deployment file leaked")
+
+        malformed_dir = tmp / "malformed-jsonc"
+        malformed_dir.mkdir()
+        (malformed_dir / "opencode.jsonc").write_text('{"plugins": [}', encoding="utf-8")
+        malformed = run("--config-dir", str(malformed_dir), "--plugins", "rig-tools", "--apply", expected=1)
+        if "could not be updated" not in malformed.stderr:
+            raise AssertionError("malformed JSONC was not rejected")
+
+        duplicate_key_dir = tmp / "duplicate-key"
+        duplicate_key_dir.mkdir()
+        (duplicate_key_dir / "opencode.jsonc").write_text(
+            '{"plugins": [], "plugins": []}', encoding="utf-8"
+        )
+        duplicate_key = run("--config-dir", str(duplicate_key_dir), "--plugins", "rig-tools", "--apply", expected=1)
+        if "could not be updated" not in duplicate_key.stderr:
+            raise AssertionError("duplicate JSONC key was not rejected")
 
         unknown = run(
             "--config-dir",

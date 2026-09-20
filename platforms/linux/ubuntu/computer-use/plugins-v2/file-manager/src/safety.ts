@@ -1,12 +1,18 @@
 import { createHash, randomUUID } from "node:crypto"
-import { open, readFile, realpath, rename, stat, unlink } from "node:fs/promises"
+import { open, lstat, opendir, readFile, realpath, rename, stat, unlink } from "node:fs/promises"
 import path from "node:path"
-import type { Stats } from "node:fs"
+import { constants, type Dir, type Stats } from "node:fs"
 
 export const MAX_READ_BYTES = 2 * 1024 * 1024
 export const MAX_EDIT_BYTES = 512 * 1024
+export const MAX_DIRECTORY_ENTRIES = 512
+export const MAX_DIRECTORY_NAME_BYTES = 240
+export const MAX_DIRECTORY_PATH_BYTES = 4096
+export const MAX_DIRECTORY_TEXT_BYTES = 64 * 1024
+export const MAX_DIRECTORY_DEPTH = 64
 const MAX_EDITOR_PARTS = 32
 const MAX_EDITOR_PART_LENGTH = 512
+const DIRECTORY_OPEN_FLAGS = constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW
 
 export class PathSafetyError extends Error {
   readonly code = "PATH_SAFETY"
@@ -29,6 +35,17 @@ export type SafeTextFile = SafePath & {
   mode: number
 }
 
+/** Local tree metadata intentionally omits absolute paths and filesystem
+ * handles. Every later operation must validate the relative path again. */
+export type SafeDirectoryEntry = {
+  name: string
+  relative: string
+  type: "file" | "directory"
+  size: number
+  mtimeMs: number
+  mode: number
+}
+
 export type SaveSnapshot = {
   path: string
   content: string
@@ -41,6 +58,7 @@ export type PathGuard = {
   readonly root: string
   normalize(value: unknown): string
   inspect(relative: unknown): Promise<SafePath>
+  listDirectory(relative: unknown): Promise<SafeDirectoryEntry[]>
   readText(relative: unknown): Promise<SafeTextFile>
   writeText(snapshot: SaveSnapshot): Promise<SafeTextFile>
 }
@@ -112,6 +130,20 @@ function fingerprint(info: Stats, bytes: Uint8Array): string {
   return [info.dev, info.ino, info.size, info.mtimeMs, modeBits(info), hashBytes(bytes)].join(":")
 }
 
+function sameNode(left: Stats, right: Stats): boolean {
+  return left.dev === right.dev && left.ino === right.ino && left.mode === right.mode
+}
+
+function sameStableInfo(left: Stats, right: Stats): boolean {
+  return (
+    sameNode(left, right) &&
+    left.nlink === right.nlink &&
+    left.size === right.size &&
+    left.mtimeMs === right.mtimeMs &&
+    left.ctimeMs === right.ctimeMs
+  )
+}
+
 function decodeUtf8(bytes: Uint8Array): string {
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(bytes)
@@ -143,6 +175,150 @@ async function inspectPath(root: string, value: unknown): Promise<SafePath> {
     throw new PathSafetyError(`cannot inspect path: ${relative}`)
   }
   return { relative, absolute, canonical, info }
+}
+
+function normalizeDirectoryRelative(value: unknown): string {
+  if (value === "") return ""
+  return normalizeSafeRelative(value)
+}
+
+function checkDirectoryPathBounds(relative: string): void {
+  const depth = relative === "" ? 0 : relativeParts(relative).length
+  if (depth > MAX_DIRECTORY_DEPTH) fail(`path exceeds the ${MAX_DIRECTORY_DEPTH}-component directory depth limit`)
+  if (Buffer.byteLength(relative) > MAX_DIRECTORY_PATH_BYTES) {
+    fail(`path exceeds the ${MAX_DIRECTORY_PATH_BYTES}-byte directory path limit`)
+  }
+}
+
+type StableDirectoryEntry = {
+  result?: SafeDirectoryEntry
+  descriptorPath: string
+  info: Stats
+}
+
+/** Enumerate one local directory through pinned descriptors. The directory and
+ * every returned child are checked twice so disappearance, replacement, or
+ * metadata changes during enumeration fail closed. Symlink and special-file
+ * children are tracked for race checks but omitted rather than followed. */
+async function listDirectory(
+  root: string,
+  rootIdentity: Stats,
+  value: unknown,
+): Promise<SafeDirectoryEntry[]> {
+  const relative = normalizeDirectoryRelative(value)
+  checkDirectoryPathBounds(relative)
+  const expected = relative === "" ? root : path.resolve(root, ...relativeParts(relative))
+  if (!contained(root, expected)) fail("directory resolves outside the project")
+
+  let rootHandle: Awaited<ReturnType<typeof open>> | undefined
+  let targetHandle: Awaited<ReturnType<typeof open>> | undefined
+  let ownsTargetHandle = false
+  let directory: Dir | undefined
+  try {
+    rootHandle = await open(root, DIRECTORY_OPEN_FLAGS)
+    const rootBefore = await rootHandle.stat()
+    if (!rootBefore.isDirectory() || !sameNode(rootIdentity, rootBefore)) fail("project root changed before directory listing")
+    const rootDescriptorPath = `/proc/self/fd/${rootHandle.fd}`
+    const currentRoot = await realpath(rootDescriptorPath)
+    if (currentRoot !== root) fail("project root changed before directory listing")
+
+    targetHandle = rootHandle
+    for (const part of relative === "" ? [] : relativeParts(relative)) {
+      // Open each component as the final O_NOFOLLOW path relative to the
+      // previously pinned descriptor. No symlink directory is traversed, even
+      // when it appears in the middle of the requested relative path.
+      const nextHandle = await open(path.join(`/proc/self/fd/${targetHandle.fd}`, part), DIRECTORY_OPEN_FLAGS)
+      if (ownsTargetHandle) await targetHandle.close()
+      targetHandle = nextHandle
+      ownsTargetHandle = true
+    }
+
+    const targetBefore = await targetHandle.stat()
+    if (!targetBefore.isDirectory()) fail("only directories can be listed")
+    const targetDescriptorPath = `/proc/self/fd/${targetHandle.fd}`
+    const canonical = await realpath(targetDescriptorPath)
+    if (!contained(root, canonical)) fail("directory resolves outside the project")
+    if (canonical !== expected) fail("symlink directories are not allowed")
+
+    directory = await opendir(targetDescriptorPath)
+    const entries: StableDirectoryEntry[] = []
+    const names = new Set<string>()
+    let entryCount = 0
+    let textBytes = 0
+
+    while (true) {
+      const dirent = await directory.read()
+      if (!dirent) break
+      entryCount += 1
+      if (entryCount > MAX_DIRECTORY_ENTRIES) {
+        fail(`directory exceeds the ${MAX_DIRECTORY_ENTRIES}-entry limit`)
+      }
+
+      const name = dirent.name
+      const nameBytes = Buffer.byteLength(name)
+      if (nameBytes > MAX_DIRECTORY_NAME_BYTES) {
+        fail(`directory entry exceeds the ${MAX_DIRECTORY_NAME_BYTES}-byte name limit`)
+      }
+      textBytes += nameBytes
+      if (textBytes > MAX_DIRECTORY_TEXT_BYTES) {
+        fail(`directory names exceed the ${MAX_DIRECTORY_TEXT_BYTES}-byte text limit`)
+      }
+
+      if (name === ".git") continue
+      if (names.has(name)) fail("directory changed while it was being listed")
+      names.add(name)
+
+      const joined = relative ? `${relative}/${name}` : name
+      const childRelative = normalizeSafeRelative(joined)
+      if (childRelative !== joined) fail("directory entry cannot be represented as a safe relative path")
+      checkDirectoryPathBounds(childRelative)
+
+      const descriptorPath = path.join(targetDescriptorPath, name)
+      const info = await lstat(descriptorPath)
+      const type = info.isDirectory() ? "directory" : info.isFile() ? "file" : undefined
+      if (info.isSymbolicLink()) {
+        entries.push({ descriptorPath, info })
+        continue
+      }
+      if (!type) fail(`special directory entry is not allowed: ${childRelative}`)
+      entries.push({
+        descriptorPath,
+        info,
+        result: {
+          name,
+          relative: childRelative,
+          type,
+          size: info.size,
+          mtimeMs: info.mtimeMs,
+          mode: modeBits(info),
+        },
+      })
+    }
+
+    const targetAfter = await targetHandle.stat()
+    if (!sameStableInfo(targetBefore, targetAfter)) fail("directory changed while it was being listed")
+    for (const entry of entries) {
+      const after = await lstat(entry.descriptorPath).catch(() => undefined)
+      if (!after || !sameStableInfo(entry.info, after)) fail("directory entry changed while it was being listed")
+    }
+    const rootAfter = await rootHandle.stat()
+    if (!sameNode(rootBefore, rootAfter)) fail("project root changed while directory was being listed")
+
+    return entries
+      .map((entry) => entry.result)
+      .filter((entry): entry is SafeDirectoryEntry => entry !== undefined)
+      .sort((left, right) => {
+        if (left.type !== right.type) return left.type === "directory" ? -1 : 1
+        return left.name < right.name ? -1 : left.name > right.name ? 1 : 0
+      })
+  } catch (error) {
+    if (error instanceof PathSafetyError) throw error
+    throw new PathSafetyError(`cannot safely list directory: ${relative || "."}`)
+  } finally {
+    if (directory) await directory.close().catch(() => undefined)
+    if (ownsTargetHandle && targetHandle) await targetHandle.close().catch(() => undefined)
+    if (rootHandle) await rootHandle.close().catch(() => undefined)
+  }
 }
 
 async function readText(root: string, value: unknown): Promise<SafeTextFile> {
@@ -232,6 +408,7 @@ export async function createPathGuard(projectRoot: string): Promise<PathGuard> {
     root,
     normalize: normalizeSafeRelative,
     inspect: (relative) => inspectPath(root, relative),
+    listDirectory: (relative) => listDirectory(root, info, relative),
     readText: (relative) => readText(root, relative),
     writeText: (snapshot) => writeText(root, snapshot),
   }

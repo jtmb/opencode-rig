@@ -28,7 +28,7 @@ Register the plugin in the v2 `plugins` array:
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
     {
-      "package": "file:///absolute/path/to/codex-fallback/src/index.ts",
+      "package": "/absolute/path/to/plugins-v2/codex-fallback",
       "options": {
         "defaultChain": [
           "deepseek/deepseek-v4-flash",
@@ -75,7 +75,7 @@ plugins do not receive the old mutable global config hook:
 {
   "plugins": [
     {
-      "package": "file:///absolute/path/to/codex-fallback/src/index.ts",
+      "package": "/absolute/path/to/plugins-v2/codex-fallback",
       "options": {
         "defaultChain": ["fake/tier-1", "fake/tier-2"],
         "agents": {
@@ -100,11 +100,15 @@ accepted as an alias for `mode: "off"`.
 1. The `context` hook records the source model, routes a cooling model, checks
    proactive quota when enabled, and requests model changes through
    `ctx.session.switchModel()`; it never mutates the read-only `event.model`.
-2. The `retry` hook classifies the failure, cools the failed model, switches to
-   the next available tier, and sets `{ retry: true, delay: 250 }`. OpenCode's
-   normal retry machinery performs the next request on the selected model.
+2. The `retry` hook classifies failures from any connected provider, including
+   DeepSeek balance exhaustion and OpenCode Zen typed free/go usage exhaustion,
+   cools the failed model, switches to the next available tier, and sets
+   `{ retry: true, delay: 250 }`. OpenCode's normal retry machinery performs
+   the next request on the selected model.
 3. A duplicate retry event for the same physical attempt is ignored. A failed
-   fallback tier advances exactly once to the next tier.
+   fallback tier advances exactly once to the next tier. The chain wraps once,
+   so a source already on its final configured tier can still reach an earlier
+   healthy tier; cooled models are skipped and the bounded scan never loops.
 4. When a source cooldown expires, a later context request can switch from a
    fallback tier back to the recorded source model.
 5. A model selected manually outside the plugin's active route resets the

@@ -16,9 +16,9 @@ the pinned Game Studio manifest. The standard license text is preserved in
 
 ## Adaptation notes
 
-- Replaced generic browser-automation references with this repository's visible
-  `playwright_browser_*` tools and explicit-only
-  `playwright_headless_browser_*` tools.
+- Replaced generic browser-automation references with this repository's
+  connected live Playwright tools and the explicit-only bounded runtime
+  documented by the `browser-headless` skill.
 - Added accessibility-snapshot-first inspection while requiring screenshots
   for canvas/WebGL and explicitly rejecting DOM claims about internal scene
   state.

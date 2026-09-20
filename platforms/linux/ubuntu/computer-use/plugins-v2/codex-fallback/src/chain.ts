@@ -69,13 +69,18 @@ export function isTierAvailable(catalog: Catalog | undefined, tier: ModelRef): b
 export function pickTier(input: {
   chain: ModelRef[]
   startIndex?: number
+  wrap?: boolean
   isCooling: (key: string) => boolean
   isAvailable?: (tier: ModelRef) => boolean
 }): { tier?: ModelRef; skipped: TierSkip[] } {
   const skipped: TierSkip[] = []
   const startIndex = Math.max(0, input.startIndex ?? 0)
+  const count = input.chain.length
+  if (count === 0) return { skipped }
 
-  for (let index = startIndex; index < input.chain.length; index += 1) {
+  const attempts = input.wrap ? count : Math.max(0, count - startIndex)
+  for (let offset = 0; offset < attempts; offset += 1) {
+    const index = input.wrap ? (startIndex + offset) % count : startIndex + offset
     const tier = input.chain[index]
     if (!tier) continue
     if (input.isCooling(modelKey(tier))) {

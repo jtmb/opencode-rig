@@ -1,7 +1,54 @@
 {
-  "$schema": "https://opencode.ai/v2/plugin-role-catalog.json",
   "version": 1,
   "plugins": [
+    {
+      "name": "orchestration-policy",
+      "path": "plugins-v2/orchestration-policy",
+      "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
+        }
+      }
+    },
+    {
+      "name": "git-tool",
+      "path": "plugins-v2/git-tool",
+      "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
+        }
+      }
+    },
+    {
+      "name": "integrated-browser",
+      "path": "plugins-v2/integrated-browser",
+      "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
+        },
+        "cli": {
+          "entrypoint": "tui.tsx",
+          "config": "cli.json"
+        }
+      }
+    },
+    {
+      "name": "repo-learning",
+      "path": "plugins-v2/repo-learning",
+      "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
+        },
+        "cli": {
+          "entrypoint": "tui.tsx",
+          "config": "cli.json"
+        }
+      }
+    },
     {
       "name": "rig-tools",
       "path": "plugins-v2/rig-tools",
@@ -59,6 +106,16 @@
     {
       "name": "file-manager",
       "path": "plugins-v2/file-manager",
+      "roles": {
+        "cli": {
+          "entrypoint": "tui.tsx",
+          "config": "cli.json"
+        }
+      }
+    },
+    {
+      "name": "resource-monitor",
+      "path": "plugins-v2/resource-monitor",
       "roles": {
         "cli": {
           "entrypoint": "tui.tsx",

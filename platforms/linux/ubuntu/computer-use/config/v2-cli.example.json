@@ -6,12 +6,14 @@
   },
   "animations": true,
   "session": {
+    "permissions": "prompt",
     "sidebar": "auto",
     "thinking": "hide",
     "scrollbar": true,
     "image_preview": true
   },
   "diffs": {
+    "source": "working",
     "wrap": "word"
   },
   "prompt": {
@@ -32,7 +34,19 @@
       "options": {}
     },
     {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser",
+      "options": {}
+    },
+    {
       "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
+      "options": {}
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/repo-learning",
+      "options": {}
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/resource-monitor",
       "options": {}
     }
   ]

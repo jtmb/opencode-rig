@@ -9,8 +9,14 @@
     "codex-usage",
     "source-control",
     "file-manager",
+    "integrated-browser",
+    "orchestration-policy",
+    "ponytail-adapter",
+    "git-tool",
+    "repo-learning",
     "rig-tools",
-    "rig-todo"
+    "rig-todo",
+    "resource-monitor"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
@@ -22,6 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "22.18.6",
+    "tree-sitter-wasm": "2.0.1",
     "typescript": "5.9.3"
   }
 }

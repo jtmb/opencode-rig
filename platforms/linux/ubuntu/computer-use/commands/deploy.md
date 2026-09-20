@@ -1,47 +1,22 @@
 ---
-description: Deploy the local OpenCode plugins, and optionally the bootstrap scripts, to the global config, a repository, or the v2 config directory.
+description: Deploy the local OpenCode v2 plugins to an isolated config directory.
 agent: build
 ---
 
-Deploy the local OpenCode plugins from this repository to an OpenCode
-installation. Ask the user where the deployment should go before acting.
+Deploy the local OpenCode v2 plugins from this repository. Ask the user for the
+config directory and package selection before acting.
 
-1. Read `AGENTS.md` and `docs/scripts/deploy-plugins.md` before acting; for a
-   v2 target also read `docs/scripts/setup-opencode-v2.md`.
+1. Read `AGENTS.md` and `docs/scripts/deploy-plugins.md` first.
 2. Work from `~/repos/opencode-rig` and preserve unrelated dirty work.
-3. Use the `question` tool to ask for the deployment target:
-   - `Global` — register for every project under `~/.config/opencode` (v1).
-   - `A specific repository` — register in that repository's `.opencode/`
-     directory (v1).
-   - `OpenCode v2 config directory` — register the `plugins-v2` packages under
-     `~/.opencode-v2-pilot/config`, or a path the user names.
-4. If the user chose a repository, use the `question` tool again to confirm the
-   absolute path. Offer the current repository as an option and let the user
-   type another path.
-5. Use the `question` tool to ask which plugins to register:
-   - v1: `both` (the Codex quota and fallback pair), `all` (including
-     source-control, tui-settings, and file-manager), or one named plugin.
-   - v2: `both` (the Codex pair), `all` (all six packages), `server`, `cli`, or
-     one of `rig-tools`, `rig-todo`, `codex-fallback`, `source-control`,
-     `codex-usage`, `file-manager`. `tui-settings` is retired in v2.
-6. Use the `question` tool to ask whether to also deploy the bootstrap scripts
-   (a verbatim copy of `computer-use/scripts/` into the target). This applies to
-   v1 targets only.
-7. Preview the exact change, read-only:
-
-   v1:
-   `./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope <global|project> --project <path-if-project> --plugins <selection> [--bootstrap] --verify-only`
-
-   v2:
-   `./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --v2 [--config-dir <dir>] --plugins <selection> --verify-only`
-
-8. Review the preview, then repeat the same command with `--apply` and let its
-   verification pass run. Do not change any option between the preview and the
-   apply.
-9. If `codex-fallback` is being added without a configured chain, tell the user
-   it stays inactive until `defaultChain` is set, or offer `--chain a/b,c/d`.
-10. Report the target config files and any copied scripts, and remind the user to
-    restart OpenCode so the plugin registration takes effect.
-11. Do not commit, do not edit deployed skill copies, and do not overwrite
-    unrelated configuration. Existing plugin entries and their options must
-    stay intact.
+3. Preview with:
+   `./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh [--config-dir <dir>] --plugins <selection> --verify-only`
+4. Select `both`, `all`, `server`, `cli`, or a catalog package name.
+5. Review the preview, then repeat the exact command with `--apply`; keep the
+   verification pass enabled and do not change options.
+6. If `codex-fallback` has no configured chain, report that it remains inactive
+   until `defaultChain` is configured (or offer `--chain a/b,c/d`).
+7. Report target config files and remind the user to restart OpenCode.
+8. Do not commit, edit deployed skill copies, or overwrite unrelated config.
+   Existing plugin entries and options stay intact. If the deployment changes
+   repository files, follow `docs/scripts/git-safety-gates.md`; never infer
+   commit or push approval from deployment approval.
