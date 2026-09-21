@@ -140,9 +140,10 @@ commit or push was performed.
   independently reviewed background records. Canonical repository QA passes all
   twelve package checks, every self-test, policy/documentation/deployment gates,
   format/link validation, and Git whitespace checks.
-- PR #3 CI portability is bounded: CI installs both locked v2 workspaces before
-  package QA, and the checked-in Playwright MCP command is workspace-relative;
-  the verifier also accepts the setup assistant's checkout-local absolute form.
+- PR #3 CI portability is bounded: CI pins the locally verified Node 22.22.2
+  release, installs both locked v2 workspaces before package QA, and uses a
+  workspace-relative Playwright MCP command; the verifier also accepts the
+  setup assistant's checkout-local absolute form.
 - `integrated-browser` package typecheck/tests and disposable role-deployment
   self-tests pass; its pinned headed Chromium runtime and controller now pass
   live launch, navigation, rendering, accessible interaction, and cleanup.
