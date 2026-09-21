@@ -193,7 +193,9 @@ def run_command(
     check_deadline(deadline, f"command {argv[0]}")
     output = b"".join(chunks).decode("utf-8", errors="replace")
     if process.returncode:
-        detail = output.strip().replace("\n", " ")[:400]
+        detail = output.strip().replace("\n", " ")
+        if len(detail) > 400:
+            detail = f"{detail[:180]} ... {detail[-215:]}"
         raise QAError(
             f"command failed ({process.returncode}): {argv[0]}"
             f"{': ' + detail if detail else ''}"

@@ -73,6 +73,17 @@ def test_command_failures(qa, root: Path) -> None:
         "missing command",
     )
 
+    failure = expect_failure(
+        lambda: qa.run_command(
+            ["python3", "-c", "import sys; print('start-' + 'x' * 500 + '-end'); sys.exit(7)"],
+            root,
+            1,
+        ),
+        "bounded failure detail",
+        "command failed (7)",
+    )
+    assert "start-" in str(failure) and "-end" in str(failure)
+
     parent_pid = root / "timeout-parent.pid"
     descendant_pid = root / "timeout-descendant.pid"
     ready = root / "timeout-descendant.ready"

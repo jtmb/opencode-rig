@@ -144,6 +144,8 @@ commit or push was performed.
   release, installs both locked v2 workspaces before package QA, and uses a
   workspace-relative Playwright MCP command; the verifier also accepts the
   setup assistant's checkout-local absolute form.
+- Canonical QA keeps bounded start and end context for failed commands so
+  runner-only test assertions remain visible without dumping full output.
 - `integrated-browser` package typecheck/tests and disposable role-deployment
   self-tests pass; its pinned headed Chromium runtime and controller now pass
   live launch, navigation, rendering, accessible interaction, and cleanup.

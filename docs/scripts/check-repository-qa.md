@@ -46,7 +46,9 @@ Child processes preserve the caller's environment, including `PATH` and
 `HOME`, while forcing `C.UTF-8`, noninteractive CI/Git behavior,
 `PYTHONDONTWRITEBYTECODE=1`, deterministic Python hashing, and npm offline
 mode. Dynamic helper imports also suppress bytecode, so canonical QA does not
-create ignored `__pycache__` artifacts.
+create ignored `__pycache__` artifacts. Failed commands report at most 400
+characters split between the start and end of combined output, preserving the
+command identity and final assertion without dumping the full stream.
 
 `check-repository-qa-self-test.py` uses disposable temporary roots to prove
 missing-command failure, command timeout and reaping, process-group descendant
@@ -54,7 +56,8 @@ cleanup, combined stdout/stderr output overflow, an overall deadline expiring
 inside a running command and inside an in-process traversal, malformed and
 duplicate JSON/JSONC rejection, malformed SVG rejection, broken-link
 rejection, missing and unexpected self-test detection, deterministic discovery
-order, the controlled child environment, and absence of bytecode output.
+order, bounded start/end failure context, the controlled child environment, and
+absence of bytecode output.
 `check-acceptance-evidence-self-test.py` independently covers the positive
 manifest path plus empty/vacuous claims, missing visual/interaction evidence,
 agent/model allowlists, background-only records, concurrency bounds, regular
