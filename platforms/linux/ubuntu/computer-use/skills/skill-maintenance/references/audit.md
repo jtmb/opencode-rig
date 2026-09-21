@@ -33,7 +33,8 @@ Keep the audit read-only until findings and authorized scope are clear.
 
 ### Deployment
 
-- The deployed location is `~/.config/opencode/skills/<name>/`.
+- The deployed location is the selected v2 config directory's
+  `skills/<name>/` (default `~/.opencode-v2-pilot/config/skills/<name>/`).
 - Canonical source is authoritative and deployed files are generated copies.
 - The complete directory is deployed recursively, not only `SKILL.md`.
 - Source and deployed relative paths and contents match.

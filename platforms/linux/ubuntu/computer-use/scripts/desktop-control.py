@@ -11,6 +11,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import subprocess
 import time
 import warnings
 from collections import deque
@@ -30,6 +32,94 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 REDACTED = "[redacted protected field]"
 TARGET_TOKEN_MAX_AGE_SECONDS = 30.0
+INPUT_TOKEN_MAX_AGE_SECONDS = 30.0
+MAX_TYPE_CHARS = 256
+WINDOW_ROLES = {
+    "frame",
+    "window",
+    "dialog",
+    "alert",
+    "file chooser",
+    "color chooser",
+    "font chooser",
+}
+MODIFIER_CODES = {"ctrl": 29, "shift": 42, "alt": 56, "super": 125, "meta": 125}
+KEY_CODES = {
+    "escape": 1,
+    "1": 2,
+    "2": 3,
+    "3": 4,
+    "4": 5,
+    "5": 6,
+    "6": 7,
+    "7": 8,
+    "8": 9,
+    "9": 10,
+    "0": 11,
+    "minus": 12,
+    "equal": 13,
+    "backspace": 14,
+    "tab": 15,
+    "q": 16,
+    "w": 17,
+    "e": 18,
+    "r": 19,
+    "t": 20,
+    "y": 21,
+    "u": 22,
+    "i": 23,
+    "o": 24,
+    "p": 25,
+    "leftbrace": 26,
+    "rightbrace": 27,
+    "return": 28,
+    "enter": 28,
+    "a": 30,
+    "s": 31,
+    "d": 32,
+    "f": 33,
+    "g": 34,
+    "h": 35,
+    "j": 36,
+    "k": 37,
+    "l": 38,
+    "semicolon": 39,
+    "apostrophe": 40,
+    "grave": 41,
+    "z": 44,
+    "x": 45,
+    "c": 46,
+    "v": 47,
+    "b": 48,
+    "n": 49,
+    "m": 50,
+    "comma": 51,
+    "dot": 52,
+    "slash": 53,
+    "space": 57,
+    "f1": 59,
+    "f2": 60,
+    "f3": 61,
+    "f4": 62,
+    "f5": 63,
+    "f6": 64,
+    "f7": 65,
+    "f8": 66,
+    "f9": 67,
+    "f10": 68,
+    "f11": 87,
+    "f12": 88,
+    "home": 102,
+    "up": 103,
+    "pageup": 104,
+    "left": 105,
+    "right": 106,
+    "end": 107,
+    "down": 108,
+    "pagedown": 109,
+    "insert": 110,
+    "delete": 111,
+}
 
 
 @dataclass
@@ -282,6 +372,129 @@ def validate_target_token(match: Match, token: str, verb: str) -> None:
         )
 
 
+def focused_window() -> dict:
+    for app in applications():
+        traversal = walk(app, 4, 500)
+        for match in traversal.matches:
+            role = node_role(match.node).casefold()
+            if role in WINDOW_ROLES and "active" in node_states(match.node):
+                return {"app": node_name(app), "window": node_name(match.node)}
+    return {"app": "", "window": ""}
+
+
+def key_sequence(chord: str) -> list[str]:
+    tokens = [token.strip().casefold() for token in chord.split("+")]
+    if not tokens or any(not token for token in tokens):
+        raise SystemExit("desktop-control: --key must be a chord such as 'ctrl+s'")
+    modifiers: list[str] = []
+    key = None
+    for token in tokens:
+        if token in MODIFIER_CODES and key is None:
+            if token in modifiers:
+                raise SystemExit(
+                    f"desktop-control: duplicate modifier in --key: {token!r}"
+                )
+            modifiers.append(token)
+            continue
+        if key is not None:
+            raise SystemExit(
+                "desktop-control: --key accepts exactly one non-modifier key"
+            )
+        key = token
+    if key is None:
+        raise SystemExit(
+            "desktop-control: --key needs a non-modifier key, such as 'ctrl+s'"
+        )
+    if key not in KEY_CODES:
+        choices = ", ".join(sorted(KEY_CODES))
+        raise SystemExit(f"desktop-control: unsupported key {key!r}; choices: {choices}")
+    sequence = [f"{MODIFIER_CODES[modifier]}:1" for modifier in modifiers]
+    sequence += [f"{KEY_CODES[key]}:1", f"{KEY_CODES[key]}:0"]
+    sequence += [f"{MODIFIER_CODES[modifier]}:0" for modifier in reversed(modifiers)]
+    return sequence
+
+
+def validated_text(text: str) -> str:
+    if not text:
+        raise SystemExit("desktop-control: --text must not be empty")
+    if len(text) > MAX_TYPE_CHARS:
+        raise SystemExit(
+            f"desktop-control: --text is limited to {MAX_TYPE_CHARS} characters"
+        )
+    for character in text:
+        if not 32 <= ord(character) <= 126:
+            raise SystemExit(
+                "desktop-control: --text accepts printable ASCII only; "
+                "send Return, Tab, or arrow keys with --kind key"
+            )
+    return text
+
+
+def ydotool_socket_path() -> str:
+    socket = os.environ.get("YDOTOOL_SOCKET", "")
+    if not socket:
+        runtime = os.environ.get("XDG_RUNTIME_DIR", "")
+        if runtime:
+            socket = os.path.join(runtime, ".ydotool_socket")
+    return socket
+
+
+def run_ydotool(command: str, arguments: list[str]) -> None:
+    socket = ydotool_socket_path()
+    if not socket or not os.path.exists(socket):
+        raise SystemExit(
+            "desktop-control: ydotool's private socket is unavailable; "
+            "fix provisioning with setup-computer-assistant.sh --apply"
+        )
+    environment = dict(os.environ)
+    environment["YDOTOOL_SOCKET"] = socket
+    try:
+        completed = subprocess.run(
+            ["ydotool", command, *arguments],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            env=environment,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise SystemExit(f"desktop-control: ydotool {command} failed: {exc}") from exc
+    if completed.returncode != 0:
+        detail = (
+            completed.stderr or completed.stdout or ""
+        ).strip() or f"exit {completed.returncode}"
+        raise SystemExit(f"desktop-control: ydotool {command} failed: {detail}")
+
+
+def input_fingerprint(payload: dict, context: dict) -> str:
+    identity = {"payload": payload, "context": context}
+    encoded = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def issue_input_token(payload: dict, context: dict) -> str:
+    return f"{time.time_ns()}:{input_fingerprint(payload, context)}"
+
+
+def validate_input_token(payload: dict, context: dict, token: str) -> None:
+    issued_raw, separator, expected_fingerprint = token.partition(":")
+    try:
+        issued_at = int(issued_raw) / 1_000_000_000
+    except ValueError:
+        issued_at = 0.0
+    age = time.time() - issued_at
+    if (
+        not separator
+        or expected_fingerprint != input_fingerprint(payload, context)
+        or age < -1.0
+        or age > INPUT_TOKEN_MAX_AGE_SECONDS
+    ):
+        raise SystemExit(
+            "desktop-control: input preview token is stale or the focused window "
+            "changed; run a fresh dry run"
+        )
+
+
 class NthAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         namespace.nth = values
@@ -460,6 +673,78 @@ def command_set_text(args):
     }, indent=2, ensure_ascii=False))
 
 
+def command_windows(args):
+    apps = [select_application(args.app)] if args.app else applications()
+    windows = []
+    scanned = 0
+    truncated = False
+    for app in apps:
+        traversal = walk(app, args.max_depth, args.max_nodes)
+        truncated = truncated or not traversal.complete
+        scanned += 1
+        for match in traversal.matches:
+            role = node_role(match.node).casefold()
+            if role not in WINDOW_ROLES:
+                continue
+            states = node_states(match.node)
+            showing = "showing" in states and "visible" in states
+            if args.showing and not showing:
+                continue
+            info = node_info(match)
+            info["app"] = node_name(app)
+            info["showing"] = showing
+            info["active"] = "active" in states
+            windows.append(info)
+    print(json.dumps({
+        "complete": not truncated,
+        "scanned_apps": scanned,
+        "windows": windows,
+    }, indent=2, ensure_ascii=False))
+
+
+def command_input(args):
+    if args.kind == "key":
+        if not args.key:
+            raise SystemExit("desktop-control: --kind key requires --key, e.g. 'ctrl+s'")
+        if args.text is not None:
+            raise SystemExit("desktop-control: --text is only valid with --kind type")
+        payload = {"kind": "key", "key": args.key.casefold()}
+        ydotool_arguments = ["key", *key_sequence(args.key)]
+    else:
+        if args.text is None:
+            raise SystemExit("desktop-control: --kind type requires --text")
+        if args.key is not None:
+            raise SystemExit("desktop-control: --key is only valid with --kind key")
+        text = validated_text(args.text)
+        payload = {"kind": "type", "text": text}
+        ydotool_arguments = ["type", "--escape=0", "--", text]
+
+    context = focused_window()
+    if not args.apply:
+        token = issue_input_token(payload, context)
+        print(json.dumps({
+            "dry_run": True,
+            "would": payload,
+            "focused_window": context,
+            "target_token": token,
+            "apply_requires": "--expect-token TARGET_TOKEN --apply",
+        }, indent=2, ensure_ascii=False))
+        return
+    if not args.expect_token:
+        raise SystemExit(
+            "desktop-control: --apply requires --expect-token from a fresh dry run"
+        )
+    validate_input_token(payload, context, args.expect_token)
+    run_ydotool(ydotool_arguments[0], ydotool_arguments[1:])
+    print(json.dumps({
+        "dispatched": True,
+        **payload,
+        "focused_window": context,
+        "outcome": "unverified",
+        "next_step": "take a fresh observation (screenshot or find) before retrying or continuing",
+    }, indent=2, ensure_ascii=False))
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(
         description="Inspect/control GNOME apps through AT-SPI; mutations require --apply."
@@ -503,6 +788,23 @@ def parser() -> argparse.ArgumentParser:
     set_text.add_argument("--wait-seconds", type=float, default=2.0)
     set_text.add_argument("--apply", action="store_true")
     set_text.set_defaults(func=command_set_text)
+
+    windows = sub.add_parser("windows", help="list top-level windows (frames and dialogs)")
+    windows.add_argument("--app", help="only this AT-SPI application")
+    windows.add_argument("--showing", action="store_true", help="only showing/visible windows")
+    windows.add_argument("--max-depth", type=int, default=4)
+    windows.add_argument("--max-nodes", type=int, default=2000)
+    windows.set_defaults(func=command_windows)
+
+    input_command = sub.add_parser(
+        "input", help="send one bounded key chord or text string through ydotool"
+    )
+    input_command.add_argument("--kind", required=True, choices=["key", "type"])
+    input_command.add_argument("--key", help="key or chord for --kind key, e.g. ctrl+s")
+    input_command.add_argument("--text", help="printable ASCII text for --kind type")
+    input_command.add_argument("--expect-token")
+    input_command.add_argument("--apply", action="store_true")
+    input_command.set_defaults(func=command_input)
 
     return result
 

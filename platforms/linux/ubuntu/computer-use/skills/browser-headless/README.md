@@ -26,8 +26,9 @@ take over the workflow.
 
 Normal use requires:
 
-- The connected `playwright_headless` MCP server.
-- The repository's pinned browser runtime and headless wrapper.
+- The pinned repository runtime, with `playwright` imported from
+  `platforms/linux/ubuntu/browser-tools/node_modules` and invoked through the
+  bounded-command wrapper.
 - An isolated headless Firefox context with no shared state with the live
   Playwright window or normal browser.
 
@@ -37,8 +38,9 @@ The agent can check the expected MCP registration with:
 opencode mcp list
 ```
 
-Do not run the headless MCP wrapper directly as a substitute for the agent's
-browser tools. The wrapper is started by OpenCode as an MCP server.
+That command must show exactly one `playwright` entry: the live visible
+wrapper. Do not register a second Playwright MCP for headless work. Headless
+tasks run as bounded scripts against the pinned repository runtime.
 
 ## How to request it
 
@@ -94,8 +96,10 @@ Known limitations:
 
 ## Troubleshooting
 
-- MCP unavailable: inspect the `playwright_headless` entry in
-  `opencode mcp list` and report the actual startup error.
+- Runtime unavailable: verify the pinned `playwright` package and Firefox
+  installation under `platforms/linux/ubuntu/browser-tools/`; keep exactly one
+  live `playwright` entry in `opencode mcp list` and use the bounded shell
+  runtime for headless work.
 - Authentication or visual verification becomes necessary: switch explicitly
   to `browser-assistant`.
 - Unexpected page state: inspect a fresh snapshot before continuing.

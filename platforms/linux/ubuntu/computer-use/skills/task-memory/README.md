@@ -10,7 +10,8 @@ Tags: `memory`, `preferences`, `decisions`, `pending`
 
 ## Purpose and when to use it
 
-Use `task-memory` to preserve durable context across sessions.
+Use `task-memory` to preserve durable context across sessions in Basic Memory,
+a local-first Markdown knowledge base shared by the user and the assistant.
 
 Appropriate requests include:
 
@@ -25,130 +26,108 @@ application state.
 
 ## Prerequisites and setup verification
 
-The private store is managed by the repository's `assistant-memory.py`
-utility and stored as an owner-only file:
+- The `basic-memory` MCP server is registered in the v2 config and launched
+  through `scripts/basic-memory-mcp.sh`, which applies an adaptive user-cgroup
+  memory budget and fails closed without a limiter.
+- The project is `computer-assistant` at
+  `~/Documents/computer-assistant/basic-memory/` (owner-only, `700`), with its
+  SQLite index and the FastEmbed `bge-small-en-v1.5` model cached locally.
+- The wrapper's resolved limiter and budget can be checked read-only:
 
-```text
-~/Documents/computer-assistant/memory.json
-```
+  ```bash
+  platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only
+  ```
 
-The expected directory mode is `700` and file mode is `600`. Setup
-initializes the store with:
+- Registration and connection:
 
-```bash
-python3 ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py init
-```
+  ```bash
+  opencode mcp list   # basic-memory connected
+  ```
 
-Unlike record changes, `init` performs filesystem and permission work without
-`--apply`.
-
-Validate an existing store with:
-
-```bash
-python3 ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
-```
+Only the core nine tools are exposed (`search_notes`, `read_note`,
+`write_note`, `edit_note`, `delete_note`, `build_context`, `recent_activity`,
+`list_directory`, `basic_memory_diagnostics`); the project/workspace managers,
+schema tools, `move_note`, `view_note`, `read_content`, and the compatibility
+`search`/`fetch` tools are hidden by `permissions` deny entries.
 
 ## How to request it
 
-Ask in ordinary language. The user does not need to know categories, sources,
-IDs, or expiry formats.
+Ask in ordinary language. The user does not need to know titles, folders, or
+tool names.
 
 Example requests:
 
 - "Remember this durable preference."
 - "Search memory for microphone setup."
 - "List pending items."
-- "Remove the obsolete entry with this ID."
+- "Remove the obsolete note about the old printer."
 
-The agent should read narrowly and avoid dumping the entire memory store into
-a conversation.
+The agent should read narrowly with `search_notes`/`build_context` and avoid
+dumping the whole knowledge base into a conversation.
 
 ## Worked workflow and expected result
 
-A representative retrieval workflow is:
+A representative retrieval workflow:
 
-```bash
-python3 ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py search "audio microphone"
-python3 ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py list --category pending
-```
+1. `recent_activity` to see recently changed notes.
+2. `search_notes` with task-relevant terms.
+3. `read_note` the best hit, or `build_context` to pull in related notes.
 
-List and search support optional `--category`, `--source`, `--all`, and
-`--json` filters. Without `--all`, expired entries are hidden.
+A representative write workflow:
 
-A representative write workflow previews first:
+1. Decide whether the fact is durable and appropriate (see the rules below).
+2. Confirm with the user before recording personal facts or decisions.
+3. `write_note` with a short title, a `directory` such as `preferences` or
+   `decisions`, a `note_type`, tags, and a concise body. Relations use
+   `[[Other note title]]`.
 
-```bash
-python3 ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py remember "Use local speech models" \
-  --category preference --source user
-```
+Corrections use `edit_note` (append, replace a section, or find-replace).
+Deletion uses `delete_note` only after an explicit confirmation in the moment;
+the tool deletes files, so never bulk-delete a directory.
 
-After reviewing the preview, the same command with `--apply` writes the
-record and returns its generated ID and timestamps. There is no separate
-`--dry-run` flag.
+Expected result: the relevant note is retrieved or changed deliberately, and
+the agent reports the note title and its location (permalink) when useful
+without exposing unrelated notes.
 
-A representative removal workflow is:
+## Note types and tags
 
-```bash
-python3 ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py forget MEMORY_ID
-python3 ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py forget MEMORY_ID --apply
-```
+- `preference` — explicit durable user choices.
+- `system` — verified hardware, OS, or application facts.
+- `workflow` — tested procedures that succeeded on this machine.
+- `decision` — user-approved implementation or policy choices.
+- `pending` — unfinished work with a concrete next step.
 
-A representative pruning workflow is:
-
-```bash
-python3 ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py prune
-python3 ~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py prune --apply
-```
-
-Expected result: relevant records are retrieved or changed deliberately. The
-agent reports the stored text, category, source, expiry, and ID when useful,
-without exposing unrelated memories.
-
-## Memory categories and sources
-
-Use:
-
-- `preference` for explicit durable user choices.
-- `system` for verified hardware, OS, or application facts.
-- `workflow` for tested procedures that succeeded on this machine.
-- `decision` for user-approved implementation or policy choices.
-- `pending` for unfinished work with a concrete next step.
-
-Use:
-
-- `user` for direct user statements.
-- `observed` for local evidence.
-- `verified` only after an acceptance test.
-
-Add an expiry date in `YYYY-MM-DD` format when a fact or pending item can
-become stale. To replace obsolete information, forget the old record and
-remember the corrected one; there is no update subcommand.
+Keep notes short and link related notes by title so `build_context` can follow
+the graph.
 
 ## Verification and known limitations
 
-The agent should validate the store after maintenance and preserve exact IDs
-for later correction or deletion.
+The agent verifies writes by reading the note back with `read_note` or by
+finding it again with `search_notes`.
 
 Known limitations:
 
-- Search is textual and may miss differently worded records.
-- Expired records require `--all` to appear.
-- There is no merge or update operation.
-- Duplicate detection applies to identical category and text.
-- Memory can become stale; prefer a short pending item over recording a guess
-  as a fact.
+- Search is hybrid (semantic plus keyword) and can miss differently worded
+  notes; try several terms or `build_context` from a related note.
+- Notes have no expiry field; retire stale pending items with `edit_note` or
+  `delete_note` instead of leaving contradictions.
+- Writes apply directly with no preview; the confirmation rule below is the
+  guardrail.
+- The legacy JSON store and `assistant-memory.py` were removed on 2026-09-18;
+  do not recreate them.
 
 ## Troubleshooting
 
-- Permission error: inspect the store path and modes, then restore owner-only
-  permissions through `init` or explicit permission repair.
-- Unexpected empty result: retry with `--all`, a broader term, category, or
-  source filter.
-- Credential-like text rejected: that refusal is intentional. Do not attempt
-  to disguise the value.
-- ID not found: list or search for the current ID rather than guessing.
-- Conflicting facts: replace the obsolete fact instead of accumulating
-  contradictions.
+- `basic-memory` not connected: check `opencode mcp list`, then the wrapper
+  with `--verify-only`; a missing limiter or binary exits `2` with a reason.
+- Permission error: confirm the project directory is owned by the user with
+  mode `700`; do not broaden permissions.
+- Empty search result: try broader terms, `recent_activity`, or
+  `list_directory`.
+- Wrong note edited: `read_note` first; `edit_note` requires an exact title,
+  permalink, or memory URL.
+- Startup slow or memory pressure: the wrapper bounds the server; report the
+  symptom instead of removing the limiter.
 
 ## Safety, confirmation, and elevation
 
@@ -158,11 +137,13 @@ The agent must never store:
 - API keys or access tokens.
 - Private keys.
 - Payment details.
+- MFA codes.
 - Dictated private content.
 - Whole chats or unrelated personal details.
 
-The script's credential rejection is only a guardrail. This skill does not
-require administrator elevation for normal memory operations.
+Ask before deleting a note, and ask before recording sensitive personal
+context even when it is not on the forbidden list. This skill does not require
+administrator elevation for normal memory operations.
 
 ## Related skills and documents
 
@@ -170,4 +151,6 @@ require administrator elevation for normal memory operations.
   tested workflow as automation input.
 - [`system-troubleshooting`](../system-troubleshooting/README.md) can verify
   or replace stale system facts.
+- The bounded launcher is documented in `docs/scripts/basic-memory-mcp.md`
+  in the repository.
 - The canonical catalog entry is in `skills/README.md`.

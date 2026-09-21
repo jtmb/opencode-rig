@@ -48,7 +48,8 @@ checks and documentation coverage:
 - **Adaptive command wrapper.** Plugin typechecks and tests run in a transient
   memory-limited user service, with a budget recalculated from current memory.
 - **Local pre-push hook** (this script). It blocks a push on this machine when
-  a plugin package drops the wrapper or when documentation is incomplete.
+  a plugin package drops the wrapper, a required checker is missing, or when
+  documentation is incomplete. Missing checkers fail closed.
 - **GitHub Actions** (`.github/workflows/verify.yml`). It repeats the resource
   metadata check, bounded plugin checks, shell/Python lint, and documentation
   self-tests on every push and pull request. Because the repository is public,
@@ -58,11 +59,19 @@ checks and documentation coverage:
 The hook catches mistakes earliest; the required check is the server-side
 backstop that also covers other machines and clones that skipped the hook.
 
+The hook is not an approval mechanism. Agent workflows must follow the
+[separate commit and push gates](git-safety-gates.md): the user approves the
+reviewed staged scope before a commit, then separately approves the verified
+remote destination/ref and commit range before a push. Commit approval never
+implies push approval.
+
 ## Bypass
 
 - `git push --no-verify` skips the hook entirely.
 - A `Doc-Gate: exempt` line in a commit message bypasses only the change-aware
   check for that push; completeness still runs.
+- A missing documentation checker is never an allow condition; it blocks the
+  push until the checker is restored.
 
 Both are deliberate and visible; prefer them over weakening the gate.
 

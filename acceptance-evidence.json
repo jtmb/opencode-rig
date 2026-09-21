@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "claims": [
+    {
+      "id": "acceptance-evidence-validator",
+      "status": "complete",
+      "user_visible": false,
+      "runtime": false,
+      "evidence": {
+        "automated": [
+          "platforms/linux/ubuntu/computer-use/scripts/check-acceptance-evidence-self-test.py"
+        ]
+      }
+    },
+    {
+      "id": "mandatory-delegation-policy",
+      "status": "complete",
+      "user_visible": false,
+      "runtime": false,
+      "evidence": {
+        "automated": ["platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/test/policy.test.ts"]
+      }
+    },
+    {
+      "id": "visible-commands",
+      "status": "complete",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {
+        "automated": ["platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts"],
+        "rendered_visual": ["docs/acceptance-evidence-2026-09-19.md"],
+        "interaction": ["docs/acceptance-evidence-2026-09-19.md"]
+      }
+    },
+    {
+      "id": "fullscreen-panels",
+      "status": "complete",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {
+        "automated": ["platforms/linux/ubuntu/computer-use/plugins-v2/resource-monitor/test/resource-monitor.test.ts"],
+        "rendered_visual": ["docs/acceptance-evidence-2026-09-19.md"],
+        "interaction": ["docs/acceptance-evidence-2026-09-19.md"]
+      }
+    },
+    {
+      "id": "provider-usage",
+      "status": "complete",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {
+        "automated": ["platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/usage.test.ts"],
+        "rendered_visual": ["docs/acceptance-evidence-2026-09-19.md"],
+        "interaction": ["docs/acceptance-evidence-2026-09-19.md"]
+      }
+    },
+    {
+      "id": "working-tree-diff",
+      "status": "complete",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {
+        "automated": ["platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/tui.test.ts"],
+        "rendered_visual": ["docs/acceptance-evidence-2026-09-19.md"],
+        "interaction": ["docs/acceptance-evidence-2026-09-19.md"]
+      }
+    },
+    {
+      "id": "repository-explorer",
+      "status": "complete",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {
+        "automated": [
+          "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/repository.test.ts",
+          "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/viewer-contract.test.ts"
+        ],
+        "rendered_visual": ["docs/acceptance-evidence-2026-09-19.md"],
+        "interaction": ["docs/acceptance-evidence-2026-09-19.md"]
+      }
+    },
+    {
+      "id": "integrated-browser",
+      "status": "complete",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {
+        "automated": ["platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser/test/panel-model.test.ts"],
+        "rendered_visual": ["docs/acceptance-evidence-2026-09-19.md"],
+        "interaction": ["docs/acceptance-evidence-2026-09-19.md"]
+      }
+    },
+    {
+      "id": "active-subagent-sidebar",
+      "status": "complete",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {
+        "automated": ["platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/subagents.test.ts"],
+        "rendered_visual": ["docs/acceptance-evidence-2026-09-19.md"],
+        "interaction": ["docs/acceptance-evidence-2026-09-19.md"]
+      }
+    },
+    {
+      "id": "sidebar-coexistence",
+      "status": "complete",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {
+        "automated": ["platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts"],
+        "rendered_visual": ["docs/acceptance-evidence-2026-09-19.md"],
+        "interaction": ["docs/acceptance-evidence-2026-09-19.md"]
+      }
+    }
+  ],
+  "subagent_policy": {
+    "allowed_agents": ["general"],
+    "allowed_models": ["openai/gpt-5.6-luna#max"],
+    "max_concurrency": 3
+  },
+  "subagent_evidence": [
+    {
+      "id": "sidebar-fixture-one",
+      "agent": "general",
+      "model": "openai/gpt-5.6-luna#max",
+      "background": true,
+      "evidence": ["docs/acceptance-evidence-2026-09-19.md"]
+    },
+    {
+      "id": "sidebar-fixture-two",
+      "agent": "general",
+      "model": "openai/gpt-5.6-luna#max",
+      "background": true,
+      "evidence": ["docs/acceptance-evidence-2026-09-19.md"]
+    },
+    {
+      "id": "sidebar-fixture-three",
+      "agent": "general",
+      "model": "openai/gpt-5.6-luna#max",
+      "background": true,
+      "evidence": ["docs/acceptance-evidence-2026-09-19.md"]
+    }
+  ]
+}

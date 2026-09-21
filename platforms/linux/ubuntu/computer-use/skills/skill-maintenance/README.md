@@ -43,7 +43,7 @@ platforms/linux/ubuntu/computer-use/skills/<name>/
 Deployed copies are generated state:
 
 ```text
-~/.config/opencode/skills/<name>/
+~/.opencode-v2-pilot/config/skills/<name>/
 ```
 
 The user should define whether the task is detection, creation, update,
@@ -133,7 +133,7 @@ Known limitations:
 - Catalog drift: regenerate counts and metadata from canonical sources rather
   than editing generated deployment copies.
 - Incomplete deployment: fix repository tooling rather than manually editing
-  `~/.config/opencode/skills/`.
+  the selected v2 config directory's `skills/` tree.
 - Rename or retirement uncertainty: prepare an old-to-new or deletion
   manifest and request immediate pre-deletion confirmation.
 

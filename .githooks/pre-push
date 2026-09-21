@@ -26,8 +26,8 @@ if ! python3 "$RESOURCE_GUARD_SELF_TEST"; then
 fi
 
 if [ ! -f "$CHECK" ]; then
-  echo "doc-gate: checker missing at $CHECK; allowing push." >&2
-  exit 0
+  echo "doc-gate: checker missing at $CHECK; blocking push." >&2
+  exit 1
 fi
 
 base=""

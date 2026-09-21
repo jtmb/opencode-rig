@@ -77,12 +77,12 @@ file or running `bpy`.
    collisions, LODs, and warnings against the contract. A successful exporter
    exit and non-empty file are not enough.
 8. Load the exact shipping artifact with the project's existing loader in
-   Firefox. For an interactive check use visible `playwright_browser_*` tools:
+   Firefox. For an interactive check use the connected live Playwright tools:
    take an accessibility snapshot first, inspect console and network failures,
    then take a screenshot because canvas/WebGL output is not represented by
-   DOM structure. Do not claim the DOM proves mesh appearance. Use
-   `playwright_headless_browser_*` only when the user explicitly requested
-   headless/background testing.
+   DOM structure. Do not claim the DOM proves mesh appearance. Load the
+   `browser-headless` skill and use the pinned bounded shell runtime only when
+   the user explicitly requested headless/background testing.
 9. Compare the new artifact with the prior version: byte size, transfer size,
    decode/load behavior, texture memory assumptions, draw-relevant material or
    primitive counts, visual output, animation, and interaction. Report the

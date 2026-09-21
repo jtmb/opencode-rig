@@ -1,10 +1,11 @@
 # `github-mcp.sh`
 
-Launches the pinned official GitHub MCP Server with a deliberately small,
-read-only tool surface. This is the `github` MCP that OpenCode registers
-globally. Publishing, merging, workflows, deletions, and account or
-repository security changes are **not** available through it and stay behind an
-explicit confirmation gate.
+Launches the pinned official GitHub MCP Server with a bounded, write-capable
+tool surface. This is the `github` MCP that OpenCode registers globally, so
+GitHub reads and mutations are MCP tool calls rather than `gh` shell commands.
+Lockdown mode stays enabled, and the agent keeps its confirmation gate before
+publishing, merging, deleting, or changing workflows, repositories, or account
+settings.
 
 ```bash
 ./platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh
@@ -32,8 +33,7 @@ project can provide the token through an env-backed MCP entry.
 
    ```bash
    github-mcp-server stdio \
-     --toolsets=context,repos,issues,pull_requests \
-     --read-only \
+     --toolsets=context,repos,issues,pull_requests,actions,users \
      --lockdown-mode
    ```
 
@@ -42,12 +42,16 @@ project can provide the token through an env-backed MCP entry.
 | Flag | Meaning |
 |------|---------|
 | `stdio` | Speak MCP over standard input/output |
-| `--toolsets=context,repos,issues,pull_requests` | Expose only these four toolsets |
-| `--read-only` | Do not perform write operations |
+| `--toolsets=context,repos,issues,pull_requests,actions,users` | Expose these six toolsets |
 | `--lockdown-mode` | Restrict to the lockdown tool surface |
 
-The four toolsets cover exactly the read-oriented skill workflows: repository
-context, repository content, issues, and pull requests.
+Write operations are enabled by omitting `--read-only`. The six toolsets cover
+repository context and content, issues, pull requests, Actions workflow runs,
+and users - the practical "GitHub commands" surface, including creating and
+merging pull requests, commenting, creating issues, updating files and
+branches, and triggering or re-running workflows. Every enabled toolset adds
+its tool schemas to each request's context, so widen `--toolsets` deliberately;
+`--toolsets=all` is intentionally not used.
 
 ## Pin
 
@@ -59,9 +63,9 @@ version, archive URL, and checksum in the setup script. Do not use `latest`.
 
 ## Integration
 
-- Registered as the MCP named `github` in the **global** config
-  (`~/.config/opencode/opencode.jsonc` when present, otherwise
-  `opencode.json`), global-only, with a 30 s timeout.
+- Registered as the MCP named `github` in the isolated Open Rig **global**
+  config (`$OPENCODE_V2_CONFIG_DIR/opencode.jsonc` when present, otherwise
+  `opencode.json`), global-only, with a 30 s startup timeout.
 - When a token is present, `setup-computer-assistant.sh --verify-only` confirms
   `opencode mcp list` reports it connected. Without a token, verification
   reports authentication as pending instead of failing.
@@ -74,15 +78,16 @@ the local MCP, use this global `opencode.json`/`opencode.jsonc` entry shape:
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "github": {
-      "type": "local",
-      "command": [
-        "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"
-      ],
-      "enabled": true,
-      "timeout": 30000,
-      "environment": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+    "servers": {
+      "github": {
+        "type": "local",
+        "command": [
+          "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"
+        ],
+        "timeout": { "startup": 30000 },
+        "environment": {
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+        }
       }
     }
   }
@@ -101,16 +106,17 @@ from the logged-in `gh` CLI. To use a dedicated credential instead:
 - Set `GITHUB_PERSONAL_ACCESS_TOKEN` (or `GH_TOKEN`) in OpenCode's launch
   environment **before** OpenCode starts. A project `.env` loaded by OpenCode
   is one supported way to provide that environment value.
-- Prefer a fine-grained PAT limited to the required repositories and read
-  permissions.
+- Prefer a fine-grained PAT limited to the required repositories, with read
+  permissions for inspection and write permissions only where mutations are
+  expected.
 - Never put a token in this repository, in `opencode.json`, or in any committed
   file.
 - Restart OpenCode after changing its launch environment.
 - The wrapper never prints, logs, or stores the token value; it is passed to
   the server only through the `GITHUB_PERSONAL_ACCESS_TOKEN` environment.
 
-If authentication later fails, check expiration, selected repositories, read
-permissions, SSO, and organization policy — without displaying the token.
+If authentication later fails, check expiration, selected repositories, scopes
+(read and write), SSO, and organization policy — without displaying the token.
 
 ## Failure behavior
 
@@ -124,13 +130,16 @@ The wrapper fails closed: it never starts an unauthenticated server.
 
 ## Security
 
-- Read-only and lockdown modes are always on.
-- Only four toolsets are exposed.
+- Lockdown mode is always on, and write operations are enabled.
+- Six toolsets are exposed (context, repos, issues, pull_requests, actions,
+  users); the toolset list is the blast-radius control, since each enabled
+  toolset's schemas also consume context on every request.
 - Credentials come from the environment or the logged-in `gh` CLI and stay out
   of the repository and configuration.
-- Remote mutations are not possible through this MCP; the `github-operations`
-  skill performs separately approved changes through `gh` after inspecting the
-  target and passing the confirmation gate.
+- Mutations are MCP tool calls and remain behind the confirmation gate: inspect
+  the target, then ask before publishing, merging, deleting, dispatching
+  workflows, or changing repositories, permissions, or security settings. The
+  `github-operations` skill documents that policy.
 
 ## Related
 

@@ -24,9 +24,10 @@ Computer Use skill.
   perform one bounded action, and verify visually rather than clicking blind.
 - There is no Blender MCP server in this repository. Do not invent or require
   one.
-- Use visible `playwright_browser_*` tools only for browser-based output or
-  documentation that needs interaction. Use `playwright_headless_browser_*`
-  only when the user explicitly requests headless/background browser work.
+- Use the connected live Playwright tools only for browser-based output or
+  documentation that needs interaction. Load `browser-headless` and use its
+  pinned bounded runtime only when the user explicitly requests
+  headless/background browser work.
 
 ## Core workflow
 

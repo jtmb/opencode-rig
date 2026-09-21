@@ -1,0 +1,53 @@
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "theme": {
+    "name": "aura",
+    "mode": "dark"
+  },
+  "animations": true,
+  "session": {
+    "permissions": "prompt",
+    "sidebar": "auto",
+    "thinking": "hide",
+    "scrollbar": true,
+    "image_preview": true
+  },
+  "diffs": {
+    "source": "working",
+    "wrap": "word"
+  },
+  "prompt": {
+    "paste": "full"
+  },
+  "mouse": true,
+  "plugins": [
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/source-control",
+      "options": { "github": true, "whenEmpty": "show" }
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage",
+      "options": { "refreshMs": 60000, "timeoutMs": 10000 }
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+      "options": {}
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser",
+      "options": {}
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
+      "options": {}
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/repo-learning",
+      "options": {}
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/resource-monitor",
+      "options": {}
+    }
+  ]
+}

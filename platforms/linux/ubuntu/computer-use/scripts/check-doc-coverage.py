@@ -30,7 +30,7 @@ import re
 import subprocess
 import sys
 
-PLUGIN_MARKER = "platforms/linux/ubuntu/computer-use/plugins/"
+PLUGIN_MARKER = "platforms/linux/ubuntu/computer-use/plugins-v2/"
 SKILL_MARKER = "platforms/linux/ubuntu/computer-use/skills/"
 SKIP_DIRS = {".git", "node_modules", "browsers", "__pycache__", ".opencode"}
 EXEMPT_PATTERN = re.compile(r"(?im)^[ \t]*doc-gate[ \t]*:[ \t]*exempt\b")
@@ -169,7 +169,7 @@ def list_files(root: str) -> list[str]:
             capture_output=True, text=True,
         )
         if proc.returncode == 0:
-            return [item for item in proc.stdout.split("\0") if item]
+            return [item for item in proc.stdout.split("\0") if item and os.path.lexists(os.path.join(root, item))]
     except OSError:
         pass
     files: list[str] = []
@@ -223,6 +223,34 @@ def git_changed(root: str, base: str, head: str) -> dict[str, str]:
             path = tokens[index + 1]
             index += 2
             changed[normalize(path)] = code
+    return changed
+
+
+def git_staged(root: str) -> dict[str, str]:
+    """Return the exact staged path set for repository gate evidence."""
+    proc = subprocess.run(
+        ["git", "-C", root, "diff", "--cached", "--name-status", "-z", "-M", "--diff-filter=ACMRD"],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        raise ConfigError(f"git staged diff failed: {proc.stderr.strip()}")
+    tokens = proc.stdout.split("\0")
+    changed: dict[str, str] = {}
+    index = 0
+    while index + 1 < len(tokens):
+        status = tokens[index]
+        if not status:
+            index += 1
+            continue
+        code = status[0]
+        if code in ("R", "C") and index + 2 < len(tokens):
+            old, new = normalize(tokens[index + 1]), normalize(tokens[index + 2])
+            changed[old] = "D" if code == "R" else "C"
+            changed[new] = "R" if code == "R" else "A"
+            index += 3
+        else:
+            changed[normalize(tokens[index + 1])] = code
+            index += 2
     return changed
 
 
@@ -301,6 +329,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--root", help="repository root (default: git toplevel of cwd)")
     parser.add_argument("--map", help="documentation map (default: <root>/documentation-map.json)")
     parser.add_argument("--base", help="git base ref for the change-aware check")
+    parser.add_argument("--staged", action="store_true", help="check the exact staged proposal")
     parser.add_argument("--head", default="HEAD", help="git head ref (default: HEAD)")
     parser.add_argument("--changed-file", action="append", default=[], help="treat this path as modified")
     parser.add_argument("--added-file", action="append", default=[], help="treat this path as added")
@@ -335,6 +364,8 @@ def main(argv: list[str] | None = None) -> int:
                 changed[normalize(path)] = "M"
             for path in args.added_file:
                 changed[normalize(path)] = "A"
+        elif args.staged:
+            changed = git_staged(root)
         elif args.base:
             changed = git_changed(root, args.base, args.head)
 
