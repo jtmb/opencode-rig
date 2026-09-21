@@ -1,9 +1,9 @@
 # `basic-memory-mcp.sh`
 
-Launches the Basic Memory MCP server for the `computer-assistant` project inside
-an adaptive user-cgroup memory budget. It is registered as the `basic-memory`
-MCP server in the v2 config; the server's rarely used tools are hidden with
-`permissions` deny entries so only the core note tools remain.
+Launches the canonical Basic Memory `0.23.2` MCP server for the
+`computer-assistant` project inside an adaptive user-cgroup memory budget. The
+same launcher serves native Ubuntu and the WSL2 profile; WSL selects a private
+profile root for its home, notes, and cache.
 
 ```bash
 platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only
@@ -12,7 +12,10 @@ platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only
 ## What it does
 
 - Resolves `basic-memory` from `PATH` (or `BASIC_MEMORY_BIN`) and exits `2`
-  when it is missing or not executable.
+  when it is missing, not executable, or not exactly the canonical version.
+- In the `wsl2` profile, resolves a trusted absolute `uvx` owned by root or the
+  current user and runs the pinned package from the isolated cache. Startup is
+  offline after provisioning, so a missing or stale runtime fails closed.
 - Computes an adaptive budget from current host and cgroup availability: 20% of
   effective memory and 25% of free swap, with a 64 MiB floor. The fractions
   mirror the source-control plugin's bounded GitHub MCP child.
@@ -31,6 +34,10 @@ platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only
 | `-h`, `--help` | Show usage |
 | `BASIC_MEMORY_PROJECT` | Project name (default `computer-assistant`) |
 | `BASIC_MEMORY_BIN` | Executable override (default: `PATH` lookup) |
+| `OPENCODE_MCP_PROFILE` | `native` (default) or `wsl2` |
+| `OPENCODE_MCP_PROFILE_ROOT` | Isolated WSL/profile state root |
+| `OPENCODE_MCP_UVX_BIN` | Optional trusted `uvx` override for WSL2 |
+| `--provision` | Populate the selected WSL/profile runtime before marker verification |
 
 ## Verification
 

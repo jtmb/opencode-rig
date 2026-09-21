@@ -7,6 +7,7 @@ entries and options.
 ```bash
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --plugins all --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --config-dir ~/.opencode-v2-pilot/config --plugins all --apply
+./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --config-dir ~/.opencode-wsl2-pilot/config --cli-config ~/.opencode-wsl2-pilot/xdg/opencode/cli.json --plugins all --apply
 ```
 
 ## Options
@@ -14,6 +15,7 @@ entries and options.
 | Option | Default | Meaning |
 |---|---|---|
 | `--config-dir DIR` | `$OPENCODE_V2_CONFIG_DIR`, then `$OPENCODE_V2_PILOT_DIR/config`, then `~/.opencode-v2-pilot/config` | v2 config directory |
+| `--cli-config FILE` | `DIR/cli.json` | Explicit CLI config path for an isolated profile with a separate XDG root |
 | `--plugins LIST` | `both` | `both`, `all`, `server`, `cli`, or one catalog package |
 | `--chain a/b,c/d` | — | `defaultChain` for `codex-fallback` |
 | `--apply` | — | Write changes, then verify |

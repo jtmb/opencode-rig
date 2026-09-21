@@ -143,7 +143,7 @@
   },
   "plugins": [
     {
-      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy",
+      "package": "./platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy",
       "options": {
         "backgroundOnly": true,
         "maxConcurrent": 3,
@@ -159,7 +159,7 @@
         "enforceAgentIndex": true,
         "reconciliationIntervalTurns": 10,
         "memoryProject": "computer-assistant",
-        "memoryDirectory": "/home/james/Documents/computer-assistant/basic-memory",
+        "memoryDirectory": "{env:HOME}/Documents/computer-assistant/basic-memory",
         "memoryBindings": [
           "open-rig",
           "opencode-rig"
@@ -171,6 +171,24 @@
   ],
   "mcp": {
     "servers": {
+      "basic-memory": {
+        "type": "local",
+        "command": [
+          "./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"
+        ],
+        "disabled": false,
+        "timeout": {
+          "startup": 30000
+        }
+      },
+      "github": {
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp/",
+        "disabled": false,
+        "timeout": {
+          "startup": 30000
+        }
+      },
       "playwright": {
         "type": "local",
         "command": [

@@ -49,6 +49,46 @@ export function providerPanelDetail(provider: ProviderState) {
   return provider.detail
 }
 
+export function providerCompactParts(provider: ProviderState, snapshot?: CodexUsageSnapshot) {
+  const measurements: string[] = []
+  if (provider.id === "codex" && snapshot) {
+    const weekly = overallWeeklyWindow(snapshot)
+    const reserve = lunaReserveWindow(snapshot)
+    if (weekly) measurements.push(`Weekly ${percent(weekly.leftPercent)}`)
+    if (reserve) measurements.push(`Reserve ${percent(reserve.leftPercent)}`)
+  }
+  return {
+    label: provider.label,
+    status: providerStatusLabel(provider.status),
+    measurements,
+  }
+}
+
+export function providerCompactLine(provider: ProviderState, snapshot?: CodexUsageSnapshot) {
+  const parts = providerCompactParts(provider, snapshot)
+  return [`${parts.label} ${parts.status}`, ...parts.measurements].join(" · ")
+}
+
+export function providerUsageSummary(providers: readonly ProviderState[]) {
+  const labels: Record<string, string> = {
+    available: "ready",
+    "quota-exhausted": "empty",
+    cooling: "cooling",
+    stale: "stale",
+    unavailable: "offline",
+    "usage-unavailable": "offline",
+  }
+  const counts = new Map<string, number>()
+  for (const provider of providers) {
+    const label = labels[provider.status] ?? "offline"
+    counts.set(label, (counts.get(label) ?? 0) + 1)
+  }
+  return ["ready", "empty", "cooling", "stale", "offline"]
+    .filter((label) => counts.has(label))
+    .map((label) => `${counts.get(label)} ${label}`)
+    .join(" · ")
+}
+
 export function updatedAgo(fetchedAt: number, now = Date.now()) {
   const seconds = Math.max(0, Math.floor((now - fetchedAt) / 1000))
   const time = new Date(fetchedAt).toLocaleTimeString(undefined, {

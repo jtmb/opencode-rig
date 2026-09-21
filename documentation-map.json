@@ -2,6 +2,21 @@
   "version": 1,
   "rules": [
     {
+      "name": "wsl2-ubuntu-computer-use",
+      "match": [
+        "platforms/windows/wsl2/ubuntu/computer-use/**",
+        ".github/workflows/verify-wsl2.yml"
+      ],
+      "docs": [
+        "platforms/windows/wsl2/ubuntu/computer-use/README.md",
+        "docs/wsl2-acceptance-2026-09-21.md",
+        "README.md"
+      ],
+      "onAdd": [
+        "docs/README.md"
+      ]
+    },
+    {
       "name": "setup-opencode",
       "match": [
         "platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh",
@@ -286,6 +301,7 @@
         "documentation-map.json",
         ".githooks/**",
         ".github/**",
+        "platforms/windows/wsl2/ubuntu/computer-use/**",
         "platforms/linux/ubuntu/computer-use/commands/*.md",
         "platforms/linux/ubuntu/computer-use/plugins-v2/README.md",
         "platforms/linux/ubuntu/computer-use/plugins-v2/*/README.md",

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Start the pinned GitHub MCP with a bounded, write-capable tool surface.
+# Optional Source Control child MCP. The generic Open Rig GitHub MCP is the
+# hosted OAuth endpoint and is configured remotely; this file is not registered
+# by the canonical MCP setup and is unavailable in the WSL2 profile.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

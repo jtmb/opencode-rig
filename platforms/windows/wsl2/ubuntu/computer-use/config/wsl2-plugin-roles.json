@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "name": "wsl-interop",
+      "path": "plugins-v2/wsl-interop",
+      "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
+        },
+        "cli": {
+          "entrypoint": "tui.tsx",
+          "config": "cli.json"
+        }
+      }
+    }
+  ]
+}

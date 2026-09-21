@@ -52,6 +52,67 @@ test("approves exactly three when the bounded orchestration budget permits it", 
   assert.equal((await evaluate(3)).recommendedCount, 3)
 })
 
+test("accepts a WSL cgroup namespace root that exposes controllers without root limit files", async () => {
+  const files: Record<string, string> = {
+    "/proc/meminfo": "MemAvailable: 10485760 kB\nSwapFree: 4194304 kB\n",
+    "/proc/self/cgroup": "0::/init.scope\n",
+    "/sys/fs/cgroup/init.scope/memory.max": "max",
+    "/sys/fs/cgroup/init.scope/memory.swap.max": "max",
+    "/sys/fs/cgroup/cgroup.controllers": "cpuset cpu io memory pids\n",
+  }
+  const evaluate = createMemoryCapacityEvaluator({}, async (path) => files[path] ?? (() => { throw new Error(`missing ${path}`) })())
+  for (const requested of [1, 2, 3]) {
+    const result = await evaluate(requested)
+    assert.equal(result.approvedCount, requested)
+    assert.equal(result.recommendedCount, requested)
+    assert.equal(result.limitingSource, "host-MemAvailable")
+    assert.equal(result.evidence.opaqueCgroupNamespaceRoot, true)
+    assert.ok(Number(result.evidence.effectiveLogicalCpuCount) >= 1)
+  }
+})
+
+test("still fails closed when a non-root cgroup ancestor loses its limit file", async () => {
+  const files: Record<string, string> = {
+    "/proc/meminfo": "MemAvailable: 10485760 kB\n",
+    "/proc/self/cgroup": "0::/parent/child\n",
+    "/sys/fs/cgroup/parent/child/memory.max": "max",
+  }
+  const evaluate = createMemoryCapacityEvaluator({}, async (path) => files[path] ?? (() => { throw new Error(`missing ${path}`) })())
+  assert.equal((await evaluate(3)).limitingSource, "invalid-metrics-or-configuration")
+})
+
+test("fails closed for malformed leaf limits and oversized host availability", async () => {
+  const malformedLeaf = createMemoryCapacityEvaluator({}, async (path) => ({
+    "/proc/meminfo": "MemAvailable: 10485760 kB\n",
+    "/proc/self/cgroup": "0::/agent\n",
+    "/sys/fs/cgroup/agent/memory.max": "not-a-limit",
+  } as Record<string, string>)[path] ?? (() => { throw new Error(`missing ${path}`) })())
+  assert.equal((await malformedLeaf(3)).limitingSource, "invalid-metrics-or-configuration")
+
+  const oversizedHost = createMemoryCapacityEvaluator({}, async (path) => {
+    if (path === "/proc/meminfo") return `MemAvailable: ${Number.MAX_SAFE_INTEGER} kB\n`
+    throw new Error(`missing ${path}`)
+  })
+  assert.equal((await oversizedHost(3)).limitingSource, "invalid-metrics-or-configuration")
+})
+
+test("fails closed for oversized host swap availability", async () => {
+  const evaluate = createMemoryCapacityEvaluator({}, async (path) => {
+    if (path === "/proc/meminfo") {
+      return `MemAvailable: 10485760 kB\nSwapFree: ${Number.MAX_SAFE_INTEGER} kB\n`
+    }
+    throw new Error(`missing ${path}`)
+  })
+  assert.equal((await evaluate(3)).limitingSource, "invalid-metrics-or-configuration")
+})
+
+test("rejects requested counts outside the one-through-three contract", async () => {
+  const evaluate = createMemoryCapacityEvaluator()
+  await assert.rejects(() => evaluate(0), /integer from 1 through 3/)
+  await assert.rejects(() => evaluate(4), /integer from 1 through 3/)
+  await assert.rejects(() => evaluate(1.5), /integer from 1 through 3/)
+})
+
 test("reduces to the valid budget and never exceeds the hard cap", async () => {
   const files: Record<string, string> = {
     "/proc/meminfo": "MemAvailable: 4096 kB\n",

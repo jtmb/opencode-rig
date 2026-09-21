@@ -1,0 +1,23 @@
+{
+  "name": "opencode-rig-wsl2-plugins-v2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["wsl-interop"],
+  "scripts": {
+    "check": "npm run typecheck && npm test",
+    "typecheck": "tsc --noEmit -p wsl-interop/tsconfig.json",
+    "test": "node --experimental-strip-types --test wsl-interop/test/*.test.ts"
+  },
+  "dependencies": {
+    "@opencode/client": "2.0.7",
+    "@opencode/plugin": "2.0.7",
+    "@opentui/core": "0.5.11",
+    "@opentui/solid": "0.5.11",
+    "solid-js": "1.9.12"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.6",
+    "typescript": "5.9.3"
+  }
+}

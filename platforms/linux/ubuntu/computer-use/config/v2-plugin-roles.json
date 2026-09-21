@@ -56,6 +56,10 @@
         "server": {
           "entrypoint": "server.ts",
           "config": "opencode.jsonc"
+        },
+        "cli": {
+          "entrypoint": "tui.tsx",
+          "config": "cli.json"
         }
       }
     },

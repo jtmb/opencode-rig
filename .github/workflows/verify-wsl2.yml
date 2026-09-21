@@ -1,0 +1,41 @@
+name: verify-wsl2-source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-wsl2.yml"
+      - "platforms/windows/wsl2/ubuntu/computer-use/**"
+      - "README.md"
+      - "documentation-map.json"
+  pull_request:
+    paths:
+      - ".github/workflows/verify-wsl2.yml"
+      - "platforms/windows/wsl2/ubuntu/computer-use/**"
+      - "README.md"
+      - "documentation-map.json"
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+
+      - name: Install locked WSL2 test dependencies
+        run: |
+          set -euo pipefail
+          workspace=platforms/windows/wsl2/ubuntu/computer-use/plugins-v2
+          wrapper=platforms/windows/wsl2/ubuntu/computer-use/scripts/run-bounded-command.sh
+          bash "$wrapper" -- npm --prefix "$workspace" ci --ignore-scripts
+
+      - name: Verify independent WSL2 source
+        run: bash platforms/windows/wsl2/ubuntu/computer-use/scripts/verify-wsl2.sh --source

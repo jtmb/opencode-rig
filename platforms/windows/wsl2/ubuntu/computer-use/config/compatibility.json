@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "minimumOpenCode": "2.0.7",
+  "maximumTestedOpenCode": "2.0.11",
+  "pluginSdk": "2.0.7",
+  "policy": "Unknown versions keep native OpenCode active and disable both WSL host tools and custom sidebar claims until source and rendered acceptance pass."
+}

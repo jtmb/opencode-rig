@@ -111,6 +111,19 @@
         "rendered_visual": ["docs/acceptance-evidence-2026-09-19.md"],
         "interaction": ["docs/acceptance-evidence-2026-09-19.md"]
       }
+    },
+    {
+      "id": "independent-wsl2-backend",
+      "status": "limited",
+      "user_visible": false,
+      "runtime": true,
+      "evidence": {
+        "automated": [
+          "platforms/windows/wsl2/ubuntu/computer-use/scripts/self-test.py",
+          "platforms/windows/wsl2/ubuntu/computer-use/plugins-v2/wsl-interop/test/windows-ui.test.ts"
+        ],
+        "interaction": ["docs/wsl2-acceptance-2026-09-21.md"]
+      }
     }
   ],
   "subagent_policy": {

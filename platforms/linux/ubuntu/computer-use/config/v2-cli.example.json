@@ -38,6 +38,10 @@
       "options": {}
     },
     {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "options": {}
+    },
+    {
       "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
       "options": {}
     },

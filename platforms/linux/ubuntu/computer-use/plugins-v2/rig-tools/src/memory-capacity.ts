@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises"
+import { availableParallelism } from "node:os"
 
 export type MemoryCapacityOptions = {
   memoryReserveMiB?: unknown
@@ -28,7 +29,23 @@ function positiveMiB(value: unknown, fallback: number, label: string): number {
 function parseMemAvailable(text: string): number {
   const match = text.match(/^MemAvailable:\s+(\d+)\s+kB\s*$/m)
   if (!match) throw new Error("/proc/meminfo has no valid MemAvailable value")
-  return Number(match[1]) * 1024
+  const kibibytes = Number(match[1])
+  if (!Number.isSafeInteger(kibibytes) || kibibytes > Math.floor(Number.MAX_SAFE_INTEGER / 1024)) {
+    throw new Error("/proc/meminfo MemAvailable is too large")
+  }
+  return kibibytes * 1024
+}
+
+function parseSwapFree(text: string): number | undefined {
+  const line = text.match(/^SwapFree:.*$/m)?.[0]
+  if (!line) return undefined
+  const match = line.match(/^SwapFree:\s+(\d+)\s+kB\s*$/)
+  if (!match) throw new Error("/proc/meminfo has no valid SwapFree value")
+  const kibibytes = Number(match[1])
+  if (!Number.isSafeInteger(kibibytes) || kibibytes > Math.floor(Number.MAX_SAFE_INTEGER / 1024)) {
+    throw new Error("/proc/meminfo SwapFree is too large")
+  }
+  return kibibytes * 1024
 }
 
 function parseBytes(text: string, label: string): number | undefined {
@@ -87,8 +104,7 @@ export function createMemoryCapacityEvaluator(options: MemoryCapacityOptions = {
     try {
       const meminfo = await reader("/proc/meminfo")
       const hostAvailableBytes = parseMemAvailable(meminfo)
-      const swapMatch = meminfo.match(/^SwapFree:\s+(\d+)\s+kB\s*$/m)
-      const hostSwapBytes = swapMatch ? Number(swapMatch[1]) * 1024 : undefined
+      const hostSwapBytes = parseSwapFree(meminfo)
       let limitBytes: number | undefined
       let currentBytes: number | undefined
       let cgroupAvailableBytes: number | undefined
@@ -96,6 +112,7 @@ export function createMemoryCapacityEvaluator(options: MemoryCapacityOptions = {
       let cgroupSwapBytes: number | undefined
       let cgroupConfigured = false
       let sawLeafMemoryMax = false
+      let opaqueNamespaceRoot = false
       try {
         const cgroupText = await reader("/proc/self/cgroup")
         const relative = cgroupRelativePath(cgroupText)
@@ -107,10 +124,17 @@ export function createMemoryCapacityEvaluator(options: MemoryCapacityOptions = {
             let maxText: string
             try { maxText = await reader(`${directory}/memory.max`) } catch (error) {
               if (index === 0) throw error
+              if (directory === "/sys/fs/cgroup") {
+                const controllers = (await reader(`${directory}/cgroup.controllers`)).trim().split(/\s+/)
+                if (controllers.includes("memory")) {
+                  opaqueNamespaceRoot = true
+                  continue
+                }
+              }
               throw new Error(`missing ancestor cgroup memory.max: ${directory}`)
             }
-            const max = parseBytes(maxText, `${directory}/memory.max`)
             if (index === 0) sawLeafMemoryMax = true
+            const max = parseBytes(maxText, `${directory}/memory.max`)
             if (index === 0) leafMax = max
             if (max === undefined) continue
             let current: number
@@ -135,6 +159,7 @@ export function createMemoryCapacityEvaluator(options: MemoryCapacityOptions = {
             let swapMaxText: string
             try { swapMaxText = await reader(`${directory}/memory.swap.max`) } catch (error) {
               if (index === 0) break
+              if (directory === "/sys/fs/cgroup" && opaqueNamespaceRoot) continue
               if (swapSeen) throw new Error(`missing ancestor cgroup memory.swap.max: ${directory}`)
               break
             }
@@ -164,6 +189,10 @@ export function createMemoryCapacityEvaluator(options: MemoryCapacityOptions = {
       const budgetBytes = Math.max(0, effectiveAvailableBytes - reserveMiB * MIB)
       const capacity = Math.min(MAX_AGENTS, Math.floor(budgetBytes / (perAgentMiB * MIB)))
       const recommended = Math.min(requested, capacity)
+      const effectiveLogicalCpuCount = availableParallelism()
+      if (!Number.isInteger(effectiveLogicalCpuCount) || effectiveLogicalCpuCount < 1) {
+        throw new Error("effective logical CPU count is invalid")
+      }
       const effectiveSwapBytes = hostSwapBytes === undefined
         ? cgroupSwapBytes
         : cgroupSwapBytes === undefined ? hostSwapBytes : Math.min(hostSwapBytes, cgroupSwapBytes)
@@ -187,6 +216,8 @@ export function createMemoryCapacityEvaluator(options: MemoryCapacityOptions = {
           perAgentBytes: perAgentMiB * MIB,
           effectiveAvailableBytes,
           effectiveAvailableMiB: Math.floor(effectiveAvailableBytes / MIB),
+          effectiveLogicalCpuCount,
+          opaqueCgroupNamespaceRoot: opaqueNamespaceRoot,
         },
       }
     } catch (error) {

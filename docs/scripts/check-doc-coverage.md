@@ -70,7 +70,10 @@ rather than a per-plugin page.
 
 The current `rules` cover scripts, plugins, skills, commands, config examples,
 the browser manifests, the GitHub tools, the Git hooks, and the map itself. The
-single `additional` rule (`handoff`) requires `HANDOFF.md` to be updated
+independent WSL2 rule maps its source tree and dedicated workflow to the
+platform README, root README, and bounded WSL2 acceptance artifact; additions
+also require the documentation index. The single `additional` rule (`handoff`)
+requires `HANDOFF.md` to be updated
 whenever an environment-defining artifact changes: the map and hooks, CI
 workflows, global commands, plugin registration, the skills catalog, the
 setup/MCP/deploy scripts (including `basic-memory-mcp.sh`,

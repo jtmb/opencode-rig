@@ -202,12 +202,10 @@ Example requests:
 - "Check why the latest GitHub Actions run failed."
 
 Requires: the global `github` MCP entry pointing at
-`../scripts/github-mcp.sh`, the checksum-pinned official runtime under
-`../../github-tools/`, and a credential from `GITHUB_PERSONAL_ACCESS_TOKEN` or
-`GH_TOKEN` in OpenCode's launch environment, including values loaded from a
-project `.env`, or from the logged-in `gh` CLI.
-The MCP is limited to `context`, `repos`,
-`issues`, and `pull_requests` with read-only and lockdown modes. Credentials,
+`https://api.githubcopilot.com/mcp/`. Complete hosted OAuth from OpenCode's
+`/mcps` screen; no token, header, or client secret belongs in configuration.
+The MCP tool surface is provider-owned and remains behind OpenCode's
+confirmation gates. Credentials,
 publishing, merging, deletion, workflow/deployment actions, and security or
 permission changes retain explicit user handling and confirmation gates.
 

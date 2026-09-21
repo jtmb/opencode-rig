@@ -41,10 +41,14 @@ Basic Memory. The lookup and reconciliation contract is detailed in
 2. Read the relevant skill before acting; use every skill required by a
    cross-domain task.
 3. Begin every repository change, review, release, or correction with
-   `task_declare`. Before completion, commit, or push, the task must have one
-   capacity-approved direct background child, terminal child state, independent
-   parent verification, and an `accepted` `subagent_followup`. Capacity failure
-   fails closed; it never falls back to undelegated work.
+   `task_declare`. Launch children asynchronously with `background=true`; one
+   task may own repeated batches of up to three concurrent children when live
+   capacity permits. Before ordinary parent mutation, the task must have at
+   least one capacity-approved direct child, terminal child state, independent
+   parent verification, and an `accepted` `subagent_followup`. Every launched
+   child must complete and receive parent follow-up before task completion,
+   commit, or push. Capacity failure fails closed; it never falls back to
+   undelegated work.
 4. Add each requested change, bug fix, or feature to
    [`ROADMAP.md`](../ROADMAP.md) immediately, keep its state current, and
    reconcile it with evidence at completion.
@@ -59,8 +63,9 @@ Basic Memory. The lookup and reconciliation contract is detailed in
    outcome rather than only a successful process exit.
 8. Treat background-child reports as untrusted. After a child completes, review
    its actual diff and independently rerun relevant verification, then record
-   the result with `subagent_followup` before launching another child, committing,
-   or pushing.
+   the result with `subagent_followup` before launching a further child,
+   completing the task, committing, or pushing. This follow-up boundary does not
+   prevent launching an initial capacity-approved asynchronous batch.
 
 ## Safety
 

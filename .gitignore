@@ -13,6 +13,7 @@ platforms/linux/ubuntu/computer-use/tools/node_modules/
 # Generated OpenCode v2 plugin dependencies - never commit.
 platforms/linux/ubuntu/computer-use/plugins-v2/node_modules/
 platforms/linux/ubuntu/computer-use/plugins-v2/*/node_modules/
+platforms/windows/wsl2/ubuntu/computer-use/plugins-v2/node_modules/
 
 # Generated GitHub MCP runtime - never commit.
 platforms/linux/ubuntu/github-tools/bin/

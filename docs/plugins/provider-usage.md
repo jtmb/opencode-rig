@@ -24,12 +24,18 @@ command palette provides **Refresh provider usage** and **Provider usage
 details**; `/provider-usage` opens the same details dialog, while
 `/codex-usage` and `/usage-left` remain aliases.
 
-The expanded sidebar groups each provider's status and verified measurements
-together. Short, stable status labels (`READY`, `EMPTY`, `COOLING`, `OFFLINE`,
-or `STALE`) align at the right edge; Codex weekly and reserve windows stay
-directly under Codex rather than appearing after unrelated providers. Detail
-text is indented below its provider, and one shared update line closes the
-panel.
+Provider Usage is inserted before the native `sidebar.footer`, as is Source
+Control. This preserves the native working-directory item as the final entry at
+the bottom of the sidebar.
+
+The panel starts collapsed as one native-sized summary line, for example
+`Provider Usage · 2 ready · 1 empty · 1 offline`. Expanded provider rows also
+stay on one line: `Codex READY · Weekly 67% · Reserve 52%`, `DeepSeek EMPTY`,
+`OpenCode Go READY`, and `OpenCode Zen READY`. Short, stable status labels are
+semantic (`READY`, `EMPTY`, `COOLING`, `OFFLINE`, or `STALE`) and unavailable
+measurements are never inferred. Full reset times, balances, stale-state
+explanations, diagnostics, and the shared update timestamp remain in the
+details dialog opened through the palette or `/provider-usage`.
 
 Polling defaults to 60 seconds and is bounded to at least 30 seconds. Codex and
 DeepSeek refresh independently, so one unavailable provider does not erase the

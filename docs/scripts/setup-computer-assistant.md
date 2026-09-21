@@ -3,8 +3,9 @@
 Full-stack provisioning and verification for the local computer-assistant
 capabilities on Ubuntu GNOME. This is the top-level setup entry point: it
 installs system packages, deploys v2 skills and commands, verifies
-the bounded Basic Memory installation, and installs the pinned Playwright and
-GitHub MCP runtimes.
+the bounded Basic Memory installation, and installs the canonical pinned
+Playwright MCP. GitHub is registered as the credential-free hosted OAuth MCP
+endpoint.
 
 ```bash
 # Read-only health check (default)
@@ -15,7 +16,9 @@ GitHub MCP runtimes.
 ```
 
 `--verify-only` and `--apply` are mutually exclusive; any other argument exits
-with a usage error (`2`).
+with a usage error (`2`). The setup provisions the native local runtimes and
+declares hosted GitHub OAuth; it does not install or register the optional local
+Source Control compatibility runtime.
 
 ## Security-relevant changes made by `--apply`
 
@@ -27,22 +30,20 @@ need review before running on a new machine:
   grants synthetic-input access).
 - Enables the single isolated Playwright browser MCP in the **project** `opencode.json`
   (project-only, never global; no normal-browser cookies).
-- Installs a checksum-pinned GitHub MCP and enables its global, write-capable
-  wrapper in lockdown mode.
+- Registers GitHub's hosted OAuth endpoint without a token, authorization
+  header, client secret, or local credential wrapper. The operator signs in
+  from `/mcps`.
 
 ## Pins and paths
 
 | Item | Value |
 |------|-------|
-| Playwright MCP | `@playwright/mcp@0.0.80` (`BROWSER_MCP_VERSION`) |
-| GitHub MCP | `v1.12.1` (`GITHUB_MCP_VERSION`) |
-| GitHub archive | `github-mcp-server_Linux_x86_64.tar.gz` |
-| GitHub SHA-256 | `e45c73a26a3c4cd643b40360db06f442de1e73a60d4eaf9e8639204ec3b95d3b` |
+| Playwright MCP | canonical `@playwright/mcp@0.0.80` policy |
+| GitHub MCP | `https://api.githubcopilot.com/mcp/` hosted OAuth endpoint |
 | Project config | `$REPO_ROOT/opencode.json` |
 | v2 config | `$OPENCODE_V2_PILOT_DIR/config` |
 | OpenCode binary | `$OPENCODE_V2_BIN`, default `~/.local/opt/opencode-v2/opencode` |
 | Browser project | `platforms/linux/ubuntu/browser-tools/` |
-| GitHub project | `platforms/linux/ubuntu/github-tools/` |
 | Basic Memory | `0.23.2` (`BASIC_MEMORY_VERSION`) via `basic-memory-mcp.sh` |
 | Required packages | `python3-pyatspi`, `ydotool`, `wl-clipboard` |
 
@@ -51,13 +52,12 @@ Node is used from the fnm default alias at
 
 ## What `--apply` does
 
-`--apply` runs four phases in order, then always runs `verify()`:
+`--apply` runs three phases in order, then always runs `verify()`:
 
 1. `install_system_dependencies`
 2. `initialize_local_state` (runs `setup-opencode.sh --prepare`, then registers
    all v2 plugins; the final `verify()` phase performs one full health check)
 3. `install_browser_runtime`
-4. `install_github_runtime`
 
 ### 1. System dependencies
 
@@ -86,9 +86,9 @@ only into the trusted `sudo`/PolicyKit dialog.
   This works for clean and stale targets; registration is idempotent and
   preserves plugin options, unrelated settings, and existing modes.
 - During local-state setup, stale pilot MCP configuration is migrated to V2
-  scopes: global `mcp.servers.github` and `mcp.servers.basic-memory` use their
-  pinned local wrappers, while Playwright is project-only in the repository
-  config. Obsolete flat `mcp.github`, `mcp.playwright`, and
+  scopes: global `mcp.servers.github` uses the hosted OAuth endpoint and
+  `mcp.servers.basic-memory` uses the canonical local wrapper, while Playwright
+  is project-only in the repository config. Obsolete flat `mcp.github`, `mcp.playwright`, and
   `mcp.basic-memory` keys are removed only after those destinations validate.
 - A failed preparation (including accumulated skill-copy, destination,
   extra-file, or parser checks) stops immediately under `set -e`; plugin and
@@ -108,21 +108,12 @@ only into the trusted `sudo`/PolicyKit dialog.
   to the component-local `browsers/` directory.
 - Registers exactly one Playwright MCP entry project-only (see below).
 
-### 4. GitHub runtime
-
-- `github_runtime_complete()` requires the executable to exist and
-  `--version` to contain `1.12.1`.
-- When incomplete, it requires `curl`, `install`, `sha256sum`, and `tar`;
-  downloads the archive to a temp dir under `/tmp/opencode/`, verifies the
-  published SHA-256, extracts it, and installs `github-mcp-server` as `0755`
-  under `github-tools/bin/`.
-- Registers the GitHub MCP entry globally.
-
 ## MCP registration
 
 Playwright MCP entries are written into the **project** `opencode.json`, not the
 global config, and duplicate nested or legacy flat entries are actively removed
-from the global files. Basic Memory is global-only alongside GitHub.
+from the global files. Basic Memory and the GitHub hosted endpoint are
+global-only.
 The GitHub MCP entry is written into the **global** config
 (`$OPENCODE_V2_PILOT_DIR/config/opencode.jsonc`),
 and any duplicate project entry is removed. The embedded Python editor writes
@@ -130,8 +121,8 @@ these entries atomically (temp file + `os.replace`):
 
 ```json
 {
-  "type": "local",
-  "command": ["<absolute wrapper path>"],
+  "type": "remote",
+  "url": "https://api.githubcopilot.com/mcp/",
   "disabled": false,
   "timeout": { "startup": 30000 }
 }
@@ -151,9 +142,9 @@ For the global-scoped `github` entry it:
 1. `ensure_global_mcp_entry` — create or update the entry in the global config.
 2. `remove_project_mcp_entry` — delete the name from the project
    `opencode.json`.
-3. `global_mcp_matches` — confirm the global entry names the wrapper.
-4. `project_mcp_has_entry` and `mcp_config_matches` — confirm the project config
-   is clean and exactly one scoped entry names the wrapper.
+3. the hosted-URL matcher — confirm the global entry is credential-free.
+4. `project_mcp_has_entry` — confirm the project config is clean and exactly one
+   global entry uses the hosted URL.
 
 The migration parses JSON and JSONC with the strict string-aware parser,
 rejecting malformed or duplicate-key input. It validates both target files and
@@ -171,10 +162,12 @@ and JSONC files there until they are consolidated. Existing fields on the named
 server are preserved while its type, command, enabled state, and startup timeout
 are normalized. Malformed config is never silently overwritten.
 
-The wrappers registered are:
+The local wrappers registered are:
 
 - `playwright` → `playwright-mcp.sh` (project)
-- `github` → `github-mcp.sh` (global)
+- `basic-memory` → `basic-memory-mcp.sh` (global)
+
+`github` is remote and has no local wrapper.
 
 ## Verification
 
@@ -191,14 +184,14 @@ The wrappers registered are:
 - Basic Memory `0.23.2` is on `PATH` and `basic-memory-mcp.sh --verify-only`
   resolves a limiter and a usable budget.
 - The pinned Playwright runtime and Firefox binary are complete.
-- The pinned GitHub MCP runtime is present.
+- The canonical GitHub hosted endpoint is declared without credential fields.
 - `opencode mcp list` reports the single live Playwright MCP connected.
   When the caller explicitly sets `OPENCODE_DISABLE_PROJECT_CONFIG=1`, this
   shared-service probe is reported as deferred rather than silently overriding
   the opt-out; the project entry, pinned runtime, and local wrapper are still
   verified.
-- The GitHub MCP is connected when a token is present in the environment,
-  otherwise it reports authentication as pending.
+- The GitHub hosted MCP is connected after OAuth, otherwise it reports
+  `needs_auth` and instructs the operator to complete `/mcps`.
 - Each MCP is bound to the right scope — Playwright project-only, GitHub
   global-only, and Basic Memory global-only — in valid `mcp.servers` entries;
   no obsolete flat MCP keys remain, `session.permissions` is exactly `prompt`,
@@ -235,15 +228,13 @@ that require those edits.
 
 - The script assumes the canonical repository layout; it derives the project
   config path by walking up from `scripts/`.
-- Browser binaries and the GitHub executable are downloaded during `--apply`
-  and are gitignored.
+- Native Playwright browser binaries are downloaded during `--apply` and are
+  gitignored; WSL2 downloads its own profile-local runtime through the same
+  canonical launcher.
 - `ydotool` access may require a logout/login after the first `--apply` on a
   new machine; the script prints a notice and verification fails until then.
-- The GitHub MCP authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN`
-  in OpenCode's launch environment, including values loaded from a project
-  `.env`, or from the logged-in `gh` CLI. The script never reads, stores, or
-  verifies the token value itself. The GitHub connection check is treated as
-  pending until an explicit variable or `gh auth` is available.
+- GitHub authentication is handled only by OpenCode's hosted OAuth flow from
+  `/mcps`; never add a token, header, or client secret to configuration.
 - Reading order: [`setup-opencode.md`](setup-opencode.md),
   [`setup-live-dictation.md`](setup-live-dictation.md),
   [`github-mcp.md`](github-mcp.md), [`playwright-mcp.md`](playwright-mcp.md).

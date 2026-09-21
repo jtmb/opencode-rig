@@ -1,16 +1,15 @@
 # Fresh handoff
 
-Updated 2026-09-19 for the current Open Rig v2-only baseline.
+Updated 2026-09-21 for the current Open Rig v2-only baseline.
 
 ## Copy-paste prompt
 
 ```text
-Continue work in ~/repos/opencode-rig as Open Rig, the Ubuntu computer-use
-agent harness for OpenCode v2.
+Continue work in ~/repos/opencode-rig as Open Rig, the native Ubuntu and WSL2
+Ubuntu computer-use agent harness for OpenCode v2.
 
-Read AGENTS.md, README.md, platforms/linux/ubuntu/computer-use/README.md,
-platforms/linux/ubuntu/computer-use/plugins-v2/README.md, docs/README.md, and
-ROADMAP.md. Inspect the worktree before editing and preserve dirty work.
+Read AGENTS.md, README.md, the README for the platform in scope, docs/README.md,
+and ROADMAP.md. Inspect the worktree before editing and preserve dirty work.
 
 Run the current read-only gates in AGENTS.md first. Track multi-step work with
 the todo tool, keep exactly one item in_progress, and verify the actual result.
@@ -19,6 +18,43 @@ Use --apply only for an approved write; restart the shared OpenCode service
 reload server plugin code. Do not handle credentials, MFA, payment data, or
 CAPTCHAs. Do not commit or push unless explicitly asked.
 ```
+
+## Independent WSL2 Ubuntu platform
+
+`platforms/windows/wsl2/ubuntu/computer-use/` is an independent source tree for
+Ubuntu under WSL2. It owns its config examples, role catalog, lockfile,
+dual-role plugin, PowerShell JSON-RPC host, Windows UI Automation, isolated
+launcher, deployment scripts, tests, and source/live verifier. Generic MCP
+declarations, launchers, provisioning, verification, and version policy remain
+owned by the canonical Ubuntu tree; WSL may invoke that source only through its
+explicit thin delegation and must not duplicate it, symlink it, or embed
+developer-specific paths.
+
+The WSL2 server role exposes read-only status, fixed structured PowerShell,
+AST-previewed and token-gated raw PowerShell, bounded Windows app/UI discovery,
+and token-gated UI actions. Its CLI role contributes only after native
+`sidebar.content`; canonical Ubuntu `rig-tools` owns the shared MCP and
+active-child sections, and WSL disables custom claims outside the rendered
+compatibility range. Built-in web search is configured as `provider: "random"`
+with `websearch: ask`.
+
+The correction pass separates server config from the CLI's isolated XDG root,
+enforces strict compatibility/options and kernel-confirmed WSL2/interop, binds
+tokens to trusted executable identity and complete UI snapshots, and uses
+bounded no-follow transactional config writes. The fresh WSL backend live run
+passed with OpenCode v2.0.11, kernel `6.6.87.2-microsoft-standard-WSL2`,
+systemd, Windows PowerShell 5.1, structured PowerShell, raw preview,
+application enumeration, and a non-truncated 434-node focus preview. The
+historical pre-convergence run completed Basic Memory and Playwright read-only
+calls under the former WSL pins; the current canonical Playwright policy is
+`0.0.80` with browser revision `1243`, and fresh live runtime proof remains
+pending. GitHub is correctly `needs_auth` until the operator uses the isolated
+TUI's `/mcps` OAuth flow; no third connection is claimed. Earlier rendered
+sidebar and action-apply evidence preceded final hardening. Fresh post-hardening
+rendering, visible prompts, action apply, WSLg, and PowerShell 7 remain pending.
+Focused WSL2 checks pass; canonical repository QA currently stops in the
+unrelated native-Ubuntu `codex-fallback` bounded-command lock validation, and
+`shellcheck` is unavailable if that stage is reached.
 
 ## Server-plugin reload procedure
 
@@ -120,7 +156,9 @@ Firefox MCP remains a separate surface; the plugin-owned headed Chromium flow
 has its own completed live acceptance above.
 The current `opencode.json` selects `openai/gpt-5.6-luna#max` for both
 `explore` and `general`; orchestration allows at most three background children
-only after memory approval. Clean-restart live fixtures accepted omitted-model
+only after memory approval. Tasks may own repeated asynchronous batches and no
+longer have a one-child-total restriction; every completed child still requires
+independent parent follow-up. Clean-restart live fixtures accepted omitted-model
 resolution, terminal-child capacity release, and required parent follow-up.
 Repository change/review/correction/release work now starts with persisted
 `task_declare`, requires a validated direct background child and accepted
@@ -136,10 +174,11 @@ commit or push was performed.
 
 ## Final verification
 
-- The portable acceptance-evidence manifest passes with ten claims and three
-  independently reviewed background records. Canonical repository QA passes all
-  twelve package checks, every self-test, policy/documentation/deployment gates,
-  format/link validation, and Git whitespace checks.
+- The portable acceptance-evidence manifest passes with eleven claims and three
+  independently reviewed background records. The current canonical QA run
+  passed all twelve package checks and stopped at the shell stage because
+  `shellcheck` is unavailable on this host; focused WSL2, ownership,
+  documentation, setup, syntax, and compilation checks pass.
 - PR #3 CI portability is bounded: CI pins the locally verified Node 22.22.2
   release, installs both locked v2 workspaces before package QA, and uses a
   workspace-relative Playwright MCP command; the verifier also accepts the

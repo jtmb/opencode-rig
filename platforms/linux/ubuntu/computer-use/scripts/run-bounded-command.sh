@@ -232,6 +232,9 @@ prepare_runtime_dir() {
   local path parent
   if [ -n "${XDG_RUNTIME_DIR:-}" ]; then
     RUNTIME_DIR="$XDG_RUNTIME_DIR"
+    while [[ "$RUNTIME_DIR" != / && "$RUNTIME_DIR" == */ ]]; do
+      RUNTIME_DIR="${RUNTIME_DIR%/}"
+    done
     validate_private_dir "$RUNTIME_DIR" 1
     return 0
   fi

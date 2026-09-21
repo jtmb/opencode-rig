@@ -1,14 +1,12 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
 import type { Context, PanelInput } from "@opencode/plugin/tui/context"
-import type { McpServer } from "@opencode/client"
 import type { BoxRenderable } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 
 import { toolCatalogQuery } from "./tool-catalog.ts"
 import { RigTools, type RigToolsOutput } from "./rpc.ts"
-import { mcpStatusCounts, mcpStatusText } from "./mcp-sidebar.ts"
 import { activeSubagentRows, formatSubagentRow, MAX_SUBAGENT_ROWS, nextSubagentIndex, resolveSubagentRows, subagentActivityLabel, subagentAnimationsEnabled, subagentStatus, type SubagentStatus } from "./subagents.ts"
 
 export const SUBAGENTS_PANEL_NAME = "opencode-rig.rig-tools.subagents"
@@ -156,71 +154,6 @@ function SubagentsPanel(props: { panel: PanelInput }) {
 
 const ACTIVITY_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const
 
-function McpSidebar() {
-  const context = usePlugin()
-  const location = context.location ?? context.data.location.default()
-  const servers = createMemo(() => context.data.location.mcp.server.list(location) ?? [])
-  const counts = createMemo(() => mcpStatusCounts(servers()))
-  const [open, setOpen] = createSignal(true)
-
-  createEffect(() => {
-    void context.data.location.mcp.server.sync(location).catch(() => undefined)
-  })
-
-  const dotColor = (status: McpServer["status"]["status"]) => {
-    if (status === "connected") return context.theme.text.feedback.success.default
-    if (status === "failed") return context.theme.text.feedback.error.default
-    if (status === "needs_auth") return context.theme.text.feedback.warning.default
-    return context.theme.text.subdued
-  }
-
-  return (
-    <Show when={servers().length > 0}>
-      <box flexDirection="column" gap={0}>
-        <box
-          flexDirection="row"
-          gap={1}
-          width="100%"
-          focusable
-          onMouseDown={(event) => {
-            if (event.button !== 0 || servers().length <= 2) return
-            event.preventDefault()
-            setOpen((value) => !value)
-          }}
-          onKeyDown={(event) => {
-            if ((event.name !== "return" && event.name !== "space") || servers().length <= 2) return
-            event.preventDefault()
-            event.stopPropagation()
-            setOpen((value) => !value)
-          }}
-        >
-          <Show when={servers().length > 2}>
-            <text fg={context.theme.text.default}>{open() ? "-" : "+"}</text>
-          </Show>
-          <text fg={context.theme.text.default}>
-            <b>MCP</b>
-            <Show when={!open()}>
-              <span style={{ fg: context.theme.text.subdued }}> ({counts().active} active{counts().errors > 0 ? `, ${counts().errors} error${counts().errors > 1 ? "s" : ""}` : ""})</span>
-            </Show>
-          </text>
-        </box>
-        <Show when={servers().length <= 2 || open()}>
-          <For each={servers()}>
-            {(server) => (
-              <box flexDirection="row" gap={1}>
-                <text flexShrink={0} fg={dotColor(server.status.status)}>•</text>
-                <text fg={context.theme.text.default} wrapMode="word">
-                  {server.name} <span style={{ fg: context.theme.text.subdued }}>{mcpStatusText(server)}</span>
-                </text>
-              </box>
-            )}
-          </For>
-        </Show>
-      </box>
-    </Show>
-  )
-}
-
 function ActiveSubagentsSidebar(props: { sessionID: string }) {
   const context = usePlugin()
   const feed = createSubagentFeed(context, () => props.sessionID)
@@ -315,13 +248,8 @@ export default Plugin.define({
       render: (panel) => panel.name === SUBAGENTS_PANEL_NAME ? <SubagentsPanel panel={panel} /> : null,
     })
     const stopSidebar = context.ui.slot({
-      replace: "sidebar.content",
-      render: ({ sessionID }) => (
-        <box flexDirection="column" gap={1}>
-          <McpSidebar />
-          <ActiveSubagentsSidebar sessionID={sessionID} />
-        </box>
-      ),
+      after: "sidebar.content",
+      render: ({ sessionID }) => <ActiveSubagentsSidebar sessionID={sessionID} />,
     })
     const stopKeymap = context.ui.slot({
       append: "app",

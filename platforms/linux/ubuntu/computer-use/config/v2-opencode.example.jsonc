@@ -67,16 +67,16 @@
     "timeout": { "startup": 30000 },
     "servers": {
       "github": {
-        "type": "local",
-        "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"]
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp/"
       },
       "playwright": {
         "type": "local",
-        "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"]
+        "command": ["./platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"]
       },
       "basic-memory": {
         "type": "local",
-        "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"]
+        "command": ["./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"]
       }
     }
   },

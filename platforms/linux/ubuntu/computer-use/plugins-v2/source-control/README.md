@@ -29,8 +29,10 @@ plugin source.
 
 ## Behavior
 
-- The panel is an additive `sidebar.footer` contribution, independent of the
-  native and plugin-owned `sidebar.content` sections.
+- The panel is an additive contribution before `sidebar.footer`, independent of
+  the native and plugin-owned `sidebar.content` sections. Keeping plugin footer
+  panels before the native footer leaves OpenCode's working-directory item as
+  the final entry at the bottom of the sidebar.
 - The panel starts minimized. The header expands or collapses it and persists
   the state in plugin storage (`ctx.storage`).
 - The header shows the total local change count in the theme accent color with

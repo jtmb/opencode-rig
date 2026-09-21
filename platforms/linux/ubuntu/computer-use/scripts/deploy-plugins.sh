@@ -7,14 +7,17 @@ APPLY=0
 MODE_SET=0
 PLUGINS="both"
 CONFIG_DIR="${OPENCODE_V2_CONFIG_DIR:-${OPENCODE_V2_PILOT_DIR:-$HOME/.opencode-v2-pilot}/config}"
+CLI_CONFIG=""
 
 usage() {
   cat <<'EOF'
-Usage: deploy-plugins.sh [--config-dir DIR] [--plugins LIST] [--apply|--verify-only]
+Usage: deploy-plugins.sh [--config-dir DIR] [--cli-config FILE] [--plugins LIST] [--apply|--verify-only]
 
 Options:
   --config-dir DIR  v2 target directory (default: $OPENCODE_V2_CONFIG_DIR,
                      else $OPENCODE_V2_PILOT_DIR/config, else ~/.opencode-v2-pilot/config)
+  --cli-config FILE Override the CLI config path (default: DIR/cli.json). This
+                     supports isolated profiles whose CLI uses a separate XDG root.
   --plugins LIST    both (default), all, server, cli, or a catalog package name
   --chain a/b,c/d   defaultChain written when adding codex-fallback
   --apply           Write changes
@@ -26,6 +29,8 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --config-dir) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; CONFIG_DIR="$2"; shift 2 ;;
     --config-dir=*) CONFIG_DIR="${1#*=}"; shift ;;
+    --cli-config) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; CLI_CONFIG="$2"; shift 2 ;;
+    --cli-config=*) CLI_CONFIG="${1#*=}"; shift ;;
     --plugins) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; PLUGINS="$2"; shift 2 ;;
     --plugins=*) PLUGINS="${1#*=}"; shift ;;
     --chain) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; CHAIN="$2"; shift 2 ;;
@@ -37,6 +42,8 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 [ -n "$CONFIG_DIR" ] || { echo "ERROR: --config-dir must not be empty" >&2; exit 2; }
+CLI_CONFIG="${CLI_CONFIG:-$CONFIG_DIR/cli.json}"
+[ -n "$CLI_CONFIG" ] || { echo "ERROR: --cli-config must not be empty" >&2; exit 2; }
 case "$PLUGINS" in
   both|all|server|cli) ;;
   ''|*[!a-z0-9-]*) echo "ERROR: --plugins must be both, all, server, cli, or a catalog package name" >&2; exit 2 ;;
@@ -47,7 +54,6 @@ V2_ROLE_CATALOG="${OPENCODE_V2_ROLE_CATALOG:-$COMPUTER_USE_ROOT/config/v2-plugin
 V2_CATALOG_TOOL="$SCRIPT_DIR/v2-plugin-catalog.py"
 TARGET_ROOT="$CONFIG_DIR"
 SERVER_CONFIG="$TARGET_ROOT/opencode.jsonc"
-CLI_CONFIG="$TARGET_ROOT/cli.json"
 
 preflight_config_paths() {
   python3 - "$TARGET_ROOT" "$SERVER_CONFIG" "$CLI_CONFIG" <<'PY'

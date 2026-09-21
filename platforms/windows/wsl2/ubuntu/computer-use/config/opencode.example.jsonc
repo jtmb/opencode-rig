@@ -1,0 +1,56 @@
+// WSL owns the interop permissions and profile plumbing only. The generic MCP
+// declarations are injected by the canonical Ubuntu MCP implementation during
+// deployment; this example intentionally contains no duplicate server entries.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "update": "notify",
+  "websearch": {
+    "provider": "random"
+  },
+  "mcp": {
+    "timeout": {
+      "startup": 90000,
+      "catalog": 30000,
+      "execution": 600000
+    },
+    "servers": {}
+  },
+  "permissions": [
+    {
+      "action": "websearch",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "wsl_powershell_command",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "wsl_powershell_raw",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "wsl_windows_act",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "basic-memory_*",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "github_*",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "playwright_*",
+      "resource": "*",
+      "effect": "ask"
+    }
+  ],
+  "plugins": []
+}

@@ -66,6 +66,8 @@ format checks. Its focused self-test uses temporary ordinary files and covers
 both passing and failing manifests.
 
 This repository's checked-in manifest records the fresh 2026-09-19 Open Rig
-pilot evidence in [`../acceptance-evidence-2026-09-19.md`](../acceptance-evidence-2026-09-19.md).
+pilot evidence in [`../acceptance-evidence-2026-09-19.md`](../acceptance-evidence-2026-09-19.md)
+and the limited WSL2 backend and historical pre-convergence MCP evidence in
+[`../wsl2-acceptance-2026-09-21.md`](../wsl2-acceptance-2026-09-21.md).
 Limited claims state their runtime boundary explicitly; planned claims do not
 present source or package checks as live acceptance.

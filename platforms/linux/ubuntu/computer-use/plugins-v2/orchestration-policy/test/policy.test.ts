@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import test from "node:test"
 
-import { loadMemory } from "../src/index.ts"
+import { createSerialWriteQueue, loadMemory } from "../src/index.ts"
 import {
   createOrchestrationPolicy,
   isCommitOrPush,
@@ -195,7 +195,8 @@ test("requires and persists parent follow-up after a background child becomes id
   assert.deepEqual(controller.pendingFollowupRecords(), [{ parentID: "ses_parent", childID: "ses_child" }])
   assert.equal(controller.acknowledgeFollowup("ses_parent", "ses_child", "accepted"), true)
   assert.deepEqual(controller.pendingFollowupRecords(), [])
-  await assert.rejects(controller.before(event("blocked-after-accept")), /already has an accepted background child/)
+  await launch(controller, "allowed-after-accept", "ses_parent", "ses_secondchild")
+  assert.deepEqual(controller.taskState("ses_parent")?.children.map((child) => child.sessionID), ["ses_child", "ses_secondchild"])
 
   controller.sessionStatus("ses_child", "busy")
   controller.sessionStatus("ses_child", "idle")
@@ -347,6 +348,68 @@ test("enforces live concurrency and releases children only when idle", async () 
   await controller.before(event("three", { sessionID: "ses_parent3" }))
 })
 
+test("allows three concurrent children and repeated asynchronous batches in one task", async () => {
+  const controller = declaredPolicy(3)
+  const first = await launch(controller, "batch-one", "ses_parent", "ses_batchone")
+  const second = await launch(controller, "batch-two", "ses_parent", "ses_batchtwo")
+  const third = await launch(controller, "batch-three", "ses_parent", "ses_batchthree")
+  assert.deepEqual(controller.state(), { pending: 0, active: 3, known: 3 })
+  await assert.rejects(controller.before(event("batch-over-capacity")), /capacity unavailable or reached \(3\/3\)/)
+
+  controller.sessionStatus(first, "idle")
+  controller.reviewFollowup("ses_parent", {
+    sessionID: first,
+    outcome: "accepted",
+    verification: "Independently verified the first asynchronous child.",
+  })
+  controller.acknowledgeFollowup("ses_parent", first, "accepted")
+  const fourth = await launch(controller, "batch-four", "ses_parent", "ses_batchfour")
+  assert.deepEqual(controller.state(), { pending: 0, active: 3, known: 4 })
+  assert.equal(controller.taskState("ses_parent")?.children.length, 4)
+  assert.throws(
+    () => controller.completeTask("ses_parent", { verification: "Too early." }),
+    /every background child must complete/,
+  )
+
+  for (const childID of [second, third, fourth]) {
+    controller.sessionStatus(childID, "idle")
+    controller.reviewFollowup("ses_parent", {
+      sessionID: childID,
+      outcome: "accepted",
+      verification: `Independently verified ${childID}.`,
+    })
+    controller.acknowledgeFollowup("ses_parent", childID, "accepted")
+  }
+  assert.equal(controller.completeTask("ses_parent", { verification: "All asynchronous children were reviewed." }).children.length, 4)
+})
+
+test("reserves concurrent launch capacity before restoring all active children", async () => {
+  let started = 0
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => { release = resolve })
+  const controller = createOrchestrationPolicy({ maxConcurrent: 3 }, {
+    capacity: async () => {
+      started += 1
+      await gate
+      return { approvedCount: 3 }
+    },
+    resolveAgentModel: async () => "openai/gpt-5.6-luna#max",
+  })
+  controller.declareTask("ses_parent", { kind: "change" })
+  const launches = ["concurrent-one", "concurrent-two", "concurrent-three"].map((id) => controller.before(event(id)))
+  while (started < 3) await new Promise<void>((resolve) => setImmediate(resolve))
+  assert.deepEqual(controller.state(), { pending: 0, active: 0, known: 0 })
+  release()
+  await Promise.all(launches)
+  for (const [id, childID] of [["concurrent-one", "ses_concurrentone"], ["concurrent-two", "ses_concurrenttwo"], ["concurrent-three", "ses_concurrentthree"]] as const) {
+    controller.after({ ...event(id), status: "completed", result: { sessionID: childID } })
+  }
+  assert.deepEqual(controller.state(), { pending: 0, active: 3, known: 3 })
+  const restored = policy()
+  restored.restoreTaskState(controller.taskStateRecords())
+  assert.deepEqual(restored.state(), { pending: 0, active: 3, known: 3 })
+})
+
 test("recovered terminal follow-up releases stale active capacity", async () => {
   const controller = policy(1)
   controller.declareTask("ses_parent", { kind: "change" })
@@ -418,7 +481,7 @@ test("requires task declaration and reports waiting, ready, and completed states
 
   const declared = controller.declareTask("ses_parent", { kind: "review", summary: "  Review the policy  " })
   assert.equal(declared.summary, "Review the policy")
-  assert.equal(declared.childCompleted, false)
+  assert.deepEqual(declared.children, [])
   assert.match(controller.instructions("ses_parent"), /TASK STATE: review; waiting/)
   assert.throws(() => controller.declareTask("ses_parent", { kind: "change" }), /already active/)
 
@@ -443,6 +506,36 @@ test("requires task declaration and reports waiting, ready, and completed states
   )
 })
 
+test("blocks parent completion and commit while a direct launch is reserving or pending", async () => {
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => { release = resolve })
+  const controller = createOrchestrationPolicy({ maxConcurrent: 3 }, {
+    capacity: async () => {
+      await gate
+      return { approvedCount: 3 }
+    },
+    resolveAgentModel: async () => "openai/gpt-5.6-luna#max",
+  })
+  controller.declareTask("ses_parent", { kind: "change" })
+  const launch = controller.before(event("in-flight"))
+  await new Promise<void>((resolve) => setImmediate(resolve))
+  await assert.rejects(
+    controller.before({ ...event("parent-commit"), tool: "repo_commit", input: {} }),
+    /pending or reserving/,
+  )
+  assert.throws(
+    () => controller.completeTask("ses_parent", { verification: "Too early." }),
+    /pending or reserving/,
+  )
+  release()
+  await launch
+  await assert.rejects(
+    controller.before({ ...event("parent-push"), tool: "repo_push", input: {} }),
+    /pending or reserving/,
+  )
+  controller.after({ ...event("in-flight"), status: "completed", result: { sessionID: "ses_inflight" } })
+})
+
 test("binds session.created only to a pending launch and accepts one serialized result ID", async () => {
   const arbitrary = declaredPolicy()
   arbitrary.sessionCreated("ses_arbitrary", "ses_parent")
@@ -456,14 +549,14 @@ test("binds session.created only to a pending launch and accepts one serialized 
   controller.sessionCreated("ses_createdchild", "ses_parent")
   assert.deepEqual(controller.state(), { pending: 1, active: 1, known: 1 })
   controller.after({ ...launchEvent, status: "completed", result: JSON.stringify({ data: { sessionID: "ses_createdchild" } }) })
-  assert.equal(controller.taskState("ses_parent")?.childID, "ses_createdchild")
+  assert.deepEqual(controller.taskState("ses_parent")?.children, [{ sessionID: "ses_createdchild", status: "active" }])
   assert.deepEqual(controller.state(), { pending: 0, active: 1, known: 1 })
 
   const serialized = declaredPolicy()
   const serializedEvent = event("serialized")
   await serialized.before(serializedEvent)
   serialized.after({ ...serializedEvent, status: "completed", result: JSON.stringify({ sessionID: "ses_serializedchild" }) })
-  assert.equal(serialized.taskState("ses_parent")?.childID, "ses_serializedchild")
+  assert.deepEqual(serialized.taskState("ses_parent")?.children, [{ sessionID: "ses_serializedchild", status: "active" }])
   assert.deepEqual(serialized.state(), { pending: 0, active: 1, known: 1 })
 
   const ambiguous = declaredPolicy()
@@ -475,6 +568,23 @@ test("binds session.created only to a pending launch and accepts one serialized 
     result: "ses_first ses_second",
   })
   assert.deepEqual(ambiguous.state(), { pending: 0, active: 0, known: 0 })
+})
+
+test("does not self-bind a runtime session or bind a second result child", async () => {
+  const self = declaredPolicy()
+  const selfLaunch = event("self")
+  await self.before(selfLaunch)
+  assert.equal(self.sessionCreated("ses_parent", "ses_parent"), false)
+  self.after({ ...selfLaunch, status: "completed", result: { sessionID: "ses_parent" } })
+  assert.deepEqual(self.state(), { pending: 0, active: 0, known: 0 })
+
+  const controller = declaredPolicy()
+  const launchEvent = event("paired")
+  await controller.before(launchEvent)
+  assert.equal(controller.sessionCreated("ses_created", "ses_parent"), true)
+  controller.after({ ...launchEvent, status: "completed", result: { sessionID: "ses_different" } })
+  assert.deepEqual(controller.taskState("ses_parent")?.children, [{ sessionID: "ses_created", status: "active" }])
+  assert.deepEqual(controller.state(), { pending: 0, active: 1, known: 1 })
 })
 
 test("allows non-correction worker mutation and gates correction workers on ledgers", async () => {
@@ -514,7 +624,7 @@ test("denies nested delegation and child commit or push tools", async () => {
   }
 })
 
-test("accepted follow-up unlocks parent mutation but prevents another child", async () => {
+test("accepted follow-up unlocks parent mutation and permits another background child", async () => {
   const controller = declaredPolicy()
   const childID = await launch(controller, "accepted", "ses_parent", "ses_acceptedchild")
   controller.sessionStatus(childID, "idle")
@@ -525,10 +635,12 @@ test("accepted follow-up unlocks parent mutation but prevents another child", as
   })
   controller.acknowledgeFollowup("ses_parent", childID, "accepted")
   await controller.before({ ...event("parent-mutation"), tool: "patch", input: { patchText: "*** Update File: README.md" } })
-  await assert.rejects(controller.before(event("replacement")), /already has an accepted background child/)
+  const next = await launch(controller, "next", "ses_parent", "ses_nextchild")
+  assert.equal(next, "ses_nextchild")
+  assert.equal(controller.taskState("ses_parent")?.children.length, 2)
 })
 
-test("changes_required and failed follow-ups permit one replacement child", async () => {
+test("changes_required and failed follow-ups permit replacement children", async () => {
   for (const outcome of ["changes_required", "failed"] as const) {
     const controller = declaredPolicy()
     const oldChild = await launch(controller, `old-${outcome}`, "ses_parent", `ses_old${outcome.replace("_", "")}`)
@@ -539,13 +651,34 @@ test("changes_required and failed follow-ups permit one replacement child", asyn
       verification: `The ${outcome} result needs replacement work.`,
     })
     controller.acknowledgeFollowup("ses_parent", oldChild, outcome)
-    assert.equal(controller.taskState("ses_parent")?.followupOutcome, outcome)
+    assert.equal(controller.taskState("ses_parent")?.children[0]?.outcome, outcome)
 
     const replacement = await launch(controller, `replacement-${outcome}`, "ses_parent", `ses_new${outcome.replace("_", "")}`)
-    assert.equal(controller.taskState("ses_parent")?.childID, replacement)
-    assert.equal(controller.taskState("ses_parent")?.childCompleted, false)
-    assert.equal(controller.taskState("ses_parent")?.followupOutcome, undefined)
+    assert.deepEqual(controller.taskState("ses_parent")?.children, [
+      { sessionID: oldChild, status: "reviewed", outcome },
+      { sessionID: replacement, status: "active" },
+    ])
   }
+})
+
+test("a later nonaccepted review keeps completion and commits blocked until replacement acceptance", async () => {
+  const controller = declaredPolicy()
+  const accepted = await launch(controller, "mixed-accepted", "ses_parent", "ses_mixedaccepted")
+  controller.sessionStatus(accepted, "idle")
+  controller.reviewFollowup("ses_parent", { sessionID: accepted, outcome: "accepted", verification: "Accepted first review." })
+  controller.acknowledgeFollowup("ses_parent", accepted, "accepted")
+  const changes = await launch(controller, "mixed-changes", "ses_parent", "ses_mixedchanges")
+  controller.sessionStatus(changes, "idle")
+  controller.reviewFollowup("ses_parent", { sessionID: changes, outcome: "changes_required", verification: "Requested corrections." })
+  controller.acknowledgeFollowup("ses_parent", changes, "changes_required")
+  await assert.rejects(
+    controller.before({ ...event("mixed-commit"), tool: "repo_commit", input: {} }),
+    /later changes-required or failed child/,
+  )
+  assert.throws(
+    () => controller.completeTask("ses_parent", { verification: "Still needs replacement." }),
+    /later changes-required or failed child/,
+  )
 })
 
 test("restores task records and pending follow-ups without trusting malformed state", async () => {
@@ -561,10 +694,81 @@ test("restores task records and pending follow-ups without trusting malformed st
   assert.deepEqual(restored.state(), { pending: 0, active: 0, known: 1 })
 
   restored.restoreTaskState([
-    { parentID: "not-a-session", kind: "change", childCompleted: false, ledgers: {} },
-    { parentID: "ses_other", kind: "not-a-kind", childCompleted: false, ledgers: {} },
+    { parentID: "not-a-session", kind: "change", children: [], ledgers: {} },
+    { parentID: "ses_other", kind: "not-a-kind", children: [], ledgers: {} },
   ])
   assert.equal(restored.taskState("ses_other"), undefined)
+
+  const migrated = policy()
+  migrated.restoreTaskState([{
+    parentID: "ses_legacy",
+    kind: "change",
+    declaredAt: "2026-09-21T00:00:00.000Z",
+    childID: "ses_legacychild",
+    childCompleted: true,
+    followupOutcome: "accepted",
+    ledgers: {},
+  }])
+  assert.deepEqual(migrated.taskState("ses_legacy")?.children, [{
+    sessionID: "ses_legacychild",
+    status: "reviewed",
+    outcome: "accepted",
+  }])
+
+  const malformed = policy()
+  malformed.restoreTaskState([{
+    parentID: "ses_malformed",
+    kind: "change",
+    children: [
+      { sessionID: "ses_validchild", status: "reviewed", outcome: "accepted" },
+      { sessionID: "not-a-session", status: "active" },
+    ],
+    ledgers: {},
+  }])
+  assert.equal(malformed.taskState("ses_malformed"), undefined)
+
+  const contradictoryLegacy = policy()
+  contradictoryLegacy.restoreTaskState([{
+    parentID: "ses_contradictory",
+    kind: "change",
+    childID: "ses_contradictorychild",
+    childCompleted: false,
+    followupOutcome: "accepted",
+    ledgers: {},
+  }])
+  assert.equal(contradictoryLegacy.taskState("ses_contradictory"), undefined)
+})
+
+test("serializes storage writes and continues after a failed write", async () => {
+  const queue = createSerialWriteQueue()
+  const order: string[] = []
+  let active = 0
+  let maximum = 0
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => { release = resolve })
+  const first = queue(async () => {
+    active += 1
+    maximum = Math.max(maximum, active)
+    order.push("first-start")
+    await gate
+    order.push("first-end")
+    active -= 1
+  })
+  const second = queue(async () => {
+    active += 1
+    maximum = Math.max(maximum, active)
+    order.push("second")
+    active -= 1
+  })
+  await new Promise<void>((resolve) => setImmediate(resolve))
+  assert.deepEqual(order, ["first-start"])
+  release()
+  await Promise.all([first, second])
+  assert.deepEqual(order, ["first-start", "first-end", "second"])
+  assert.equal(maximum, 1)
+  await assert.rejects(queue(async () => { throw new Error("storage failed") }), /storage failed/)
+  await queue(async () => { order.push("after-failure") })
+  assert.equal(order.at(-1), "after-failure")
 })
 
 test("tracks correction ledgers and requires reconciliation for a memory update", () => {

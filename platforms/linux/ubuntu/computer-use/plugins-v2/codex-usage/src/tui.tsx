@@ -4,15 +4,12 @@ import type { Context } from "@opencode/plugin/tui/context"
 import { createSignal, For, onCleanup, Show } from "solid-js"
 
 import {
-  compactReset,
   formatDetails,
-  percent,
-  providerPanelDetail,
-  providerStatusLabel,
+  providerCompactParts,
+  providerUsageSummary,
   usageUpdatedLabel,
 } from "./format.ts"
 import { createUsageStore, type UsageState, type UsageStore } from "./store.ts"
-import { lunaReserveWindow, overallWeeklyWindow, type CodexUsageWindow } from "./usage.ts"
 import type { ProviderState } from "./providers.ts"
 
 type Theme = Context["theme"]
@@ -24,34 +21,10 @@ function positiveNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined
 }
 
-function usageColor(leftPercent: number, theme: Theme) {
-  if (leftPercent <= 10) return theme.text.feedback.error.default
-  if (leftPercent <= 20) return theme.text.feedback.warning.default
-  return theme.text.feedback.success.default
-}
-
-function WindowRow(props: {
-  label: string
-  window: CodexUsageWindow
-  theme: () => Theme
-  now: () => number
-}) {
-  return (
-    <box flexDirection="row" paddingLeft={1}>
-      <text fg={props.theme().text.subdued}>{props.label}</text>
-      <text fg={usageColor(props.window.leftPercent, props.theme())}>
-        <b> {percent(props.window.leftPercent)} left</b>
-      </text>
-      <text fg={props.theme().text.subdued}> · {compactReset(props.window.resetsAt, props.now())}</text>
-    </box>
-  )
-}
-
 function ProviderRow(props: {
   provider: ProviderState
   snapshot: UsageState["snapshot"]
   theme: () => Theme
-  now: () => number
 }) {
   const color = () => props.provider.status === "available"
     ? props.theme().text.feedback.success.default
@@ -60,26 +33,13 @@ function ProviderRow(props: {
       : props.provider.status === "cooling" || props.provider.status === "usage-unavailable" || props.provider.status === "stale"
       ? props.theme().text.feedback.warning.default
       : props.theme().text.subdued
-  const weekly = () => props.provider.id === "codex" && props.snapshot
-    ? overallWeeklyWindow(props.snapshot)
-    : undefined
-  const reserve = () => props.provider.id === "codex" && props.snapshot
-    ? lunaReserveWindow(props.snapshot)
-    : undefined
-  const showDetail = () => props.provider.id !== "codex" || weekly() === undefined
+  const parts = () => providerCompactParts(props.provider, props.snapshot)
   return (
-    <box flexDirection="column" gap={0}>
-      <box flexDirection="row">
-        <text fg={props.theme().text.default}><b>{props.provider.label}</b></text>
-        <box flexGrow={1} />
-        <text fg={color()}><b>{providerStatusLabel(props.provider.status)}</b></text>
-      </box>
-      <Show when={weekly()}>{(window) => <WindowRow label="Weekly" window={window()} theme={props.theme} now={props.now} />}</Show>
-      <Show when={reserve()}>{(window) => <WindowRow label="Reserve" window={window()} theme={props.theme} now={props.now} />}</Show>
-      <Show when={showDetail()}>
-        <box paddingLeft={1}>
-          <text fg={props.theme().text.subdued}>{providerPanelDetail(props.provider)}</text>
-        </box>
+    <box flexDirection="row" width="100%">
+      <text fg={props.theme().text.default}><b>{parts().label}</b> </text>
+      <text fg={color()}><b>{parts().status}</b></text>
+      <Show when={parts().measurements.length > 0}>
+        <text fg={props.theme().text.subdued}> · {parts().measurements.join(" · ")}</text>
       </Show>
     </box>
   )
@@ -88,7 +48,7 @@ function ProviderRow(props: {
 function UsagePanel(props: { store: UsageStore; sessionID: string; refreshMs: number; syncProviders: () => Promise<void> }) {
   const context = usePlugin()
   const [state, setState] = createSignal<UsageState>(props.store.getState())
-  const [settings, updateSettings] = context.storage.store("settings", { initial: { collapsed: false } })
+  const [settings, updateSettings] = context.storage.store("provider-usage-settings-v2", { initial: { collapsed: true } })
   const [now, setNow] = createSignal(Date.now())
   const theme = () => context.theme
   const stop = props.store.subscribe(setState)
@@ -137,12 +97,15 @@ function UsagePanel(props: { store: UsageStore; sessionID: string; refreshMs: nu
         >
           <text fg={theme().text.default}>
             <b>{collapsed() ? "+" : "-"} Provider Usage</b>
+            <Show when={collapsed()}>
+              <span style={{ fg: theme().text.subdued }}> · {providerUsageSummary(state().providers ?? [])}</span>
+            </Show>
           </text>
         </box>
 
         <Show when={!collapsed()}>
           <For each={state().providers ?? []}>
-            {(provider) => <ProviderRow provider={provider} snapshot={state().snapshot} theme={theme} now={now} />}
+            {(provider) => <ProviderRow provider={provider} snapshot={state().snapshot} theme={theme} />}
           </For>
           <Show when={state().status === "error" && state().message}>
             <text fg={theme().text.feedback.warning.default}>Refresh failed; saved values retained.</text>
@@ -225,7 +188,7 @@ export default Plugin.define({
     })
 
     const stopSlot = context.ui.slot({
-      append: "sidebar.footer",
+      before: "sidebar.footer",
       render: ({ sessionID }) => <UsagePanel store={store} sessionID={sessionID} refreshMs={refreshMs} syncProviders={syncProviders} />,
     })
 

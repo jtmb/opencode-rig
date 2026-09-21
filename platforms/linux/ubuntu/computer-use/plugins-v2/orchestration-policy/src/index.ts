@@ -142,6 +142,15 @@ function modelReference(model: { providerID: string; id: string; variant?: strin
   return `${model.providerID}/${model.id}${model.variant ? `#${model.variant}` : ""}`
 }
 
+export function createSerialWriteQueue() {
+  let tail: Promise<void> = Promise.resolve()
+  return <T>(write: () => Promise<T>): Promise<T> => {
+    const next = tail.then(write, write)
+    tail = next.then(() => undefined, () => undefined)
+    return next
+  }
+}
+
 export default Plugin.define({
   id: "opencode-rig.orchestration-policy",
   async setup(ctx) {
@@ -161,10 +170,15 @@ export default Plugin.define({
     policy.restoreTaskState(await ctx.storage.get(TASK_STATE_KEY))
     const root = ctx.location.project.canonical
     const memoryLoads = new Map<string, Promise<MemorySnapshot>>()
-    const persistFollowups = () =>
-      ctx.storage.set(FOLLOWUP_STATE_KEY, policy.pendingFollowupRecords())
-    const persistTasks = () =>
-      ctx.storage.set(TASK_STATE_KEY, policy.taskStateRecords())
+    const enqueueWrite = createSerialWriteQueue()
+    const persistFollowups = () => {
+      const snapshot = policy.pendingFollowupRecords()
+      return enqueueWrite(() => ctx.storage.set(FOLLOWUP_STATE_KEY, snapshot))
+    }
+    const persistTasks = () => {
+      const snapshot = policy.taskStateRecords()
+      return enqueueWrite(() => ctx.storage.set(TASK_STATE_KEY, snapshot))
+    }
     const refreshTasks = async () =>
       policy.restoreTaskState(await ctx.storage.get(TASK_STATE_KEY))
 
@@ -201,7 +215,7 @@ export default Plugin.define({
       editor.add({
         name: "task_declare",
         description:
-          "Declare a repository change, review, release, or correction task before repository mutation. Every declared task requires one validated background child and an accepted parent follow-up.",
+          "Declare a repository change, review, release, or correction task before repository mutation. A task may launch capacity-bounded background children and requires at least one accepted parent follow-up.",
         input: {
           type: "object",
           properties: {
@@ -292,7 +306,7 @@ export default Plugin.define({
       editor.add({
         name: "subagent_followup",
         description:
-          "Record the parent agent's review and independent verification of a completed background child. Required before another child launch, commit, or push.",
+          "Record the parent agent's review and independent verification of a completed background child. Each completed child must be reviewed before further child launches, task completion, commit, or push.",
         input: {
           type: "object",
           properties: {
@@ -319,14 +333,21 @@ export default Plugin.define({
             (record) => record.parentID !== audit.parentID || record.childID !== audit.childID,
           )
           const taskState = policy.taskStateRecords().map((task) =>
-            task.parentID === audit.parentID && task.childID === audit.childID
-              ? { ...task, followupOutcome: audit.outcome }
+            task.parentID === audit.parentID
+              ? {
+                  ...task,
+                  children: task.children.map((child) => child.sessionID === audit.childID
+                    ? { ...child, status: "reviewed" as const, outcome: audit.outcome }
+                    : child),
+                }
               : task)
-          await Promise.all([
-            ctx.storage.set(FOLLOWUP_STATE_KEY, remaining),
-            ctx.storage.set(TASK_STATE_KEY, taskState),
-            ctx.storage.set(`subagent-followup/audit/${audit.parentID}/${audit.childID}/${audit.reviewedAt}`, audit),
-          ])
+          await enqueueWrite(async () => {
+            await Promise.all([
+              ctx.storage.set(FOLLOWUP_STATE_KEY, remaining),
+              ctx.storage.set(TASK_STATE_KEY, taskState),
+              ctx.storage.set(`subagent-followup/audit/${audit.parentID}/${audit.childID}/${audit.reviewedAt}`, audit),
+            ])
+          })
           if (!policy.acknowledgeFollowup(audit.parentID, audit.childID, audit.outcome)) {
             throw new Error("background agent follow-up changed during audit persistence")
           }
@@ -361,7 +382,9 @@ export default Plugin.define({
     void (async () => {
       try {
         for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
-          if (event.type === "session.created") policy.sessionCreated(event.data.sessionID, event.data.parentID)
+          if (event.type === "session.created") {
+            if (policy.sessionCreated(event.data.sessionID, event.data.parentID)) await persistTasks()
+          }
           else if (event.type === "session.status") {
             if (!policy.isKnownChild(event.data.sessionID)) {
               const found = await ctx.session.get({ sessionID: event.data.sessionID }).catch(() => undefined)

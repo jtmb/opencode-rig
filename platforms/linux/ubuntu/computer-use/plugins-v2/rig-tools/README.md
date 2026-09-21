@@ -143,8 +143,12 @@ shortcut.
   `memoryReserveMiB` and `memoryPerAgentMiB` are finite positive integers. It
   reads `/proc/meminfo`, resolves the active cgroup and every bounded ancestor
   from `/proc/self/cgroup`, and returns requested/approved/recommended counts,
-  limiting source, limiting ancestor path, and byte/MiB evidence. Exhausted or
-  malformed finite ancestor metrics fail closed. The default per-agent budget models
+  limiting source, limiting ancestor path, byte/MiB evidence, and the effective
+  logical CPU count. A cgroup namespace root that advertises the memory
+  controller but intentionally omits root `memory.max` files is treated as an
+  opaque unlimited root; finite leaf and intermediate ancestors are still
+  enforced. Exhausted, missing intermediate, or malformed finite ancestor
+  metrics fail closed. The default per-agent budget models
   lightweight remote-model orchestration-session overhead; expensive local
   commands remain separately bounded and queued by `run-bounded-command.sh`.
   Invalid metrics fail closed to one and the hard maximum remains three.

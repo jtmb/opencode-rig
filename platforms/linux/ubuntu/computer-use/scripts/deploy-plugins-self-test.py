@@ -15,13 +15,13 @@ CATALOG_TOOL = Path(__file__).resolve().with_name("v2-plugin-catalog.py")
 COMPUTER_USE_ROOT = SCRIPT.parent.parent
 PLUGIN_ROOT = COMPUTER_USE_ROOT / "plugins-v2"
 SERVER_NAMES = ["orchestration-policy", "git-tool", "integrated-browser", "repo-learning", "rig-tools", "rig-todo", "codex-fallback"]
-CLI_NAMES = ["rig-todo", "repo-learning", "source-control", "codex-usage", "file-manager", "integrated-browser", "resource-monitor"]
+CLI_NAMES = ["rig-tools", "rig-todo", "repo-learning", "source-control", "codex-usage", "file-manager", "integrated-browser", "resource-monitor"]
 PACKAGE_ROLES = {
     "orchestration-policy": {"server"},
     "git-tool": {"server"},
     "integrated-browser": {"server", "cli"},
     "repo-learning": {"server", "cli"},
-    "rig-tools": {"server"},
+    "rig-tools": {"server", "cli"},
     "rig-todo": {"server", "cli"},
     "codex-fallback": {"server"},
     "source-control": {"cli"},
@@ -154,6 +154,24 @@ def main() -> int:
         cli_dir = tmp / "cli"
         run("--config-dir", str(cli_dir), "--plugins", "cli", "--apply")
         assert_selection(cli_dir, set(), set(CLI_NAMES))
+
+        split_dir = tmp / "split"
+        split_cli = tmp / "split-xdg" / "opencode" / "cli.json"
+        run(
+            "--config-dir", str(split_dir),
+            "--cli-config", str(split_cli),
+            "--plugins", "rig-tools",
+            "--apply",
+        )
+        if read_names(split_dir, "opencode.jsonc") != {"rig-tools"}:
+            raise AssertionError("split deployment omitted the rig-tools server role")
+        split_cli_data = load_jsonc(split_cli)
+        if {Path(entry["package"]).name for entry in split_cli_data["plugins"]} != {"rig-tools"}:
+            raise AssertionError("split deployment omitted the rig-tools CLI role")
+        if split_cli_data.get("session", {}).get("permissions") != "prompt":
+            raise AssertionError("split deployment omitted CLI prompt permissions")
+        if (split_dir / "cli.json").exists():
+            raise AssertionError("split deployment wrote a duplicate CLI config")
 
         both_dir = tmp / "both"
         run("--config-dir", str(both_dir), "--plugins", "both", "--apply")

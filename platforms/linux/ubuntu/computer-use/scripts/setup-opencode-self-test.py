@@ -6,9 +6,9 @@ from __future__ import annotations
 import os
 import json
 import importlib.util
-import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[5]
 SETUP = ROOT / "platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh"
 DEPLOY = ROOT / "platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh"
 ASSISTANT = ROOT / "platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh"
+MCP_RUNTIME = ROOT / "platforms/linux/ubuntu/computer-use/scripts/mcp_runtime.py"
 PARSER = ROOT / "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/scripts/install-parsers.mjs"
 HELPER = ROOT / "platforms/linux/ubuntu/computer-use/scripts/setup-opencode-jsonc.py"
 
@@ -33,31 +34,58 @@ def run(command: list[str], *, env: dict[str, str], check: bool = True) -> subpr
     return result
 
 
-def run_mcp_migration(assistant: Path, global_path: Path, project_path: Path) -> subprocess.CompletedProcess[str]:
-    text = assistant.read_text(encoding="utf-8")
-    start = text.index("global_mcp_config_path() {")
-    end = text.index("\nmcp_file_matches() {", start)
-    functions = text[start:end]
-    scripts = ROOT / "platforms/linux/ubuntu/computer-use/scripts"
-    values = {
-        "SCRIPT_DIR": scripts,
-        "PROJECT_CONFIG_JSON": project_path,
-        "OPENCODE_CONFIG_JSON": global_path.parent / "pilot.json",
-        "OPENCODE_CONFIG_JSONC": global_path,
-        "GITHUB_MCP_WRAPPER": scripts / "github-mcp.sh",
-        "BASIC_MEMORY_WRAPPER": scripts / "basic-memory-mcp.sh",
-        "LIVE_MCP_WRAPPER": scripts / "playwright-mcp.sh",
-    }
-    assignments = "\n".join(f"{key}={shlex.quote(str(value))}" for key, value in values.items())
-    conflict = 'has_conflicting_opencode_configs() { [ -f "$OPENCODE_CONFIG_JSON" ] && [ -f "$OPENCODE_CONFIG_JSONC" ]; }'
-    script = f"set -euo pipefail\n{assignments}\nfail() {{ printf '%s\\n' \"$*\" >&2; }}\n{conflict}\n{functions}\nmigrate_mcp_configs\n"
-    return subprocess.run(["bash", "-c", script], cwd=ROOT, text=True, capture_output=True, check=False, timeout=60)
+def run_mcp_config(path: Path, *, scope: str, apply: bool = False) -> subprocess.CompletedProcess[str]:
+    """Run canonical MCP configuration verification or normalization."""
+    command = [sys.executable, str(MCP_RUNTIME), "config", "--scope", scope, "--config", str(path)]
+    if apply:
+        command.append("--apply")
+    return subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False, timeout=60)
 
 
 test_root = Path(os.environ.get("OPENCODE_SETUP_TEST_ROOT", "/tmp/opencode"))
 test_root.mkdir(parents=True, exist_ok=True)
 with tempfile.TemporaryDirectory(prefix="opencode-setup-self-test-", dir=test_root) as temporary:
     root = Path(temporary)
+    basic_notes = root / "basic-memory-notes"
+    basic_notes.mkdir()
+    basic_config = root / "basic-memory-config.json"
+    basic_config.write_text(
+        json.dumps(
+            {
+                "projects": {
+                    "computer-assistant": {
+                        "path": str(basic_notes),
+                        "mode": "local",
+                    }
+                },
+                "default_project": "computer-assistant",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    basic_project_command = [
+        sys.executable,
+        str(MCP_RUNTIME),
+        "basic-project",
+        "--config",
+        str(basic_config),
+        "--notes",
+        str(basic_notes),
+        "--project",
+        "computer-assistant",
+    ]
+    assert subprocess.run(basic_project_command, cwd=ROOT, check=False).returncode == 0
+    wrong_default = json.loads(basic_config.read_text(encoding="utf-8"))
+    wrong_default["default_project"] = "main"
+    basic_config.write_text(json.dumps(wrong_default) + "\n", encoding="utf-8")
+    assert subprocess.run(basic_project_command, cwd=ROOT, check=False).returncode != 0
+    wrong_default["default_project"] = "computer-assistant"
+    wrong_default["projects"]["computer-assistant"]["path"] = str(root / "other-notes")
+    (root / "other-notes").mkdir()
+    basic_config.write_text(json.dumps(wrong_default) + "\n", encoding="utf-8")
+    assert subprocess.run(basic_project_command, cwd=ROOT, check=False).returncode != 0
+
     config = root / "config"
     parsers = root / "parsers"
     runtime = root / "runtime"
@@ -132,7 +160,7 @@ with tempfile.TemporaryDirectory(prefix="opencode-setup-self-test-", dir=test_ro
     assert negative_permissions.returncode != 0
     (config / "cli.json").write_bytes(verify_cli_bytes)
     assert len(server["plugins"]) == 7
-    assert len(cli["plugins"]) == 7
+    assert len(cli["plugins"]) == 8
     assert cli["session"]["permissions"] == "prompt"
     assert len(list((config / "skills").iterdir())) == 19
     assert sorted(path.name for path in (config / "commands").glob("*.md")) == ["deploy.md", "handoff.md", "promote-skills.md", "resume.md"]
@@ -149,8 +177,8 @@ with tempfile.TemporaryDirectory(prefix="opencode-setup-self-test-", dir=test_ro
     run([str(SETUP), "--config-dir", str(root / "default-config"), "--prepare"], env=default_env)
     assert default_parsers.is_dir()
 
-    # Migrate the actual legacy pilot shape through the real setup-computer
-    # migration function, without reading the live pilot.
+    # Normalize only global Basic Memory/GitHub declarations. The portable
+    # project config is verification-only and must remain byte-identical.
     pilot = root / "pilot"
     pilot.mkdir()
     global_config = pilot / "opencode.jsonc"
@@ -165,52 +193,48 @@ with tempfile.TemporaryDirectory(prefix="opencode-setup-self-test-", dir=test_ro
         '  },\n}\n',
         encoding="utf-8",
     )
-    project_config.write_text(
-        '{/* project JSONC */ "mcp": {"playwright": {"command": ["legacy-project"]}, '
-        '"servers": {"github": {"command": ["wrong"]}, "basic-memory": {}}}, '
-        '"model": "project/model",}\n',
-        encoding="utf-8",
-    )
+    project_config.write_bytes((ROOT / "opencode.json").read_bytes())
     os.chmod(global_config, 0o600)
     os.chmod(project_config, 0o640)
-    migrated = run_mcp_migration(ASSISTANT, global_config, project_config)
+    project_before = project_config.read_bytes()
+    migrated = run_mcp_config(global_config, scope="global", apply=True)
     assert migrated.returncode == 0, migrated.stderr
     migrated_global = _jsonc.load_jsonc(str(global_config))
-    migrated_project = _jsonc.load_jsonc(str(project_config))
     global_mcp = migrated_global["mcp"]
-    project_mcp = migrated_project["mcp"]
     assert set(global_mcp["servers"]) == {"github", "basic-memory", "unrelated"}
-    assert project_mcp["servers"].keys() == {"playwright"}
     assert global_mcp["timeout"] == {"startup": 12000}
     assert migrated_global["model"] == "keep/model"
-    assert migrated_project["model"] == "project/model"
     assert all(name not in global_mcp for name in ("github", "playwright", "basic-memory"))
-    assert all(name not in project_mcp for name in ("github", "playwright", "basic-memory"))
     assert global_mcp["servers"]["github"]["timeout"]["startup"] == 30000
-    assert migrated_project["mcp"]["servers"]["playwright"]["disabled"] is False
+    assert global_mcp["servers"]["github"]["type"] == "remote"
+    assert global_mcp["servers"]["github"]["url"] == "https://api.githubcopilot.com/mcp/"
+    assert all(
+        key not in global_mcp["servers"]["github"]
+        for key in ("authorization", "headers", "environment", "client_secret", "clientSecret", "token")
+    )
     assert (global_config.stat().st_mode & 0o777) == 0o600
     assert (project_config.stat().st_mode & 0o777) == 0o640
     first_global = global_config.read_bytes()
-    first_project = project_config.read_bytes()
-    assert run_mcp_migration(ASSISTANT, global_config, project_config).returncode == 0
+    assert run_mcp_config(global_config, scope="global", apply=True).returncode == 0
     assert global_config.read_bytes() == first_global
-    assert project_config.read_bytes() == first_project
-    assert not list(pilot.glob(".mcp.*"))
+    assert run_mcp_config(project_config, scope="project").returncode == 0
+    assert project_config.read_bytes() == project_before
+    rejected_project_apply = run_mcp_config(project_config, scope="project", apply=True)
+    assert rejected_project_apply.returncode != 0
+    assert project_config.read_bytes() == project_before
 
     malformed_global = pilot / "malformed.jsonc"
-    malformed_project = pilot / "malformed-project.json"
     malformed_global.write_text('{"mcp": {"github": 1, "github": 2}}\n', encoding="utf-8")
-    malformed_project.write_bytes(first_project)
-    before_malformed = malformed_project.read_bytes()
-    assert run_mcp_migration(ASSISTANT, malformed_global, malformed_project).returncode != 0
-    assert malformed_project.read_bytes() == before_malformed
+    malformed_before = malformed_global.read_bytes()
+    assert run_mcp_config(malformed_global, scope="global", apply=True).returncode != 0
+    assert malformed_global.read_bytes() == malformed_before
     outside = root / "migration-outside"
     outside.mkdir()
     sentinel = outside / "sentinel"
     sentinel.write_text("untouched", encoding="utf-8")
     symlink_global = pilot / "symlink.jsonc"
     symlink_global.symlink_to(sentinel)
-    assert run_mcp_migration(ASSISTANT, symlink_global, project_config).returncode != 0
+    assert run_mcp_config(symlink_global, scope="global", apply=True).returncode != 0
     assert sentinel.read_text(encoding="utf-8") == "untouched"
     symlink_global.unlink()
 
@@ -270,7 +294,7 @@ with tempfile.TemporaryDirectory(prefix="opencode-setup-self-test-", dir=test_ro
     os.chmod(stale / "cli.json", 0o640)
     run([str(SETUP), "--config-dir", str(stale), "--prepare"], env=env)
     run([str(DEPLOY), "--config-dir", str(stale), "--plugins", "all", "--apply"], env=env)
-    assert run_mcp_migration(ASSISTANT, stale / "opencode.jsonc", stale / "opencode.json").returncode == 0
+    assert run_mcp_config(stale / "opencode.jsonc", scope="global", apply=True).returncode == 0
     stale_health = run([str(SETUP), "--config-dir", str(stale), "--verify-only"], env=env)
     assert "OK: v2 deployment verified" in stale_health.stdout
     upgraded_server = _jsonc.load_jsonc(str(stale / "opencode.jsonc"))

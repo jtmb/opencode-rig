@@ -1,8 +1,8 @@
 # `playwright-mcp.sh` (Live Browser)
 
-Launches the pinned Playwright MCP in a **visible, shared Firefox window**. This
-is the `playwright` MCP that OpenCode registers project-only, and the browser
-the user and agent steer together during a session.
+Launches the canonical pinned Playwright MCP. Native Ubuntu uses a visible,
+isolated Firefox window; the WSL2 profile uses the same launcher with a private
+headless Chromium runtime root.
 
 ```bash
 ./platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh
@@ -13,15 +13,16 @@ The script is normally launched by OpenCode as an MCP server, not by hand.
 ## What it does
 
 1. Sets `umask 077` and `set -euo pipefail`.
-2. Resolves:
+2. For the native profile, resolves:
    - `NODE_BIN` = `~/.local/share/fnm/aliases/default/bin`
    - `PROJECT` = the sibling `browser-tools/` directory
    - `MCP` = `<PROJECT>/node_modules/.bin/playwright-mcp`
    - `OUTPUT` = `/tmp/opencode/playwright`
-3. Preflight: fails with a clear message if the fnm Node binary or the MCP
+3. In either profile, preflight fails with a clear message if a trusted Node
+   runner or the pinned MCP
    executable is missing. The missing-MCP message explains how to provision it
    with [`setup-computer-assistant.sh`](setup-computer-assistant.md).
-4. Creates `OUTPUT` and chmods it `700`.
+4. Creates the selected profile's output directory and chmods it `700`.
 5. Prepends the fnm Node directory to `PATH` and sets
    `PLAYWRIGHT_BROWSERS_PATH` to `<PROJECT>/browsers`, so the pinned Firefox is
    used rather than a system browser.
@@ -43,6 +44,8 @@ The script is normally launched by OpenCode as an MCP server, not by hand.
 | `--isolated` | A fresh, separate profile; no access to the user's normal Firefox profile, cookies, or tabs |
 | `--image-responses omit` | Do not return screenshots as image content, keeping the model context small |
 | `--output-dir` | Where transient browser output is written |
+| `--verify-only` | Check the selected profile's pinned runtime without starting MCP |
+| `--provision` | Provision the selected profile's pinned runtime/browser |
 
 ## Integration
 
@@ -50,6 +53,9 @@ The script is normally launched by OpenCode as an MCP server, not by hand.
   with `"type": "local"`, this wrapper as the command, and a 30 s timeout.
 - Project-only: it must not appear in the isolated Open Rig global
   configuration selected by `OPENCODE_CONFIG_DIR`.
+- WSL2 sets `OPENCODE_MCP_PROFILE=wsl2` and `OPENCODE_MCP_PROFILE_ROOT` from
+  its pilot. Its npm cache, browser cache, home, and output never use the native
+  profile root.
 - [`setup-computer-assistant.sh --verify-only`](setup-computer-assistant.md)
   confirms the entry resolves and `opencode mcp list` reports it connected.
 

@@ -25,6 +25,7 @@ const MUTATION_TOOLS = new Set([
   "repo_push",
   "shell",
   "subagent",
+  "task_complete",
   "write",
 ])
 
@@ -122,14 +123,18 @@ export type TaskCompletionInput = {
 
 export type CorrectionLedgerRecord = CorrectionLedgerInput & { acknowledgedAt: string }
 
+export type TaskChildRecord = {
+  sessionID: string
+  status: "active" | "awaiting_followup" | "reviewed"
+  outcome?: SubagentFollowupInput["outcome"]
+}
+
 export type TaskStateRecord = {
   parentID: string
   kind: TaskKind
   summary?: string
   declaredAt: string
-  childID?: string
-  childCompleted: boolean
-  followupOutcome?: SubagentFollowupInput["outcome"]
+  children: TaskChildRecord[]
   ledgers: Partial<Record<LedgerName, CorrectionLedgerRecord>>
   completedAt?: string
 }
@@ -339,6 +344,7 @@ function extractSessionIDs(value: unknown) {
 export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dependencies) {
   const options = parseOrchestrationPolicyOptions(rawOptions)
   const pending = new Map<string, string>()
+  const pendingChildren = new Map<string, string>()
   const reserving = new Map<string, string>()
   const knownChildren = new Set<string>()
   const deletedChildren = new Set<string>()
@@ -365,6 +371,9 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
 
   const followups = (parentID: string) => pendingFollowups.get(parentID) ?? new Set<string>()
 
+  const directLaunchInFlight = (parentID: string) =>
+    [...pending.values(), ...reserving.values()].some((pendingParent) => pendingParent === parentID)
+
   const addFollowup = (childID: string) => {
     const parentID = childParents.get(childID)
     if (!parentID) return false
@@ -387,6 +396,7 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
 
   const taskCopy = (task: TaskStateRecord): TaskStateRecord => ({
     ...task,
+    children: task.children.map((child) => ({ ...child })),
     ledgers: Object.fromEntries(Object.entries(task.ledgers).map(([name, value]) => [name, { ...value }])),
   })
 
@@ -404,10 +414,16 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
   const taskReadyError = (task: TaskStateRecord | undefined) => {
     if (!task) return "repository mutation blocked: call task_declare before repository work"
     if (task.completedAt) return "repository mutation blocked: task is complete; declare a new task"
-    if (!task.childID) return "repository mutation blocked: a direct background child is required"
-    if (!task.childCompleted) return "repository mutation blocked: the background child must complete"
-    if (task.followupOutcome !== "accepted") {
+    if (!task.children.length) return "repository mutation blocked: a direct background child is required"
+    const lastAccepted = task.children.findLastIndex(
+      (child) => child.status === "reviewed" && child.outcome === "accepted",
+    )
+    if (lastAccepted < 0) {
       return "repository mutation blocked: an accepted subagent_followup is required"
+    }
+    if (task.children.some((child, index) =>
+      index > lastAccepted && child.status === "reviewed" && child.outcome !== "accepted")) {
+      return "repository mutation blocked: a later changes-required or failed child needs an accepted replacement"
     }
     if (task.kind === "correction" && !ledgerComplete(task)) {
       return "repository mutation blocked: correction ledger acknowledgement is incomplete"
@@ -434,28 +450,40 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
 
   const markTaskChild = (parentID: string, childID: string) => {
     const task = tasks.get(parentID)
-    if (!task || task.completedAt) return
-    if (!task.childID || (task.followupOutcome !== undefined && task.followupOutcome !== "accepted")) {
-      task.childID = childID
-      task.childCompleted = false
-      delete task.followupOutcome
+    if (!task || task.completedAt || parentID === childID) return false
+    if (!task.children.some((child) => child.sessionID === childID)) {
+      task.children.push({ sessionID: childID, status: "active" })
+      return true
     }
+    return false
   }
 
   const markTaskCompletedChild = (childID: string) => {
     const parentID = childParents.get(childID)
     const task = parentID ? tasks.get(parentID) : undefined
-    if (!task || task.completedAt || task.childID !== childID || task.childCompleted) return false
-    task.childCompleted = true
+    const child = task?.children.find((entry) => entry.sessionID === childID)
+    if (!task || task.completedAt || !child || child.status !== "active") return false
+    child.status = "awaiting_followup"
+    delete child.outcome
     return true
   }
 
   const markTaskActiveChild = (childID: string) => {
     const parentID = childParents.get(childID)
     const task = parentID ? tasks.get(parentID) : undefined
-    if (!task || task.completedAt || task.childID !== childID) return
-    task.childCompleted = false
-    delete task.followupOutcome
+    const child = task?.children.find((entry) => entry.sessionID === childID)
+    if (!task || task.completedAt || !child) return
+    child.status = "active"
+    delete child.outcome
+  }
+
+  const bindChild = (parentID: string, childID: string) => {
+    if (childID === parentID || knownChildren.has(childID) || childParents.has(childID)) return false
+    if (!markTaskChild(parentID, childID)) return false
+    childParents.set(childID, parentID)
+    knownChildren.add(childID)
+    activeChildren.add(childID)
+    return true
   }
 
   const capacity = async () => {
@@ -502,11 +530,6 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
         const kind = entry?.kind
         if (typeof parentID !== "string" || !SESSION_ID.test(parentID) || !isTaskKind(kind)) continue
         if (tasks.has(parentID)) continue
-        const childID = typeof entry.childID === "string" && SESSION_ID.test(entry.childID) && entry.childID !== parentID
-          ? entry.childID
-          : undefined
-        if (childID && restoredChildren.has(childID)) continue
-        if (childID && childParents.has(childID) && childParents.get(childID) !== parentID) continue
         const rawLedgers = record(entry.ledgers)
         const ledgers: Partial<Record<LedgerName, CorrectionLedgerRecord>> = {}
         for (const ledger of LEDGERS) {
@@ -521,9 +544,60 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
             acknowledgedAt: value.acknowledgedAt,
           }
         }
-        const followupOutcome = ["accepted", "changes_required", "failed"].includes(String(entry.followupOutcome))
+        const legacyChildID = typeof entry.childID === "string" && SESSION_ID.test(entry.childID) && entry.childID !== parentID
+          ? entry.childID
+          : undefined
+        const legacyOutcome = entry.childCompleted === true && ["accepted", "changes_required", "failed"].includes(String(entry.followupOutcome))
           ? entry.followupOutcome as SubagentFollowupInput["outcome"]
           : undefined
+        if (!Array.isArray(entry.children) && entry.followupOutcome !== undefined &&
+          (!legacyOutcome || entry.childCompleted !== true || !legacyChildID)) continue
+        if (Array.isArray(entry.children) && entry.children.length > MAX_TASK_RECORDS) continue
+        const rawChildren = Array.isArray(entry.children)
+          ? entry.children
+          : legacyChildID
+            ? [{
+                sessionID: legacyChildID,
+                status: legacyOutcome ? "reviewed" : entry.childCompleted === true ? "awaiting_followup" : "active",
+                ...(legacyOutcome ? { outcome: legacyOutcome } : {}),
+              }]
+            : []
+        const children: TaskChildRecord[] = []
+        let invalidChildren = false
+        for (const item of rawChildren) {
+          const value = record(item)
+          if (!value) {
+            invalidChildren = true
+            break
+          }
+          const childID = value.sessionID
+          if (typeof childID !== "string" || !SESSION_ID.test(childID) || childID === parentID) {
+            invalidChildren = true
+            break
+          }
+          if (restoredChildren.has(childID) || children.some((child) => child.sessionID === childID)) {
+            invalidChildren = true
+            break
+          }
+          if (childParents.has(childID) && childParents.get(childID) !== parentID) {
+            invalidChildren = true
+            break
+          }
+          const status = value.status
+          if (status !== "active" && status !== "awaiting_followup" && status !== "reviewed") {
+            invalidChildren = true
+            break
+          }
+          const outcome = ["accepted", "changes_required", "failed"].includes(String(value.outcome))
+            ? value.outcome as SubagentFollowupInput["outcome"]
+            : undefined
+          if ((status === "reviewed") !== (outcome !== undefined)) {
+            invalidChildren = true
+            break
+          }
+          children.push({ sessionID: childID, status, ...(status === "reviewed" ? { outcome } : {}) })
+        }
+        if (invalidChildren) continue
         const task: TaskStateRecord = {
           parentID,
           kind,
@@ -531,18 +605,22 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
             ? { summary: entry.summary.slice(0, MAX_TASK_SUMMARY) }
             : {}),
           declaredAt: typeof entry.declaredAt === "string" ? entry.declaredAt : new Date(0).toISOString(),
-          ...(childID ? { childID } : {}),
-          childCompleted: entry.childCompleted === true || (childID !== undefined && pendingFollowups.get(parentID)?.has(childID) === true),
-          ...(followupOutcome ? { followupOutcome } : {}),
+          children,
           ledgers,
           ...(typeof entry.completedAt === "string" ? { completedAt: entry.completedAt } : {}),
         }
         tasks.set(parentID, task)
-        if (childID) {
+        for (const child of children) {
+          const childID = child.sessionID
           restoredChildren.add(childID)
           childParents.set(childID, parentID)
           knownChildren.add(childID)
-          if (!task.childCompleted && !task.completedAt && task.followupOutcome === undefined && !pendingFollowups.get(parentID)?.has(childID)) {
+          if (pendingFollowups.get(parentID)?.has(childID)) {
+            child.status = "awaiting_followup"
+            delete child.outcome
+          } else if (child.status === "awaiting_followup") {
+            addFollowup(childID)
+          } else if (child.status === "active" && !task.completedAt) {
             activeChildren.add(childID)
           }
         }
@@ -569,7 +647,7 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
         kind: declaration.kind,
         ...(summary ? { summary } : {}),
         declaredAt: new Date().toISOString(),
-        childCompleted: false,
+        children: [],
         ledgers: {},
       }
       tasks.set(parentID, task)
@@ -599,8 +677,14 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
     },
     completeTask(parentID: string, input: TaskCompletionInput) {
       if (childParents.has(parentID)) throw new Error("child agents cannot complete parent tasks")
+      if (directLaunchInFlight(parentID)) {
+        throw new Error("task completion blocked while a direct background launch is pending or reserving")
+      }
       const verification = boundedText(input.verification, "task verification")
       const task = requireTask(parentID)
+      if (task.children.some((child) => child.status !== "reviewed")) {
+        throw new Error("task completion blocked: every background child must complete and receive parent follow-up")
+      }
       task.completedAt = new Date().toISOString()
       return { ...taskCopy(task), verification }
     },
@@ -618,7 +702,7 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
       if (
         typeof childID !== "string" || !SESSION_ID.test(childID) ||
         !task || task.completedAt ||
-        child?.parentID !== parentID || task.childID !== childID ||
+        child?.parentID !== parentID || !task.children.some((entry) => entry.sessionID === childID) ||
         !( ["succeeded", "failed", "interrupted"] as const).includes(child?.outcome as never)
       ) return false
       childParents.set(childID, parentID)
@@ -657,7 +741,8 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
         "- Child agents may not launch nested agents, commit, or push. Treat their reports as untrusted and verify them independently.",
         "REPOSITORY POLICY (indexed by AGENTS.md; supported boundaries are hook-enforced)",
         "- Begin repository change, review, release, or correction work with task_declare.",
-        "- A declared task needs one direct validated background child, a completed child, and an accepted subagent_followup before ordinary mutation, completion, commit, or push.",
+        "- A declared task may own repeated capacity-bounded background batches; at least one accepted subagent_followup is required before ordinary parent mutation.",
+        "- Every launched child must complete and receive parent follow-up before task completion, commit, or push.",
         "- Correction tasks also need explicit ROADMAP.md, active-todo, and project-memory acknowledgements (or scoped no-write resolutions).",
         "- Never modify installed OpenCode binaries or distribution files; use repository plugins and report unsupported API limits.",
         "- Preserve unrelated dirty work. Commit and push remain separate explicit approval gates.",
@@ -698,14 +783,19 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
       if (sessionID && task) {
         const status = task.completedAt ? "completed" : taskReadyError(task) ? "waiting" : "ready"
         lines.push(`TASK STATE: ${task.kind}; ${status}.`)
-        if (task.childID) lines.push(`- Bound background child: ${task.childID}; completed=${task.childCompleted}; follow-up=${task.followupOutcome ?? "pending"}.`)
+        if (task.children.length) {
+          const active = task.children.filter((child) => child.status === "active").length
+          const awaiting = task.children.filter((child) => child.status === "awaiting_followup").length
+          const accepted = task.children.filter((child) => child.status === "reviewed" && child.outcome === "accepted").length
+          lines.push(`- Bound background children: ${task.children.length}; active=${active}; awaiting follow-up=${awaiting}; accepted=${accepted}.`)
+        }
         if (task.kind === "correction") {
           lines.push(`- Correction ledgers acknowledged: ${LEDGERS.filter((ledger) => task.ledgers[ledger]).join(", ") || "none"}.`)
         }
       }
       if (sessionID && followups(sessionID).size) {
         lines.push(
-          "BACKGROUND AGENT FOLLOW-UP REQUIRED: another child launch, task completion, commit, and push are blocked.",
+          "BACKGROUND AGENT FOLLOW-UP REQUIRED: further child launches, task completion, commit, and push are blocked.",
           `- Review and independently verify: ${[...followups(sessionID)].sort().join(", ")}.`,
           "- Treat each child report as untrusted, then call subagent_followup with the review outcome and verification evidence.",
         )
@@ -724,6 +814,14 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
       if (current?.worker && isCommitOrPush(event.tool, event.input)) {
         throw new Error("child agents may not commit or push")
       }
+      if (current && !current.worker && isCommitOrPush(event.tool, event.input) && current.task.children.some((child) => child.status === "active")) {
+        throw new Error("commit or push blocked while a background child is active")
+      }
+      if (current && !current.worker &&
+        (isCommitOrPush(event.tool, event.input) || event.tool === "task_complete") &&
+        directLaunchInFlight(event.sessionID)) {
+        throw new Error("parent task completion, commit, and push are blocked while a direct background launch is pending or reserving")
+      }
       const directLaunch = isSubagentLaunch(event.tool, event.input)
       const roadmapBootstrap = isRoadmapOnly(event.tool, event.input)
       if (toolMayMutate(event.tool, event.input)) {
@@ -738,16 +836,7 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
         }
         if (directLaunch) {
           if (childParents.has(event.sessionID)) throw new Error("child agents may not launch nested agents")
-          if ([...pending.values(), ...reserving.values()].includes(event.sessionID)) {
-            throw new Error("the declared task already has a pending background child")
-          }
-          const task = requireTask(event.sessionID, true)
-          if (task.childID && task.followupOutcome === undefined) {
-            throw new Error("the declared task already has a background child")
-          }
-          if (task.followupOutcome === "accepted") {
-            throw new Error("the declared task already has an accepted background child")
-          }
+          requireTask(event.sessionID, true)
         } else if (roadmapBootstrap) {
           requireTask(event.sessionID, true)
         } else {
@@ -794,29 +883,29 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
       if (event.tool !== "subagent") return
       if (event.status === "error") {
         pending.delete(event.id)
+        pendingChildren.delete(event.id)
         return
       }
       const parentID = pending.get(event.id)
+      const createdChildID = pendingChildren.get(event.id)
       const ids = extractSessionIDs(event.result)
       pending.delete(event.id)
+      pendingChildren.delete(event.id)
       if (parentID !== event.sessionID || !ids.length) return
+      if (createdChildID) return
       for (const id of ids) {
-        if (knownChildren.has(id) || childParents.has(id)) continue
-        childParents.set(id, parentID)
-        markTaskChild(parentID, id)
-        knownChildren.add(id)
-        activeChildren.add(id)
+        bindChild(parentID, id)
       }
     },
     sessionCreated(sessionID: string, parentID?: string) {
       session(sessionID)
-      if (!parentID || knownChildren.has(sessionID) || childParents.has(sessionID)) return
-      const launches = [...pending].filter(([, pendingParent]) => pendingParent === parentID)
-      if (launches.length !== 1) return
-      childParents.set(sessionID, parentID)
-      markTaskChild(parentID, sessionID)
-      knownChildren.add(sessionID)
-      activeChildren.add(sessionID)
+      if (!parentID || sessionID === parentID || knownChildren.has(sessionID) || childParents.has(sessionID)) return false
+      const launches = [...pending.entries()].filter(([, pendingParent]) => pendingParent === parentID)
+      if (launches.length !== 1) return false
+      const launchID = launches[0]![0]
+      if (pendingChildren.has(launchID) || !bindChild(parentID, sessionID)) return false
+      pendingChildren.set(launchID, sessionID)
+      return true
     },
     sessionStatus(sessionID: string, status: string) {
       if (deletedChildren.has(sessionID) || (!knownChildren.has(sessionID) && !childParents.has(sessionID))) return false
@@ -864,9 +953,10 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Dep
     acknowledgeFollowup(parentID: string, childID: string, outcome: SubagentFollowupInput["outcome"]) {
       activeChildren.delete(childID)
       const task = tasks.get(parentID)
-      if (task?.childID === childID) {
-        task.childCompleted = true
-        task.followupOutcome = outcome
+      const child = task?.children.find((entry) => entry.sessionID === childID)
+      if (child) {
+        child.status = "reviewed"
+        child.outcome = outcome
       }
       return removeFollowup(parentID, childID)
     },

@@ -8,8 +8,10 @@ import {
   compactReset,
   formatDetails,
   formatSnapshot,
+  providerCompactLine,
   providerPanelDetail,
   providerStatusLabel,
+  providerUsageSummary,
   relativeTime,
   usageUpdatedLabel,
 } from "../src/format.ts"
@@ -34,9 +36,12 @@ import {
   readOpenAICredential,
 } from "../src/usage.ts"
 
-test("provider usage coexists with plugins that replace sidebar content", async () => {
+test("provider usage stays before the native footer so working directory remains last", async () => {
   const source = await readFile(new URL("../src/tui.tsx", import.meta.url), "utf8")
-  assert.match(source, /append: "sidebar\.footer"/)
+  assert.match(source, /before: "sidebar\.footer"/)
+  assert.doesNotMatch(source, /append: "sidebar\.footer"/)
+  assert.match(source, /provider-usage-settings-v2[^\n]+collapsed: true/)
+  assert.doesNotMatch(source, /flexGrow=\{1\}/)
 })
 
 test("parses overall and model-specific usage windows", () => {
@@ -190,6 +195,46 @@ test("formats compact, stable provider panel labels", () => {
     status: "quota-exhausted",
     detail: "Insufficient balance (USD -0.15).",
   }), "Insufficient · USD -0.15")
+})
+
+test("formats one-line provider summaries without inventing unavailable measurements", () => {
+  const now = Date.UTC(2026, 8, 15, 12, 0, 0)
+  const snapshot = parseUsagePayload({
+    rate_limit: { secondary_window: { used_percent: 33, limit_window_seconds: 604800 } },
+    rate_limits_by_limit_id: {
+      base_model_inference: {
+        limit_name: "gpt-reserve",
+        primary_window: { used_percent: 48, limit_window_seconds: 604800 },
+      },
+    },
+  }, now)
+  assert.equal(providerCompactLine({
+    id: "codex",
+    label: "Codex",
+    status: "available",
+    detail: "Subscription quota available.",
+  }, snapshot), "Codex READY · Weekly 67% · Reserve 52%")
+  assert.equal(providerCompactLine({
+    id: "deepseek",
+    label: "DeepSeek",
+    status: "quota-exhausted",
+    detail: "Insufficient balance (USD 0.00).",
+  }), "DeepSeek EMPTY")
+  assert.equal(providerCompactLine({
+    id: "opencode-go",
+    label: "OpenCode Go",
+    status: "usage-unavailable",
+    detail: "Available in provider catalog.",
+  }), "OpenCode Go OFFLINE")
+})
+
+test("summarizes collapsed provider state in a stable native-sized header", () => {
+  assert.equal(providerUsageSummary([
+    { id: "codex", label: "Codex", status: "available", detail: "ready" },
+    { id: "deepseek", label: "DeepSeek", status: "quota-exhausted", detail: "empty" },
+    { id: "opencode-go", label: "OpenCode Go", status: "available", detail: "ready" },
+    { id: "opencode-zen", label: "OpenCode Zen", status: "unavailable", detail: "offline" },
+  ]), "2 ready · 1 empty · 1 offline")
 })
 
 test("reports provider availability without inventing balances", () => {

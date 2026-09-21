@@ -6,11 +6,12 @@ OpenCode's Ubuntu integration is split into three cooperating components.
 |-----------|-----------|----------------|
 | Computer use | [`computer-use/`](computer-use/) | GNOME control, skills, local plugins, memory, maintenance, setup, and live configuration |
 | Browser tools | [`browser-tools/`](browser-tools/) | Pinned Playwright MCP package for live and headless Firefox |
-| GitHub tools | [`github-tools/`](github-tools/) | Checksum-pinned official GitHub MCP native runtime |
+| GitHub tools | [`github-tools/`](github-tools/) | Optional checksum-pinned Source Control child-client runtime; not the generic MCP |
 
-The computer-use setup script provisions all components. Its Playwright and
-GitHub MCP wrappers resolve their generated runtimes relative to this platform
-directory, so the components must remain siblings.
+The computer-use setup script provisions the canonical local components and
+hosted GitHub declaration. Its Playwright wrapper resolves the generated native
+runtime relative to this platform directory; the optional Source Control child
+wrapper is separate and is not registered as the generic GitHub MCP.
 
 Run the read-only platform health check from the repository root:
 

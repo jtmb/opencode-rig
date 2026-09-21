@@ -1,7 +1,9 @@
 # Open Rig for Ubuntu
 
-This component supplies Open Rig's Ubuntu GNOME computer-use skills, v2 plugins,
-bounded MCP launchers, configuration examples, and verification scripts.
+This component supplies Open Rig's canonical Ubuntu computer-use skills, v2
+plugins, profile-aware bounded MCP launchers, configuration examples, and
+verification scripts. Ubuntu-on-WSL2 delegates its generic MCP surface here
+while keeping a separate profile, runtime, cache, and notes root.
 
 ## Supported environment
 
@@ -39,8 +41,8 @@ deployment registers canonical local packages.
 | `plugins-v2/` | Server and CLI plugin packages |
 | `config/` | v2 server/CLI examples and role catalog |
 | `scripts/` | Bounded setup, deployment, launch, and health checks |
-| `../browser-tools/` | Pinned Playwright runtime |
-| `../github-tools/` | Pinned GitHub MCP executable |
+| `../browser-tools/` | Native Ubuntu Playwright runtime |
+| `config/mcp-versions.json` | One shared Basic Memory/Playwright/OAuth policy |
 
 ## Configuration and operation
 
@@ -62,7 +64,10 @@ system overlay, Provider Usage details, and Explorer baseline have fresh
 standalone TTY evidence. Setup and deployment are verified in disposable config;
 provider data and visible-browser interaction remain runtime-dependent.
 
-Restart OpenCode after changing skills, MCP declarations, config, or plugins.
+The `github` MCP is GitHub's hosted OAuth endpoint; do not add a token,
+authorization header, or client secret to configuration. Complete sign-in from
+OpenCode's `/mcps` screen. Restart OpenCode after changing skills, MCP
+declarations, config, or plugins.
 Remove an individual plugin by removing its v2 registration object and
 restarting; the rest of the harness remains usable.
 

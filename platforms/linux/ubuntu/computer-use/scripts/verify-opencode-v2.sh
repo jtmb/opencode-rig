@@ -166,13 +166,30 @@ mcp = mcp_config.get("servers", {}) if isinstance(mcp_config, dict) else {}
 if not isinstance(mcp_config, dict) or not isinstance(mcp, dict):
     fail("mcp.servers is not an object")
 else:
-    github_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh")
     basic_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh")
     playwright_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh")
+    policy_path = os.path.join(repo, "platforms/linux/ubuntu/computer-use/config/mcp-versions.json")
+    try:
+        with open(policy_path, encoding="utf-8") as handle:
+            github_remote = json.load(handle)["githubRemote"]
+    except (OSError, ValueError, KeyError) as error:
+        github_remote = ""
+        failures.append(f"cannot read canonical MCP policy: {error}")
     portable_playwright_command = ["./platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"]
-    for name, wrapper in (("github", github_wrapper), ("basic-memory", basic_wrapper)):
+    portable_basic_command = ["./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"]
+    github = mcp.get("github")
+    if isinstance(github, dict) and github.get("type") == "remote" and github.get("url") == github_remote \
+            and github.get("disabled", False) is not True \
+            and not any(key in github for key in ("authorization", "headers", "environment", "client_secret", "clientSecret", "token")):
+        ok("global GitHub MCP uses the hosted OAuth endpoint")
+    else:
+        fail("global GitHub MCP is not the credential-free hosted OAuth endpoint")
+    for name, wrapper in (("basic-memory", basic_wrapper),):
         entry = mcp.get(name)
-        if isinstance(entry, dict) and entry.get("command") == [wrapper] and entry.get("disabled", False) is not True:
+        if isinstance(entry, dict) and (
+            entry.get("command") == [wrapper]
+            or (entry.get("command") == portable_basic_command and entry.get("cwd", ".") == ".")
+        ) and entry.get("disabled", False) is not True:
             ok(f"global {name} MCP declared with exact local wrapper")
         else:
             fail(f"global {name} MCP is not the exact enabled local wrapper")
@@ -195,6 +212,8 @@ else:
 project_mcp_config = project.get("mcp", {}) if isinstance(project, dict) else {}
 project_servers = project_mcp_config.get("servers", {}) if isinstance(project_mcp_config, dict) else {}
 project_playwright = project_servers.get("playwright") if isinstance(project_servers, dict) else None
+project_basic = project_servers.get("basic-memory") if isinstance(project_servers, dict) else None
+project_github = project_servers.get("github") if isinstance(project_servers, dict) else None
 project_command = project_playwright.get("command") if isinstance(project_playwright, dict) else None
 portable_cwd = project_playwright.get("cwd", ".") if isinstance(project_playwright, dict) else None
 if isinstance(project_playwright, dict) and (
@@ -204,8 +223,20 @@ if isinstance(project_playwright, dict) and (
     ok("project Playwright MCP uses the local wrapper")
 else:
     fail("project Playwright MCP is not the exact enabled local or workspace-relative wrapper")
-if isinstance(project_servers, dict) and any(name in project_servers for name in ("github", "basic-memory")):
-    fail("global-only MCP remains nested in project config")
+if isinstance(project_basic, dict) and project_basic.get("command") == portable_basic_command \
+        and project_basic.get("disabled", False) is not True:
+    ok("portable project Basic Memory MCP uses the workspace-relative wrapper")
+else:
+    fail("portable project Basic Memory MCP is not the exact enabled workspace-relative wrapper")
+if isinstance(project_github, dict) and project_github.get("type") == "remote" \
+        and project_github.get("url") == github_remote \
+        and project_github.get("disabled", False) is not True \
+        and not any(key in project_github for key in ("authorization", "headers", "environment", "client_secret", "clientSecret", "token")):
+    ok("portable project GitHub MCP uses the credential-free hosted OAuth endpoint")
+else:
+    fail("portable project GitHub MCP is not the credential-free hosted OAuth endpoint")
+if isinstance(project_servers, dict) and set(project_servers) != {"basic-memory", "github", "playwright"}:
+    fail(f"portable project MCP server set is not exactly canonical: {sorted(project_servers)}")
 if isinstance(project_mcp_config, dict) and any(name in project_mcp_config for name in ("github", "playwright", "basic-memory")):
     fail("legacy flat MCP key remains in project config")
 

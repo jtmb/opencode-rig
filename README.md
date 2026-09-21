@@ -5,11 +5,14 @@
 <p align="center"><strong>The autonomous agent harness for OpenCode.</strong><br>
 Give your AI agent eyes, hands, memory, tools, and the ability to operate your computer.</p>
 
-Open Rig is a modular Ubuntu computer-use harness for OpenCode. It combines
-skills, bounded MCP/runtime wrappers, v2 server and CLI plugins, setup scripts,
-and maintainer gates. Capability claims below describe repository code and
-checked configuration; provider availability and live UI behavior still depend
-on the target installation and fresh verification.
+Open Rig is a modular computer-use harness for OpenCode with native Ubuntu and
+Ubuntu-on-WSL2 profiles. Generic MCP/runtime ownership is canonical under
+`platforms/linux/ubuntu/computer-use`; WSL retains only its Windows/WSL
+interop package and isolated profile state. The project combines skills,
+bounded MCP/runtime wrappers, v2 server and CLI plugins, setup scripts, and
+maintainer gates. Capability claims below describe repository code and checked
+configuration; provider availability and live UI behavior still depend on the
+target installation and fresh verification.
 
 ## Current evidence boundary
 
@@ -107,13 +110,20 @@ The `/learn` backend and its package tests do not prove visible command
 rendering; its latest rendered body was blank pre-fix and remains
 broken/unverified until a fresh rendered and interaction check passes.
 
-## Supported boundary
+## Supported boundaries
 
-The checked target is Ubuntu 26.04.1 LTS amd64 with GNOME on Wayland,
+The checked native target is Ubuntu 26.04.1 LTS amd64 with GNOME on Wayland,
 OpenCode v2.0.7 (or a compatible v2 release validated by the checks), Node.js
 22.6+ for plugin checks, Python 3, `python3-pyatspi`, `ydotool`, and
 `wl-clipboard`. Other Linux distributions are not claimed as supported. Some
 workflows additionally use the optional Blender and NumPy installation.
+
+The independent Windows target is Ubuntu under WSL2 with systemd, Windows
+interoperability, OpenCode v2.0.7 through the rendered compatibility ceiling,
+and PowerShell 7 or Windows PowerShell. Its source provides isolated config,
+built-in web search, bounded PowerShell JSON-RPC, Windows UI Automation, and an
+additive native-preserving sidebar. Source checks do not substitute for live
+WSL2, Windows UI, provider-authentication, or rendered-TUI acceptance.
 
 ## Setup and verification
 
@@ -134,6 +144,24 @@ unless `--apply` is supplied. Restart the shared OpenCode service—not only the
 TUI—after changing skills, MCP declarations, configuration, or plugins; a TUI
 restart alone does not reload server plugin code.
 
+For Ubuntu under WSL2, use the independent profile and source verifier:
+
+```bash
+./platforms/windows/wsl2/ubuntu/computer-use/scripts/setup-opencode.sh --apply
+./platforms/windows/wsl2/ubuntu/computer-use/scripts/setup-mcps.sh --apply
+./platforms/windows/wsl2/ubuntu/computer-use/scripts/verify-wsl2.sh --source
+./platforms/windows/wsl2/ubuntu/computer-use/scripts/opencode-wsl2.sh
+```
+
+The WSL2 scripts never merge the repository's native-Ubuntu project config or
+native profile state. They delegate generic MCP source, declarations, and
+runtime verification to the canonical Ubuntu tree. Run `verify-wsl2.sh --live`
+inside the target distribution before claiming systemd, interoperability,
+PowerShell, Windows UI, web-search-provider, or rendered-sidebar acceptance.
+GitHub remains `needs_auth` until OAuth is completed from the isolated TUI's
+`/mcps` screen; Basic Memory and Playwright use the canonical launchers with
+separately provisioned local runtimes below the pilot.
+
 ## Safety and limits
 
 Desktop mutations use preview/apply tokens. Explorer operations enforce project
@@ -151,6 +179,7 @@ acceptance are not claimed complete merely because the package exists.
   evidence, boundaries, and known limits.
 - [Documentation index](docs/README.md)
 - [Ubuntu computer-use guide](platforms/linux/ubuntu/computer-use/README.md)
+- [Ubuntu-on-WSL2 computer-use guide](platforms/windows/wsl2/ubuntu/computer-use/README.md)
 - [v2 plugin workspace](platforms/linux/ubuntu/computer-use/plugins-v2/README.md)
 - [19-skill catalog](platforms/linux/ubuntu/computer-use/skills/README.md)
 

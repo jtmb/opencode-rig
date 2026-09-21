@@ -19,6 +19,7 @@ pieces fit together?*
 | Anyone evaluating or modifying v2 plugins | [`plugins/README.md`](plugins/README.md) |
 | Anyone provisioning or debugging the scripts | [`scripts/README.md`](scripts/README.md) |
 | A maintainer needing the complete current inventory | [`maintainer-features.md`](maintainer-features.md) |
+| An operator using Ubuntu under WSL2 | [`../platforms/windows/wsl2/ubuntu/computer-use/README.md`](../platforms/windows/wsl2/ubuntu/computer-use/README.md) |
 | An agent needing full behavioral detail | the per-file documents below |
 
 ## Contents
@@ -66,20 +67,22 @@ pieces fit together?*
 | Document | Covers |
 |----------|--------|
 | [`scripts/README.md`](scripts/README.md) | Index grouped by role plus the conventions every script follows |
-| [`scripts/setup-computer-assistant.md`](scripts/setup-computer-assistant.md) | Full-stack provisioning: system packages, skills, memory, browser and GitHub MCP runtimes |
+| [`scripts/setup-computer-assistant.md`](scripts/setup-computer-assistant.md) | Full-stack provisioning: system packages, skills, memory, browser runtime, and hosted GitHub MCP declaration |
 | [`scripts/setup-opencode.md`](scripts/setup-opencode.md) | Deploying skills, commands, custom tools, and v2 starting config into an isolated config directory |
 | [`scripts/setup-ponytail-plugin.md`](scripts/setup-ponytail-plugin.md) | Bounded install/update, private runtime verification, daily timer, rollback, disable, and uninstall for Ponytail |
 | [`scripts/deploy-plugins.md`](scripts/deploy-plugins.md) | Registering the local plugins globally or into a repository, plus the `/deploy` command and optional bootstrap copy |
 | [`scripts/setup-live-dictation.md`](scripts/setup-live-dictation.md) | Checksum-pinned Vosk dictation runtime and the `Alt+X` shortcut |
 | [`scripts/desktop-control.md`](scripts/desktop-control.md) | AT-SPI inspection and mutation with traversal bounds and short-lived target tokens |
 | [`scripts/basic-memory-mcp.md`](scripts/basic-memory-mcp.md) | The bounded Basic Memory MCP launcher: adaptive cgroup budget, prlimit fallback, and the nine exposed tools |
+| [`scripts/mcp_runtime.md`](scripts/mcp_runtime.md) | Canonical MCP policy, profile roots, trusted runners, and fail-closed runtime verification |
+| [`scripts/setup-mcps.md`](scripts/setup-mcps.md) | Canonical profile-aware MCP provisioning delegated by WSL2 |
 | [`scripts/check-skill-docs.md`](scripts/check-skill-docs.md) | Skill metadata/documentation validation and its negative self-test |
 | [`scripts/check-progress-tracking.md`](scripts/check-progress-tracking.md) | The mandatory todo-tracking gate: required rule surfaces, exit codes, and its negative self-test |
 | [`scripts/check-doc-coverage.md`](scripts/check-doc-coverage.md) | The documentation coverage gate: map rules, completeness, change-aware checks, and the exemption |
 | [`scripts/git-safety-gates.md`](scripts/git-safety-gates.md) | Repository-local git-safety and bounded-command gate checks with context-bound evidence |
 | [`scripts/setup-git-hooks.md`](scripts/setup-git-hooks.md) | Installing the pre-push hook that enforces the documentation gate |
 | [`scripts/playwright-mcp.md`](scripts/playwright-mcp.md) | The visible, user-shared Playwright Firefox launcher |
-| [`scripts/github-mcp.md`](scripts/github-mcp.md) | The pinned, write-capable, lockdown-protected GitHub MCP launcher |
+| [`scripts/github-mcp.md`](scripts/github-mcp.md) | Hosted GitHub MCP declaration plus the optional Source Control compatibility path |
 | [`scripts/opencode-db-maintain.md`](scripts/opencode-db-maintain.md) | Database statistics, event-log pruning, VACUUM, and hardening |
 | [`scripts/opencode-chat-backup.md`](scripts/opencode-chat-backup.md) | Full-fidelity chat export with a pruning manifest |
 | [`scripts/opencode-maintenance-cron.md`](scripts/opencode-maintenance-cron.md) | The weekly wrapper that combines backup and cleanup |
@@ -107,6 +110,11 @@ These conventions are stated once here rather than repeated in every document.
   instructs you to commit a secret value to the repository or to a config file.
 - **Restart to reload.** OpenCode does not hot-reload skills, MCP
   configuration, or plugins. Restart it after changing any of them.
+- **Platform ownership.** The WSL2 Ubuntu profile has its own server/CLI
+  configuration, interop plugin workspace, tests, and launcher. Generic MCP
+  declarations, launchers, provisioning, and version policy are canonical
+  under the Ubuntu computer-use tree; WSL delegates to them without sharing
+  native profile state or using symlinks.
 
 ## Related documentation
 
@@ -122,3 +130,8 @@ These conventions are stated once here rather than repeated in every document.
 - [`ROADMAP.md`](../ROADMAP.md) - implementation, automated-evidence, and pending live-acceptance ledger.
 - Component READMEs under `platforms/linux/ubuntu/` - install and troubleshooting
   for each component.
+- [`../platforms/windows/wsl2/ubuntu/computer-use/README.md`](../platforms/windows/wsl2/ubuntu/computer-use/README.md)
+  - isolated WSL2 setup, tools, security boundaries, and live-acceptance limits.
+- [`wsl2-acceptance-2026-09-21.md`](wsl2-acceptance-2026-09-21.md) - focused
+  WSL2 backend and historical pre-convergence MCP evidence with explicit
+  remaining limits.

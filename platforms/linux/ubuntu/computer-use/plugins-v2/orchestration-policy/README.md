@@ -12,9 +12,12 @@ capacity fails closed: the launch is denied rather than admitted optimistically.
 Child sessions are bound only to a pending direct launch and a validated
 `session.created` event or single serialized session ID.
 
-When a tracked background child becomes idle or is deleted, the parent session
-gets a persisted follow-up obligation. Another child launch, `repo_commit`, or
-`repo_push` is denied until the parent reviews the untrusted child report,
+One task may own repeated batches of background children. Up to three may run
+concurrently when both configured and live memory capacity permit; there is no
+one-child-total task gate. When a tracked child becomes idle or is deleted, the
+parent session gets a persisted follow-up obligation. Further child launches,
+task completion, `repo_commit`, or `repo_push` are denied until the parent
+reviews the untrusted child report,
 independently verifies the work, and records an `accepted`, `changes_required`,
 or `failed` result through `subagent_followup`. A child session cannot clear its
 parent's obligation. Pending parent/child pairs and completed audit records live
@@ -88,24 +91,27 @@ substitute for any of them:
 
 - `task_declare` starts one parent task (`change`, `review`, `release`, or
   `correction`).
-- `task_status` returns the persisted task record, including the bound child,
-  follow-up outcome, and correction ledgers.
-- `subagent` must be the direct tool call. The child must run in the
-  background and complete before the parent reviews it with
+- `task_status` returns the persisted task record, including every bound child,
+  per-child lifecycle/review state, and correction ledgers.
+- `subagent` must be the direct tool call. Children run in the background; the
+  policy admits as many as the live capacity allows, up to three concurrently.
+  Each child must complete before the parent reviews it with
   `subagent_followup`.
 - `correction_ledger_ack` records `updated` or scoped `no_write` evidence for
   `ROADMAP.md`, the active todo, and project-bound memory on correction tasks.
-- `task_complete` records verified completion after an accepted follow-up and,
-  for corrections, all three ledger acknowledgements.
+- `task_complete` records verified completion after at least one accepted
+  follow-up, follow-up for every other launched child, and, for corrections,
+  all three ledger acknowledgements.
 - `rule_reconciliation` clears a due project-memory gate after the bounded
   lookup and any required question-tool escalation.
 
-The parent state is `waiting` after declaration, `ready` after the child is
-idle/deleted and its follow-up is `accepted`, and `completed` after
-`task_complete`. A `changes_required` or `failed` follow-up permits a
-replacement child; it does not unlock ordinary parent mutation. Correction
-workers remain blocked until all required ledger acknowledgements exist, while
-non-correction workers may perform the declared task's repository work.
+The parent state is `waiting` after declaration, `ready` after any child is
+idle/deleted and its follow-up is `accepted`, and `completed` only after every
+bound child is reviewed and `task_complete` runs. A `changes_required` or
+`failed` follow-up permits replacement or supplemental children; it does not
+unlock ordinary parent mutation. Correction workers remain blocked until all
+required ledger acknowledgements exist, while non-correction workers may
+perform the declared task's repository work.
 
 ## Fail-closed and API boundaries
 

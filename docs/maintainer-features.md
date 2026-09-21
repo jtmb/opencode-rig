@@ -100,20 +100,22 @@ enforces explicit tool and session-lifecycle boundaries.
 
 ## MCP and runtime wrappers
 
-- `scripts/playwright-mcp.sh` launches the one registered visible Playwright
-  MCP. Explicit headless work uses the pinned browser runtime through bounded
-  shell execution, not a second MCP. The project-enabled standalone runtime
-  connects this MCP, but visible page interaction still requires an attached
-  desktop browser.
-- `scripts/github-mcp.sh` launches the pinned GitHub MCP runtime with bounded
-  toolsets and credential lookup outside the repository.
+- `scripts/playwright-mcp.sh` launches the one canonical profile-aware
+  Playwright MCP. Explicit headless work uses the pinned browser runtime
+  through bounded shell execution, not a second MCP. The project-enabled
+  standalone runtime connects this MCP, but visible page interaction still
+  requires an attached desktop browser.
+- `scripts/github-mcp.sh` is an optional Source Control child-client
+  compatibility launcher. It is not registered or provisioned by generic MCP
+  setup; the registered `github` MCP is GitHub's hosted OAuth endpoint.
 - `scripts/basic-memory-mcp.sh` launches Basic Memory under an adaptive memory
   budget; the v2 example permits the documented core note tools.
 - `scripts/desktop-control.py` supplies bounded AT-SPI inspection/mutation
   semantics used by the desktop tools.
 - `scripts/run-bounded-command.sh` contains resource-sensitive subprocesses.
-- `browser-tools/` and `github-tools/` contain the pinned runtime installations;
-  their launchers and checks are the integration boundary.
+- `browser-tools/` contains the native pinned runtime installation. The
+  optional `github-tools/` child-client runtime is outside generic MCP setup;
+  its launcher and checks are a separate Source Control compatibility boundary.
 
 ## Setup, deployment, and checking
 

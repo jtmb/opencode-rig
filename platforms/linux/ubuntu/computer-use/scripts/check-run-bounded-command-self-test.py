@@ -441,6 +441,14 @@ def main() -> int:
         if unsafe_run.returncode == 0 or "not private" not in unsafe_run.stderr:
             print("ERROR: unsafe runtime mode was accepted", file=sys.stderr)
             return 1
+        trailing_runtime = run(
+            [str(wrapper), "--", "/bin/true"],
+            {**fallback_env, "XDG_RUNTIME_DIR": f"{runtime}/"},
+        )
+        if trailing_runtime.returncode != 0:
+            print("ERROR: trailing-slash runtime directory rejected a safe lock", file=sys.stderr)
+            print(trailing_runtime.stderr, file=sys.stderr, end="")
+            return 1
         home = base / "home"
         home.mkdir(mode=0o700)
         home.chmod(0o700)

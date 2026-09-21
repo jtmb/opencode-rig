@@ -10,7 +10,10 @@
 | `deploy-plugins.sh` | [`deploy-plugins.md`](deploy-plugins.md) | Register v2 packages in an isolated config |
 | `verify-opencode-v2.sh` | [`verify-opencode-v2.md`](verify-opencode-v2.md) | Read-only v2 health check |
 | `setup-computer-assistant.sh` | [`setup-computer-assistant.md`](setup-computer-assistant.md) | Verify or configure Ubuntu computer-use dependencies |
-| `playwright-mcp.sh` | [`playwright-mcp.md`](playwright-mcp.md) | Launch the single visible Playwright MCP |
+| `mcp_runtime.py` | [`mcp_runtime.md`](mcp_runtime.md) | Own the canonical MCP policy, profile state, and runtime checks |
+| `setup-mcps.sh` | [`setup-mcps.md`](setup-mcps.md) | Provision or verify canonical profile-aware MCP runtimes |
+| `basic-memory-mcp.sh` | [`basic-memory-mcp.md`](basic-memory-mcp.md) | Launch bounded, profile-aware Basic Memory MCP |
+| `playwright-mcp.sh` | [`playwright-mcp.md`](playwright-mcp.md) | Launch the canonical profile-aware Playwright MCP |
 | `check-plugin-resource-guards.py` | [`check-plugin-resource-guards.md`](check-plugin-resource-guards.md) | Enforce bounded v2 package checks |
 | `check-git-safety-policy.py` | [`git-safety-gates.md`](git-safety-gates.md) | Validate the separate commit and push approval policy |
 | `check-acceptance-evidence.py` | [`check-acceptance-evidence.md`](check-acceptance-evidence.md) | Validate portable runtime, visual, interaction, and subagent evidence |
