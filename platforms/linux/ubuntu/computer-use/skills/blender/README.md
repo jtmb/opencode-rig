@@ -135,6 +135,9 @@ verification output is cleaned up.
   browser-ready GLB assets.
 - [`desktop-control`](../desktop-control/README.md) and
   [`desktop-vision`](../desktop-vision/README.md) support interactive Blender.
+- [`browser-assistant`](../browser-assistant/README.md) and
+  [`browser-headless`](../browser-headless/README.md) govern visible and
+  explicitly requested headless checks of browser-based output.
 - [`files-and-documents`](../files-and-documents/README.md) governs final local
   artifact organization.
 - The public Blender 5.0 manual documents

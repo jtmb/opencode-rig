@@ -9,9 +9,9 @@ metadata:
 
 # Live Browser
 
-Use the `playwright_browser_*` tools for interactive pages. They control one
-visible Firefox window shared by the user and agent for the current OpenCode
-session. Do not use the `playwright_headless_browser_*` tools in this mode.
+Use the connected `playwright` MCP browser tools for interactive pages. They
+control one visible Firefox window shared by the user and agent for the current
+OpenCode session. Do not launch the bounded headless runtime in this mode.
 
 This is a dedicated, isolated Playwright browser. It does not attach to the
 user's normal Firefox profile or inherit its cookies, history, or tabs. The

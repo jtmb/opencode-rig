@@ -52,8 +52,12 @@ general rule.
 | `onAdd` | Optional. When a matched file is **added**, at least one of these must also change (index/overview upkeep) |
 
 `docs` paths may use placeholders: `{stem}` (file name without extension),
-`{plugin}` (directory under `.../plugins/`), and `{skill}` (directory under
-`.../skills/`).
+`{plugin}` (directory under `.../plugins-v2/`), and `{skill}` (directory under
+`.../skills/`). The v2 plugin workspace
+(`platforms/linux/ubuntu/computer-use/plugins-v2/**`) is matched by a rule
+whose documentation is the workspace
+[`plugins-v2/README.md`](../../platforms/linux/ubuntu/computer-use/plugins-v2/README.md)
+rather than a per-plugin page.
 
 ### `rules` and `additional`
 
@@ -69,7 +73,9 @@ the browser manifests, the GitHub tools, the Git hooks, and the map itself. The
 single `additional` rule (`handoff`) requires `HANDOFF.md` to be updated
 whenever an environment-defining artifact changes: the map and hooks, CI
 workflows, global commands, plugin registration, the skills catalog, the
-setup/MCP/deploy scripts, the browser manifests, or the GitHub tools README.
+setup/MCP/deploy scripts (including `basic-memory-mcp.sh`,
+`setup-opencode.sh`, and `verify-opencode-v2.sh`), the browser manifests,
+or the GitHub tools README.
 
 ## Options
 

@@ -1,0 +1,135 @@
+// OpenCode v2 (2.0.x) server/project example. Copy only the relevant parts to
+// <repo>/opencode.json or the isolated Open Rig global opencode.jsonc.
+//
+// Configuration notes:
+// - Local packages use `plugins` object entries with an options object.
+// - MCP server names live under `mcp.servers`; timeout values are objects.
+// - Exactly ONE Playwright MCP is registered. Headless-only work runs through
+//   the repository Playwright runtime from the shell instead of a second MCP.
+// - Basic Memory runs through the bounded wrapper and hides 12 rarely used
+//   tools with `permissions` deny entries, leaving nine core note tools.
+// - The built-in `general` and `explore` subagents are model-configurable
+//   here. Replace example models with ones available from the installation.
+// - Build retains access to every configured subagent. Plan is restricted to
+//   read-only Explore subagents.
+// - Commit and push require separate primary-agent approvals. General and
+//   Explore subagents cannot perform either operation.
+// - Configure `codex-fallback.defaultChain` only with provider/model IDs that
+//   exist in the target installation; an empty options object leaves it inactive.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agents": {
+    "build": {
+      "permissions": [
+        { "action": "*", "resource": "*", "effect": "allow" },
+        { "action": "repo_commit", "resource": "*", "effect": "ask" },
+        { "action": "repo_push", "resource": "*", "effect": "ask" },
+        { "action": "shell", "resource": "git commit *", "effect": "deny" },
+        { "action": "shell", "resource": "git push *", "effect": "deny" },
+        { "action": "shell", "resource": "git -C * commit *", "effect": "deny" },
+        { "action": "shell", "resource": "git -C * push *", "effect": "deny" }
+      ]
+    },
+    "plan": {
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+        { "action": "subagent", "resource": "explore", "effect": "allow" },
+         { "action": "shell", "resource": "git commit *", "effect": "deny" },
+         { "action": "shell", "resource": "git push *", "effect": "deny" },
+         { "action": "repo_commit", "resource": "*", "effect": "deny" },
+         { "action": "repo_push", "resource": "*", "effect": "deny" }
+      ]
+    },
+    "explore": {
+      "mode": "subagent",
+      "model": "openai/gpt-5.6-luna#max",
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+         { "action": "shell", "resource": "git commit *", "effect": "deny" },
+         { "action": "shell", "resource": "git push *", "effect": "deny" },
+         { "action": "repo_commit", "resource": "*", "effect": "deny" },
+         { "action": "repo_push", "resource": "*", "effect": "deny" }
+      ]
+    },
+    "general": {
+      "mode": "subagent",
+      "model": "openai/gpt-5.6-luna#max",
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+         { "action": "shell", "resource": "git commit *", "effect": "deny" },
+         { "action": "shell", "resource": "git push *", "effect": "deny" },
+         { "action": "repo_commit", "resource": "*", "effect": "deny" },
+         { "action": "repo_push", "resource": "*", "effect": "deny" }
+      ]
+    }
+  },
+  "mcp": {
+    "timeout": { "startup": 30000 },
+    "servers": {
+      "github": {
+        "type": "local",
+        "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"]
+      },
+      "playwright": {
+        "type": "local",
+        "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"]
+      },
+      "basic-memory": {
+        "type": "local",
+        "command": ["/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"]
+      }
+    }
+  },
+  "permissions": [
+    { "action": "repo_commit", "resource": "*", "effect": "ask" },
+    { "action": "repo_push", "resource": "*", "effect": "ask" },
+    { "action": "shell", "resource": "git commit *", "effect": "deny" },
+    { "action": "shell", "resource": "git push *", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * commit *", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push *", "effect": "deny" },
+    { "action": "basic-memory_read_content", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_view_note", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_move_note", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_create_memory_project", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_delete_project", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_list_memory_projects", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_list_workspaces", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_schema_validate", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_schema_infer", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_schema_diff", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_search", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_fetch", "resource": "*", "effect": "deny" }
+  ],
+  "plugins": [
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy",
+      "options": {
+        "backgroundOnly": true,
+        "maxConcurrent": 3,
+        "allowedAgents": ["explore", "general"],
+        "allowedModels": ["openai/gpt-5.6-luna#max", "openai/gpt-5.6-sol#xhigh", "openai/gpt-6-astra#max"],
+        "enforceAgentIndex": true,
+        "reconciliationIntervalTurns": 10,
+        "memoryProject": "computer-assistant",
+        "memoryDirectory": "/home/james/Documents/computer-assistant/basic-memory",
+        "memoryBindings": ["open-rig", "opencode-rig"],
+        "memoryReserveMiB": 512,
+        "memoryPerAgentMiB": 256
+      }
+    },
+    { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/git-tool", "options": {} },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser",
+      "options": {
+        "runtimeRoot": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/browser-tools"
+      }
+    },
+    { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/repo-learning", "options": {} },
+    { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools", "options": { "requiredPaths": ["HANDOFF.md", "ROADMAP.md"] } },
+    { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo", "options": {} },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback",
+      "options": {}
+    }
+  ]
+}

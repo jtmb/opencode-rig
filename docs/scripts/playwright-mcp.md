@@ -48,8 +48,8 @@ The script is normally launched by OpenCode as an MCP server, not by hand.
 
 - Registered as the MCP named `playwright` in the **project** `opencode.json`
   with `"type": "local"`, this wrapper as the command, and a 30 s timeout.
-- Project-only: it must not appear in the global `~/.config/opencode`
-  configuration.
+- Project-only: it must not appear in the isolated Open Rig global
+  configuration selected by `OPENCODE_CONFIG_DIR`.
 - [`setup-computer-assistant.sh --verify-only`](setup-computer-assistant.md)
   confirms the entry resolves and `opencode mcp list` reports it connected.
 
@@ -74,8 +74,6 @@ The script never prints secrets and never falls back to a system browser.
 
 ## Related
 
-- [`playwright-headless-mcp.md`](playwright-headless-mcp.md) — the isolated
-  invisible browser for explicitly non-interactive work.
 - [`setup-computer-assistant.md`](setup-computer-assistant.md) — installs the
   runtime and registers the MCP.
 - `browser-tools/README.md` — the pinned package.

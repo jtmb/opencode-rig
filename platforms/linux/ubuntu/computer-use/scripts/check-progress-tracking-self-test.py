@@ -15,13 +15,19 @@ from pathlib import Path
 
 AGENTS = """# AGENTS.md fixture
 
-## Progress Tracking
+- [Agent policy](docs/agent-policy.md)
+"""
 
+POLICY = """# Agent policy
+
+## Work and progress
+
+- Add requested work to ROADMAP.md.
 - Track work with the todo tool: keep exactly one item in_progress and mark an
   item completed only after its verification passes.
 """
 
-AGENTS_WITHOUT_MARKER = AGENTS.replace("in_progress", "running")
+POLICY_WITHOUT_MARKER = POLICY.replace("in_progress", "running")
 
 RESUME = """Resume steps.
 
@@ -34,8 +40,16 @@ HANDOFF = """Prompt.
 """
 
 
-def build(root: Path, agents: str = AGENTS, resume: str = RESUME, handoff: str = HANDOFF) -> None:
+def build(
+    root: Path,
+    agents: str = AGENTS,
+    policy: str = POLICY,
+    resume: str = RESUME,
+    handoff: str = HANDOFF,
+) -> None:
     (root / "AGENTS.md").write_text(agents, encoding="utf-8")
+    (root / "docs").mkdir()
+    (root / "docs/agent-policy.md").write_text(policy, encoding="utf-8")
     (root / "HANDOFF.md").write_text(handoff, encoding="utf-8")
     commands = root / "platforms/linux/ubuntu/computer-use/commands"
     commands.mkdir(parents=True, exist_ok=True)
@@ -55,8 +69,8 @@ def main() -> int:
     checker = Path(__file__).resolve().parent / "check-progress-tracking.py"
     cases = [
         ("compliant fixture", {}, 0),
-        ("missing AGENTS section", {"agents": "# AGENTS.md fixture\n"}, 1),
-        ("AGENTS section without in_progress", {"agents": AGENTS_WITHOUT_MARKER}, 1),
+        ("missing AGENTS policy link", {"agents": "# AGENTS.md fixture\n"}, 1),
+        ("policy section without in_progress", {"policy": POLICY_WITHOUT_MARKER}, 1),
         ("resume without todo", {"resume": "Resume steps.\n"}, 1),
         ("handoff without todo", {"handoff": "Prompt.\n"}, 1),
     ]

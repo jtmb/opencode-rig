@@ -22,11 +22,11 @@ redistributing the adaptation. The applicable license text is in
 
 ## Browser mode
 
-- Use visible `playwright_browser_*` tools for normal interactive playtests.
-  The user and agent share that isolated Firefox window.
-- Use `playwright_headless_browser_*` only when the user explicitly requests a
-  headless/background test. Headless visual output and input timing may differ,
-  so identify that mode in the report.
+- Use the connected live Playwright tools for normal interactive playtests. The
+  user and agent share that isolated Firefox window.
+- Load `browser-headless` and use its pinned bounded runtime only when the user
+  explicitly requests a headless/background test. Headless visual output and
+  input timing may differ, so identify that mode in the report.
 - Do not fall back to desktop coordinate clicking for a browser page. If the
   Playwright MCP is unavailable, inspect `opencode mcp list` and report the
   actual startup error.

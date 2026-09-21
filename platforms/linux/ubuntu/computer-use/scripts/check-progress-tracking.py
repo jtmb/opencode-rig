@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Enforce that the mandatory progress-tracking rule stays present and wired.
+"""Enforce that the indexed progress-tracking rule stays present and wired.
 
 The repository requires multi-step work to be tracked with the todo tool.
 That rule only works while the operating surfaces that define it stay
 current, so this gate fails when any of them drops the requirement:
 
-- the `## Progress Tracking` section in `AGENTS.md`,
+- the policy link in the root `AGENTS.md` index,
+- the `## Work and progress` section in `docs/agent-policy.md`,
 - the progress step in the `/resume` command,
 - the operating expectation in the `HANDOFF.md` copy-paste prompt.
 
@@ -22,8 +23,9 @@ import argparse
 import sys
 from pathlib import Path
 
-AGENTS_HEADING = "## Progress Tracking"
-AGENTS_MARKERS = ("todo tool", "in_progress", "completed")
+AGENTS_POLICY_LINK = "(docs/agent-policy.md)"
+POLICY_HEADING = "## Work and progress"
+POLICY_MARKERS = ("todo tool", "in_progress", "completed", "roadmap.md")
 RESUME_MARKERS = ("todo",)
 HANDOFF_MARKERS = ("todo tool",)
 
@@ -61,20 +63,22 @@ def require_markers(path: Path, root: Path, markers: tuple[str, ...]) -> list[st
 def check_root(root: Path) -> list[str]:
     failures: list[str] = []
 
-    agents = root / "AGENTS.md"
+    failures.extend(require_markers(root / "AGENTS.md", root, (AGENTS_POLICY_LINK,)))
+
+    policy = root / "docs/agent-policy.md"
     try:
-        agents_text = agents.read_text(encoding="utf-8")
+        policy_text = policy.read_text(encoding="utf-8")
     except OSError as exc:
-        failures.append(f"AGENTS.md: cannot read ({exc})")
+        failures.append(f"{policy.relative_to(root)}: cannot read ({exc})")
     else:
-        body = section_body(agents_text, AGENTS_HEADING)
+        body = section_body(policy_text, POLICY_HEADING)
         if body is None:
-            failures.append(f"AGENTS.md: missing '{AGENTS_HEADING}' section")
+            failures.append(f"{policy.relative_to(root)}: missing '{POLICY_HEADING}' section")
         else:
             lowered = body.lower()
             failures.extend(
-                f"AGENTS.md: progress section must mention '{marker}'"
-                for marker in AGENTS_MARKERS
+                f"{policy.relative_to(root)}: progress section must mention '{marker}'"
+                for marker in POLICY_MARKERS
                 if marker.lower() not in lowered
             )
 
@@ -105,7 +109,7 @@ def main() -> int:
             print(f"ERROR: {failure}", file=sys.stderr)
         return 1
 
-    print("OK: progress-tracking requirement present in AGENTS.md, /resume, and HANDOFF.md")
+    print("OK: progress tracking indexed in AGENTS.md and present in agent policy, /resume, and HANDOFF.md")
     return 0
 
 

@@ -26,7 +26,8 @@ The agent checks:
 - the exact game URL and build/commit under test
 - documented controls, main verbs, and expected states
 - the project's existing start command and lockfile for local games
-- `opencode mcp list` when Playwright availability is uncertain
+- `opencode mcp list` when visible Playwright availability is uncertain, or
+  the pinned repository runtime when headless mode was explicitly requested
 - whether normal visible Firefox or explicitly requested headless Firefox is in
   scope
 
@@ -95,8 +96,9 @@ representative steps; they were not executed while creating the skill.
   user takeover.
 - Pointer lock or gesture cannot be automated reliably: use bounded user
   takeover, then inspect fresh state after handoff.
-- Playwright unavailable: inspect the registered MCP and report its actual
-  startup error; do not switch to blind desktop clicking.
+- Playwright unavailable: for visible mode, inspect the registered MCP and
+  report its actual startup error; for headless mode, verify the pinned browser
+  package and Firefox installation. Do not switch to blind desktop clicking.
 - Nondeterministic animation or physics: use a known deterministic test surface
   if the project already provides one, otherwise report frequency and evidence
   without claiming certainty.

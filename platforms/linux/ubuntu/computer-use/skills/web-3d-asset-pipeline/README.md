@@ -28,6 +28,8 @@ The agent checks, without installing anything:
 - the project's asset conventions and budgets
 - the installed DCC/exporter version when a DCC is needed
 - the available visible `playwright` MCP for interactive Firefox validation
+- the pinned bounded browser runtime when headless validation was explicitly
+  requested
 - any existing, approved, pinned optimization command
 
 There is no assumed Blender MCP server. If Blender is used, the agent loads the
@@ -114,6 +116,8 @@ and security controls are not weakened.
   after the asset loads.
 - [`browser-assistant`](../browser-assistant/README.md) governs the visible
   Playwright Firefox session.
+- [`browser-headless`](../browser-headless/README.md) governs explicitly
+  requested non-interactive validation through the pinned bounded runtime.
 - [`files-and-documents`](../files-and-documents/README.md) governs local
   artifact preservation and organization.
 - [PROVENANCE.md](./PROVENANCE.md) records the exact OpenAI upstream and

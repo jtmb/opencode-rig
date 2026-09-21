@@ -13,9 +13,11 @@ REQUIRED_SCRIPTS = ("typecheck", "test")
 
 
 def package_paths(root: Path) -> list[Path]:
-    plugin_root = root / "platforms/linux/ubuntu/computer-use/plugins"
-    tools_package = root / "platforms/linux/ubuntu/computer-use/tools/package.json"
-    return sorted(plugin_root.glob("*/package.json")) + [tools_package]
+    computer_use = root / "platforms/linux/ubuntu/computer-use"
+    v2_root = computer_use / "plugins-v2"
+    return (
+        sorted(v2_root.glob("*/package.json"))
+    )
 
 
 def main() -> int:

@@ -18,9 +18,9 @@ the pinned Game Studio manifest. The standard license text is preserved in
 
 - Replaced plugin-specific and unavailable references with a self-contained
   Ubuntu/OpenCode workflow.
-- Mapped browser validation to this repository's visible
-  `playwright_browser_*` tools and explicit-only
-  `playwright_headless_browser_*` tools.
+- Mapped browser validation to this repository's connected live Playwright
+  tools and the explicit-only bounded runtime documented by the
+  `browser-headless` skill.
 - Added source preservation, versioned output, confirmation, upload, temporary
   file, and Firefox screenshot rules from this repository's safety policy.
 - Added explicit pivot, units, transform, naming, hierarchy, material, texture,

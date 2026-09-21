@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-labelledby="title desc" color="#E8EEF4">
+  <title id="title">Open Rig mark for dark backgrounds</title>
+  <desc id="desc">An open structural frame with a connected module.</desc>
+  <path fill="currentColor" d="M28 10H24V8H8V24H24V22H28V28H4V4H28Z"/>
+  <path fill="currentColor" d="M14 14H24V12H30V20H24V18H14Z"/>
+</svg>

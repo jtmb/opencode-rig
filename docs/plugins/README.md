@@ -1,321 +1,79 @@
-# Local Plugins
+# OpenCode v2 plugins
 
-The repository ships five local OpenCode plugins. They are ordinary npm
-packages that live in the repository and are loaded directly from source; they
-are **not** deployed by the setup scripts and are **not** published to npm.
+Open Rig uses twelve local OpenCode v2 packages. They are modular additions to the
+server and CLI surfaces, registered from isolated v2 configuration and loaded
+from canonical paths in this checkout.
 
-| Plugin | Kind | Directory | Purpose |
-|--------|------|-----------|---------|
-| [`codex-usage`](codex-usage.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/codex-usage/` | Collapsible sidebar panel showing weekly ChatGPT Codex quota and optional Luna Reserve remaining usage |
-| [`codex-fallback`](codex-fallback.md) | Server | `platforms/linux/ubuntu/computer-use/plugins/codex-fallback/` | Transparent failover from the Codex subscription to a configurable chain of any OpenCode providers when the quota runs out |
-| [`source-control`](source-control.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/source-control/` | Working-tree changes and the current branch's GitHub pull request in the session sidebar |
-| [`tui-settings`](tui-settings.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/tui-settings/` | Settings overlay for appearance, display, plugins, source control, and sidebar positioning |
-| [`file-manager`](file-manager.md) | TUI | `platforms/linux/ubuntu/computer-use/plugins/file-manager/` | Full-screen project tree, quick-open, and an in-TUI editor with explicit saves |
+| Package | Role | Provides |
+|---|---|---|
+| [`orchestration-policy`](../../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md) | server | Hook-enforced subagents, policy-index validation, installed-binary protection, and project-memory reconciliation |
+| [`git-tool`](../../platforms/linux/ubuntu/computer-use/plugins-v2/git-tool/README.md) | server | Bounded read-only unified diffs through OpenCode's native VCS API |
+| [`integrated-browser`](../../platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser/README.md) | server + CLI | Bounded external headed Chromium window with a shared per-session BrowserContext |
+| [`repo-learning`](../../platforms/linux/ubuntu/computer-use/plugins-v2/repo-learning/README.md) | server + CLI | Explicitly enabled structured observation and a read-only review panel |
+| [`rig-tools`](../../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md) | server | Desktop/vision tools, repository gates, capacity checks, OpenCode API/runtime/TTY management, `/tools`, and bounded cross-session context with `/session-context` |
+| [`rig-todo`](../../platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/README.md) | server + CLI | Todo tools and the live Todo panel |
+| [`codex-fallback`](../../platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback/README.md) | server | Quota-aware provider fallback routing |
+| [`source-control`](../../platforms/linux/ubuntu/computer-use/plugins-v2/source-control/README.md) | CLI | Working-tree and optional PR status panel |
+| [`codex-usage`](provider-usage.md) | CLI | Provider Usage panel for Codex quota, DeepSeek balance, and OpenCode Zen status |
+| [`file-manager`](../../platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/README.md) | CLI | Docked Explorer tree, viewer, and explicit-save editor |
+| [`resource-monitor`](../../platforms/linux/ubuntu/computer-use/plugins-v2/resource-monitor/README.md) | CLI | Per-TUI CPU and RAM footer status |
+| [`ponytail-adapter`](ponytail.md) | server | OpenCode v2 bridge for the official Ponytail commands, skills, and per-session modes |
 
-## TUI vs. server plugins
+The bounded GNU Screen acceptance tool exposed by `rig-tools` has a separate
+usage and safety guide at [`screen-terminal.md`](screen-terminal.md).
 
-OpenCode has two distinct plugin surfaces, and these packages target one each.
+The Ponytail bridge has a separate compatibility and lifecycle guide at
+[`ponytail.md`](ponytail.md), including its V1-only upstream boundary and
+bounded update procedure.
 
-- A **TUI plugin** runs inside the terminal UI. It can register sidebar slots,
-  command-palette entries, slash commands, dialogs, toasts, and key-value
-  storage, and it can subscribe to TUI events. `codex-usage` is a TUI plugin
-  whose entry point is `src/tui.tsx`.
-- `source-control` is also a TUI plugin. It uses the VCS client for local
-  status, the built-in diff route for file activation, and a bounded child MCP
-  client for optional GitHub pull-request status. Its `src/options.ts`
-  normalizes the registration options, re-reads the runtime kv overrides on
-  each poll tick, and runs the one-time minimized-start migration.
-- `tui-settings` is a TUI plugin that renders a `Settings` row and a drill-down
-  overlay over the host `DialogSelect`/`DialogAlert` components. It edits host
-  display keys, dispatches the built-in theme and plugin managers, tunes the
-  `source-control` runtime keys, and positions the harness sidebar panels.
-- `file-manager` is a TUI plugin that registers a full-screen `files` route and
-  an `Explorer` row. It loads the project tree lazily through
-  `client.file.list`, searches with `client.find.files`, renders files with
-  `line_number` + `code` highlighting, and edits with a `textarea` that saves
-  atomically through `node:fs` under a `realpath` containment check.
-- A **server plugin** runs in the OpenCode server. It can hook config
-  resolution, message assembly, outbound request parameters, and the event
-  stream, and it can call the client API (sessions, providers, TUI). It has no
-  rendering surface of its own. `codex-fallback` is a server plugin whose entry
-  point is `src/index.ts`.
-
-The TUI plugins are registered in `tui.json`, while the server plugin is
-registered in `opencode.jsonc` (see below), so enabling one does not enable the
-others. The Codex sidebar and router are designed to work together; source
-control is independent and adds local and GitHub working-tree context.
+OpenCode's built-in `/settings` supplies host settings; no separate settings
+package is required. The canonical role catalog is
+[`config/v2-plugin-roles.json`](../../platforms/linux/ubuntu/computer-use/config/v2-plugin-roles.json).
+The separately managed `ponytail-adapter` is intentionally not in that general
+role catalog; `setup-ponytail-plugin.sh` owns its package, registration, and
+update timer.
 
 ## Registration
 
-Both registrations are **user-owned** files. The setup scripts do not create or
-verify them, and editing them requires a restart.
-
-### `codex-usage` (TUI)
-
-Register the source file in `~/.config/opencode/tui.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": [
-    [
-      "file:///absolute/path/to/codex-usage/src/tui.tsx",
-      { "refreshMs": 60000, "timeoutMs": 10000 }
-    ]
-  ]
-}
-```
-
-### `codex-fallback` (server)
-
-Register the plugin in the `plugin` array of `~/.config/opencode/opencode.jsonc`:
+Server packages are listed in `opencode.jsonc`; CLI packages are listed in
+`cli.json`. Local packages use the object form, not a bare npm name:
 
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    [
-      "file:///absolute/path/to/codex-fallback/src/index.ts",
-      {
-        "defaultChain": [
-          "deepseek/deepseek-v4-flash",
-          "deepseek/deepseek-v4-pro",
-          "opencode/muse-spark-1.3-contributor-free"
-        ],
-        "proactive": true,
-        "notify": true
-      }
-    ]
+  "plugins": [
+    { "package": "/absolute/path/to/plugins-v2/rig-tools", "options": {} }
   ]
 }
 ```
 
-Both forms use the `[moduleURL, options]` tuple. The second element is passed to
-the plugin factory as its raw options object and is normalized internally.
-Omitting the options object is valid; every option has a default.
+The complete shapes are [`v2-opencode.example.jsonc`](../../platforms/linux/ubuntu/computer-use/config/v2-opencode.example.jsonc) and [`v2-cli.example.json`](../../platforms/linux/ubuntu/computer-use/config/v2-cli.example.json). A package can be removed by deleting its object from the relevant `plugins` array and restarting OpenCode.
 
-### `source-control` (TUI)
+## Surfaces and safety
 
-Register the source file in `~/.config/opencode/tui.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": [
-    [
-      "file:///absolute/path/to/source-control/src/tui.tsx",
-      { "github": true }
-    ]
-  ]
-}
-```
-
-The deployment script also supports `--plugins source-control` and
-`--plugins all`. Registration is user-owned and takes effect after restart.
-
-### `tui-settings` (TUI)
-
-Register the source file in `~/.config/opencode/tui.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": [
-    [
-      "file:///absolute/path/to/tui-settings/src/tui.tsx",
-      { "order": 10 }
-    ]
-  ]
-}
-```
-
-The deployment script also supports `--plugins tui-settings` and
-`--plugins all`. Registration is user-owned and takes effect after restart.
-
-### `file-manager` (TUI)
-
-Register the source file in `~/.config/opencode/tui.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": [
-    [
-      "file:///absolute/path/to/file-manager/src/tui.tsx",
-      { "order": 60 }
-    ]
-  ]
-}
-```
-
-The deployment script also supports `--plugins file-manager` and
-`--plugins all`. Registration is user-owned and takes effect after restart.
-
-> The chain above is an example. There is no baked-in provider chain: until you
-> register a non-empty `defaultChain` (or a per-agent chain), the router is
-> inactive and the session stays on its configured model.
-
-### Environment-backed credentials
-
-OpenCode loads a project `.env` automatically. Reference its values in
-`opencode.json` with `{env:VARIABLE_NAME}`; do not add an `envFile` key or put
-the secret value in JSON. The complete project example is
-[`config/opencode.example.jsonc`](../../platforms/linux/ubuntu/computer-use/config/opencode.example.jsonc),
-with a safe template at
-[`config/.env.example`](../../platforms/linux/ubuntu/computer-use/config/.env.example).
-
-For example, an API-key provider can be configured as:
-
-```jsonc
-{
-  "provider": {
-    "deepseek": {
-      "options": { "apiKey": "{env:DEEPSEEK_API_KEY}" }
-    }
-  }
-}
-```
-
-The GitHub wrapper can receive the same kind of reference through a local MCP
-`environment` entry; its token variable is documented in
-[`github-mcp.md`](../scripts/github-mcp.md). OpenAI/Codex OAuth is intentionally
-different: run `opencode auth login`, and the plugins read only the managed
-`~/.local/share/opencode/auth.json` access-token entry. They do not read OAuth
-tokens from `.env` or the refresh token.
-
-## Package layout and requirements
-
-The packages follow the same conventions:
-
-- `package.json` declares `"type": "module"`, a `check` script, and a pinned
-  `@opencode-ai/plugin` dependency (`1.18.31`). Pinning to the installed OpenCode
-  minor keeps the plugin API surface stable.
-- `src/` holds the TypeScript sources; there is no separate build step. OpenCode
-  loads the `.ts`/`.tsx` sources directly.
-- `test/` holds `node:test` suites executed with
-  `node --experimental-strip-types`, so no bundler or transpiler is required.
-- `tsconfig.json` enables `--noEmit` type checking.
-- `codex-usage` additionally depends on the `@opentui/*` packages and
-  `solid-js` for its JSX rendering.
-- `source-control` additionally depends on the `@opentui/*` packages,
-  `solid-js`, and the pinned `@modelcontextprotocol/sdk` for its bounded stdio
-  GitHub client.
-- `tui-settings` additionally depends on the `@opentui/*` packages and
-  `solid-js` for its sidebar row and host-dialog overlay.
-- `file-manager` additionally depends on the `@opentui/*` packages and
-  `solid-js`; it uses `node:fs` for reads and atomic saves.
-- Every plugin's `typecheck` and `test` scripts run through the repository's
-  adaptive resource guard so a check cannot take down its OpenCode parent.
-
-`npm run check` runs `tsc --noEmit` followed by the test suite:
+- Server plugins expose bounded tools, lifecycle hooks, and registered slash
+  commands to the OpenCode service; CLI plugins render panels, commands, and
+  keymaps in the TUI.
+- `rig-tools` uses preview tokens for mutations. File-manager writes enforce
+  project containment, `.git` and outside-root symlink refusal, fingerprints, dirty guards,
+  and atomic replacement.
+- Plugin checks run through the shared bounded command wrapper. Run a package's
+  check with:
 
 ```bash
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage install
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback install
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control install
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/source-control run check
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings install
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/tui-settings run check
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/file-manager install
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/file-manager run check
+npm --prefix platforms/linux/ubuntu/computer-use/plugins-v2/<package> run check
 ```
 
-Node.js 22.6 or newer is required for `--experimental-strip-types`. The
-generated `node_modules/` directories are gitignored.
+The Explorer is an active component, but its broader IDE roadmap remains
+planned. See [`docs/plans/explorer-ide.md`](../plans/explorer-ide.md) for the
+rendered-UI and interaction acceptance gates.
 
-## Shared Codex usage layer
+## Removal and troubleshooting
 
-`codex-fallback` does not reimplement quota reading. Its `src/usage.ts` imports
-directly from the sibling package:
+Open Rig does not require a monolithic install. Remove one package registration,
+restart OpenCode, and retain the rest of the harness. Do not edit generated
+`node_modules` or deployed copies as a substitute for source changes.
 
-```ts
-import {
-  fetchCodexUsage,
-  overallWeeklyWindow,
-  readOpenAICredential,
-} from "../../codex-usage/src/usage.ts"
-```
-
-This means:
-
-- The OpenAI OAuth credential reader and the ChatGPT usage parser have a single
-  implementation, shared by the TUI panel and the router.
-- The two packages must stay checked out together; `codex-fallback` cannot be
-  installed independently of `codex-usage`.
-- A change to the endpoint, headers, or response parsing in
-  `codex-usage/src/usage.ts` affects both plugins and must be covered by both
-  test suites.
-
-`codex-fallback/src/usage.ts` wraps the shared parser in a small
-`QuotaChecker` that reduces the snapshot to the three facts the router needs —
-`limitReached`, `resetsAt`, and `planType` — and caches the result.
-
-## Shared security model
-
-The two Codex plugins handle an OpenAI OAuth credential. Their posture is
-deliberately narrow and identical in spirit:
-
-- They read only the OpenAI **access token** (and account id) from OpenCode's
-  normal data location (`$XDG_DATA_HOME/opencode/auth.json`, defaulting to
-  `~/.local/share/opencode/auth.json`).
-- They never read or expose the **refresh token**, never modify `auth.json`,
-  and never log credentials. OpenCode itself owns token renewal.
-- The token is sent only to the fixed ChatGPT usage endpoint
-  (`https://chatgpt.com/backend-api/wham/usage`), or to an explicitly
-  configured `usageEndpoint` override used for local tests.
-- The quota value is never written into model context; it is displayed or used
-  for routing only.
-- Fallback turns are ordinary model requests to the providers you configure;
-  the plugins do not proxy or intercept provider traffic beyond selecting the
-  model and aborting a failed turn.
-
-`source-control` does not read OpenCode OAuth credentials. Its GitHub section
-starts the repository's `github-mcp.sh` wrapper only through a transient,
-adaptive-memory user service, or a bounded `prlimit` fallback when the user
-systemd manager is unavailable. That wrapper remains read-only, lockdown
-protected, and limited to repository, issue, and pull-request tools. If no
-safe current-memory budget or authentication is available, the local panel
-continues and the GitHub row stays hidden.
-
-The usage endpoint is a ChatGPT backend endpoint used by Codex clients, not a
-versioned public REST API. Both plugins validate the response and handle
-service changes conservatively so a malformed reply is never shown as a
-fabricated quota value.
-
-## Deploying the plugins
-
-The repository ships a `/deploy` command and a `deploy-plugins.sh` script that
-register the plugins with an OpenCode installation. Registration references this
-checkout with `file://` URLs; the plugin sources are not copied.
-
-- **Global** deploys to `~/.config/opencode/tui.json` (TUI) and
-  `~/.config/opencode/opencode.jsonc` or `.json` (server).
-- **Project** deploys to `<repo>/.opencode/tui.json` (TUI) and
-  `<repo>/.opencode/opencode.json` (server).
-- `--bootstrap` additionally copies the provisioning scripts into the target.
-
-Run `/deploy` for an interactive, question-driven flow, or invoke the script
-directly. Both default to read-only verification; writes require `--apply`.
-Neither overwrites existing `plugin` entries or their options, and both refuse
-to rewrite a config that contains JSONC comments (they cannot be preserved by a
-plain JSON edit).
-
-Full behavior, options, targets, and exit codes are documented in
-[`docs/scripts/deploy-plugins.md`](../scripts/deploy-plugins.md).
-
-## Failure isolation
-
-Neither plugin may take the harness down with it:
-
-- `codex-usage` publishes an error state but keeps displaying the last known
-  snapshot for non-authentication failures, and times out rather than hanging.
-- `codex-fallback` fails **open**: if the usage check or provider catalog lookup
-  errors, it does not switch models and lets OpenCode's own behavior proceed.
-- Plugin code runs in the server/TUI process, so an unhandled exception is a
-  real risk. Both keep their network and client calls inside `try`/`catch` and
-  never throw from event handlers.
-
-Continue with [`codex-usage.md`](codex-usage.md) and
-[`codex-fallback.md`](codex-fallback.md) for the full behavioral detail.
+After changing plugins or config, restart OpenCode and run the v2 health check.
+The repository history records prior architecture; current documentation is
+v2-only.

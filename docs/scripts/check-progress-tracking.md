@@ -2,9 +2,9 @@
 
 Enforces the repository's mandatory progress-tracking rule: multi-step work is
 tracked with the todo tool, with exactly one item `in_progress` and items
-`completed` only after their verification passes. The rule itself lives in the
-[Progress Tracking section of `AGENTS.md`](../../AGENTS.md); this gate keeps the
-operating surfaces that define it from losing it.
+`completed` only after their verification passes. The rule itself lives in
+[`docs/agent-policy.md`](../agent-policy.md); root
+[`AGENTS.md`](../../AGENTS.md) is its concise index.
 
 ```bash
 python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking.py
@@ -17,7 +17,8 @@ Read-only: the script never writes to the repository.
 
 | Surface | Requirement |
 |---------|-------------|
-| `AGENTS.md` | a `## Progress Tracking` section that mentions the `todo tool`, `in_progress`, and `completed` |
+| `AGENTS.md` | links to `docs/agent-policy.md` |
+| `docs/agent-policy.md` | a `## Work and progress` section that mentions `ROADMAP.md`, the `todo tool`, `in_progress`, and `completed` |
 | `platforms/linux/ubuntu/computer-use/commands/resume.md` | mentions `todo` |
 | `HANDOFF.md` | the copy-paste prompt mentions `todo tool` |
 
@@ -44,7 +45,7 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-progress-tracking-self
 ```
 
 Builds temporary fixture trees and runs the real CLI against them, proving the
-gate rejects a missing `## Progress Tracking` section, a section that lost
+gate rejects a missing policy-index link, a policy section that lost
 `in_progress`, and a `/resume` or handoff prompt that lost the todo marker,
 while accepting the compliant fixture.
 
