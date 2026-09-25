@@ -1,40 +1,102 @@
 #!/usr/bin/env bash
-# Optional Source Control child MCP. The generic Open Rig GitHub MCP is the
-# hosted OAuth endpoint and is configured remotely; this file is not registered
-# by the canonical MCP setup and is unavailable in the WSL2 profile.
+# Launch the pinned profile-owned GitHub MCP from the existing gh login.
 set -euo pipefail
+umask 077
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-UBUNTU_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-MCP="$UBUNTU_ROOT/github-tools/bin/github-mcp-server"
+RUNTIME="$SCRIPT_DIR/mcp_runtime.py"
+PROFILE="${OPENCODE_MCP_PROFILE:-native}"
+PROFILE_ROOT="${OPENCODE_MCP_PROFILE_ROOT:-${OPENCODE_WSL2_PILOT_DIR:-$HOME/.opencode-wsl2-pilot}}"
+HOST="${GH_HOST:-github.com}"
 
-if [ ! -x "$MCP" ]; then
-  echo "github-mcp: runtime is not installed: $MCP" >&2
+fail() {
+  printf 'github-mcp: %s\n' "$*" >&2
   exit 1
+}
+
+usage() {
+  cat <<'EOF'
+Usage: github-mcp.sh [--verify-only]
+
+The wrapper reads the existing authenticated gh session at process start. It
+never accepts a token from inherited environment variables or configuration.
+EOF
+}
+
+VERIFY_ONLY=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --verify-only) VERIFY_ONLY=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; exit 2 ;;
+  esac
+done
+
+case "$PROFILE" in
+  native|wsl2) ;;
+  *) fail "unsupported MCP profile: $PROFILE" ;;
+esac
+if [ "$PROFILE" = "wsl2" ]; then
+  [[ "$PROFILE_ROOT" = /* ]] || fail "wsl2 MCP profile root must be absolute"
+  RUNTIME_ARGS=(--profile "$PROFILE" --profile-root "$PROFILE_ROOT")
+else
+  RUNTIME_ARGS=(--profile "$PROFILE")
+fi
+[[ "$HOST" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*(:[0-9]+)?$ ]] || fail "GH_HOST must be a hostname with an optional port"
+
+if [ -n "${OPENCODE_MCP_GH_BIN:-}" ]; then
+  fail "OPENCODE_MCP_GH_BIN is not accepted; install gh at a trusted canonical path"
+fi
+mapfile -t INHERITED_NAMES < <(compgen -e)
+for NAME in "${INHERITED_NAMES[@]}"; do
+  case "$NAME" in
+    GH_TOKEN|GITHUB_*) fail "inherited GitHub token/control variables are not accepted: $NAME" ;;
+  esac
+done
+unset INHERITED_NAMES NAME
+
+MCP="$(python3 "$RUNTIME" github-runtime "${RUNTIME_ARGS[@]}")"
+GH="$(python3 "$RUNTIME" runner --kind gh "${RUNTIME_ARGS[@]}")"
+
+# The authenticated gh store is authoritative; token-bearing environment
+# variables were rejected above so they cannot supersede the saved login.
+if ! TOKEN="$("$GH" auth token --hostname "$HOST")"; then
+  fail "cannot read the authenticated gh session for $HOST; run 'gh auth login --hostname $HOST'"
+fi
+if [ -z "$TOKEN" ] || [ "${#TOKEN}" -gt 16384 ] || [[ "$TOKEN" == *$'\n'* ]] || [[ "$TOKEN" == *$'\r'* ]]; then
+  unset TOKEN
+  fail "gh returned an invalid authentication token"
 fi
 
-# Resolve a credential without ever printing it. The explicit variables win;
-# otherwise fall back to the logged-in GitHub CLI, which stores no token in this
-# repository or in OpenCode's configuration.
-if [ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ] && [ -n "${GH_TOKEN:-}" ]; then
-  export GITHUB_PERSONAL_ACCESS_TOKEN="$GH_TOKEN"
-fi
-if [ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ] && command -v gh >/dev/null 2>&1; then
-  gh_token="$(gh auth token 2>/dev/null || true)"
-  if [ -n "$gh_token" ]; then
-    export GITHUB_PERSONAL_ACCESS_TOKEN="$gh_token"
-  fi
-  unset gh_token
-fi
-if [ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]; then
-  echo "github-mcp: authentication is not configured; run 'gh auth login' or start OpenCode with GITHUB_PERSONAL_ACCESS_TOKEN or GH_TOKEN set" >&2
-  exit 1
+if [ "$VERIFY_ONLY" -eq 1 ]; then
+  unset TOKEN
+  printf 'runtime=%s\n' "$MCP"
+  printf 'gh=%s\n' "$GH"
+  printf 'host=%s\n' "$HOST"
+  exit 0
 fi
 
-# Write operations are enabled so GitHub mutations are MCP tool calls. The
-# wrapper stays in lockdown mode, and the agent keeps its confirmation gate
-# before publishing, merging, deleting, or changing workflows, repositories,
-# or account settings.
+export GITHUB_PERSONAL_ACCESS_TOKEN="$TOKEN"
+unset TOKEN
+if [ "$HOST" != "github.com" ]; then
+  export GITHUB_HOST="$HOST"
+fi
+export PATH="/usr/local/bin:/usr/bin:/bin"
+export LANG="${LANG:-C.UTF-8}"
+
+# Exec directly after reducing the exported environment. This keeps the token
+# out of argv while preventing unrelated provider credentials from reaching the
+# server. Flags remain authoritative because inherited GITHUB_* controls were
+# rejected before credential resolution.
+mapfile -t EXPORTED_NAMES < <(compgen -e)
+for NAME in "${EXPORTED_NAMES[@]}"; do
+  case "$NAME" in
+    HOME|PATH|LANG|LC_*|HTTPS_PROXY|https_proxy|ALL_PROXY|all_proxy|NO_PROXY|no_proxy|SSL_CERT_FILE|SSL_CERT_DIR|GITHUB_PERSONAL_ACCESS_TOKEN|GITHUB_HOST) ;;
+    *) unset "$NAME" ;;
+  esac
+done
+unset EXPORTED_NAMES NAME
+
 exec "$MCP" stdio \
   --toolsets=context,repos,issues,pull_requests,actions,users \
   --lockdown-mode

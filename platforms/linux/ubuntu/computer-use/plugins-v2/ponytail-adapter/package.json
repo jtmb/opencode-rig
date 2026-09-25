@@ -11,9 +11,11 @@
     "check": "npm run typecheck && npm test",
     "test": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "bash ../../scripts/run-bounded-command.sh -- ../node_modules/.bin/tsc --noEmit",
+    "verify:package": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types scripts/verify-package.mjs",
     "verify:runtime": "bash ../../scripts/run-bounded-command.sh --timeout 10m -- node scripts/verify-runtime.mjs"
   },
   "dependencies": {
+    "@dietrichgebert/ponytail": "4.10.0",
     "@opencode/plugin": "2.0.7"
   },
   "devDependencies": {

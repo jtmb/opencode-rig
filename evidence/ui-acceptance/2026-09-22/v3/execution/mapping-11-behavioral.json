@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/subagents.test.ts",
+  "test_sha256": "d82fea2b668f5574d1f0f86b741e4dcb57bbab9fb30946bc2b8562468b602671",
+  "source_sha256": "38f50adc2fe85e321622435e3e935217712318b40091148d8064d29731ef7a0d",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "/tmp/opencode/node-v26.4.0-linux-x64/bin/node node@26.4.0; npm CLI /tmp/opencode/node-v26.4.0-linux-x64/lib/node_modules/npm/bin/npm-cli.js npm@11.17.0; run-bounded-command.sh",
+  "command": "PATH=/tmp/opencode/node-v26.4.0-linux-x64/bin:$PATH bash ../../scripts/run-bounded-command.sh -- /tmp/opencode/node-v26.4.0-linux-x64/bin/node --experimental-strip-types --test test/subagents.test.ts",
+  "observed_at": "2026-09-22T21:35:58.052Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/v3/execution-output/mapping-11-behavioral.txt",
+  "output_sha256": "34948b97b773c10b5bb9735f98f3cdf53a6f629df7e8339def7d51096e73c089"
+}

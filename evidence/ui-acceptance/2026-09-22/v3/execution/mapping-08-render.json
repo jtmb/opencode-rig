@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tui.test.ts",
+  "test_sha256": "1e9fd72a1a25c67f532484b99e401c66a66fac439800fa4a3dc088292ec59e9e",
+  "source_sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "/tmp/opencode/node-v26.4.0-linux-x64/bin/node node@26.4.0; npm CLI /tmp/opencode/node-v26.4.0-linux-x64/lib/node_modules/npm/bin/npm-cli.js npm@11.17.0; run-bounded-command.sh",
+  "command": "PATH=/tmp/opencode/node-v26.4.0-linux-x64/bin:$PATH bash ../../scripts/run-bounded-command.sh -- /tmp/opencode/node-v26.4.0-linux-x64/bin/node --experimental-strip-types --test test/tui.test.ts",
+  "observed_at": "2026-09-22T21:35:58.052Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/v3/execution-output/mapping-08-render.txt",
+  "output_sha256": "a4441de0cce1b15759b1cc6cfef7da0b2e0edaab369e44acb5867f07a1f6320b"
+}

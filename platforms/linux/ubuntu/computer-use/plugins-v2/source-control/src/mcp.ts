@@ -30,6 +30,12 @@ const CONNECT_TIMEOUT_MS = 10_000
 const CALL_TIMEOUT_MS = 15_000
 const MCP_MEMORY_FRACTION = 20
 const MCP_SWAP_FRACTION = 25
+const SYSTEMD_ENVIRONMENT_NAMES = [
+  "OPENCODE_MCP_PROFILE",
+  "OPENCODE_MCP_PROFILE_ROOT",
+  "GH_CONFIG_DIR",
+  "GH_HOST",
+] as const
 
 function timeout<T>(promise: Promise<T>, milliseconds: number, operation: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -52,6 +58,14 @@ function processEnvironment(): Record<string, string> {
   return Object.fromEntries(
     Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
   )
+}
+
+export function githubMcpSystemdEnvironment(environment: NodeJS.ProcessEnv = process.env): string[] {
+  return SYSTEMD_ENVIRONMENT_NAMES.flatMap((name) => {
+    const value = environment[name]
+    if (typeof value !== "string" || value.length === 0 || value.length > 4096 || /[\r\n\0]/.test(value)) return []
+    return [`--setenv=${name}=${value}`]
+  })
 }
 
 export function defaultGithubMcpCommand(): string {
@@ -97,6 +111,7 @@ export function boundedGithubMcpCommand(
         `--working-directory=${process.cwd()}`,
         `--setenv=PATH=${process.env.PATH ?? ""}`,
         `--setenv=HOME=${process.env.HOME ?? ""}`,
+        ...githubMcpSystemdEnvironment(),
         `--property=MemoryMax=${budget.memoryMaxBytes}`,
         `--property=MemorySwapMax=${budget.swapMaxBytes}`,
         "--",

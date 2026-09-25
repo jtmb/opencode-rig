@@ -1,0 +1,13 @@
+bounded-command: available=7944MiB budget=3177MiB swap=794MiB node_heap=2065MiB
+Running as unit: run-r6d8705abb8b046ccbc07c6934349266e.scope; invocation ID: 4a6d33b95c6f4838964ec0c0031b991a
+✔ source control stays before the native footer so working directory remains last (0.749159ms)
+✔ change rows are compact one-line previews with fixed semantic counts (0.432319ms)
+✔ source-control uses a cohesive heading and visibly muted secondary text (0.16578ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 110.336658

@@ -31,18 +31,21 @@ pieces fit together?*
 | [`plugins/README.md`](plugins/README.md) | Active v2 packages, server vs. CLI surfaces, registration, adaptive resource guards, and the common security model |
 | [`../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md) | Configurable hook enforcement for background-only, capacity-gated subagents |
 | [`plugins/codex-fallback.md`](plugins/codex-fallback.md) | The active v2 server failover router: hooks, configuration precedence, proactive and reactive switching, cooldown state, and recovery |
+| [`../platforms/linux/ubuntu/computer-use/plugins-v2/chatgpt-connector/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/chatgpt-connector/README.md) | ChatGPT OAuth connector tools, session-private chat, MCP scope, and live-evidence limits |
+| [`plugins/provider-usage.md`](plugins/provider-usage.md) | Authoritative provider/integration/connection resolution, universal visibility and status rules, sanitized usage snapshots, adapters, and native sidebar rendering |
 | [`plugins/screen-terminal.md`](plugins/screen-terminal.md) | Bounded GNU Screen list/capture and token-gated OpenCode TTY start/input/resize/stop usage |
+| [`plugins/hermes-hooks.md`](plugins/hermes-hooks.md) | Opt-in Hermes observer, bounded metadata snapshot, and fullscreen `/hooks` pipeline panel |
 | [`../platforms/linux/ubuntu/computer-use/plugins-v2/source-control/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/source-control/README.md) | Source Control panel and lifecycle |
 | [`../platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/README.md) | Active Explorer tree, viewer, editor, and safety contract |
 | [`../platforms/linux/ubuntu/computer-use/plugins-v2/resource-monitor/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/resource-monitor/README.md) | Per-TUI CPU/RAM measurement, formatting, and shared-service exclusion |
-| [`plugins/ponytail.md`](plugins/ponytail.md) | OpenCode v2 adapter for the official Ponytail package, per-session modes, and safe updates |
+| [`plugins/ponytail.md`](plugins/ponytail.md) | OpenCode v2 adapter for the pinned official Ponytail package, per-session modes, and canonical bootstrap path |
 | [`../platforms/linux/ubuntu/computer-use/plugins-v2/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/README.md) | Active v2 plugin workspace, role registration, bounded checks, and Explorer status |
 
 ### Desktop tools
 
 | Document | Covers |
 |----------|--------|
-| [`../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md) | v2 desktop/vision tools, repository gates, agent capacity, OpenCode API/runtime/TTY management, `/tools`, and bounded session-context retrieval |
+| [`../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md) | v2 desktop/vision tools, repository gates, agent capacity, OpenCode API/runtime/recovery/TTY management, `/tools`, and bounded session-context retrieval |
 
 ### Memory
 
@@ -56,6 +59,14 @@ pieces fit together?*
 |----------|--------|
 | [`plans/explorer-ide.md`](plans/explorer-ide.md) | Explorer recovery, rendered visual and click audits, safety acceptance, and planned IDE increments |
 
+### Acceptance evidence
+
+| Document | Covers |
+|----------|--------|
+| [`acceptance-evidence-2026-09-21.md`](acceptance-evidence-2026-09-21.md) | Fresh unified-Ubuntu MCP and 140/80/60-column sidebar acceptance |
+| [`acceptance-evidence-2026-09-19.md`](acceptance-evidence-2026-09-19.md) | Historical v2.0.7 command, Explorer, diff, browser, and fullscreen evidence |
+| [`wsl2-acceptance-2026-09-21.md`](wsl2-acceptance-2026-09-21.md) | Historical pre-convergence WSL2 backend and host-boundary evidence |
+
 ### Brand
 
 | Document | Covers |
@@ -67,22 +78,25 @@ pieces fit together?*
 | Document | Covers |
 |----------|--------|
 | [`scripts/README.md`](scripts/README.md) | Index grouped by role plus the conventions every script follows |
-| [`scripts/setup-computer-assistant.md`](scripts/setup-computer-assistant.md) | Full-stack provisioning: system packages, skills, memory, browser runtime, and hosted GitHub MCP declaration |
-| [`scripts/setup-opencode.md`](scripts/setup-opencode.md) | Deploying skills, commands, custom tools, and v2 starting config into an isolated config directory |
-| [`scripts/setup-ponytail-plugin.md`](scripts/setup-ponytail-plugin.md) | Bounded install/update, private runtime verification, daily timer, rollback, disable, and uninstall for Ponytail |
+| [`scripts/orchestration-lockout-recovery.md`](scripts/orchestration-lockout-recovery.md) | Operator-authorized, allowlisted bootstrap recovery, backups, audit, rollback, and verification |
+| [`scripts/opencode-recovery.md`](scripts/opencode-recovery.md) | Target-bound native MCP readiness, bounded repair/reconnect, and caller-owned `read_note` proof |
+| [`scripts/bootstrap.md`](scripts/bootstrap.md) | Single cross-platform native-Ubuntu/WSL2 bootstrap contract, staged verification/apply, journaling, rollback, and security boundaries |
+| [`scripts/setup-computer-assistant.md`](scripts/setup-computer-assistant.md) | Full-stack provisioning: system packages, skills, memory, and local Basic Memory, GitHub, and ChatGPT MCPs |
+| [`scripts/setup-opencode.md`](scripts/setup-opencode.md) | Deploying skills, the opt-in ChatGPT agent, commands, and v2 starting config into an isolated config directory |
+| [`scripts/setup-plugin-dependencies.md`](scripts/setup-plugin-dependencies.md) | Pinned repository Ponytail dependency installation, fail-closed surface verification, and disposable planning checks |
+| [`scripts/setup-qa-runtime.md`](scripts/setup-qa-runtime.md) | Checksum-pinned checkout-local Node/npm runtime, safe extraction, verification, and CI/bootstrap use |
 | [`scripts/deploy-plugins.md`](scripts/deploy-plugins.md) | Registering the local plugins globally or into a repository, plus the `/deploy` command and optional bootstrap copy |
 | [`scripts/setup-live-dictation.md`](scripts/setup-live-dictation.md) | Checksum-pinned Vosk dictation runtime and the `Alt+X` shortcut |
 | [`scripts/desktop-control.md`](scripts/desktop-control.md) | AT-SPI inspection and mutation with traversal bounds and short-lived target tokens |
 | [`scripts/basic-memory-mcp.md`](scripts/basic-memory-mcp.md) | The bounded Basic Memory MCP launcher: adaptive cgroup budget, prlimit fallback, and the nine exposed tools |
-| [`scripts/mcp_runtime.md`](scripts/mcp_runtime.md) | Canonical MCP policy, profile roots, trusted runners, and fail-closed runtime verification |
+| [`scripts/mcp_runtime.md`](scripts/mcp_runtime.md) | Canonical three-server MCP policy, profile roots, trusted runners, and fail-closed runtime verification |
 | [`scripts/setup-mcps.md`](scripts/setup-mcps.md) | Canonical profile-aware MCP provisioning delegated by WSL2 |
 | [`scripts/check-skill-docs.md`](scripts/check-skill-docs.md) | Skill metadata/documentation validation and its negative self-test |
 | [`scripts/check-progress-tracking.md`](scripts/check-progress-tracking.md) | The mandatory todo-tracking gate: required rule surfaces, exit codes, and its negative self-test |
 | [`scripts/check-doc-coverage.md`](scripts/check-doc-coverage.md) | The documentation coverage gate: map rules, completeness, change-aware checks, and the exemption |
 | [`scripts/git-safety-gates.md`](scripts/git-safety-gates.md) | Repository-local git-safety and bounded-command gate checks with context-bound evidence |
 | [`scripts/setup-git-hooks.md`](scripts/setup-git-hooks.md) | Installing the pre-push hook that enforces the documentation gate |
-| [`scripts/playwright-mcp.md`](scripts/playwright-mcp.md) | The visible, user-shared Playwright Firefox launcher |
-| [`scripts/github-mcp.md`](scripts/github-mcp.md) | Hosted GitHub MCP declaration plus the optional Source Control compatibility path |
+| [`scripts/github-mcp.md`](scripts/github-mcp.md) | Pinned profile-owned GitHub MCP authenticated from the existing `gh` login |
 | [`scripts/opencode-db-maintain.md`](scripts/opencode-db-maintain.md) | Database statistics, event-log pruning, VACUUM, and hardening |
 | [`scripts/opencode-chat-backup.md`](scripts/opencode-chat-backup.md) | Full-fidelity chat export with a pruning manifest |
 | [`scripts/opencode-maintenance-cron.md`](scripts/opencode-maintenance-cron.md) | The weekly wrapper that combines backup and cleanup |
@@ -105,7 +119,7 @@ These conventions are stated once here rather than repeated in every document.
   refuses to apply, and `4`/`5`/`6` for integrity or backup failures.
 - **No secrets in the repository.** OpenCode may load local, untracked project
   `.env` values through `{env:NAME}` references for API keys and other secrets.
-  GitHub credentials may come from that environment or the logged-in `gh` CLI;
+  GitHub authentication comes only from the logged-in `gh` CLI;
   OpenAI OAuth remains in OpenCode's own data directory. No document here
   instructs you to commit a secret value to the repository or to a config file.
 - **Restart to reload.** OpenCode does not hot-reload skills, MCP
@@ -127,7 +141,8 @@ These conventions are stated once here rather than repeated in every document.
   workflow, precedence, safety, roadmap, and verification rules.
   verification.
 - [`HANDOFF.md`](../HANDOFF.md) - new-chat handoff prompt and live-state record.
-- [`ROADMAP.md`](../ROADMAP.md) - implementation, automated-evidence, and pending live-acceptance ledger.
+- [`ROADMAP.md`](../ROADMAP.md) - current implementation, automated-evidence, and pending live-acceptance ledger.
+- [2026-09-25 roadmap archive](../roadmap-archive-2026-09-25.md) - byte-for-byte pre-consolidation roadmap retained for history.
 - Component READMEs under `platforms/linux/ubuntu/` - install and troubleshooting
   for each component.
 - [`../platforms/windows/wsl2/ubuntu/computer-use/README.md`](../platforms/windows/wsl2/ubuntu/computer-use/README.md)

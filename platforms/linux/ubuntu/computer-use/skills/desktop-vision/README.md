@@ -6,7 +6,7 @@ automatically load this usage guide when the skill is loaded.
 
 Category: `desktop`
 
-Tags: `desktop`, `gnome`, `screenshot`, `visual-verification`
+Tags: `desktop`, `gnome`, `wsl`, `windows`, `screenshot`, `visual-verification`
 
 ## Purpose and when to use it
 
@@ -22,7 +22,7 @@ skill when appearance, layout, focus, or rendered output matters.
 
 ## Prerequisites and setup verification
 
-Normal agent-initiated capture requires:
+Native GNOME agent-initiated capture requires:
 
 - GNOME on Wayland.
 - The configured GNOME screenshot shortcut.
@@ -35,8 +35,10 @@ systemctl --user is-active --quiet ydotool.service
 test -S "${XDG_RUNTIME_DIR:?}/.ydotool_socket"
 ```
 
-If that service, socket, or shortcut is unavailable, the agent must ask the
-user to press the appropriate built-in screenshot key instead.
+On WSL2, `vision_capture` instead uses the checked-in bounded Windows host with
+trusted PowerShell identity, a fixed screenshot RPC, a 6 MiB PNG cap, and
+in-memory handling. If the native service/socket is unavailable outside WSL,
+the agent asks the user to press the appropriate built-in screenshot key.
 
 ## How to request it
 
@@ -53,7 +55,7 @@ and follows its screenshot workflow.
 
 ## Worked workflow and expected result
 
-The representative agent workflow is:
+The representative native-GNOME workflow is:
 
 1. Record all existing files matching:
 
@@ -94,6 +96,10 @@ The representative agent workflow is:
 Expected result: one new image is identified, inspected once, deleted
 immediately, and summarized without retaining a screenshot.
 
+On WSL2 the agent still announces the capture, then calls `vision_capture`.
+The tool returns the validated image attachment directly and retains no host or
+Linux screenshot file.
+
 ## Verification and known limitations
 
 The screenshot must show the claimed application or dialog state. An
@@ -106,6 +112,8 @@ Known limitations:
 - Multi-display full-screen capture can span every display.
 - Large or high-resolution images may be difficult to inspect.
 - The stated fallback key combinations are GNOME-specific.
+- WSL2 capture requires an expected trusted Windows PowerShell installation and
+  the checked-in interop host; it does not provide general Windows input.
 - An active-window key combination may capture another application if focus
   changed unexpectedly.
 
@@ -117,8 +125,11 @@ Known limitations:
   task; ask which file to inspect.
 - Wrong window captured: re-establish application focus first, then capture
   again.
-- Service unavailable: do not change permissions or install input software
-  for this skill. Ask the user to press PrintScreen.
+- Native service unavailable: do not change permissions or install input
+  software for this skill. Outside WSL, ask the user to press PrintScreen.
+- WSL capture unavailable: report the bounded host error; do not replace it
+  with arbitrary PowerShell, a persistent screenshot file, or broader input
+  permissions.
 - Sensitive or unintended private content appears: stop, say so, and do not
   quote or retain it.
 

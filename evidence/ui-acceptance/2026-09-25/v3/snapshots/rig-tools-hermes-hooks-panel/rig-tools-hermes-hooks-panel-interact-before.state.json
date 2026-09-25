@@ -1,0 +1,7 @@
+{
+  "visible": true,
+  "snapshotCalls": 1,
+  "dispatches": [
+    "hermes.snapshot"
+  ]
+}

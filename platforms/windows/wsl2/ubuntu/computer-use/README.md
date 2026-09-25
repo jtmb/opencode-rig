@@ -32,6 +32,31 @@ platforms/windows/wsl2/ubuntu/computer-use/scripts/verify-wsl2.sh --source
 platforms/windows/wsl2/ubuntu/computer-use/scripts/verify-wsl2.sh --live
 ```
 
+To register only the WSL interop server and CLI roles in an existing WSL
+profile, target that profile's exact config directory:
+
+```bash
+CONFIG_DIR="${OPENCODE_WSL2_CONFIG_DIR:-${OPENCODE_WSL2_PILOT_DIR:-$HOME/.opencode-wsl2-pilot}/config}"
+platforms/windows/wsl2/ubuntu/computer-use/scripts/deploy-plugins.sh \
+  --config-dir "$CONFIG_DIR" --plugins wsl-interop --verify-only
+```
+
+After separately authorizing the config write, replace `--verify-only` with
+`--apply`. This installs both `wsl-interop` roles and the exact `ask`
+permissions for `wsl_browser_open` and `wsl_browser_act`; it does not reload an
+already running server. For a non-default selected service, use only the config
+directory actually owned by that exact service, then confirm its location, PID,
+and port again after its separately authorized restart. Do not use the WSL
+profile deployer for a native service that cannot access the Windows host.
+
+WSL2 setup first verifies or installs the canonical Ubuntu plugins-v2 lockfile,
+including `@dietrichgebert/ponytail@4.10.0`; it does not use a HOME-based
+Ponytail install. Apply also installs the WSL interop workspace from this tree's
+own lockfile with lifecycle scripts disabled. Source verification fails clearly
+when its TypeScript dependency is missing and still requires the typecheck. The
+shared deployment wrapper then registers the single catalog-managed
+`ponytail-adapter` server role in the isolated profile.
+
 The default isolated root is `~/.opencode-wsl2-pilot`. Override it with
 `OPENCODE_WSL2_PILOT_DIR`; override the executable with `OPENCODE_V2_BIN`.
 Server settings live at `$OPENCODE_WSL2_PILOT_DIR/config/opencode.jsonc`.
@@ -44,6 +69,13 @@ Ubuntu paths into this profile. It always uses a private server from
 `$OPENCODE_WSL2_PILOT_DIR/workspace` and rejects shared-server or directory
 arguments that could re-enable project-config discovery. Repository paths
 remain available only through explicit external-directory approvals.
+The isolated WSL server profile seeds its Build, Explore, and General agent
+defaults from the canonical Ubuntu GPT-6 Luna `#max` role assignments, and its
+Plan and read-only Architect defaults from the GPT-6 Sol `#max` assignments.
+Setup and verification reject stale GPT-5.6 agent references; selected
+`--apply` upgrades the known roles without replacing unrelated custom models.
+No project-config discovery or
+active native-global config edit is needed for this WSL profile.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
@@ -51,8 +83,7 @@ remain available only through explicit external-directory approvals.
 | `OPENCODE_WSL2_CONFIG_DIR` | `$OPENCODE_WSL2_PILOT_DIR/config` | Selects the setup and verification target. |
 | `OPENCODE_V2_BIN` | `~/.opencode/bin/opencode` | Selects the executable launched without modification. |
 | `OPENCODE_MCP_UVX_BIN` | first trusted `uvx` candidate | Optional canonical Basic Memory runner override. |
-| `OPENCODE_MCP_NPX_BIN` | first trusted `npx` candidate | Optional canonical Playwright runner override. |
-| `OPENCODE_MCP_NODE_BIN` | first trusted `node` candidate | Optional canonical Node.js runner override. |
+| `OPENCODE_MCP_NODE_BIN` | profile-owned Node.js `22.22.2` | Optional path override for the pinned runtime used by the ChatGPT MCP wrapper; it must resolve to this profile's Node.js. |
 | `HTTPS_PROXY` / `ALL_PROXY` | unset | Uses an existing WSL network proxy without printing its value. |
 | `SSL_CERT_FILE` / `SSL_CERT_DIR` | system trust | Uses an operator-managed CA bundle or directory. |
 
@@ -68,6 +99,18 @@ The server plugin exposes:
   short-lived, single-use token and an OpenCode permission prompt.
 - `windows_apps` and `windows_find` — read-only bounded Windows application
   and UI Automation discovery over JSON-RPC stdin/stdout.
+- `wsl_browser_*` — agent-callable tools in the
+  [WSL interop plugin](plugins-v2/wsl-interop/src/index.ts) for opening URLs in
+  the current Windows default browser, listing matching windows, reading
+  bounded UI Automation snapshots, capturing the selected window in-memory,
+  and previewing/applying click, focus, type, or key actions on exact elements.
+  `wsl_browser_open` reports ShellExecute request acceptance only; verify
+  navigation separately. Screenshots use the selected HWND without activating
+  it and fail closed on changed identity, occlusion, or blank/unpainted pixels.
+- The shared `vision_capture` tool delegates to the fixed
+  `windows.screenshot` host method when it detects WSL2 and the native
+  GNOME/ydotool backend is unavailable. The capture stays in memory, is bounded
+  to 6 MiB, and is returned as a PNG attachment without creating a host file.
 - `windows_act` — preview/apply UI Automation for focus, invoke, value, toggle,
   and selection patterns. Apply requires an unchanged exact target, a
   short-lived single-use token, and an OpenCode permission prompt.
@@ -91,8 +134,9 @@ second in-host exact snapshot comparison.
 
 The CLI role registers only an additive WSL capability/status contribution
 **after** native `sidebar.content`; it never replaces native OpenCode content.
-Canonical Ubuntu `rig-tools` owns the shared MCP and active-subagent sections,
-so the WSL plugin does not duplicate them. Unknown OpenCode versions outside
+OpenCode owns the sole MCP sidebar row, and canonical Ubuntu `rig-tools`
+contributes only the shared active-subagent section, so the WSL plugin does not
+duplicate either one. Unknown OpenCode versions outside
 the tested range disable the custom WSL contribution while leaving the native
 interface intact.
 
@@ -106,48 +150,64 @@ authenticated provider capable of returning results.
 
 ## MCP servers
 
-The WSL server profile receives the canonical three entries under `mcp.servers`
-from the Ubuntu MCP implementation:
+The WSL server profile receives exactly `basic-memory`, `github`, and `chatgpt`
+under `mcp.servers` from the canonical Ubuntu MCP implementation:
 
-- **Basic Memory 0.23.2** runs through `uvx` with its home, notes, and cache
-  beneath the pilot.
-- **GitHub** uses GitHub's hosted OAuth endpoint. No authorization header,
-  personal access token, client secret, or provider credential is written to
-  configuration.
-- **Playwright MCP** uses the canonical pinned package and runs headless and
-  isolated with its output, npm cache, and pinned Chrome-for-Testing revision
-  beneath the pilot.
+- **Basic Memory 0.23.2** runs through `uvx` with its home, notes, project
+  configuration, and cache beneath the pilot. Provisioning registers the local
+  `computer-assistant` project at that notes root and makes it the default.
+- **GitHub MCP Server 1.12.1** is checksum-pinned and installed below the pilot.
+  Its canonical wrapper reads the existing authenticated `gh` session at
+  process start; no authorization header, personal access token, client secret,
+  or provider credential is written to configuration.
+- **ChatGPT MCP** runs through the canonical local `chatgpt-mcp.sh` wrapper and
+  uses the profile-owned, checksum-pinned Node.js `22.22.2` runtime beneath the
+  pilot.
 
 `setup-mcps.sh` delegates to the canonical Ubuntu provisioner. `--apply`
-provisions only the two local runtimes and writes a version marker after both
-succeed. Its default `--verify-only` path is read-only. Normal MCP startup
-verifies that marker, the exact cached package versions, and the pinned browser
-before opening stdio; it does not silently provision a missing runtime during
-an agent session. For GitHub, start
-`opencode-wsl2.sh`, open `/mcps`, select `github`,
-and complete OAuth in the browser. OpenCode keeps that authorization in the
-isolated profile's managed store; never paste a token into `opencode.jsonc`.
-Until this login is completed, `needs_auth` is the expected fail-closed state,
-not a connected result.
+provisions Basic Memory `0.23.2`, profile-owned Node.js `22.22.2` for ChatGPT,
+and GitHub MCP Server `1.12.1`, then writes a version marker after all verify.
+Its default `--verify-only` path checks all launchers without changing any
+profile file or mode. Basic Memory uses exactly one selected memory limiter; it
+never falls through from `systemd-run` to a second `prlimit` launch. Normal MCP
+startup verifies the marker, local project, pinned Basic Memory runtime,
+profile-owned Node.js, and GitHub binary before opening stdio; it does not
+silently provision a missing runtime during an agent session. Run
+`gh auth login --hostname github.com` yourself before setup. The wrapper rejects
+inherited token/control variables and obtains a transient token from the saved
+login only when the child starts. `needs_auth` is not accepted for this local
+server; the MCP must report `connected`.
 
-`verify-wsl2.sh --live` checks the exact canonical configuration, provisioned
-local MCP runtimes, and a fixed HTTPS/TLS
-request without reading provider credentials. It also probes WSL2, systemd,
-interoperability, structured PowerShell, AST-only raw preview, and read-only
-Windows app enumeration. The fresh hardened 2026-09-21 run used OpenCode
-v2.0.11 and Windows PowerShell 5.1. It proved kernel-confirmed WSL2/interop,
+WSL2 Basic Memory uses the canonical bounded-command runner with 20% memory and
+25% swap fractions; the systemd path applies `MemoryMax` and `MemorySwapMax`.
+Its long-lived MCP launch uses `--persistent`, so it skips the check-only timeout
+and shared lock while keeping the selected limits. Without a user systemd
+manager, the fallback applies a generous virtual-address-space ceiling and
+monitors process-tree RSS against the memory budget; it does not reuse the RSS
+budget as an address-space limit.
+
+The 2026-09-21 hardened WSL run is historical evidence only. It used OpenCode
+v2.0.11 and Windows PowerShell 5.1, and proved kernel-confirmed WSL2/interop,
 trusted executable identity, structured PowerShell, AST-only raw preview,
 Windows application enumeration, a complete 434-node UI Automation traversal,
-and an exact focus-action preview. Basic Memory `recent_activity` and
-Playwright navigation/title evaluation both completed in the isolated profile.
-GitHub reached its hosted endpoint and reported `needs_auth`; no post-hardening
-focus apply or third MCP connection is claimed.
+and an exact focus-action preview. In that old isolated profile, Basic Memory
+`recent_activity` and Playwright navigation/title evaluation completed while the
+then-installed Playwright MCP was available. These calls predate the current
+three-MCP configuration and the `wsl_browser_*` tools; they do not verify current
+MCP connectivity or browser QA. The run's hosted GitHub `needs_auth` result also
+predates the local-server conversion, and is not current connection evidence.
+See the [historical WSL2 acceptance record](../../../../../docs/wsl2-acceptance-2026-09-21.md).
+
+Live Windows-default-browser QA remains pending; no current rendered-browser
+acceptance is claimed. Follow the [OpenCode Web QA guide](../../../../../docs/scripts/opencode-web-qa.md)
+for the authenticated browser, exact service identity, rendered screenshot,
+accessible snapshot, startup/error review, and observed interaction evidence.
 
 Earlier acceptance showed the built-in `websearch` returning current results
 with `provider: "random"` and a 140×60 TUI preserving native Context while
 rendering the then-local Open Rig WSL2, MCP, Active subagents, and `/wsl-status`
-sections. MCP and Active subagents are now canonical Ubuntu `rig-tools`
-contributions. The earlier rendered and mutating checks preceded both the final
+sections. MCP is now native OpenCode content and Active subagents is the only
+canonical Ubuntu `rig-tools` sidebar contribution. The earlier rendered and mutating checks preceded both the final
 hardening pass and this ownership convergence, so they are not relabeled as
 fresh shared-stack evidence.
 

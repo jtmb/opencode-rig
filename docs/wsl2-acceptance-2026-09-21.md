@@ -5,6 +5,15 @@ platform from the pre-convergence security-correction run. It is intentionally
 historical: prior rendered and mutating acceptance is not treated as fresh
 post-hardening or current canonical-MCP proof.
 
+> **Supersession note — 2026-09-22:** The evidence below is preserved as a
+> factual record of the 2026-09-21 run, not as current runtime guidance or
+> acceptance. The current supported MCP set is exactly `basic-memory`,
+> `github`, and `chatgpt`; the former Playwright MCP and headed Chromium
+> `integrated-browser` plugin are retired. WSL browser actions now use the
+> Windows-default-browser UI Automation tools, whose live browser acceptance
+> remains pending. See the [current MCP policy](scripts/mcp_runtime.md) and
+> [plugin guide](plugins/README.md).
+
 ## Environment
 
 - OpenCode: `2.0.11`

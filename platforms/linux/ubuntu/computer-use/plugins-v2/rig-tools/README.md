@@ -9,7 +9,15 @@ It wraps
 [`scripts/desktop-control.py`](../../scripts/desktop-control.py) with bounded
 `execFile` calls (30 s timeout, 256 KiB output cap) and the preview/apply token
 flow, and implements `vision_capture` through the private ydotool screenshot
-shortcut.
+shortcut on native GNOME or the checked-in bounded Windows host on WSL2.
+
+The sidebar-owned **Active Subagents** section starts expanded for each plugin
+mount. Its full-width focusable header toggles with a primary click or
+Enter/Space, showing `-` while expanded and `+` while collapsed. The live count
+is derived from the same bounded active rows rendered in the body, and the feed
+continues refreshing while the body is hidden. Collapsing while a child row has
+focus hands focus to the header instead of leaving focus on a removed row; the
+header never opens a child session.
 
 ## Tools
 
@@ -21,7 +29,7 @@ shortcut.
 | `desktop_windows` | read-only | List top-level windows (frames, dialogs, alerts) with app, states, bounds, and completeness |
 | `desktop_act` | mutation | Invoke an action, focus an element, or replace field text; preview + token |
 | `desktop_input` | mutation | Send one key/chord or printable ASCII text through ydotool; preview + token bound to the focused window |
-| `vision_capture` | read-only | Screenshot as an image attachment; the PNG is deleted after reading |
+| `vision_capture` | mixed | Screenshot as an image attachment; optional explicit bounded PNG retention beneath the working directory |
 | `text_fold` | read-only | Fold bounded in-memory text without spawning a process |
 | `python_sandbox` | read-only | Run bounded read-only, network-isolated Python analysis |
 | `binary_inspect` | read-only | Inspect bounded regular binary files |
@@ -35,6 +43,8 @@ shortcut.
 | `repo_commit` | gated mutation | Preview/apply the current staged scope after fresh QA/docs evidence |
 | `repo_push` | gated mutation | Preview/apply an explicit remote and `refs/heads/*` target |
 | `agent_memory_capacity` | read-only | Conservative host/cgroup-v2 capacity for 1–3 agents |
+| `opencode_recovery_status` | read-only | Bounded MCP/plugin diagnostics and control-plane handoffs |
+| `basic_memory_recovery` | mutation | Preview/apply canonical native marker repair and await current-location Basic Memory readiness |
 | `session_context` | read-only | List same-project sessions or project a bounded selected session snapshot |
 | `opencode_runtime_status` | read-only | Inspect location-scoped MCP, plugin, provider, and model state through OpenCode's in-process V2 APIs |
 | `opencode_runtime_reload` | gated mutation | Preview/apply a state-bound MCP, model, provider, or combined registry reload |
@@ -105,7 +115,16 @@ shortcut.
   exactly one ydotool invocation per apply, and never handles passwords or
   other secrets.
 - `vision_capture` must be announced before use and is refused while a
-  credential dialog is open.
+  credential dialog is open. Native GNOME captures use ydotool and delete the
+  one newly created file after reading. If that backend is unavailable on
+  WSL2, the shared tool delegates only the capture to the checked-in WSL
+  PowerShell host, validates trusted executable/source identity, caps the PNG
+  at 6 MiB, and keeps it in memory without creating a Windows screenshot file.
+  Retention is opt-in through `savePath`; the path must resolve beneath the
+  working directory, end in `.png`, and contain no traversal or symlink
+  components. A successful atomic write uses mode `0644` and reports its path,
+  SHA-256, and dimensions; a retention failure leaves the image attachment
+  result unchanged.
 - `desktop_windows` reports `complete: false` when its traversal bounds
   truncate the scan.
 - Repository mutations use separate short-lived, single-use tokens bound to
@@ -139,7 +158,7 @@ shortcut.
 - `tokenTtlMs` may be configured from 30 seconds through 15 minutes; the Open
   Rig default is 5 minutes for human approval turns. State is always
   revalidated before apply, and gate command timeouts are bounded to 15 minutes.
-- `agent_memory_capacity` accepts `{ "requestedAgents": 1..3 }`; options
+- `agent_memory_capacity` accepts `{ "requestedAgents": 1..10 }`; options
   `memoryReserveMiB` and `memoryPerAgentMiB` are finite positive integers. It
   reads `/proc/meminfo`, resolves the active cgroup and every bounded ancestor
   from `/proc/self/cgroup`, and returns requested/approved/recommended counts,
@@ -151,7 +170,7 @@ shortcut.
   metrics fail closed. The default per-agent budget models
   lightweight remote-model orchestration-session overhead; expensive local
   commands remain separately bounded and queued by `run-bounded-command.sh`.
-  Invalid metrics fail closed to one and the hard maximum remains three.
+  Invalid metrics fail closed to one and the hard maximum remains ten.
 - `opencode_runtime_status` uses the plugin context APIs rather than terminal UI
   inspection. It returns bounded, secret-free summaries of the current
   location's MCP connection states, plugin counts plus external/failed plugin
@@ -163,6 +182,15 @@ shortcut.
   previously observed runtime state; tokens expire after 60 seconds. It uses
   `ctx.mcp.reload()`, `ctx.model.reload()`, and `ctx.provider.reload()` and
   reports fresh before/after API status.
+- `opencode_recovery_status` returns bounded MCP/plugin summaries and directs
+  ownership, QA, and TUI-only work to their existing control-plane tools.
+  `basic_memory_recovery` verifies the native marker, previews stale-state
+  digests by default, and requires explicit approval plus an unchanged preview
+  before canonical apply. It reloads the current location's full MCP collection
+  once only when Basic Memory is not connected. Its `identifier` and `project`
+  fields are labels, not a `read_note` request; a connected status is
+  `connected-awaiting_read_note`, not recovery proof. See the
+  [recovery guide](../../../../../../docs/scripts/opencode-recovery.md).
 - `opencode_self_usage` performs two short, read-only `/proc` samples with a
   4,096-process ceiling and 32-read concurrency. It recognizes at most 64
   OpenCode roots, never returns command lines, and reports TUI, standalone,
@@ -178,7 +206,9 @@ shortcut.
   the invoking session, agent, intent, and target Screen PID/state. `capture`
   removes its temporary hardcopy after reading and labels terminal content as
   untrusted. The fixed `screen-resize.py` helper briefly attaches through a
-  private PTY to set 40–240 columns and 16–100 rows, then detaches.
+  private PTY to set 40–240 columns and 16–100 rows, then detaches. The
+  `ctrl+x,b` sidebar chord is emitted as two fixed frames 50 milliseconds apart,
+  preserving OpenCode's leader-key event boundary within its timeout.
 - `session_context` accepts `action: "list"` or `action: "read"`. It binds the
   request to the invoking session's project, excludes the invoking session,
   checks the discovered service version and process identity, applies request,
@@ -224,6 +254,10 @@ There is no `commands/session-context.md` deployment.
   project.
 - `/session-context <session-id-or-unique-title>` shows a bounded read of one
   selected session.
+- `/subagents-history [text]` searches the durable read-only subagent history
+  by text and shows one bounded page.
+- `/hooks` opens the fullscreen Hermes observer pipeline with a bounded,
+  metadata-only snapshot. See the [Hermes hooks guide](../../../../../../docs/plugins/hermes-hooks.md).
 - `/tools` shows every registered `rig-tools` tool with access mode, purpose,
   representative JSON input, and apply input when relevant. `/tools screen`
   filters by name, purpose, or access mode.
@@ -255,23 +289,54 @@ row-transform, or data-hook API. This package therefore does not alter the
 native surface or patch OpenCode binaries; `/subagents` is the closest supported
 plugin-owned replacement and is the only model-label behavior implemented here.
 
+### Subagent history
+
+`src/subagent-history.ts` keeps a durable, append-only observation log at
+`${XDG_DATA_HOME:-~/.local/share}/opencode/rig-tools/subagent-history/`. A
+snapshot is appended only when a child's agent, model, title, or status changes,
+so the log grows with transitions rather than sidebar polling ticks. Batches are
+split by serialized UTF-8 byte size (`SUBAGENT_HISTORY_SEGMENT_BYTES`) and event
+count (`SUBAGENT_HISTORY_SEGMENT_EVENTS`), so a segment file never exceeds what
+readers scan; display fields are bounded, so an event cannot exceed
+`SUBAGENT_HISTORY_MAX_EVENT_BYTES`. A corrupt or stale manifest is rebuilt from
+its immutable segments before reuse, so a failed manifest write cannot reuse a
+sequence number or hide a rotated segment, and malformed lines are skipped.
+
+`querySubagentHistory` pages the latest state per child and reports `truncated`
+when its bounded scan stops early. `querySubagentHistoryEvents` pages raw
+observations and returns a `beforeSeq` continuation cursor; segments wholly
+newer than the cursor are skipped without a file read, and the cursor is derived
+from the last scanned event, so a filtered page with zero matches can still
+continue to older matches. Both filter by `text`, `status`, and `from`/`to`.
+Their public rows deliberately omit the internal session identifier and never
+contain prompts or message content, so shared UI text cannot leak either. In the
+`/subagents` panel, `h` toggles this history and `n`/`p` page through it via the
+cursor; each row wraps its full title. `/subagents-history <text>` renders the
+bounded latest-state query through the CLI dialog.
+
 ### Active-subagent sidebar
 
-The CLI export uses the supported `sidebar.content` replacement to hide the
-native Context section. It renders MCP connection status from OpenCode's
-supported location data, followed by up to eight running direct children. The
-MCP section matches the other sidebar sections with a `-` expanded / `+`
-collapsed marker,
-semantic status dots, and inline muted status text. Native `/mcps` remains the
-management surface. Each themed row shows an
+The CLI export adds one section after OpenCode's native `sidebar.content`; it
+does not replace, hide, or re-render native sidebar content. OpenCode's native
+MCP row is therefore the sole MCP sidebar surface, and native `/mcps` remains
+the management surface. The additive section renders up to eight running direct
+children. Each themed row shows an
 explicit `running` state, agent, resolved `provider/model#variant`, and bounded
 task title. Left click or Enter/Space opens that child session; Up/Down and J/K
-move between rows. The activity glyph animates when the renderer is at least 100
+move between rows. Focused and unfocused rows retain the sidebar surface;
+agent names are bold, while model and task details are dim. The running marker
+uses `hue.accent[200]`.
+The activity glyph animates when the renderer is at least 100
 columns wide. Set plugin option `subagentAnimations` to `false` for a stable
 text-only `running` state; narrow renderers also disable the glyph automatically.
+The full-width `- Active Subagents N` heading is a focusable native hit target;
+primary click and Enter/Space toggle the plugin-local expanded state to
+`+ Active Subagents N`. The count remains live while collapsed, because the
+feed still refreshes, and collapse transfers focus back to the heading when a
+focused child row is removed from the body.
 
-Explorer is anchored before the replaced boundary, while Todo is anchored
-after it, so both remain visible. This is not a modification of the native
+Explorer is anchored before the native boundary, while Active subagents and
+Todo are additive sections after it. This is not a modification of the native
 bottom Subagents panel. An empty active-subagent section says
 `No active subagents.`
 

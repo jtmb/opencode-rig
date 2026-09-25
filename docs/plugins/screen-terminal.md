@@ -23,10 +23,10 @@ Mouse input is one primary-button click
 at a one-based `x` from 1–500 and `y` from 1–200. Resize bounds are 40–240
 columns and 16–100 rows.
 
-The tool emits the exact `ctrl+x,b` bytes, but OpenCode v2.0.7 did not recognize
-that combined leader chord in standalone live testing and inserted `b` instead.
-Use the command palette for sidebar acceptance; the chord is not claimed as
-working live.
+The tool emits `ctrl+x,b` as two fixed frames separated by 50 milliseconds.
+This stays well inside OpenCode's leader timeout while preserving the event
+boundary required by the TUI, so responsive sidebar acceptance can explicitly
+toggle the sidebar instead of depending on its `auto` visibility threshold.
 
 ## Read examples
 

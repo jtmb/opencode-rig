@@ -23,16 +23,20 @@ from urllib.request import urlopen
 CANONICAL_ROOT = Path(__file__).resolve().parent.parent
 POLICY_PATH = CANONICAL_ROOT / "config" / "mcp-versions.json"
 SCRIPT_ROOT = CANONICAL_ROOT / "scripts"
-MCP_NAMES = ("basic-memory", "github", "playwright")
+MCP_NAMES = ("basic-memory", "github", "chatgpt")
+GLOBAL_MCP_NAMES = MCP_NAMES
 MCP_PROFILES = ("native", "wsl2")
 MAX_POLICY_BYTES = 64 * 1024
 MAX_CONFIG_BYTES = 1024 * 1024
 MAX_NODE_ARCHIVE_BYTES = 256 * 1024 * 1024
+MAX_GITHUB_ARCHIVE_BYTES = 32 * 1024 * 1024
+MAX_GITHUB_BINARY_BYTES = 64 * 1024 * 1024
+MAX_GITHUB_METADATA_BYTES = 2 * 1024 * 1024
 NATIVE_NOTES = Path.home() / "Documents" / "computer-assistant" / "basic-memory"
 NATIVE_ROOT = Path.home() / ".local" / "share" / "opencode" / "mcp"
-NATIVE_BROWSER_CACHE = Path.home() / ".cache" / "ms-playwright"
 NATIVE_BASIC_COMMAND = "./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"
-NATIVE_PLAYWRIGHT_COMMAND = "./platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"
+NATIVE_GITHUB_COMMAND = "./platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"
+NATIVE_CHATGPT_COMMAND = "./platforms/linux/ubuntu/computer-use/scripts/chatgpt-mcp.sh"
 
 
 class McpRuntimeError(RuntimeError):
@@ -104,16 +108,15 @@ def load_policy() -> dict[str, Any]:
         value = json.loads(_read_regular(POLICY_PATH).decode("utf-8"), object_pairs_hook=_pairs)
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise McpRuntimeError(f"cannot parse canonical MCP policy: {error}") from error
-    if not isinstance(value, dict) or value.get("schemaVersion") != 1:
+    if not isinstance(value, dict) or value.get("schemaVersion") != 2:
         raise McpRuntimeError("unsupported canonical MCP policy")
-    if not isinstance(value.get("basicMemory"), str) or not isinstance(value.get("playwright"), str):
+    if not isinstance(value.get("basicMemory"), str):
         raise McpRuntimeError("canonical MCP policy has invalid package versions")
-    if value.get("githubRemote") != "https://api.githubcopilot.com/mcp/":
-        raise McpRuntimeError("canonical GitHub MCP endpoint is not the hosted OAuth endpoint")
-    if value.get("playwrightBrowser") != "chrome-for-testing" or not isinstance(
-        value.get("playwrightBrowserRevision"), int
-    ):
-        raise McpRuntimeError("canonical Playwright browser pin is invalid")
+    retired_browser_fields = {"playwright", "playwrightBrowser", "playwrightBrowserRevision"}
+    if retired_browser_fields.intersection(value):
+        raise McpRuntimeError("retired Playwright MCP policy fields are forbidden")
+    if "githubRemote" in value:
+        raise McpRuntimeError("obsolete hosted GitHub MCP policy is forbidden")
     node_version = value.get("nodeVersion")
     node_archive = value.get("nodeArchive")
     node_sha256 = value.get("nodeSha256")
@@ -132,6 +135,27 @@ def load_policy() -> dict[str, Any]:
     expected_url = f"https://nodejs.org/dist/v{node_version}/{expected_archive}"
     if node_archive != expected_archive or node_url != expected_url:
         raise McpRuntimeError("canonical Node.js archive and URL do not match the pinned version")
+    github_version = value.get("githubVersion")
+    github_archive = value.get("githubArchive")
+    github_sha256 = value.get("githubSha256")
+    github_url = value.get("githubUrl")
+    if (
+        not isinstance(github_version, str)
+        or not github_version
+        or not isinstance(github_archive, str)
+        or not isinstance(github_sha256, str)
+        or len(github_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in github_sha256.lower())
+        or not isinstance(github_url, str)
+    ):
+        raise McpRuntimeError("canonical GitHub MCP runtime pin is invalid")
+    expected_github_archive = "github-mcp-server_Linux_x86_64.tar.gz"
+    expected_github_url = (
+        "https://github.com/github/github-mcp-server/releases/download/"
+        f"v{github_version}/{expected_github_archive}"
+    )
+    if github_archive != expected_github_archive or github_url != expected_github_url:
+        raise McpRuntimeError("canonical GitHub MCP archive and URL do not match the pinned version")
     return value
 
 
@@ -139,16 +163,15 @@ def expected_marker(profile: str) -> dict[str, Any]:
     """Return the exact marker payload for one isolated runtime profile."""
     validate_profile(profile)
     policy = load_policy()
-    return {
-        "schemaVersion": 1,
+    marker = {
+        "schemaVersion": 2,
         "profile": profile,
         "basicMemory": policy["basicMemory"],
-        "playwright": policy["playwright"],
-        "playwrightBrowser": policy["playwrightBrowser"],
-        "playwrightBrowserRevision": policy["playwrightBrowserRevision"],
-        "githubRemote": policy["githubRemote"],
+        "githubVersion": policy["githubVersion"],
+        "githubSha256": policy["githubSha256"],
         "nodeVersion": policy["nodeVersion"],
     }
+    return marker
 
 
 def profile_paths(profile_root: Path) -> dict[str, Path]:
@@ -160,16 +183,12 @@ def profile_paths(profile_root: Path) -> dict[str, Path]:
         "basic": root / "mcp" / "basic-memory",
         "basic_home": root / "mcp" / "basic-memory" / "home",
         "basic_notes": root / "mcp" / "basic-memory" / "notes",
-        "playwright": root / "mcp" / "playwright",
-        "playwright_home": root / "mcp" / "playwright" / "home",
-        "playwright_output": root / "mcp" / "playwright" / "output",
+        "github": root / "mcp" / "github",
+        "github_binary": root / "mcp" / "github" / "github-mcp-server",
         "node_root": root / "mcp" / "node" / f"node-v{policy['nodeVersion']}-linux-x64",
         "uv_cache": root / "cache" / "uv",
         "uv_environments": root / "cache" / "uv" / "environments-v2",
         "uv_archive": root / "cache" / "uv" / "archive-v0",
-        "npm_cache": root / "cache" / "npm",
-        "npx_cache": root / "cache" / "npm" / "_npx",
-        "browser_cache": root / "cache" / "ms-playwright",
         "marker": root / "mcp" / "provisioned.json",
     }
 
@@ -178,9 +197,6 @@ def native_paths() -> dict[str, Path]:
     """Return native user-local MCP state without borrowing WSL profile state."""
     root = ensure_safe_path(Path(os.environ.get("OPENCODE_MCP_NATIVE_ROOT", str(NATIVE_ROOT))))
     notes = ensure_safe_path(Path(os.environ.get("BASIC_MEMORY_HOME", str(NATIVE_NOTES))))
-    browser_cache = ensure_safe_path(
-        Path(os.environ.get("OPENCODE_MCP_NATIVE_BROWSER_CACHE", str(NATIVE_BROWSER_CACHE)))
-    )
     policy = load_policy()
     node_root = root / "node" / f"node-v{policy['nodeVersion']}-linux-x64"
     return {
@@ -188,9 +204,8 @@ def native_paths() -> dict[str, Path]:
         "basic": root / "basic-memory",
         "basic_config": root / "basic-memory" / "config",
         "basic_notes": notes,
-        "playwright": root / "playwright",
-        "playwright_output": root / "playwright" / "output",
-        "browser_cache": browser_cache,
+        "github": root / "github",
+        "github_binary": root / "github" / "github-mcp-server",
         "node_root": node_root,
         "marker": root / "provisioned.json",
     }
@@ -198,6 +213,7 @@ def native_paths() -> dict[str, Path]:
 
 def prepare_profile(profile_root: Path, *, apply: bool) -> None:
     """Create or validate only the private directories owned by a profile."""
+    mcp_servers("wsl2", profile_root)
     paths = profile_paths(profile_root)
     directories = (
         paths["root"],
@@ -210,16 +226,11 @@ def prepare_profile(profile_root: Path, *, apply: bool) -> None:
         paths["basic"],
         paths["basic_home"],
         paths["basic_notes"],
-        paths["playwright"],
-        paths["playwright_home"],
-        paths["playwright_output"],
+        paths["github"],
         paths["node_root"].parent,
         paths["uv_cache"],
         paths["uv_environments"],
         paths["uv_archive"],
-        paths["npm_cache"],
-        paths["npx_cache"],
-        paths["browser_cache"],
     )
     for directory in directories:
         ensure_safe_path(directory)
@@ -236,13 +247,13 @@ def prepare_profile(profile_root: Path, *, apply: bool) -> None:
 
 def prepare_native(*, apply: bool) -> None:
     """Create or validate native user-local state and the Basic Memory notes root."""
+    mcp_servers("native")
     paths = native_paths()
     directories = (
         paths["root"],
         paths["basic"],
         paths["basic_config"],
-        paths["playwright"],
-        paths["playwright_output"],
+        paths["github"],
         paths["basic_notes"],
     )
     for directory in directories:
@@ -339,22 +350,6 @@ def _has_native_basic_memory_runtime(version: str) -> bool:
     return result.returncode == 0 and version in f"{result.stdout}\n{result.stderr}"
 
 
-def _has_playwright_runtime(profile_root: Path, version: str) -> bool:
-    """Find the pinned Playwright MCP package in the profile's npx cache."""
-    paths = profile_paths(profile_root)
-    for run in _children(paths["npx_cache"]):
-        package = run / "node_modules" / "@playwright" / "mcp" / "package.json"
-        try:
-            if package.is_symlink() or not package.is_file():
-                continue
-            value = json.loads(package.read_text(encoding="utf-8"))
-            if isinstance(value, dict) and value.get("version") == version:
-                return True
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-            continue
-    return False
-
-
 def _has_node_runtime(version: str, *, profile: str, profile_root: Path | None = None) -> bool:
     """Require the selected profile's trusted Node and npm at the pinned version."""
     try:
@@ -377,37 +372,113 @@ def _has_node_runtime(version: str, *, profile: str, profile_root: Path | None =
     return node_result.returncode == 0 and node_result.stdout.strip() == f"v{version}" and npm_result.returncode == 0
 
 
-def _has_native_playwright_runtime(version: str) -> bool:
-    """Check the locked repository Playwright package and trusted Node runtime."""
-    project = CANONICAL_ROOT.parent / "browser-tools"
-    package = project / "node_modules" / "@playwright" / "mcp" / "package.json"
-    launcher = project / "node_modules" / ".bin" / "playwright-mcp"
-    browser = project / "node_modules" / ".bin" / "playwright"
-    try:
-        value = json.loads(_read_regular(package, limit=256 * 1024).decode("utf-8"))
-        package_version = value.get("version") if isinstance(value, dict) else None
-        launcher_metadata = launcher.resolve(strict=True).lstat()
-        browser_metadata = browser.resolve(strict=True).lstat()
-    except (McpRuntimeError, UnicodeDecodeError, json.JSONDecodeError, OSError, RuntimeError):
-        return False
-    return (
-        package_version == version
-        and stat.S_ISREG(launcher_metadata.st_mode)
-        and os.access(launcher, os.X_OK)
-        and stat.S_ISREG(browser_metadata.st_mode)
-        and os.access(browser, os.X_OK)
-        and _has_node_runtime(str(load_policy()["nodeVersion"]), profile="native")
-    )
+def github_binary(profile: str, profile_root: Path | None = None) -> Path:
+    """Return the selected profile's fixed GitHub MCP binary path."""
+    validate_profile(profile)
+    if profile == "native":
+        if profile_root is not None:
+            raise McpRuntimeError("native GitHub MCP resolution does not accept an isolated profile root")
+        return native_paths()["github_binary"]
+    if profile_root is None:
+        raise McpRuntimeError("WSL2 GitHub MCP resolution requires an isolated profile root")
+    return profile_paths(profile_root)["github_binary"]
 
 
-def _has_browser(profile_root: Path | None, revision: int, *, profile: str) -> bool:
-    browser_root = profile_paths(profile_root)["browser_cache"] if profile == "wsl2" and profile_root else native_paths()["browser_cache"]
-    browser = browser_root / f"chromium-{revision}" / "chrome-linux64" / "chrome"
+def _has_github_runtime(path: Path, version: str) -> bool:
+    """Require a trusted executable whose embedded CLI version matches policy."""
     try:
-        metadata = browser.lstat()
-    except FileNotFoundError:
+        ensure_safe_path(path, allow_missing=False)
+        metadata = path.lstat()
+        if (
+            not stat.S_ISREG(metadata.st_mode)
+            or stat.S_ISLNK(metadata.st_mode)
+            or not os.access(path, os.X_OK)
+            or metadata.st_uid not in (0, os.getuid())
+            or stat.S_IMODE(metadata.st_mode) & 0o022
+        ):
+            return False
+        result = subprocess.run(
+            [str(path), "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env={"HOME": str(Path.home()), "PATH": "/usr/local/bin:/usr/bin:/bin", "LANG": "C.UTF-8"},
+            timeout=10,
+        )
+    except (McpRuntimeError, FileNotFoundError, OSError, subprocess.TimeoutExpired):
         return False
-    return stat.S_ISREG(metadata.st_mode) and not stat.S_ISLNK(metadata.st_mode) and os.access(browser, os.X_OK)
+    lines = result.stdout.splitlines()
+    return result.returncode == 0 and f"Version: {version}" in lines
+
+
+def ensure_github(*, profile: str, profile_root: Path | None = None, apply: bool) -> Path:
+    """Return or install the selected profile's checksum-pinned GitHub MCP binary."""
+    validate_profile(profile)
+    policy = load_policy()
+    target = github_binary(profile, profile_root)
+    version = str(policy["githubVersion"])
+    if _has_github_runtime(target, version):
+        return target
+    if not apply:
+        raise McpRuntimeError(
+            f"trusted GitHub MCP {version} is unavailable; rerun setup-mcps.sh --apply"
+        )
+    if target.exists() or target.is_symlink():
+        raise McpRuntimeError(f"pinned GitHub MCP target exists but is not usable: {target}")
+    ensure_safe_path(target)
+    target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    target.parent.chmod(0o700)
+    temporary_root = Path(tempfile.mkdtemp(prefix="github-mcp-runtime-", dir=str(target.parent)))
+    archive_path = temporary_root / str(policy["githubArchive"])
+    extracted_path = temporary_root / "github-mcp-server"
+    try:
+        with urlopen(str(policy["githubUrl"]), timeout=90) as response, archive_path.open("wb") as handle:
+            digest = hashlib.sha256()
+            total = 0
+            while True:
+                chunk = response.read(1024 * 1024)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > MAX_GITHUB_ARCHIVE_BYTES:
+                    raise McpRuntimeError("pinned GitHub MCP archive exceeds the bounded download size")
+                digest.update(chunk)
+                handle.write(chunk)
+        if digest.hexdigest() != str(policy["githubSha256"]):
+            raise McpRuntimeError("pinned GitHub MCP archive checksum does not match the published policy")
+        with tarfile.open(archive_path, mode="r:gz") as archive:
+            members = archive.getmembers()
+            expected_names = {"LICENSE", "README.md", "github-mcp-server"}
+            if len(members) != len(expected_names) or {member.name for member in members} != expected_names:
+                raise McpRuntimeError("pinned GitHub MCP archive has unexpected contents")
+            if any(not member.isfile() for member in members):
+                raise McpRuntimeError("pinned GitHub MCP archive contains an unsafe member")
+            binary_member = archive.getmember("github-mcp-server")
+            if binary_member.size <= 0 or binary_member.size > MAX_GITHUB_BINARY_BYTES:
+                raise McpRuntimeError("pinned GitHub MCP archive binary exceeds its bounded size")
+            if any(
+                archive.getmember(name).size > MAX_GITHUB_METADATA_BYTES
+                for name in ("LICENSE", "README.md")
+            ):
+                raise McpRuntimeError("pinned GitHub MCP archive metadata exceeds its bounded size")
+            source = archive.extractfile(binary_member)
+            if source is None:
+                raise McpRuntimeError("pinned GitHub MCP archive binary cannot be read")
+            with source, extracted_path.open("xb") as destination:
+                shutil.copyfileobj(source, destination, length=1024 * 1024)
+            extracted_path.chmod(0o700)
+        os.replace(extracted_path, target)
+    except (OSError, EOFError, tarfile.TarError, ValueError) as error:
+        raise McpRuntimeError(f"cannot install pinned GitHub MCP {version}: {error}") from error
+    finally:
+        shutil.rmtree(temporary_root, ignore_errors=True)
+    if not _has_github_runtime(target, version):
+        try:
+            target.unlink()
+        except FileNotFoundError:
+            pass
+        raise McpRuntimeError("installed GitHub MCP runtime failed its executable/version verification")
+    return target
 
 
 def _load_marker(path: Path) -> dict[str, Any]:
@@ -454,6 +525,7 @@ def mcp_provisioning(
 ) -> None:
     """Verify or record the exact local runtimes for one selected profile."""
     validate_profile(profile)
+    mcp_servers(profile, profile_root)
     expected = expected_marker(profile)
     if profile == "native":
         paths = native_paths()
@@ -467,10 +539,8 @@ def mcp_provisioning(
             raise McpRuntimeError("Basic Memory's canonical pinned native runtime is missing")
         if not _has_node_runtime(str(expected["nodeVersion"]), profile="native"):
             raise McpRuntimeError("the canonical pinned native Node.js runtime is missing")
-        if not _has_native_playwright_runtime(str(expected["playwright"])):
-            raise McpRuntimeError("Playwright MCP's canonical pinned native runtime is missing")
-        if not _has_browser(None, int(expected["playwrightBrowserRevision"]), profile="native"):
-            raise McpRuntimeError("the canonical pinned native Playwright browser is missing")
+        if not _has_github_runtime(paths["github_binary"], str(expected["githubVersion"])):
+            raise McpRuntimeError("the canonical pinned native GitHub MCP runtime is missing")
     else:
         if profile_root is None:
             raise McpRuntimeError("wsl2 MCP provisioning requires an isolated profile root")
@@ -483,10 +553,8 @@ def mcp_provisioning(
             raise McpRuntimeError("Basic Memory's canonical pinned WSL2 runtime is missing")
         if not _has_node_runtime(str(expected["nodeVersion"]), profile="wsl2", profile_root=profile_root):
             raise McpRuntimeError("the canonical pinned WSL2 Node.js runtime is missing")
-        if not _has_playwright_runtime(profile_root, str(expected["playwright"])):
-            raise McpRuntimeError("Playwright MCP's canonical pinned WSL2 runtime is missing")
-        if not _has_browser(profile_root, int(expected["playwrightBrowserRevision"]), profile="wsl2"):
-            raise McpRuntimeError("the canonical pinned WSL2 Playwright browser is missing")
+        if not _has_github_runtime(paths["github_binary"], str(expected["githubVersion"])):
+            raise McpRuntimeError("the canonical pinned WSL2 GitHub MCP runtime is missing")
     if apply:
         _write_marker(paths["marker"], expected)
     if not quiet:
@@ -507,20 +575,27 @@ def _wrapper(name: str) -> Path:
 def mcp_servers(profile: str = "native", profile_root: Path | None = None) -> dict[str, dict[str, Any]]:
     """Return the one shared MCP declaration set for a native or WSL profile."""
     validate_profile(profile)
-    policy = load_policy()
-    basic = _wrapper("basic-memory-mcp.sh")
-    playwright = _wrapper("playwright-mcp.sh")
+    names = MCP_NAMES if profile == "native" else GLOBAL_MCP_NAMES
+    wrappers = {name: _wrapper(f"{name}-mcp.sh") for name in names}
     timeout = {"startup": 30_000}
+    commands = {
+        "basic-memory": NATIVE_BASIC_COMMAND,
+        "github": NATIVE_GITHUB_COMMAND,
+        "chatgpt": NATIVE_CHATGPT_COMMAND,
+    }
     entries: dict[str, dict[str, Any]] = {
-        "basic-memory": {"type": "local", "command": [NATIVE_BASIC_COMMAND], "disabled": False, "timeout": timeout.copy()},
-        "github": {"type": "remote", "url": policy["githubRemote"], "disabled": False, "timeout": timeout.copy()},
-        "playwright": {"type": "local", "command": [NATIVE_PLAYWRIGHT_COMMAND], "disabled": False, "timeout": timeout.copy()},
+        name: {
+            "type": "local",
+            "command": [commands[name]],
+            "disabled": False,
+            "timeout": timeout.copy(),
+            **({"codemode": False} if name == "chatgpt" else {}),
+        }
+        for name in names
     }
     if profile == "native":
         if profile_root is not None:
             raise McpRuntimeError("native MCP declarations do not accept an isolated profile root")
-        _wrapper("basic-memory-mcp.sh")
-        _wrapper("playwright-mcp.sh")
         return entries
     if profile != "wsl2" or profile_root is None:
         raise McpRuntimeError(f"unsupported MCP profile: {profile}")
@@ -529,10 +604,10 @@ def mcp_servers(profile: str = "native", profile_root: Path | None = None) -> di
         "OPENCODE_MCP_PROFILE": "wsl2",
         "OPENCODE_MCP_PROFILE_ROOT": str(root),
     }
-    for name in ("basic-memory", "playwright"):
-        entries[name]["command"] = [str(basic if name == "basic-memory" else playwright)]
+    for name in names:
+        entries[name]["command"] = [str(wrappers[name])]
         entries[name]["cwd"] = str(root / "workspace")
-        entries[name]["environment"] = environment
+        entries[name]["environment"] = environment.copy()
     return entries
 
 
@@ -548,6 +623,9 @@ def ensure_mcp_servers(data: dict[str, Any], *, profile: str, profile_root: Path
     servers = mcp.setdefault("servers", {})
     if not isinstance(servers, dict):
         raise McpRuntimeError("mcp.servers must be an object")
+    if profile == "wsl2":
+        mcp.pop("playwright", None)
+        servers.pop("playwright", None)
     servers.update(mcp_servers(profile, profile_root))
 
 
@@ -557,23 +635,26 @@ def verify_mcp_servers(data: dict[str, Any], *, profile: str, profile_root: Path
     servers = mcp.get("servers") if isinstance(mcp, dict) else None
     if not isinstance(servers, dict):
         raise McpRuntimeError("mcp.servers must be configured")
+    if isinstance(mcp, dict) and "playwright" in mcp:
+        raise McpRuntimeError("project MCP configuration contains a retired flat Playwright declaration")
     expected = mcp_servers(profile, profile_root)
-    if set(servers) != set(MCP_NAMES):
+    if set(servers) != set(expected):
         raise McpRuntimeError(f"MCP server set is not exactly canonical: {sorted(servers)}")
-    for name in MCP_NAMES:
+    for name in expected:
         if servers.get(name) != expected[name]:
             raise McpRuntimeError(f"MCP server {name} is not exactly canonical")
-    serialized = json.dumps({name: servers[name] for name in MCP_NAMES}).lower()
+    serialized = json.dumps({name: servers[name] for name in expected}).lower()
     for marker in ("authorization", "personal_access_token", "api_key", "client_secret", "bearer", "token"):
         if marker in serialized:
             raise McpRuntimeError(f"credential field is forbidden in canonical MCP configuration: {marker}")
 
 
 def global_mcp_servers() -> dict[str, dict[str, Any]]:
-    """Return native global declarations without project-owned Playwright."""
+    """Return native global declarations for every canonical MCP."""
     entries = mcp_servers("native")
-    entries["basic-memory"]["command"] = [str(_wrapper("basic-memory-mcp.sh"))]
-    return {name: entries[name] for name in ("basic-memory", "github")}
+    for name in GLOBAL_MCP_NAMES:
+        entries[name]["command"] = [str(_wrapper(f"{name}-mcp.sh"))]
+    return {name: entries[name] for name in GLOBAL_MCP_NAMES}
 
 
 def ensure_global_mcp_servers(data: dict[str, Any]) -> None:
@@ -583,6 +664,7 @@ def ensure_global_mcp_servers(data: dict[str, Any]) -> None:
         raise McpRuntimeError("mcp must be an object")
     for name in MCP_NAMES:
         mcp.pop(name, None)
+    mcp.pop("playwright", None)
     servers = mcp.setdefault("servers", {})
     if not isinstance(servers, dict):
         raise McpRuntimeError("mcp.servers must be an object")
@@ -591,18 +673,18 @@ def ensure_global_mcp_servers(data: dict[str, Any]) -> None:
 
 
 def verify_global_mcp_servers(data: dict[str, Any]) -> None:
-    """Require canonical global Basic Memory/GitHub entries and no Playwright copy."""
+    """Require canonical global Basic Memory/GitHub/ChatGPT entries without Playwright."""
     mcp = data.get("mcp")
     servers = mcp.get("servers") if isinstance(mcp, dict) else None
     if not isinstance(servers, dict):
         raise McpRuntimeError("mcp.servers must be configured")
     if "playwright" in servers:
-        raise McpRuntimeError("global MCP configuration must not duplicate project Playwright")
+        raise McpRuntimeError("global MCP configuration contains the retired project-only Playwright server")
     expected = global_mcp_servers()
     for name, entry in expected.items():
         if servers.get(name) != entry:
             raise McpRuntimeError(f"global MCP server {name} is not exactly canonical")
-    if any(name in mcp for name in MCP_NAMES):
+    if any(name in mcp for name in (*MCP_NAMES, "playwright")):
         raise McpRuntimeError("legacy flat MCP declarations remain in global configuration")
     serialized = json.dumps({name: servers[name] for name in expected}).lower()
     for marker in ("authorization", "personal_access_token", "api_key", "client_secret", "bearer", "token"):
@@ -679,7 +761,13 @@ def configure_mcp_file(path: Path, *, scope: str, apply: bool) -> None:
     verify_global_mcp_servers(data)
 
 
-def verify_basic_memory_project(config_path: Path, *, project: str, notes: Path) -> None:
+def verify_basic_memory_project(
+    config_path: Path,
+    *,
+    project: str,
+    notes: Path,
+    require_default: bool = True,
+) -> None:
     """Require one local Basic Memory project to resolve to the selected notes root."""
     if not project or project.strip() != project:
         raise McpRuntimeError("Basic Memory project name must be non-empty without surrounding whitespace")
@@ -704,7 +792,7 @@ def verify_basic_memory_project(config_path: Path, *, project: str, notes: Path)
         raise McpRuntimeError(f"Basic Memory project {project} does not use the canonical notes root")
     if entry.get("mode") != "local":
         raise McpRuntimeError(f"Basic Memory project {project} is not local")
-    if value.get("default_project") != project:
+    if require_default and value.get("default_project") != project:
         raise McpRuntimeError(f"Basic Memory project {project} is not the default")
 
 
@@ -720,6 +808,7 @@ def _runner_candidates(kind: str, *, profile: str, profile_root: Path | None = N
         node_bin = profile_paths(profile_root)["node_root"] / "bin"
     values = {
         "uvx": (home / ".local/bin/uvx", Path("/usr/local/bin/uvx"), Path("/usr/bin/uvx")),
+        "gh": (home / ".local/bin/gh", Path("/usr/local/bin/gh"), Path("/usr/bin/gh")),
         "npx": (node_bin / "npx",),
         "npm": (node_bin / "npm",),
         "node": (node_bin / "node",),
@@ -842,25 +931,29 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "action",
-        choices=("policy", "prepare", "mcp-runtime", "runner", "node-runtime", "config", "basic-project"),
+        choices=("policy", "prepare", "mcp-runtime", "runner", "node-runtime", "github-runtime", "config", "basic-project"),
     )
     parser.add_argument("--profile", default="native")
     parser.add_argument("--profile-root", type=Path)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("--kind", choices=("uvx", "npx", "npm", "node"))
+    parser.add_argument("--kind", choices=("uvx", "gh", "npx", "npm", "node"))
     parser.add_argument("--override")
     parser.add_argument("--config", type=Path)
     parser.add_argument("--scope", choices=("global", "project"))
     parser.add_argument("--notes", type=Path)
     parser.add_argument("--project")
+    parser.add_argument("--allow-non-default", action="store_true")
     args = parser.parse_args()
     try:
         validate_profile(args.profile)
         if args.action == "policy":
             policy = load_policy()
             if args.kind:
-                key = {"uvx": "basicMemory", "npx": "playwright", "npm": "nodeVersion", "node": "nodeVersion"}[args.kind]
+                keys = {"uvx": "basicMemory", "npm": "nodeVersion", "node": "nodeVersion"}
+                if args.kind not in keys:
+                    raise McpRuntimeError(f"policy has no package version for runner: {args.kind}")
+                key = keys[args.kind]
                 print(policy[key])
             else:
                 print(json.dumps(policy, sort_keys=True))
@@ -892,6 +985,10 @@ def main() -> int:
             node = ensure_node(profile=args.profile, profile_root=args.profile_root, apply=args.apply)
             if not args.quiet:
                 print(f"OK: trusted Node.js runtime: {node}")
+        elif args.action == "github-runtime":
+            github = ensure_github(profile=args.profile, profile_root=args.profile_root, apply=args.apply)
+            if not args.quiet:
+                print(github)
         elif args.action == "config":
             if args.config is None or args.scope is None:
                 raise McpRuntimeError("config requires --config and --scope")
@@ -901,7 +998,12 @@ def main() -> int:
         elif args.action == "basic-project":
             if args.config is None or args.notes is None or args.project is None:
                 raise McpRuntimeError("basic-project requires --config, --notes, and --project")
-            verify_basic_memory_project(args.config, project=args.project, notes=args.notes)
+            verify_basic_memory_project(
+                args.config,
+                project=args.project,
+                notes=args.notes,
+                require_default=not args.allow_non_default,
+            )
             if not args.quiet:
                 print(f"OK: Basic Memory project {args.project}: {_absolute(args.notes)}")
         else:

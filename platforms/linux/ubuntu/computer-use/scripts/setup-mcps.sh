@@ -31,30 +31,32 @@ case "$PROFILE" in
     if [[ "$APPLY" -eq 1 ]]; then
       "${RUNTIME[@]}" prepare --profile native --apply --quiet
       "${RUNTIME[@]}" node-runtime --profile native --apply --quiet
+      "${RUNTIME[@]}" github-runtime --profile native --apply --quiet
       OPENCODE_MCP_PROFILE=native "$SCRIPT_DIR/basic-memory-mcp.sh" --provision
-      OPENCODE_MCP_PROFILE=native "$SCRIPT_DIR/playwright-mcp.sh" --provision
+      OPENCODE_MCP_PROFILE=native "$SCRIPT_DIR/github-mcp.sh" --verify-only
       "${RUNTIME[@]}" mcp-runtime --profile native --apply
     else
       "${RUNTIME[@]}" mcp-runtime --profile native
       OPENCODE_MCP_PROFILE=native "$SCRIPT_DIR/basic-memory-mcp.sh" --verify-only
-      OPENCODE_MCP_PROFILE=native "$SCRIPT_DIR/playwright-mcp.sh" --verify-only
+      OPENCODE_MCP_PROFILE=native "$SCRIPT_DIR/github-mcp.sh" --verify-only
     fi
     ;;
   wsl2)
     if [[ "$APPLY" -eq 1 ]]; then
       "${RUNTIME[@]}" prepare --profile wsl2 --profile-root "$PROFILE_ROOT" --apply --quiet
       "${RUNTIME[@]}" node-runtime --profile wsl2 --profile-root "$PROFILE_ROOT" --apply --quiet
+      "${RUNTIME[@]}" github-runtime --profile wsl2 --profile-root "$PROFILE_ROOT" --apply --quiet
       OPENCODE_MCP_PROFILE=wsl2 OPENCODE_MCP_PROFILE_ROOT="$PROFILE_ROOT" \
         "$SCRIPT_DIR/basic-memory-mcp.sh" --provision
       OPENCODE_MCP_PROFILE=wsl2 OPENCODE_MCP_PROFILE_ROOT="$PROFILE_ROOT" \
-        "$SCRIPT_DIR/playwright-mcp.sh" --provision
+        "$SCRIPT_DIR/github-mcp.sh" --verify-only
       "${RUNTIME[@]}" mcp-runtime --profile wsl2 --profile-root "$PROFILE_ROOT" --apply
     else
       "${RUNTIME[@]}" mcp-runtime --profile wsl2 --profile-root "$PROFILE_ROOT"
       OPENCODE_MCP_PROFILE=wsl2 OPENCODE_MCP_PROFILE_ROOT="$PROFILE_ROOT" \
         "$SCRIPT_DIR/basic-memory-mcp.sh" --verify-only
       OPENCODE_MCP_PROFILE=wsl2 OPENCODE_MCP_PROFILE_ROOT="$PROFILE_ROOT" \
-        "$SCRIPT_DIR/playwright-mcp.sh" --verify-only
+        "$SCRIPT_DIR/github-mcp.sh" --verify-only
     fi
     ;;
   *)

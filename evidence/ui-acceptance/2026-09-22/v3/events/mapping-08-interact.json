@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "phase": "interact",
+  "event_id": "mapping-08-interact-001",
+  "capture_id": "mapping-08",
+  "source_sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226",
+  "capture_generator_sha256": "de004ad8bd55316daaf82cd9460758bbb7060b487d37db7afe132677d2a46781",
+  "render_test_sha256": "1e9fd72a1a25c67f532484b99e401c66a66fac439800fa4a3dc088292ec59e9e",
+  "native_capture_test_sha256": "94cd514fa1d6b4fe500b66736aa7dd244b692a8b0db53baaba97ed0e93e941eb",
+  "native_capture_output_sha256": "21d67bf9237820c104183915b30710957b6b68dafc528c97cf4fd7f5ff2bb497",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "click",
+    "target": "todo-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "todo-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "before": {
+    "snapshot_id": "mapping-08-interact-before",
+    "frame_sha256": "ce876e5e5f35cedcef3f101f99a383ed63858b2a9c9284e9be56c73f1f2f812b",
+    "spans_sha256": "a3c70f10ef2d700c0d9cf001b8cbdce521d9108179a55fdb38e6434aaad59063",
+    "state_sha256": "6107d88460bba248f3f7a360e1e792352769d538b419ce5cce9a601ff3c03b30"
+  },
+  "after": {
+    "snapshot_id": "mapping-08-interact-after",
+    "frame_sha256": "631175a54856de941b31694a9b715ddc5c0258802fb551e54bcfd96fd7c47f18",
+    "spans_sha256": "abf87dc3080191573cc808183dbd29a1558ca88489a46c50d9e5e7e5baecca40",
+    "state_sha256": "3cb191def2928a9e5ce2be825bda706b78c72b0b4abcef431e138cc9c6658852"
+  },
+  "result": {
+    "status": "passed",
+    "target": "todo-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "e05625c432ea55b547b5856ad7f2513fec4a887a097f97d4e301b53633ceb02b",
+  "output": "evidence/ui-acceptance/2026-09-22/v3/event-output/mapping-08-interact.json",
+  "output_sha256": "314738d0f24d365def7b6851a26ff330f288abe6a3d83233f23f5c35fb63622a",
+  "observed_at": "2026-09-22T21:35:58.052Z"
+}

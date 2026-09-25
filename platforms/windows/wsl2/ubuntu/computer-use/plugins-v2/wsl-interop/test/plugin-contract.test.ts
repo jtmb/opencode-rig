@@ -35,3 +35,22 @@ test("registers structured PowerShell and Windows app-control tools", async () =
   assert.match(source, /permission:\s*["']wsl_powershell_raw["']/u)
   assert.match(source, /permission:\s*["']wsl_windows_act["']/u)
 })
+
+test("registers default-browser UI Automation tools with required action data", async () => {
+  const source = await readFile(new URL("src/index.ts", root), "utf8")
+  for (const tool of [
+    "wsl_browser_open", "wsl_browser_windows", "wsl_browser_snapshot", "wsl_browser_screenshot",
+  ]) {
+    assert.match(source, new RegExp(`name:\\s*["']${tool}["']`, "u"))
+  }
+  for (const tool of ["wsl_browser_click", "wsl_browser_focus", "wsl_browser_type", "wsl_browser_press"]) {
+    assert.ok(source.includes(`addBrowserAction("${tool}"`))
+  }
+  assert.match(source, /options:\s*\{\s*permission:\s*["']wsl_browser_open["']/u)
+  assert.match(source, /options:\s*\{\s*permission:\s*["']wsl_browser_act["']/u)
+  assert.match(source, /Success confirms request acceptance only, not navigation/u)
+  assert.match(source, /Capture a bounded in-memory PNG from the exact HWND/u)
+  assert.match(source, /fails closed on changed identity, occlusion, blank output, or unpainted pixels/u)
+  assert.match(source, /action\s*===\s*["']type["']\s*\?\s*\[["']value["']\]/u)
+  assert.match(source, /action\s*===\s*["']press["']\s*\?\s*\[["']key["']\]/u)
+})

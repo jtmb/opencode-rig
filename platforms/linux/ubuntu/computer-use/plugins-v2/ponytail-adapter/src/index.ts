@@ -1,6 +1,5 @@
 import { createRequire } from "node:module"
-import { homedir } from "node:os"
-import { basename, join, resolve } from "node:path"
+import { basename, dirname, join, resolve } from "node:path"
 import { lstat, readdir, readFile, realpath } from "node:fs/promises"
 
 import { Plugin, Skill } from "@opencode/plugin"
@@ -8,9 +7,21 @@ import { Plugin, Skill } from "@opencode/plugin"
 const MAX_PACKAGE_JSON_BYTES = 256 * 1024
 const MAX_COMMAND_BYTES = 64 * 1024
 const MAX_SKILL_BYTES = 512 * 1024
-const MAX_COMMANDS = 32
-const MAX_SKILLS = 32
+const MAX_HOOK_BYTES = 64 * 1024
+const MAX_PACKAGE_ROOT_LENGTH = 4096
 const NAME = /^[a-z0-9][a-z0-9-]{0,127}$/
+
+export const PONYTAIL_PACKAGE_NAME = "@dietrichgebert/ponytail"
+export const PONYTAIL_PACKAGE_VERSION = "4.10.0"
+export const PONYTAIL_COMMAND_NAMES = [
+  "ponytail",
+  "ponytail-audit",
+  "ponytail-debt",
+  "ponytail-gain",
+  "ponytail-help",
+  "ponytail-review",
+] as const
+export const PONYTAIL_SKILL_NAMES = PONYTAIL_COMMAND_NAMES
 
 type PonytailRuntime = {
   getDefaultMode(): string
@@ -47,6 +58,60 @@ async function boundedFile(path: string, maximum: number, label: string) {
   return readFile(path, "utf8")
 }
 
+function packageRootOption(options: unknown) {
+  if (typeof options !== "object" || options === null || Array.isArray(options)) return undefined
+  const value = (options as Record<string, unknown>).packageRoot
+  if (value === undefined) return undefined
+  if (typeof value !== "string" || value.length === 0 || value.length > MAX_PACKAGE_ROOT_LENGTH) {
+    throw new Error(`Ponytail packageRoot override must be a non-empty path of at most ${MAX_PACKAGE_ROOT_LENGTH} characters`)
+  }
+  if (!value.startsWith("/")) throw new Error("Ponytail packageRoot override must be an absolute path")
+  return value
+}
+
+function missingFile(error: unknown) {
+  return typeof error === "object" && error !== null && (error as NodeJS.ErrnoException).code === "ENOENT"
+}
+
+async function packageRootFromModule(entrypoint: string) {
+  let current = resolve(dirname(entrypoint))
+  for (let depth = 0; depth < 8; depth += 1) {
+    try {
+      const source = await boundedFile(join(current, "package.json"), MAX_PACKAGE_JSON_BYTES, "Ponytail package.json")
+      let manifest: Record<string, unknown>
+      try {
+        manifest = JSON.parse(source) as Record<string, unknown>
+      } catch {
+        throw new Error("resolved Ponytail package.json is not valid JSON")
+      }
+      if (manifest.name !== PONYTAIL_PACKAGE_NAME || manifest.version !== PONYTAIL_PACKAGE_VERSION) {
+        throw new Error(`resolved module is not the pinned official ${PONYTAIL_PACKAGE_NAME}@${PONYTAIL_PACKAGE_VERSION} package`)
+      }
+      return current
+    } catch (error) {
+      if (!missingFile(error)) throw error
+      const parent = dirname(current)
+      if (parent === current) break
+      current = parent
+    }
+  }
+  throw new Error(`could not find the pinned official ${PONYTAIL_PACKAGE_NAME}@${PONYTAIL_PACKAGE_VERSION} package manifest from the adapter module`)
+}
+
+export async function resolvePonytailPackageRoot(options?: unknown) {
+  const override = packageRootOption(options)
+  if (override) return override
+  const require = createRequire(import.meta.url)
+  let entrypoint: string
+  try {
+    entrypoint = require.resolve(PONYTAIL_PACKAGE_NAME)
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error)
+    throw new Error(`pinned official ${PONYTAIL_PACKAGE_NAME}@${PONYTAIL_PACKAGE_VERSION} dependency is missing from the adapter workspace: ${detail}`)
+  }
+  return packageRootFromModule(entrypoint)
+}
+
 function parseCommand(name: string, source: string): PonytailCommand {
   const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/)
   if (!match) throw new Error(`Ponytail command has invalid frontmatter: ${name}`)
@@ -66,18 +131,15 @@ function parseSkill(id: string, path: string, source: string): PonytailSkill {
   return { id, name: id, description, path, content: match[2].trim() }
 }
 
-function packageRootOption(options: unknown) {
-  if (typeof options === "object" && options !== null && !Array.isArray(options)) {
-    const value = (options as Record<string, unknown>).packageRoot
-    if (typeof value === "string" && value.length > 0) return value
-  }
-  return join(homedir(), ".local", "opt", "opencode-ponytail", "current", "node_modules", "@dietrichgebert", "ponytail")
-}
-
 export async function loadPonytailPackage(inputRoot: string): Promise<PonytailPackage> {
-  const root = await realpath(inputRoot)
+  const requestedRoot = resolve(inputRoot)
+  const requestedInfo = await lstat(requestedRoot)
+  if (!requestedInfo.isDirectory() || requestedInfo.isSymbolicLink()) {
+    throw new Error("Ponytail package root must be a regular non-symlink directory")
+  }
+  const root = await realpath(requestedRoot)
   const rootInfo = await lstat(root)
-  if (!rootInfo.isDirectory() || rootInfo.isSymbolicLink()) throw new Error("Ponytail package root must resolve to a regular directory")
+  if (!rootInfo.isDirectory() || rootInfo.isSymbolicLink()) throw new Error("Ponytail package root must resolve to a regular non-symlink directory")
 
   const packageText = await boundedFile(join(root, "package.json"), MAX_PACKAGE_JSON_BYTES, "Ponytail package.json")
   let manifest: Record<string, unknown>
@@ -86,15 +148,26 @@ export async function loadPonytailPackage(inputRoot: string): Promise<PonytailPa
   } catch {
     throw new Error("Ponytail package.json is not valid JSON")
   }
-  if (manifest.name !== "@dietrichgebert/ponytail" || typeof manifest.version !== "string") {
-    throw new Error("package root is not an official @dietrichgebert/ponytail package")
+  if (manifest.name !== PONYTAIL_PACKAGE_NAME || manifest.version !== PONYTAIL_PACKAGE_VERSION) {
+    throw new Error(`package root is not the pinned official ${PONYTAIL_PACKAGE_NAME}@${PONYTAIL_PACKAGE_VERSION} package`)
+  }
+  const scripts = manifest.scripts
+  if (typeof scripts === "object" && scripts !== null && !Array.isArray(scripts)) {
+    for (const name of ["preinstall", "install", "postinstall", "prepare"]) {
+      if (typeof (scripts as Record<string, unknown>)[name] === "string") {
+        throw new Error(`official Ponytail package contains the forbidden ${name} lifecycle script`)
+      }
+    }
   }
 
   const commandDirectory = join(root, ".opencode", "command")
   const commandEntries = (await readdir(commandDirectory, { withFileTypes: true }))
     .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
     .sort((left, right) => left.name.localeCompare(right.name))
-  if (commandEntries.length === 0 || commandEntries.length > MAX_COMMANDS) throw new Error(`Ponytail must contain 1-${MAX_COMMANDS} commands`)
+  const commandNames = commandEntries.map((entry) => basename(entry.name, ".md"))
+  if (commandNames.length !== PONYTAIL_COMMAND_NAMES.length || commandNames.some((name) => !PONYTAIL_COMMAND_NAMES.includes(name as typeof PONYTAIL_COMMAND_NAMES[number]))) {
+    throw new Error(`official Ponytail package must contain exactly six commands: ${PONYTAIL_COMMAND_NAMES.join(", ")}`)
+  }
   const commands: PonytailCommand[] = []
   for (const entry of commandEntries) {
     const name = basename(entry.name, ".md")
@@ -107,7 +180,10 @@ export async function loadPonytailPackage(inputRoot: string): Promise<PonytailPa
   const skillEntries = (await readdir(skillsDirectory, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
     .sort((left, right) => left.name.localeCompare(right.name))
-  if (skillEntries.length === 0 || skillEntries.length > MAX_SKILLS) throw new Error(`Ponytail must contain 1-${MAX_SKILLS} skills`)
+  const skillNames = skillEntries.map((entry) => entry.name)
+  if (skillNames.length !== PONYTAIL_SKILL_NAMES.length || skillNames.some((name) => !PONYTAIL_SKILL_NAMES.includes(name as typeof PONYTAIL_SKILL_NAMES[number]))) {
+    throw new Error(`official Ponytail package must contain exactly six skills: ${PONYTAIL_SKILL_NAMES.join(", ")}`)
+  }
   const skills: PonytailSkill[] = []
   for (const entry of skillEntries) {
     if (!NAME.test(entry.name)) throw new Error(`Ponytail skill name is invalid: ${entry.name}`)
@@ -116,9 +192,14 @@ export async function loadPonytailPackage(inputRoot: string): Promise<PonytailPa
     skills.push(parseSkill(entry.name, skillPath, source))
   }
 
+  const configPath = join(root, "hooks", "ponytail-config.js")
+  const instructionsPath = join(root, "hooks", "ponytail-instructions.js")
+  await boundedFile(configPath, MAX_HOOK_BYTES, "Ponytail config hook")
+  await boundedFile(instructionsPath, MAX_HOOK_BYTES, "Ponytail instructions hook")
+
   const require = createRequire(import.meta.url)
-  const config = require(join(root, "hooks", "ponytail-config.js")) as Record<string, unknown>
-  const instructions = require(join(root, "hooks", "ponytail-instructions.js")) as Record<string, unknown>
+  const config = require(configPath) as Record<string, unknown>
+  const instructions = require(instructionsPath) as Record<string, unknown>
   if (typeof config.getDefaultMode !== "function" || typeof config.normalizeMode !== "function" || typeof instructions.getPonytailInstructions !== "function") {
     throw new Error("Ponytail package does not expose the expected instruction runtime")
   }
@@ -148,7 +229,7 @@ function expandCommand(template: string, input: string) {
 export default Plugin.define({
   id: "ponytail",
   async setup(ctx) {
-    const ponytail = await loadPonytailPackage(resolve(packageRootOption(ctx.options)))
+    const ponytail = await loadPonytailPackage(await resolvePonytailPackageRoot(ctx.options))
     const readMode = async (sessionID: string) => {
       const stored = await ctx.storage.get(`mode/${sessionID}`)
       return ponytail.runtime.normalizeMode(stored) ?? ponytail.runtime.getDefaultMode()

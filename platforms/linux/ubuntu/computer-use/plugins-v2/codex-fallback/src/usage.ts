@@ -1,8 +1,14 @@
+import { readFile } from "node:fs/promises"
+import { homedir } from "node:os"
+import { join } from "node:path"
+
 import {
+  CodexUsageError,
+  codexLimitReached,
   fetchCodexUsage,
   overallWeeklyWindow,
-  readOpenAICredential,
   type CodexUsageSnapshot,
+  type OpenAICredential,
 } from "../../codex-usage/src/usage.ts"
 
 export type QuotaSnapshot = {
@@ -27,18 +33,87 @@ export type QuotaCheckerOptions = {
 
 const FAILURE_CACHE_MAX_MS = 15_000
 
+type JsonRecord = Record<string, unknown>
+
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function finiteNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined
+}
+
+function text(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined
+}
+
+function jwtPayload(token: string): JsonRecord | undefined {
+  try {
+    const payload = token.split(".")[1]
+    if (!payload) return undefined
+    const parsed: unknown = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"))
+    return isRecord(parsed) ? parsed : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function accountIdFrom(token: string, auth: JsonRecord) {
+  const direct = text(auth.accountId) ?? text(auth.accountIdOverride)
+  if (direct) return direct
+
+  const payload = jwtPayload(token)
+  const claims = payload?.["https://api.openai.com/auth"]
+  return isRecord(claims) ? text(claims.chatgpt_account_id) : undefined
+}
+
+function defaultAuthPath() {
+  const dataHome = process.env.XDG_DATA_HOME || join(homedir(), ".local", "share")
+  return join(dataHome, "opencode", "auth.json")
+}
+
+async function readOpenAICredential(authPath = defaultAuthPath()): Promise<OpenAICredential> {
+  let raw: string
+  try {
+    raw = await readFile(authPath, "utf8")
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new CodexUsageError("OpenAI login not found. Run `opencode auth login`.", "auth")
+    }
+    throw new CodexUsageError("Could not read the OpenCode authentication file.", "auth")
+  }
+
+  let file: unknown
+  try {
+    file = JSON.parse(raw)
+  } catch {
+    throw new CodexUsageError("The OpenCode authentication file is invalid.", "auth")
+  }
+
+  const openai = isRecord(file) && isRecord(file.openai) ? file.openai : undefined
+  if (!openai || openai.type !== "oauth") {
+    throw new CodexUsageError("Codex subscription quota requires an OpenAI OAuth login.", "auth")
+  }
+
+  const accessToken = text(openai.access)
+  if (!accessToken) throw new CodexUsageError("The OpenAI OAuth access token is missing.", "auth")
+
+  const expiresAt = finiteNumber(openai.expires)
+  if (expiresAt !== undefined && expiresAt <= Date.now()) {
+    throw new CodexUsageError("OpenAI login needs renewal. Use OpenAI in OpenCode or log in again.", "auth")
+  }
+
+  const accountId = accountIdFrom(accessToken, openai)
+  if (!accountId) throw new CodexUsageError("Could not determine the ChatGPT account for this login.", "auth")
+
+  return { accessToken, accountId, expiresAt }
+}
+
 export function quotaFromSnapshot(snapshot: CodexUsageSnapshot): QuotaSnapshot {
-  const overall = snapshot.buckets.find((bucket) => bucket.id === "codex")
   const weekly = overallWeeklyWindow(snapshot)
-  const explicit = overall?.limitReached !== undefined || overall?.allowed !== undefined
-  const limitReached =
-    snapshot.reachedType !== undefined ||
-    overall?.limitReached === true ||
-    overall?.allowed === false ||
-    (!explicit && weekly !== undefined && weekly.usedPercent >= 100)
 
   return {
-    limitReached,
+    limitReached: codexLimitReached(snapshot),
     resetsAt: weekly?.resetsAt !== undefined ? weekly.resetsAt * 1000 : undefined,
     planType: snapshot.planType,
     fetchedAt: snapshot.fetchedAt,

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts",
+  "test_sha256": "23aa007663ed33359880859972c2306e622e7c3225ed4d998fc074271e1e2319",
+  "source_sha256": "4aa6a0b71c58bffd564e879181c14af19ccf97b41b63b396ff1ec21732b8f013",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "/tmp/opencode/node-v26.4.0-linux-x64/bin/node node@26.4.0; npm CLI /tmp/opencode/node-v26.4.0-linux-x64/lib/node_modules/npm/bin/npm-cli.js npm@11.17.0; run-bounded-command.sh",
+  "command": "PATH=/tmp/opencode/node-v26.4.0-linux-x64/bin:$PATH bash ../../scripts/run-bounded-command.sh -- /tmp/opencode/node-v26.4.0-linux-x64/bin/node --experimental-strip-types --test test/visible-command.test.ts",
+  "observed_at": "2026-09-22T21:35:58.052Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/v3/execution-output/mapping-09-render.txt",
+  "output_sha256": "ab09ebf9c5cb4a61b75e1a8ab535db364ca0c1669476c15df58c256578ffaadd"
+}

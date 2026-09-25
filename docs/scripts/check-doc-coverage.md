@@ -26,6 +26,21 @@ Check evaluation is **first matching rule wins**, so an exception rule (for
 example a self-test that shares its parent's page) must appear before the
 general rule.
 
+Current shared-parent exceptions include `bootstrap_behavior_test.py` with
+`docs/scripts/bootstrap.md`, `deploy-plugins-self-test.py` with
+`docs/scripts/deploy-plugins.md`, and
+`recover-orchestration-lockout-self-test.py` with
+`docs/scripts/orchestration-lockout-recovery.md`; these tests do not require
+duplicate stem-named pages.
+
+The `opencode-recovery` rule pairs the target-bound recovery CLI, its QA
+self-test wrapper, and the nested Python unittest module with
+[`opencode-recovery.md`](opencode-recovery.md). The
+`rig-tools-basic-memory-recovery` rule pairs the TypeScript manager and tool
+registration with the package README and the same recovery contract. Catalog
+source and parity tests also retain their Screen guide mapping while requiring
+the recovery contract through an additional documentation rule.
+
 ## Documentation map
 
 `documentation-map.json` at the repository root is the single source of truth:
@@ -69,8 +84,9 @@ rather than a per-plugin page.
   `onAdd` is not allowed in `additional`.
 
 The current `rules` cover scripts, plugins, skills, commands, config examples,
-the browser manifests, the GitHub tools, the Git hooks, and the map itself. The
-independent WSL2 rule maps its source tree and dedicated workflow to the
+the browser manifests, the GitHub tools, the Git hooks, the checkout-local QA
+runtime and its gate/CI integration, and the map itself. The independent WSL2
+rule maps its source tree and dedicated workflow to the
 platform README, root README, and bounded WSL2 acceptance artifact; additions
 also require the documentation index. The single `additional` rule (`handoff`)
 requires `HANDOFF.md` to be updated

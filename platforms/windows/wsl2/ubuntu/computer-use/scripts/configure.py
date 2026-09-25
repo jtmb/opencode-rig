@@ -18,15 +18,18 @@ CONFIG_ROOT = PLATFORM_ROOT / "config"
 CATALOG = CONFIG_ROOT / "wsl2-plugin-roles.json"
 CANONICAL_ROOT = (PLATFORM_ROOT.parents[3] / "linux" / "ubuntu" / "computer-use").resolve()
 CANONICAL_MCP = CANONICAL_ROOT / "scripts" / "mcp_runtime.py"
+CANONICAL_AGENT_HELPER = CANONICAL_ROOT / "scripts" / "setup-opencode-jsonc.py"
+CANONICAL_AGENT_EXAMPLE = CANONICAL_ROOT / "config" / "v2-opencode.example.jsonc"
 MAX_CONFIG_BYTES = 1_048_576
 SERVER_PERMISSIONS = (
     "websearch",
     "wsl_powershell_command",
     "wsl_powershell_raw",
     "wsl_windows_act",
+    "wsl_browser_open",
+    "wsl_browser_act",
     "basic-memory_*",
     "github_*",
-    "playwright_*",
 )
 
 
@@ -51,7 +54,44 @@ def canonical_mcp_module() -> Any:
 
 
 MCP = canonical_mcp_module()
-MCP_NAMES = tuple(MCP.MCP_NAMES)
+MCP_NAMES = tuple(MCP.GLOBAL_MCP_NAMES)
+
+
+def canonical_agent_module() -> Any:
+    """Load the shared role-model contract from canonical Ubuntu source."""
+    metadata = CANONICAL_AGENT_HELPER.lstat()
+    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode):
+        raise ConfigError(f"canonical agent model helper is not a regular file: {CANONICAL_AGENT_HELPER}")
+    spec = importlib.util.spec_from_file_location("open_rig_canonical_agents", CANONICAL_AGENT_HELPER)
+    if spec is None or spec.loader is None:
+        raise ConfigError(f"cannot load canonical agent model helper: {CANONICAL_AGENT_HELPER}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+AGENT_MODELS = canonical_agent_module()
+
+
+def canonical_agent_source() -> dict[str, Any]:
+    """Read the native profile's verified agent roles for an isolated WSL seed."""
+    metadata = CANONICAL_AGENT_EXAMPLE.lstat()
+    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode):
+        raise ConfigError(f"canonical agent example is not a regular file: {CANONICAL_AGENT_EXAMPLE}")
+    source = AGENT_MODELS.load_jsonc(str(CANONICAL_AGENT_EXAMPLE))
+    try:
+        AGENT_MODELS.verify_agent_models(source, source=True)
+    except ValueError as error:
+        raise ConfigError(f"canonical agent model source is invalid: {error}") from error
+    return source
+
+
+def verify_agent_models(server: dict[str, Any]) -> None:
+    """Reject stale model assignments in the selected isolated profile."""
+    try:
+        AGENT_MODELS.verify_agent_models(server)
+    except ValueError as error:
+        raise ConfigError(f"isolated WSL2 agent role models are stale: {error}") from error
 
 
 def object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -436,6 +476,7 @@ def seed(config_dir: Path, *, apply: bool) -> None:
     """Seed missing server and isolated global CLI configuration together."""
     pilot_root(config_dir)
     server_path, cli_path = config_paths(config_dir)
+    canonical_agents = canonical_agent_source()
     targets = (
         (CONFIG_ROOT / "opencode.example.jsonc", server_path),
         (CONFIG_ROOT / "cli.example.json", cli_path),
@@ -443,12 +484,27 @@ def seed(config_dir: Path, *, apply: bool) -> None:
     updates: dict[Path, dict[str, Any]] = {}
     for source, target in targets:
         if _file_metadata(target) is not None:
-            load_json(target)
+            current = load_json(target)
+            if target == server_path:
+                if apply:
+                    try:
+                        if AGENT_MODELS.reconcile_agent_models(current, canonical_agents):
+                            updates[target] = current
+                    except ValueError as error:
+                        raise ConfigError(f"cannot reconcile isolated WSL2 agent role models: {error}") from error
+                else:
+                    verify_agent_models(current)
             print(f"OK: existing config valid: {target}")
         elif not apply:
             raise ConfigError(f"missing config: {target} (rerun with --apply)")
         else:
-            updates[target] = load_json(source)
+            value = load_json(source)
+            if target == server_path:
+                try:
+                    AGENT_MODELS.reconcile_agent_models(value, canonical_agents)
+                except ValueError as error:
+                    raise ConfigError(f"cannot seed isolated WSL2 agent role models: {error}") from error
+            updates[target] = value
     if updates:
         prepare_runtime(config_dir, apply=True)
         write_transaction(updates)
@@ -547,6 +603,8 @@ def deploy(config_dir: Path, selection: str, *, apply: bool) -> None:
         if _file_metadata(path) is None:
             raise ConfigError("run setup-opencode.sh --apply before plugin deployment")
         documents[role] = (path, load_json(path))
+    if "server" in documents:
+        verify_agent_models(documents["server"][1])
     originals = {role: json.loads(json.dumps(data)) for role, (_, data) in documents.items()}
     for entry in entries:
         for role in roles.intersection(entry["roles"]):
@@ -599,6 +657,7 @@ def verify_deployment(config_dir: Path, selection: str = "all") -> None:
     if "server" in roles:
         documents["server"] = load_json(server_path)
         server = documents["server"]
+        verify_agent_models(server)
         if server.get("websearch") != {"provider": "random"}:
             raise ConfigError("isolated WSL2 config must set websearch exactly to provider=random")
         _verify_permissions(server)

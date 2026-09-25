@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "capture_id": "mapping-10",
+  "phase": "interact",
+  "event_id": "mapping-10-interact-001",
+  "action": {
+    "type": "key",
+    "target": "active-subagent-row:selection",
+    "input": "down"
+  },
+  "dispatch": {
+    "device": "keyboard",
+    "method": "pressArrow",
+    "target": "active-subagent-row:selection",
+    "input": "down"
+  },
+  "before": {
+    "snapshot_id": "mapping-10-interact-before",
+    "frame_sha256": "2b9226e1f2d4db658911a655199e6de6b2a46fad102179e07c50ef9a2e28bfde",
+    "spans_sha256": "83e3beb66c033629c24460db7a44ae6bc791b434d385aadbb3bb91fbbc969f20",
+    "state_sha256": "b848bccb02d2a42444b327927d34c31d71dceb16e6856ae3f242f88e19e0d293"
+  },
+  "after": {
+    "snapshot_id": "mapping-10-interact-after",
+    "frame_sha256": "2b9226e1f2d4db658911a655199e6de6b2a46fad102179e07c50ef9a2e28bfde",
+    "spans_sha256": "83e3beb66c033629c24460db7a44ae6bc791b434d385aadbb3bb91fbbc969f20",
+    "state_sha256": "c029c7b861f700e54fd120317ed947db494ce725d303af1d88774518b234a4ef"
+  },
+  "result": {
+    "status": "passed",
+    "target": "active-subagent-row:selection",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": false,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "c066272e1c46d53aca2d01895a29e3892e415fb28c12ec8e5703ee801ee9f6a7",
+  "native_event_sha256": "221a43b017f38ce0558ed089ec7d3f678f3ff21d8a4c4898b824ccdef5c3d9e2"
+}

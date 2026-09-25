@@ -52,6 +52,28 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-git-safety-policy.py
 python3 platforms/linux/ubuntu/computer-use/scripts/check-git-safety-policy-self-test.py
 ```
 
+## Operator override commands
+
+The project-local [`/commit` command](../../.opencode/commands/commit.md) is an
+operator-only immediate commit override. Its fixed shell block stages all
+changes accepted by `git add -A`, including unrelated working-tree changes, and
+commits them using a UTC timestamped message with `--no-verify`; it squashes
+nothing. The
+[`/push` command](../../.opencode/commands/push.md) immediately runs
+`git push --no-verify` using Git's configured push destination and ref. It does
+not stage or commit changes, and it squashes nothing.
+
+OpenCode v2 evaluates each `!` shell block in the command-evaluation shell,
+outside the agent tool permission flow by design. Invoking each command is the
+operator's explicit decision for that operation; `--no-verify` skips Git hooks
+but is not itself authorization. Commit and push remain separate operator
+decisions: `/commit` never pushes, and `/push` never commits.
+
+Agents must never suggest, invoke, or rely on these commands as a substitute for
+the normal gated flow. After an operator invokes one, the agent should verify
+and report the resulting commit SHA or push state using read-only inspection,
+without performing or retrying the Git operation itself.
+
 ## Portable project configuration
 
 Any repository loading `rig-tools` can copy this project-local configuration
@@ -84,6 +106,30 @@ refused during merge, rebase, cherry-pick, revert, or bisect operations. Apply
 builds the reviewed object with `commit-tree`, verifies symbolic `HEAD`, moves
 only the reviewed branch with compare-and-swap, and restores that branch with a
 second compare-and-swap if any post-update HEAD/index postcondition races.
+
+For canonical repository QA, `.opencode/rig-gates.json` also declares a
+checkout-local Node runtime and npm CLI by relative path and SHA-256. The
+provisioner and QA runner verify the same pins; do not replace them with ambient
+`PATH` entries or external absolute paths:
+
+```json
+{
+  "qaRuntime": {
+    "name": "node",
+    "version": "26.4.0",
+    "executable": "toolchains/node/bin/node",
+    "sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "packageManager": {
+      "name": "npm",
+      "executable": "toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+      "sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+    }
+  }
+}
+```
+
+See [`check-repository-qa.md`](check-repository-qa.md) for the runtime contract
+and [`setup-qa-runtime.md`](setup-qa-runtime.md) for verify/apply behavior.
 
 ## Live repository-gate status
 

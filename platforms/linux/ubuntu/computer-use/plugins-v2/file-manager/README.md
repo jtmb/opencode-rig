@@ -12,10 +12,12 @@ available.
 All of these commands open the same panel:
 
 - `/explorer`
-- `/editor`
 - `/files`
 - `Ctrl+Alt+X` (the default; `Ctrl+Alt+E` is reserved by OpenCode's built-in
   `session.line.down` binding)
+
+OpenCode's native `/editor` command remains separate and is not claimed by this
+plugin.
 
 Set the plugin option `bind` to a nonempty key string to override the default.
 The slash aliases and sidebar entry remain available if the desktop or IBus

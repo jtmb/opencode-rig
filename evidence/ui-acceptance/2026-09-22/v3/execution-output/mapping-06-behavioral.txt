@@ -1,0 +1,11 @@
+bounded-command: available=7817MiB budget=3127MiB swap=781MiB node_heap=2032MiB
+Running as unit: run-r17bd7dbeaf394c8698d92bb5ee34f926.scope; invocation ID: a71698c8583a4227b88b74a2cddaee0f
+✔ normalizes a partial theme before panel colors are read (1.073179ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 159.08198

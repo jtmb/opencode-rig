@@ -13,6 +13,7 @@ fi
 
 "$SCRIPT_DIR/run-bounded-command.sh" -- /usr/bin/python3 "$SCRIPT_DIR/check-ownership-boundary.py"
 "$SCRIPT_DIR/run-bounded-command.sh" -- /usr/bin/python3 "$SCRIPT_DIR/self-test.py"
+"$SCRIPT_DIR/run-bounded-command.sh" -- "$SCRIPT_DIR/setup-wsl-plugin-dependencies.sh" --verify-only
 "$SCRIPT_DIR/run-bounded-command.sh" -- npm --prefix "$ROOT/plugins-v2" run check
 
 if [ "$MODE" = "--source" ]; then

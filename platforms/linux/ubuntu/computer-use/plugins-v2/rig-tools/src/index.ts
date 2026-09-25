@@ -7,7 +7,7 @@ import {
   type BinaryInspectInput,
   type BinaryReplaceInput,
 } from "./binary-files.ts"
-import { captureScreenshot, pngDataUri, type CaptureMode } from "./vision.ts"
+import { captureScreenshot, pngDataUri, retainScreenshot, type CaptureMode } from "./vision.ts"
 import { createDockerBuildTool, type DockerBuildInput } from "./docker-build.ts"
 import {
   createDockerTools,
@@ -18,6 +18,7 @@ import {
 import { createGitGateManager, isDeniedShellGitMutation, type GateProgressUpdate } from "./git-gates.ts"
 import { createMemoryCapacityEvaluator } from "./memory-capacity.ts"
 import { createOpenCodeRuntimeManager, type RuntimeReloadInput } from "./opencode-runtime.ts"
+import { createBasicMemoryRecoveryManager, type BasicMemoryRecoveryInput } from "./basic-memory-recovery.ts"
 import { createNpmTool, type NpmInput } from "./npm-tool.ts"
 import { createPythonSandbox, type PythonSandboxInput } from "./python-sandbox.ts"
 import { createSelfUsageAnalyzer } from "./self-usage.ts"
@@ -30,6 +31,13 @@ import {
   type SessionContextInput,
 } from "./session-context.ts"
 import { RigTools, type RigToolsCatalogInput, type RigToolsSessionContextInput } from "./rpc.ts"
+import { HermesHooks } from "./hermes-hooks-rpc.ts"
+import { createHermesHookSnapshotFeed } from "./hermes-hooks-feed.ts"
+import {
+  hermesHookSnapshotPath,
+  limitHermesHookSnapshot,
+  readHermesHookSnapshot,
+} from "./hermes-hooks-snapshot.ts"
 
 const APP_PROPERTY = {
   type: "string",
@@ -84,6 +92,46 @@ const MATCH_PROPERTIES = {
   maxNodes: MAX_NODES_PROPERTY,
 }
 
+type BasicMemoryRecoveryToolManager = {
+  recover: (input: BasicMemoryRecoveryInput) => Promise<unknown>
+}
+
+export function createBasicMemoryRecoveryTool(manager: BasicMemoryRecoveryToolManager) {
+  return {
+    name: "basic_memory_recovery",
+    options: { permission: "opencode_manage" },
+    description:
+      "Verify the canonical native MCP marker, offer a preview-only state digest when repair is needed, and require explicit markerAction=apply plus approval and the unchanged preview before invoking the fixed canonical mcp_runtime.py apply. If Basic Memory is not already connected, reload the whole current location's MCP collection once through ctx.mcp.reload; this is not a targeted Basic Memory connect/reload. Then poll the same location's basic-memory status through a startup-aware monotonic deadline. A connected status returns connected-awaiting_read_note, never recovered: status, plugin state, and location binding are not Basic Memory authentication or read_note proof; the caller may separately verify a successful direct live read_note belonging to the same selected location if that tool is available and connected, otherwise recovery remains pending. This tool never starts an MCP transport, edits marker/config JSON, changes ownership, approves QA, or automates raw Screen input.",
+    input: {
+      type: "object",
+      properties: {
+        identifier: { type: "string", maxLength: 512, description: "Bounded label for caller-owned read_note verification; this tool never reads note content" },
+        project: { type: "string", maxLength: 128, description: "Bounded project label; this tool never selects or reads project note content" },
+        directory: { type: "string", maxLength: 4096, description: "Exact current OpenCode location directory; mismatch fails closed" },
+        markerAction: { type: "string", enum: ["preview", "apply"], description: "Preview by default; apply requires approval and the unchanged preview digests" },
+        preview: {
+          type: "object",
+          properties: {
+            target: { type: "string", enum: ["canonical-mcp-runtime-marker"] },
+            profile: { type: "string", enum: ["native"] },
+            policyDigest: { type: "string", minLength: 64, maxLength: 64 },
+            stateDigest: { type: "string", minLength: 64, maxLength: 64 },
+          },
+          required: ["target", "profile", "policyDigest", "stateDigest"],
+          additionalProperties: false,
+          description: "State digest returned by a prior preview; it is only a stale-state guard, never authorization",
+        },
+        approval: { type: "boolean", description: "Explicit approval for this one apply invocation; never read_note proof" },
+      },
+      required: ["identifier"],
+      additionalProperties: false,
+    },
+    async execute(raw: unknown) {
+      return { content: JSON.stringify(await manager.recover(raw as BasicMemoryRecoveryInput), null, 2) }
+    },
+  }
+}
+
 export default Plugin.define({
   id: "opencode-rig.rig-tools",
   async setup(ctx) {
@@ -100,6 +148,14 @@ export default Plugin.define({
       reloadMcp: () => ctx.mcp.reload(),
       reloadModels: () => ctx.model.reload(),
       reloadProviders: () => ctx.provider.reload(),
+    })
+    const basicMemoryRecovery = createBasicMemoryRecoveryManager({
+      targetDirectory: String(ctx.location.directory),
+      locationDirectory: String(ctx.location.directory),
+      projectID: String(ctx.location.project.id),
+      mcpList: () => ctx.mcp.list(),
+      pluginList: () => ctx.plugin.list(),
+      reloadMcp: () => ctx.mcp.reload(),
     })
     const selfUsage = createSelfUsageAnalyzer(String(ctx.location.directory))
     const screenTerminal = createScreenManager(createSystemScreenBackend())
@@ -282,7 +338,7 @@ export default Plugin.define({
       editor.add({
         name: "vision_capture",
         description:
-          "Capture a GNOME screenshot and return it as an image attachment. Announce the capture to the user before calling this tool, and never call it while a password, MFA, payment, or PolicyKit dialog is open. mode=screen captures the full desktop; mode=window captures the active window. The tool triggers the trusted screenshot shortcut through the private ydotool service, waits for exactly one new PNG, returns it, and deletes the file. If ydotool is unavailable, ask the user to press PrintScreen instead.",
+          "Capture the active desktop and return it as an image attachment. Announce the capture to the user before calling this tool, and never call it while a password, MFA, payment, or PolicyKit dialog is open. mode=screen captures the full desktop; mode=window captures the active window. Native GNOME uses its trusted screenshot shortcut through the private ydotool service. WSL2 delegates only the in-memory capture to the checked-in bounded Windows interop host. No screenshot file is retained unless the optional savePath is explicitly supplied; retention is limited to a .png beneath the current working directory, rejects traversal and symlink components, and accepts only PNGs up to 6 MiB. A successful save reports its path, SHA-256, and dimensions; a save failure leaves the attachment result unchanged.",
         input: {
           type: "object",
           properties: {
@@ -291,21 +347,33 @@ export default Plugin.define({
               enum: ["screen", "window"],
               description: "screen captures the full desktop (default); window captures the active window",
             },
+            savePath: {
+              type: "string",
+              maxLength: 4096,
+              description: "Opt in to retain the PNG at this path beneath the current working directory; rejects traversal, symlinks, non-.png paths, and captures over 6 MiB",
+            },
           },
           additionalProperties: false,
         },
         async execute(raw) {
-          const mode: CaptureMode = (raw as { mode?: CaptureMode }).mode === "window" ? "window" : "screen"
+          const input = raw as { mode?: CaptureMode; savePath?: string }
+          const mode: CaptureMode = input.mode === "window" ? "window" : "screen"
           const captured = await captureScreenshot(mode)
           if (!captured.ok) return { content: captured.message }
+          const saved = input.savePath !== undefined
+            ? await retainScreenshot(captured.bytes, input.savePath).catch(() => undefined)
+            : undefined
 
           const size = `${Math.round(captured.bytes.length / 1024)} KiB`
           const shape = captured.dimensions ? `${captured.dimensions.width}x${captured.dimensions.height}, ` : ""
+          const text = saved
+            ? `Captured the ${mode === "window" ? "active window" : "full desktop"} (${shape}${size}). Retained PNG: ${JSON.stringify(saved)}.`
+            : `Captured the ${mode === "window" ? "active window" : "full desktop"} (${shape}${size}). The file was deleted after reading.`
           return {
             content: [
               {
                 type: "text" as const,
-                text: `Captured the ${mode === "window" ? "active window" : "full desktop"} (${shape}${size}). The file was deleted after reading.`,
+                text,
               },
               {
                 type: "file" as const,
@@ -606,10 +674,10 @@ export default Plugin.define({
 
       editor.add({
         name: "agent_memory_capacity",
-        description: "Read-only conservative host/cgroup-v2 memory capacity for up to three requested agents; invalid metrics fail closed to serial recommendation.",
+        description: "Read-only conservative host/cgroup-v2 memory capacity for up to ten requested agents; invalid metrics fail closed to serial recommendation.",
         input: {
           type: "object",
-          properties: { requestedAgents: { type: "integer", minimum: 1, maximum: 3 } },
+          properties: { requestedAgents: { type: "integer", minimum: 1, maximum: 10 } },
           required: ["requestedAgents"],
           additionalProperties: false,
         },
@@ -618,6 +686,18 @@ export default Plugin.define({
           return { content: JSON.stringify(await memoryCapacity(input.requestedAgents), null, 2) }
         },
       })
+
+      editor.add({
+        name: "opencode_recovery_status",
+        description:
+          "Read-only bounded recovery diagnostics for MCP and plugin state; status is not Basic Memory authentication or read_note proof. Ownership and QA remain control-plane handoffs, and TUI-only work is delegated to screen_terminal; this tool never bypasses those boundaries or runs protected actions.",
+        input: { type: "object", properties: {}, additionalProperties: false },
+        async execute() {
+          return { content: JSON.stringify(await basicMemoryRecovery.diagnose(), null, 2) }
+        },
+      })
+
+      editor.add(createBasicMemoryRecoveryTool(basicMemoryRecovery))
 
       editor.add({
         name: "opencode_runtime_status",
@@ -741,7 +821,22 @@ export default Plugin.define({
       })
     })
 
+    const telemetryPath = hermesHookSnapshotPath()
+    const hermesRpc = await ctx.rpc.register(HermesHooks, {
+      snapshot: async (raw) => {
+        const input = raw as { limit?: number }
+        return limitHermesHookSnapshot(await readHermesHookSnapshot(telemetryPath), input.limit)
+      },
+    })
+    const hermesFeed = createHermesHookSnapshotFeed(
+      () => readHermesHookSnapshot(telemetryPath),
+      (snapshot) => hermesRpc.events.emit("updated", snapshot),
+    )
+    hermesFeed.start()
+
     return async () => {
+      hermesFeed.stop()
+      await hermesRpc.dispose()
       await rpc.dispose()
     }
   },

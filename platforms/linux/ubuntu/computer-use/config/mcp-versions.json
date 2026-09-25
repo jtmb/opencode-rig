@@ -1,12 +1,12 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "basicMemory": "0.23.2",
-  "playwright": "0.0.80",
-  "playwrightBrowser": "chrome-for-testing",
-  "playwrightBrowserRevision": 1243,
   "nodeVersion": "22.22.2",
   "nodeArchive": "node-v22.22.2-linux-x64.tar.xz",
   "nodeSha256": "88fd1ce767091fd8d4a99fdb2356e98c819f93f3b1f8663853a2dee9b438068a",
   "nodeUrl": "https://nodejs.org/dist/v22.22.2/node-v22.22.2-linux-x64.tar.xz",
-  "githubRemote": "https://api.githubcopilot.com/mcp/"
+  "githubVersion": "1.12.1",
+  "githubArchive": "github-mcp-server_Linux_x86_64.tar.gz",
+  "githubSha256": "e45c73a26a3c4cd643b40360db06f442de1e73a60d4eaf9e8639204ec3b95d3b",
+  "githubUrl": "https://github.com/github/github-mcp-server/releases/download/v1.12.1/github-mcp-server_Linux_x86_64.tar.gz"
 }

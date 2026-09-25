@@ -13,7 +13,6 @@ import {
   MAX_PENDING_BYTES,
   MAX_PENDING_SESSIONS,
   observationNotice,
-  PAUSE_TOKEN_TTL_MS,
   toObservedEvent,
   toStructuredSummary,
   type ObservedEvent,
@@ -24,6 +23,7 @@ import {
   createInitialState,
   EPISODE_RETENTION_MS,
   loadState,
+  loadStoredState,
   MAX_EPISODE_EVENTS,
   MAX_EPISODES,
   MAX_STATE_BYTES,
@@ -36,7 +36,6 @@ import {
 import { eventBelongsToProject, idleSessionID, initialPluginState } from "../server.ts"
 
 const BASE = 1_700_000_000_000
-const CALLER = { sessionID: "ses-ui", agentID: "agent-a" }
 
 function toolEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
   return {
@@ -49,15 +48,17 @@ function toolEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
   }
 }
 
-test("plugin observes by default, preserves an explicit pause, and converts only metadata-only OpenCode events", () => {
-  assert.equal(initialPluginState(undefined).paused, false)
-  assert.equal(initialPluginState("not-json").paused, false)
-  assert.equal(initialPluginState(serializeState(createInitialState()), BASE).paused, false)
-  assert.equal(initialPluginState(serializeState({ ...createInitialState(), paused: true }), BASE).paused, true)
+test("plugin starts active and converts only metadata-only OpenCode events", () => {
+  assert.equal(initialPluginState(undefined).schema, 2)
+  assert.equal(initialPluginState("not-json").episodes.length, 0)
+  assert.equal(initialPluginState(serializeState(createInitialState()), BASE).episodes.length, 0)
   assert.deepEqual(toObservedEvent({
+    id: "evt_tool_input",
     type: "session.tool.input.started",
     created: BASE,
-    data: { sessionID: "ses_abc123", name: "git_diff", input: { secret: "ignored" } },
+    durable: { aggregateID: "ses_abc123", seq: 1, version: 1 },
+    location: { directory: "/repo/a" },
+    data: { sessionID: "ses_abc123", assistantMessageID: "msg_1", id: "call_1", name: "git_diff" },
   }), {
     kind: "tool",
     name: "git_diff",
@@ -66,9 +67,18 @@ test("plugin observes by default, preserves an explicit pause, and converts only
     ok: true,
   })
   assert.deepEqual(toObservedEvent({
+    id: "evt_tool_failure",
     type: "session.tool.failed",
     created: BASE + 1,
-    data: { sessionID: "ses_abc123", error: { message: "ignored" } },
+    durable: { aggregateID: "ses_abc123", seq: 2, version: 2 },
+    location: { directory: "/repo/a" },
+    data: {
+      sessionID: "ses_abc123",
+      assistantMessageID: "msg_1",
+      id: "call_1",
+      error: { type: "Error", message: "ignored" },
+      executed: true,
+    },
   }), {
     kind: "execution",
     name: "tool-failed",
@@ -76,7 +86,39 @@ test("plugin observes by default, preserves an explicit pause, and converts only
     timestamp: BASE + 1,
     ok: false,
   })
-  assert.equal(toObservedEvent({ type: "session.tool.success", created: BASE, data: { sessionID: "ses_abc123" } }), undefined)
+  assert.equal(toObservedEvent({
+    id: "evt_tool_call",
+    type: "session.tool.called",
+    created: BASE + 2,
+    durable: { aggregateID: "ses_abc123", seq: 3, version: 1 },
+    location: { directory: "/repo/a" },
+    data: {
+      sessionID: "ses_abc123",
+      assistantMessageID: "msg_1",
+      id: "call_1",
+      input: { privateArgument: "not a transcript" },
+      executed: true,
+    },
+  }), undefined)
+  assert.equal(toObservedEvent({
+    id: "evt_tool_success",
+    type: "session.tool.success",
+    created: BASE + 3,
+    durable: { aggregateID: "ses_abc123", seq: 4, version: 2 },
+    location: { directory: "/repo/a" },
+    data: {
+      sessionID: "ses_abc123",
+      assistantMessageID: "msg_1",
+      id: "call_1",
+      content: [{ type: "text", text: "ignored" }],
+      executed: true,
+    },
+  }), undefined)
+  assert.equal(toObservedEvent({
+    type: "session.tool.succeeded",
+    created: BASE + 4,
+    data: { sessionID: "ses_abc123" },
+  }), undefined)
 })
 
 function episode(id: string, endedAt = BASE, summary = "episode"): LearnState["episodes"][number] {
@@ -161,8 +203,8 @@ test("flushSession aggregates counts and stores a bounded redacted episode", () 
   assert.equal(recorder.state.episodes.length, 1)
   assert.equal(recorder.flushSession("ses_missing"), undefined)
   const exposed = recorder.state
-  exposed.paused = true
-  assert.equal(recorder.state.paused, false)
+  exposed.episodes.length = 0
+  assert.equal(recorder.state.episodes.length, 1)
 })
 
 test("idle heartbeats are dropped without cost", () => {
@@ -290,26 +332,26 @@ test("state serialization uses UTF-8 bytes and parse enforces state and nested c
   assert.deepEqual(parseState(serializeState(oldState), BASE).episodes, [])
   assert.deepEqual(loadState(serializeState(state), BASE).episodes.map((item) => item.id), ["ep-1"])
   assert.throws(() => parseState("not json"), /malformed/)
-  assert.throws(() => parseState(JSON.stringify({ schema: 999, paused: false, episodes: [] })), /unknown schema/)
-  assert.throws(() => parseState(JSON.stringify({ schema: 1, paused: "no", episodes: [] })), /paused/)
+  assert.throws(() => parseState(JSON.stringify({ schema: 999, episodes: [] })), /unknown schema/)
+  assert.throws(() => parseState(JSON.stringify({ schema: 2, paused: false, episodes: [] })), /invalid LearnState|invalid state bounds/)
   assert.throws(
-    () => parseState(JSON.stringify({ schema: 1, paused: false, episodes: Array.from({ length: MAX_EPISODES + 1 }, () => episode("ep")) })),
+    () => parseState(JSON.stringify({ schema: 2, episodes: Array.from({ length: MAX_EPISODES + 1 }, () => episode("ep")) })),
     /episodes/,
   )
   assert.throws(
-    () => parseState(JSON.stringify({ schema: 1, paused: false, episodes: [{ ...episode("ep-count"), toolCalls: MAX_EPISODE_EVENTS + 1 }] })),
+    () => parseState(JSON.stringify({ schema: 2, episodes: [{ ...episode("ep-count"), toolCalls: MAX_EPISODE_EVENTS + 1 }] })),
     /episodes|bounds/,
   )
   assert.throws(
-    () => parseState(JSON.stringify({ schema: 1, paused: false, episodes: [{ ...episode("ep-summary"), summary: "é".repeat(MAX_SUMMARY_BYTES) }] })),
+    () => parseState(JSON.stringify({ schema: 2, episodes: [{ ...episode("ep-summary"), summary: "é".repeat(MAX_SUMMARY_BYTES) }] })),
     /episodes|bounds/,
   )
   assert.throws(
-    () => parseState(JSON.stringify({ schema: 1, paused: false, episodes: [{ ...episode("ep-transcript"), transcript: "raw" }] })),
+    () => parseState(JSON.stringify({ schema: 2, episodes: [{ ...episode("ep-transcript"), transcript: "raw" }] })),
     /episodes|bounds/,
   )
   assert.throws(
-    () => parseState(`{"schema":1,"paused":false,"episodes":[],"extra":"${"é".repeat(MAX_STATE_BYTES)}"}`),
+    () => parseState(`{"schema":2,"episodes":[],"extra":"${"é".repeat(MAX_STATE_BYTES)}"}`),
     /invalid state payload/,
   )
   assert.throws(
@@ -319,64 +361,47 @@ test("state serialization uses UTF-8 bytes and parse enforces state and nested c
   assert.throws(() => serializeState({ ...state, episodes: [...state.episodes, { ...episode("ep-extra"), summary: "x".repeat(2001) }] }), /invalid LearnState|invalid episode/)
 })
 
-test("pause approval tokens are random, state-bound, caller-bound, explicit, single-use, and expiring", () => {
-  const recorder = createRecorder({ now: () => BASE })
-  const preview = recorder.previewPauseChange(true, CALLER.sessionID, CALLER.agentID, BASE)
-  const second = recorder.previewPauseChange(true, CALLER.sessionID, CALLER.agentID, BASE)
-  assert.equal(preview.token, preview.expectToken)
-  assert.notEqual(preview.token, second.token)
-  assert.ok(!preview.token.startsWith("learn-pause-"))
-  assert.equal(recorder.applyPauseChange({ expectToken: preview.expectToken, approval: true }, CALLER.sessionID, CALLER.agentID, BASE).paused, true)
-  assert.throws(
-    () => recorder.applyPauseChange({ expectToken: preview.expectToken, approval: true }, CALLER.sessionID, CALLER.agentID, BASE),
-    /unknown token/,
-  )
-  assert.throws(
-    () => recorder.applyPauseChange({ expectToken: second.expectToken }, CALLER.sessionID, CALLER.agentID, BASE),
-    /explicit approval/,
-  )
+test("legacy paused records migrate to active schema and retain bounded safe history", () => {
+  const legacy = JSON.stringify({ schema: 1, paused: true, episodes: [episode("ep-legacy", BASE, "safe history")] })
+  const loaded = loadStoredState(legacy, BASE)
+  assert.equal(loaded.state.schema, 2)
+  assert.deepEqual(loaded.state.episodes.map((item) => item.id), ["ep-legacy"])
+  assert.equal("paused" in loaded.state, false)
+  assert.equal(loaded.changed, true)
+  assert.ok(loaded.diagnostics.some((diagnostic) => diagnostic.includes("paused=true flag was ignored")))
+  assert.equal(initialPluginState(legacy, BASE).episodes[0]?.id, "ep-legacy")
 
-  const expired = createRecorder({ now: () => BASE })
-  const expiring = expired.previewPauseChange(true, CALLER, BASE)
-  assert.throws(
-    () => expired.applyPauseChange({ expectToken: expiring.expectToken, approval: true }, CALLER.sessionID, CALLER.agentID, BASE + PAUSE_TOKEN_TTL_MS),
-    /expired/,
-  )
+  const partiallyInvalid = JSON.stringify({
+    schema: 1,
+    paused: true,
+    episodes: [episode("ep-preserved", BASE), { ...episode("ep-invalid", BASE), transcript: "raw" }],
+  })
+  const recovered = loadStoredState(partiallyInvalid, BASE)
+  assert.deepEqual(recovered.state.episodes.map((item) => item.id), ["ep-preserved"])
+  assert.ok(recovered.diagnostics.some((diagnostic) => diagnostic.includes("retained 1 valid episode")))
+})
 
-  const theft = createRecorder({ now: () => BASE })
-  const stolen = theft.previewPauseChange(true, CALLER, BASE)
-  assert.throws(
-    () => theft.applyPauseChange({ expectToken: stolen.expectToken, approval: true }, "ses-other", "agent-other", BASE),
-    /another session and agent/,
-  )
-  assert.throws(
-    () => theft.applyPauseChange({ expectToken: stolen.expectToken, approval: true }, CALLER.sessionID, CALLER.agentID, BASE),
-    /unknown token/,
-  )
+test("disabled recorder reports status and audit without observing or persisting", () => {
+  const initial = addEpisode(createInitialState(), episode("ep-disabled", BASE, "retained history"))
+  const persisted: LearnState[] = []
+  const recorder = createRecorder({
+    enabled: false,
+    initialState: initial,
+    now: () => BASE,
+    persistState: (state) => persisted.push(state),
+  })
+  assert.deepEqual(recorder.recordEvent(toolEvent()), { stored: false, reason: "disabled" })
+  assert.equal(recorder.flushSession("ses_abc123", BASE), undefined)
+  let subscriptions = 0
+  recorder.attach({ subscribe: () => { subscriptions += 1 } })
+  assert.equal(subscriptions, 0)
 
-  const stale = createRecorder({ now: () => BASE })
-  const first = stale.previewPauseChange(true, CALLER, BASE)
-  stale.recordEvent(toolEvent())
-  stale.flushSession("ses_abc123", BASE)
-  assert.throws(
-    () => stale.applyPauseChange({ expectToken: first.expectToken, approval: true }, CALLER.sessionID, CALLER.agentID, BASE),
-    /stale token/,
-  )
-
-  const pending = createRecorder({ now: () => BASE })
-  pending.recordEvent(toolEvent())
-  const pendingPause = pending.previewPauseChange(true, CALLER, BASE)
-  pending.applyPauseChange({ expectToken: pendingPause.expectToken, approval: true }, CALLER.sessionID, CALLER.agentID, BASE)
-  assert.equal(pending.flushSession("ses_abc123", BASE), undefined)
-  assert.deepEqual(pending.state.episodes, [])
-
-  const pendingRace = createRecorder({ now: () => BASE })
-  const pendingRacePause = pendingRace.previewPauseChange(true, CALLER, BASE)
-  pendingRace.recordEvent(toolEvent())
-  assert.throws(
-    () => pendingRace.applyPauseChange({ expectToken: pendingRacePause.expectToken, approval: true }, CALLER.sessionID, CALLER.agentID, BASE),
-    /stale token/,
-  )
+  const status = recorder.learnCommand("/learn status", BASE)
+  assert.ok(status.text.includes("disabled by configuration"))
+  assert.equal(status.mutated, false)
+  const audit = recorder.learnCommand("/learn audit", BASE)
+  assert.ok(audit.text.includes("ep-disabled"))
+  assert.deepEqual(persisted, [])
 })
 
 test("uses current idle events and filters observation to the plugin repository", async () => {
@@ -407,7 +432,7 @@ test("uses current idle events and filters observation to the plugin repository"
   ), false)
 })
 
-test("/learn status and audit stay read-only; pause and resume accept slash args with token approval", () => {
+test("/learn status and audit stay read-only; pause and resume are not commands", () => {
   const recorder = createRecorder({ now: () => BASE })
   recorder.recordEvent(toolEvent())
   recorder.flushSession("ses_abc123", BASE)
@@ -419,22 +444,9 @@ test("/learn status and audit stay read-only; pause and resume accept slash args
   assert.equal(audit.mutated, false)
   assert.ok(audit.text.includes("ses_abc123"))
   assert.equal(serializeState(recorder.state), before)
-  assert.throws(() => recorder.learnCommand("/learn pause", BASE), /context/)
-
-  const preview = recorder.learnCommand("pause", BASE, CALLER)
-  assert.equal(preview.mutated, false)
-  const token = preview.text.match(/\/learn pause ([A-Za-z0-9_-]+)/)?.[1] ?? ""
-  assert.ok(token.length >= 32)
-  assert.throws(() => recorder.learnCommand(`/learn pause ${token}`, BASE, CALLER), /explicit approval/)
-  const applied = recorder.learnCommand(`/learn pause ${token}`, BASE, { ...CALLER, approval: true })
-  assert.equal(applied.mutated, true)
-  assert.equal(recorder.state.paused, true)
-  const resumePreview = recorder.learnCommand("resume", BASE, CALLER)
-  const resumeToken = resumePreview.text.match(/\/learn resume ([A-Za-z0-9_-]+)/)?.[1] ?? ""
-  assert.ok(resumeToken.length >= 32)
-  const resumed = recorder.learnCommand(`resume ${resumeToken}`, BASE, { ...CALLER, approval: true })
-  assert.equal(resumed.mutated, true)
-  assert.equal(recorder.state.paused, false)
+  assert.throws(() => recorder.learnCommand("/learn pause", BASE), /expected status\|audit/)
+  assert.throws(() => recorder.learnCommand("/learn resume", BASE), /expected status\|audit/)
+  assert.throws(() => recorder.learnCommand("/learn pause approval-token", BASE), /expected status\|audit/)
   assert.throws(() => recorder.learnCommand("/learn explode", BASE), /unknown \/learn subcommand/)
 })
 
@@ -456,6 +468,7 @@ test("attach subscribes to execution and tool topics", () => {
 
 test("observation notice announces summaries-only recording", () => {
   const notice = observationNotice()
-  assert.ok(notice.toast.includes("/learn pause"))
+  assert.ok(notice.toast.includes("on by default"))
+  assert.ok(!notice.toast.includes("pause"))
   assert.ok(notice.status.includes("30d"))
 })

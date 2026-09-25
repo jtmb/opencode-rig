@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "capture_id": "active-subagent-row-exemplar",
+  "phase": "test-dispatch",
+  "event_id": "active-subagent-row-exemplar-test-dispatch-001",
+  "action": {
+    "type": "key",
+    "target": "active-subagent-row:selection",
+    "input": "down"
+  },
+  "dispatch": {
+    "device": "keyboard",
+    "method": "pressArrow",
+    "target": "active-subagent-row:selection",
+    "input": "down"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "e07a772e-df53-4310-adfa-b72eff3d55ee",
+    "dispatch_id": "active-subagent-row-exemplar-test-dispatch-dispatch-001",
+    "transition_id": "active-subagent-row-exemplar-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "27023962607764",
+    "transition_monotonic_ns": "27023998437394"
+  },
+  "before": {
+    "snapshot_id": "active-subagent-row-exemplar-interact-before",
+    "frame_sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+    "spans_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+    "state_sha256": "b848bccb02d2a42444b327927d34c31d71dceb16e6856ae3f242f88e19e0d293"
+  },
+  "after": {
+    "snapshot_id": "active-subagent-row-exemplar-interact-after",
+    "frame_sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+    "spans_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+    "state_sha256": "c029c7b861f700e54fd120317ed947db494ce725d303af1d88774518b234a4ef"
+  },
+  "result": {
+    "status": "passed",
+    "target": "active-subagent-row:selection",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": false,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "4a14e9161ad407e6121d2adbc06ce244b77db8de1e4f9a2f10cfd5a057341f90",
+  "native_event_sha256": "5a8d31fd0e8c464afa706e6e459507e16975bec6b0233f42bd20a44a6a955780"
+}

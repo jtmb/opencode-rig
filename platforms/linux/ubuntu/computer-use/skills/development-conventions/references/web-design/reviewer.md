@@ -54,18 +54,12 @@ Prioritize: P1 = Fix Immediately (layout affecting functionality), P2 = Fix Next
 3. Verify fixes haven't affected other areas
 4. If more than 3 fix attempts for a specific issue, consult the user
 
-### Recommended Tools
+### Browser Tools
 
-Playwright MCP is recommended: `npx -y @playwright/mcp@latest --caps=vision`. Configuration:
-```json
-{
-  "mcpServers": {
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--caps=vision"]
-    }
-  }
-}
-```
-
-Alternatives: Selenium, Puppeteer, Cypress, WebDriver BiDi.
+For visible or authenticated QA from WSL, use `browser-assistant` and the
+`wsl_browser_*` tools. They open the user's current Windows default browser,
+inspect a selected window through Windows UI Automation, return screenshots
+in-memory, and preview each bounded interaction before applying it. If the WSL
+bridge is unavailable, stop and report the error rather than switching to an
+isolated browser. Use `browser-headless` with Firefox only when the user
+explicitly requests headless work.

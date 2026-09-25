@@ -23,6 +23,8 @@ that applies to the current path and task; do not duplicate those rules here.
 - [Computer-use source](platforms/linux/ubuntu/computer-use/README.md) — canonical
   skills, plugins, configuration, scripts, and deployment boundaries.
 - [Documentation index](docs/README.md) — detailed operational references.
+- [Orchestration lockout recovery](docs/scripts/orchestration-lockout-recovery.md)
+  — the operator-authorized, allowlisted bootstrap recovery and audit contract.
 
 ## Verification
 

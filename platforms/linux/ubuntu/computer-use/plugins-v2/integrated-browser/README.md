@@ -1,103 +1,40 @@
-# `integrated-browser` v2 plugin
+# `integrated-browser` v2 plugin — retired
 
-`integrated-browser` is a dual-role OpenCode v2 plugin. Its server role owns a
-temporary Playwright `BrowserContext` per OpenCode session and renders a headed
-Chromium window outside OpenTUI. Its CLI role adds a fullscreen control panel;
-the panel and the `integrated_browser` agent tool use the same session context.
+This package is retained as historical source only. It is retired from active
+server and CLI roles and excluded from the current plugin workspace. It is not
+an active browser or QA path.
 
-## Quick start
+For existing configurations, follow the
+[integrated-browser retirement procedure](../../../../../../docs/plugins/README.md#removal-and-troubleshooting).
+That procedure removes only canonical server/CLI registrations and preserves
+unrelated entries and this historical source package.
 
-The plugin reuses the pinned runtime in `platforms/linux/ubuntu/browser-tools`.
-It does not install Chromium or any npm dependency.
+Current browser guidance:
 
-```bash
-npm --prefix platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser run check
-platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --plugins integrated-browser --apply
-```
+- For visible browser work and QA from WSL, use the Windows-default-browser
+  tools described in the [`browser-assistant` guide](../../skills/browser-assistant/README.md).
+- The direct-pinned Playwright package in
+  [`browser-tools`](../../../browser-tools/README.md) is reserved for explicitly
+  requested headless Firefox tasks. It is not an MCP and does not provision a
+  browser.
 
-Provision the headed browser separately into the isolated OpenCode pilot cache:
+## Historical implementation
 
-```bash
-XDG_CACHE_HOME="${OPENCODE_V2_PILOT_DIR:-$HOME/.opencode-v2-pilot}/cache" \
-  ./platforms/linux/ubuntu/browser-tools/node_modules/.bin/playwright install chromium
-```
+The former server role created a temporary Playwright `BrowserContext` per
+OpenCode session and opened headed Chromium outside OpenTUI. The former CLI role
+provided a fullscreen panel, sharing the session context with the
+`integrated_browser` agent tool. Its bounded feature set included credential-free
+HTTP(S) navigation, browser tabs and controls, ARIA snapshots, console entries,
+viewport screenshots, and accessible-role click/fill actions. Contexts did not
+share cookies, storage, or pages between OpenCode sessions; this was not an OS
+security boundary.
 
-The pinned Playwright installer verifies its own browser artifact and prints the
-exact revision and destination. Rollback is to close every integrated-browser
-session, then remove only the Chromium, Chromium headless-shell, and FFmpeg
-revision directories printed by `playwright install --dry-run chromium` from
-that pilot cache; do not remove the cache root or the repository Firefox bundle.
+At retirement, OpenCode v2.0.7 had no supported native webview or child-window
+embedding API. The package did not attach to normal browser profiles, load
+extensions, expose arbitrary JavaScript or CDP, provide integrated debugger
+parity, permit unrestricted file access, or modify installed OpenCode binaries.
 
-Restart the OpenCode server and CLI after registration changes. Launch the
-panel with **Integrated browser** from the command palette, `/browser`, or
-`Ctrl+Alt+B`; choose an `http://` or `https://` URL.
-
-## Configuration
-
-Register the package in both roles:
-
-```jsonc
-// opencode.jsonc
-{
-  "plugins": [
-    {
-      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser",
-      "options": {
-        "runtimeRoot": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/browser-tools"
-      }
-    }
-  ]
-}
-```
-
-```json
-// cli.json
-{
-  "plugins": [
-    {
-      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser",
-      "options": {}
-    }
-  ]
-}
-```
-
-`runtimeRoot` defaults to the repository's sibling `browser-tools` directory.
-Optional bounds are `maxSessions` (1–4), `maxTabs` (1–12),
-`maxConsoleEntries` (1–100), `maxSnapshotChars` (256–24,000),
-`maxScreenshotBytes` (1,024–2,000,000), `navigationTimeoutMs` (1,000–15,000),
-and `defaultViewport` (320–1920 by 240–1080).
-
-## Supported surface
-
-- headed launch and explicit close, with cleanup on session deletion and plugin unload;
-- URL navigation restricted to credential-free `http` and `https` URLs;
-- bounded browser tabs, back, forward, reload, tab selection, and viewport sizing;
-- bounded ARIA snapshots, console ring buffers, viewport JPEG screenshots, and accessible-role click/fill actions;
-- typed RPC methods/events shared by the server and CLI roles.
-
-Each session uses a non-persistent context. Cookies, storage, and pages are not
-shared between OpenCode sessions; this context isolation is not an OS security
-boundary. The external Chromium executable must already
-be available to the pinned Playwright runtime; a missing runtime produces an
-explicit bounded error and never triggers installation.
-
-## Explicit non-goals
-
-OpenCode v2.0.7 has no supported native webview or child-window embedding API,
-so the browser is not rendered inside OpenTUI. This package does not attach to
-normal browser profiles, load extensions, expose arbitrary JavaScript or CDP,
-provide integrated debugger parity, permit unrestricted file access, modify
-installed OpenCode binaries, or replace the existing Firefox Playwright MCP.
-
-Live headed Chromium acceptance requires a separately provisioned Chromium
-executable and a usable desktop session. On 2026-09-19, the pinned Chromium
-153.0.8010.12 revision 1243 passed headed launch, navigation, screenshot, ARIA
-snapshot, accessible-link interaction, fullscreen-controller, and cleanup
-checks on this workstation.
-
-## Development
-
-```bash
-npm --prefix platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser run check
-```
+On 2026-09-19, a headed Chromium 153.0.8010.12 revision 1243 passed launch,
+navigation, screenshot, ARIA snapshot, accessible-link interaction,
+fullscreen-controller, and cleanup checks on this workstation. This is
+historical acceptance evidence for the retired package only.

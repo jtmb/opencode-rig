@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "capture_id": "integrated-sidebar",
+  "phase": "open",
+  "event_id": "integrated-sidebar-open-001",
+  "action": {
+    "type": "open",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "before": {
+    "snapshot_id": "integrated-sidebar-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "integrated-sidebar-open-after",
+    "frame_sha256": "1a9d1b3c40d80f1d60a510cda6b32b9b81bbd297e5c480d2b5c6a4dca4af4226",
+    "spans_sha256": "752db67f33b1e8ffab19814f37a0b3bd914c0dffda5413aee3a5c39e26358765",
+    "state_sha256": "a6c56f5d073bc28b3fc11242386603702fd42f6532a683be0972df79d6a00e2f"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "7143782dc4cfc72bef3e80df35f65e8634af32568c762fe3beb611bd407f4a47",
+  "native_event_sha256": "4e13bb37c108a5685651579b8c64e17351399e5655789f7cd3b6bd2bac923b7f"
+}

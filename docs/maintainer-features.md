@@ -24,25 +24,30 @@ Primary implementation is under
 
 ## v2 plugin packages
 
-All eleven catalog-managed packages have package checks. Ponytail is the twelfth
-local package and is deployed separately by its bounded adapter setup.
+All twelve catalog-managed packages have package checks, including the
+repository-served Ponytail adapter and its pinned official dependency.
 
 | Package | Role and user surface | Status and evidence |
 |---|---|---|
-| `rig-tools` | Server tools for bounded desktop/vision operations, repository gates, capacity checks, and read-only cross-session context; also `/session-context` | **Implemented.** Source registration is in `rig-tools/src/index.ts`; package check, focused context tests, and bounded wrappers are the evidence path. |
-| `orchestration-policy` | Server hooks for background-only subagents, capacity/allowlist enforcement, policy-index validation, installed-binary protection, and periodic project-memory reconciliation | **Implemented in source/package evidence.** Live acceptance requires a shared-service restart and a new-session reconciliation. |
+| `rig-tools` | Server tools for bounded desktop/vision operations, repository gates, capacity checks, native MCP recovery, and read-only cross-session context; also `/session-context` | **Implemented in source and package tests.** Native GNOME vision uses the trusted ydotool screenshot shortcut; WSL2 falls back to a bounded in-memory PNG from the checked-in Windows host. Recovery status and preview/apply behavior remain readiness-only until the caller independently verifies a live `read_note` call for the selected location. |
+| `orchestration-policy` | Server hooks for background-only subagents under the configured `maxConcurrent` limit, policy-index validation, installed-binary protection, periodic project-memory reconciliation, and task-scoped external GitHub issue writes | **Implemented in source/package evidence.** Direct and issue-only Code Mode writes require an active task, correction-ledger completion when applicable, and due-memory reconciliation; they skip only local policy-index, protected-path, and parent-implementation gates. Live loaded-policy acceptance remains pending. |
 | `git-tool` | Server-side bounded read-only unified Git diff | **Implemented.** Uses the native v2 VCS API and returns bounded text because v2.0.7 reserves rich rendering for built-in tool IDs. |
-| `integrated-browser` | Server and CLI control for a temporary per-session headed Chromium window, with shared typed RPC and bounded navigation/accessibility diagnostics | **Implemented in source/package evidence.** Live headed acceptance remains blocked until the pinned runtime has a Chromium executable and a usable desktop session. |
+| `chatgpt-connector` | Server plugin and local `chatgpt` MCP tools for image generation, sourced web research, and private session chat | **Implemented in source/package evidence; runtime-dependent.** Reuses OpenCode's active OpenAI OAuth connection with no API-key fallback; account capability and live tool behavior remain runtime-dependent. |
 | `repo-learning` | Server automatic bounded structured observation plus CLI read-only review panel | **Implemented with a narrow active boundary.** New state observes automatically and an explicit pause persists; synthesis, promotion, active retrieval, Basic Memory writes, and optimization effects are not registered. |
 | `rig-todo` | Server Todo tools and a CLI/TUI Todo panel | **Implemented in source/config.** Runtime behavior is validated by its package check and v2 deployment check. |
 | `codex-fallback` | Server-side provider/model fallback routing | **Implemented, runtime-dependent.** It is inactive without a valid configured chain and depends on target provider catalog and credentials. |
 | `source-control` | CLI/TUI working-tree and pull-request panel | **Implemented in source/config, runtime-dependent** for GitHub data and live TUI behavior. |
-| `codex-usage` | CLI/TUI Codex quota, DeepSeek balance, and OpenCode Zen status panel | **Implemented, live dialog accepted, runtime-dependent** for authenticated usage data and endpoint availability. |
+| `codex-usage` | CLI/TUI compact Provider Usage panel for Codex quota, DeepSeek balance, OpenCode Go, and OpenCode Zen status | **Implemented and accepted at 140/80/60 columns.** Expanded rows match native MCP styling with semantic bullets, left labels, right-aligned state/verified usage, and one-line truncation; the collapsed summary is also one line. Authenticated usage data and endpoint availability remain runtime-dependent. |
 | `file-manager` | CLI/TUI docked Explorer with tree, quick-open, viewer, tabs, and explicit-save editor | **Implemented baseline with live disposable-project evidence.** Safety/model checks and pointer/keyboard acceptance cover the baseline; broader IDE behavior and every syntax-family visual remain unclaimed. |
 | `resource-monitor` | CLI/TUI CPU and RSS footer token plus system-resources overlay | **Implemented with package and live TTY evidence.** It samples the TUI process tree and excludes the shared service subtree. |
 
-`ponytail-adapter` bridges the official Ponytail `4.10.0` content into v2 and
-is maintained outside the general role catalog.
+`ponytail-adapter` bridges the official Ponytail `4.10.0` content into v2. It is
+catalog-managed for native Ubuntu and WSL2, and the exact official dependency
+is resolved from the adapter workspace rather than a HOME-based install.
+
+The headed Chromium `integrated-browser` plugin is retired and is not part of
+the current role catalog. Its retirement does not remove the distinct browser
+skills or VS Code's built-in Browser tools.
 
 ### Explorer parser matrix
 
@@ -62,10 +67,10 @@ The source catalog contains 19 skills, recursively deployed by
 
 | Skill | User surface |
 |---|---|
-| `desktop-vision` | Trusted GNOME screenshots for visual verification |
+| `desktop-vision` | Trusted GNOME screenshots or bounded in-memory WSL/Windows captures for visual verification |
 | `desktop-control` | AT-SPI inspection and guarded GUI actions |
-| `browser-assistant` | Visible isolated Playwright Firefox shared with the user |
-| `browser-headless` | Explicitly requested isolated non-interactive browser work |
+| `browser-assistant` | Visible Windows-default-browser interaction from WSL through bounded UI Automation tools |
+| `browser-headless` | Explicitly requested isolated headless Firefox automation; not an MCP |
 | `game-playtest` | Browser-game input, canvas/WebGL screenshots, console and responsive QA |
 | `task-memory` | Durable preferences, facts, decisions, and pending work |
 | `session-context` | Bounded read-only evidence from another session in the current project |
@@ -80,7 +85,7 @@ The source catalog contains 19 skills, recursively deployed by
 | `development-conventions` | Focused source, test, documentation, API, language, UI, and Open Rig operating conventions |
 | `skill-maintenance` | Skill lifecycle, catalog, deployment, and documentation maintenance |
 | `agent-orchestration` | Bounded delegated work with ownership and verification rules |
-| `vscode-management` | VS Code package, settings, extensions, workspaces, and integrated-browser workflows |
+| `vscode-management` | VS Code package, settings, extensions, workspaces, integrated-terminal, and built-in Browser workflows |
 
 The skills are instructions and workflows, not proof that every optional
 dependency or live application is installed.
@@ -88,34 +93,48 @@ dependency or live application is installed.
 ### Orchestration contract
 
 Every repository change, review, correction, or release starts with
-`task_declare` and requires at least one direct capacity-approved background
-child plus an accepted parent `subagent_followup`. Corrections also require
-roadmap, active-todo, and project-memory acknowledgements. Use `explore` for
-planning/reconnaissance and normally `general` for implementation; `Build`
-retains access to configured subagents. No more than three children may run,
-and unavailable capacity fails closed instead of falling back to direct work.
+`task_declare` and requires at least one direct background child admitted by the
+configured `maxConcurrent` limit plus an accepted parent `subagent_followup`.
+Host/cgroup capacity estimates are diagnostic only and never reduce or block
+configured admission. Corrections also require roadmap, active-todo, and
+project-memory acknowledgements. In Open Rig, `plan`
+and the read-only `architect` subagent use GPT-6 Sol for planning/design;
+`explore` performs Luna-led reconnaissance, and `general` plus `build` use Luna
+for implementation. `Build` retains access to configured subagents. Project
+`maxConcurrent` controls the `1..10` policy ceiling.
 Main-agent verification and separate commit/push approval remain mandatory.
 OpenCode v2 has no supported semantic-intent or final-answer veto, so the plugin
 enforces explicit tool and session-lifecycle boundaries.
 
 ## MCP and runtime wrappers
 
-- `scripts/playwright-mcp.sh` launches the one canonical profile-aware
-  Playwright MCP. Explicit headless work uses the pinned browser runtime
-  through bounded shell execution, not a second MCP. The project-enabled
-  standalone runtime connects this MCP, but visible page interaction still
-  requires an attached desktop browser.
-- `scripts/github-mcp.sh` is an optional Source Control child-client
-  compatibility launcher. It is not registered or provisioned by generic MCP
-  setup; the registered `github` MCP is GitHub's hosted OAuth endpoint.
+- The portable project config and native/WSL global profiles declare exactly
+  three local MCP servers: `basic-memory`, `github`, and `chatgpt`. Playwright
+  is not a registered MCP server.
 - `scripts/basic-memory-mcp.sh` launches Basic Memory under an adaptive memory
   budget; the v2 example permits the documented core note tools.
+- `scripts/github-mcp.sh` launches the pinned profile-owned official GitHub MCP
+  for both the generic server and the optional Source Control child client. It
+  rejects inherited token/control variables and authenticates only from the
+  existing trusted `gh` login.
+- `scripts/chatgpt-mcp.sh` launches the local ChatGPT connector with the
+  profile-owned Node runtime. It reuses OpenCode's active OpenAI OAuth
+  connection; no API-key fallback is supported.
+- WSL's `wsl-interop` plugin provides `wsl_browser_open`,
+  `wsl_browser_windows`, `wsl_browser_snapshot`, `wsl_browser_screenshot`, and
+  preview/apply click, focus, type, and key-press tools for the Windows OS
+  default browser. They use bounded Windows UI Automation, not a private
+  headed-Chromium process or browser DOM/CDP access. Source/package coverage is
+  present, but live browser acceptance remains pending bounded probes on WSL
+  with the Windows default browser.
 - `scripts/desktop-control.py` supplies bounded AT-SPI inspection/mutation
   semantics used by the desktop tools.
 - `scripts/run-bounded-command.sh` contains resource-sensitive subprocesses.
-- `browser-tools/` contains the native pinned runtime installation. The
-  optional `github-tools/` child-client runtime is outside generic MCP setup;
-  its launcher and checks are a separate Source Control compatibility boundary.
+- `browser-tools/` contains the pinned Playwright JavaScript runtime for
+  explicitly requested isolated headless Firefox tasks; it does not register
+  an MCP or provide the visible WSL browser. GitHub is installed below the
+  selected profile; `github-tools/` is only a historical migration note for the
+  retired repository-owned binary.
 
 ## Setup, deployment, and checking
 
@@ -143,7 +162,7 @@ skills, MCP declarations, config, or plugins.
 The stable `rig-tools` names are:
 
 - `agent_memory_capacity` - **implemented** read-only conservative host/cgroup-v2
-  capacity check for one to three requested agents.
+  capacity check for one to ten requested agents.
 - `session_context` - **implemented** read-only same-project session listing and
   bounded selected-session projection. It separates live state from saved
   outcome and omits reasoning, provider state, attachments, shell output, and

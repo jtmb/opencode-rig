@@ -18,6 +18,29 @@ default browser. `--no-open` prints the same access details without opening a
 browser. The launcher never restarts an already healthy service, avoiding port
 races and disruption to other OpenCode clients.
 
+## Read-only service identity probes
+
+These fixed-argument commands inspect the selected service without restarting
+it:
+
+```bash
+platforms/linux/ubuntu/computer-use/scripts/opencode-launcher.sh service status
+platforms/linux/ubuntu/computer-use/scripts/opencode-launcher.sh api get /api/info
+```
+
+The orchestration policy also permits the configured installed binary directly
+for the exact `api get /api/info` argv. The default protected paths include
+`$HOME/.opencode/bin/opencode`; this does not change the launcher's separate
+default binary at `$HOME/.local/opt/opencode-v2/opencode`. Additional arguments,
+shell operators, quotes, and dynamic argv do not receive the read-only
+classification.
+
+The launcher skips its own pilot-directory initialization for these exact argv
+and passes them through without calling `service start` or `pair`. OpenCode's
+`api` command may start a service when no compatible healthy service is
+available. The disposable self-test uses a fake executable and fresh profile
+roots; it does not contact a service or read credentials.
+
 ## Reload server plugins
 
 Reopening or restarting the TUI does not reload server plugin code. Wait for
@@ -40,9 +63,11 @@ launcher-managed setup has no persistent user unit.
 
 The health response is not acceptance of the omitted-model path or visible
 commands. After `/restart`, retest a continuation without an explicit model
-pin. The current evidence remains unaccepted: the shared service rejected an
-omitted-model continuation as `model <unresolved>` after a TUI restart, while
-only the explicit, previously approved `openai/gpt-5.6-luna#max` pin succeeded.
+pin. Historical pre-migration evidence remains unaccepted: the shared service
+rejected an omitted-model continuation as `model <unresolved>` after a TUI
+restart, while only the explicit, previously approved
+`openai/gpt-5.6-luna#max` pin succeeded in that run. This does not validate the
+new GPT-6 role assignments until authorized deployment and fresh resolution.
 The latest visible `/session-context`, `/tools`, and `/learn` bodies were blank;
 they remain broken/unverified until fresh rendered and interaction evidence
 passes.
@@ -51,11 +76,11 @@ Set `OPENCODE_V2_BIN`, `OPENCODE_V2_PILOT_DIR`, or
 `OPENCODE_WEB_OPENER` to override the binary, isolated state root, or URL opener.
 The launcher also defaults `RIG_PARSERS_DIR` to
 `$OPENCODE_V2_PILOT_DIR/cache/opencode-rig/parsers`, matching setup.
-Project configuration discovery remains enabled by default, so the canonical
-project-only Playwright registration and project agents/permissions load. If a
-caller explicitly sets `OPENCODE_DISABLE_PROJECT_CONFIG`, the launcher passes
-that value through unchanged for both normal and `web` invocations; it never
-invents a disabling value.
+Project configuration discovery remains enabled by default, so portable project
+configuration, agents, and permissions load. If a caller explicitly sets
+`OPENCODE_DISABLE_PROJECT_CONFIG`, the launcher passes that value through
+unchanged for both normal and `web` invocations; it never invents a disabling
+value.
 OAuth providers must be connected through OpenCode; only existing API-key
 credentials are mapped into the isolated runtime.
 

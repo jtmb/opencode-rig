@@ -1,0 +1,30 @@
+bounded-command: available=7911MiB budget=3164MiB swap=791MiB node_heap=2057MiB
+Running as unit: run-rf236607241f3455ab0b54a154ed1cb1f.scope; invocation ID: 27ef73279eee406e96738e9ca570056a
+TAP version 13
+# Subtest: source control stays before the native footer so working directory remains last
+ok 1 - source control stays before the native footer so working directory remains last
+  ---
+  duration_ms: 0.682689
+  type: 'test'
+  ...
+# Subtest: change rows retain full wrapped paths with fixed semantic counts
+ok 2 - change rows retain full wrapped paths with fixed semantic counts
+  ---
+  duration_ms: 0.23008
+  type: 'test'
+  ...
+# Subtest: source-control uses native disclosure grammar and default-text heading
+ok 3 - source-control uses native disclosure grammar and default-text heading
+  ---
+  duration_ms: 0.11597
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 116.612602

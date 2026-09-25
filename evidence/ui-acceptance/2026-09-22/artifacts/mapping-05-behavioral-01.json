@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+  "test_sha256": "45f7f39a9130c3fffacdaca3e26ae7dcfd2897703bc071687b63ddf18f458c81",
+  "source_sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh with Node v26.4.0 via PATH",
+  "command": "PATH=/tmp/opencode/node-v26.4.0-linux-x64/bin:$PATH bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/rendered.test.ts",
+  "observed_at": "2026-09-22T14:38:49Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/focused-output/file-manager__test__rendered.txt",
+  "output_sha256": "ceef6c224a2ce3b70ab831888bceba1d9fe9a0f6a30c80948d9a43b0f35ecfb1"
+}

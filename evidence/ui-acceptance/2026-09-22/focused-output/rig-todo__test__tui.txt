@@ -1,0 +1,14 @@
+bounded-command: available=7861MiB budget=3144MiB swap=786MiB node_heap=2044MiB
+Running as unit: run-r0b77c033142e4c6b853c967c57ce42cd.scope; invocation ID: 6167694d06914b9b84d082db245266b8
+✔ every displayed status keeps its complete content in the same row data (1.261238ms)
+✔ all statuses use one auto-height word-wrapped TodoRow path (0.402819ms)
+✔ Todo heading spans the panel and separates its accent count with flexible space (0.16439ms)
+✔ history summary reports exactly the omitted history rows (0.150479ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 104.632262

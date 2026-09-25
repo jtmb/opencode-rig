@@ -1,7 +1,7 @@
 # `verify-opencode-v2.sh`
 
-Read-only health check for the isolated OpenCode v2 stack. It never
-connects an MCP server, so it never launches Firefox.
+Read-only health check for the isolated OpenCode v2 stack. It never connects an
+MCP server, so it never launches a browser.
 
 ```bash
 platforms/linux/ubuntu/computer-use/scripts/verify-opencode-v2.sh
@@ -24,16 +24,22 @@ Override the paths with environment variables:
   expected config files.
 - The config-dir `skills/` source has 19 entries (no stray `README`).
 - The config-dir `commands/` source has at least the four global commands.
-- Global `mcp.servers.github` and `mcp.servers.basic-memory` use the exact
-  enabled local wrappers; global Playwright and all legacy flat same-name MCP
+- Global `mcp.servers` declares exactly `basic-memory`, `github`, and `chatgpt`
+  with their enabled local wrappers; Playwright and legacy flat same-name MCP
   keys are absent.
-- Repository `opencode.json` declares exactly one enabled project Playwright
-  server using either the exact checkout-local wrapper path or the
-  workspace-relative `./platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh`
-  command, with no global-only MCP registrations. The relative form uses
-  OpenCode's default workspace `cwd`; the setup assistant's generated absolute
-  form remains valid for an installed checkout.
-- `cli.json` has `session.permissions` exactly `prompt`.
+- Repository `opencode.json` declares the same exact three-server set:
+  Basic Memory, GitHub, and ChatGPT use workspace-relative local wrappers with
+  no credential fields. The wrappers use OpenCode's default workspace `cwd`.
+- Native and isolated WSL global profiles use the same three MCPs. WSL browser
+  actions use the Windows-default-browser connector with Playwright-like tools
+  instead of a project-only Playwright MCP; live browser capability still needs
+  bounded probes.
+- Repository and canonical example agent models bind Build/Explore/General to
+  `openai/gpt-6-luna#max` and Plan/Architect to `openai/gpt-6-sol#max`. The
+  selected server profile must explicitly define the five roles and cannot retain GPT-5.6 or a
+  swapped GPT-6 family; unrelated explicitly selected custom models are preserved.
+- `cli.json` has `session.permissions` exactly `prompt` and
+  `attention.sound` exactly `false`.
 - Every catalog-declared server and CLI role is declared in its expected config,
   with canonical package paths, no duplicate or malformed entries, and an
   existing role entrypoint. This includes both `rig-todo` roles.

@@ -1,7 +1,3 @@
-import { readFile } from "node:fs/promises"
-import { homedir } from "node:os"
-import { join } from "node:path"
-
 export const DEFAULT_USAGE_ENDPOINT = "https://chatgpt.com/backend-api/wham/usage"
 export const DEFAULT_DEEPSEEK_BALANCE_ENDPOINT = "https://api.deepseek.com/user/balance"
 
@@ -36,7 +32,7 @@ const LUNA_RESERVE_NAME = "gpt-reserve"
 
 export type OpenAICredential = {
   accessToken: string
-  accountId: string
+  accountId?: string
   expiresAt?: number
 }
 
@@ -62,6 +58,17 @@ export function overallWeeklyWindow(snapshot: CodexUsageSnapshot) {
   if (!overall) return undefined
   return overall.windows.find((window) => window.windowMinutes === 10080) ??
     overall.windows.find((window) => window.id === "secondary")
+}
+
+/** Return whether the provider-wide Codex subscription quota is exhausted. */
+export function codexLimitReached(snapshot: CodexUsageSnapshot) {
+  const overall = snapshot.buckets.find((bucket) => bucket.id === "codex")
+  const weekly = overallWeeklyWindow(snapshot)
+  const explicit = overall?.limitReached !== undefined || overall?.allowed !== undefined
+  return snapshot.reachedType !== undefined ||
+    overall?.limitReached === true ||
+    overall?.allowed === false ||
+    (!explicit && weekly !== undefined && weekly.usedPercent >= 100)
 }
 
 export function lunaReserveWindow(snapshot: CodexUsageSnapshot) {
@@ -137,8 +144,12 @@ function jwtPayload(token: string): JsonRecord | undefined {
   }
 }
 
-function accountIdFrom(token: string, auth: JsonRecord) {
-  const direct = text(auth.accountId) ?? text(auth.accountIdOverride)
+function accountIdFrom(token: string, metadata?: JsonRecord) {
+  const direct =
+    text(metadata?.accountId) ??
+    text(metadata?.accountIdOverride) ??
+    text(metadata?.chatgpt_account_id) ??
+    text(metadata?.chatgptAccountId)
   if (direct) return direct
 
   const payload = jwtPayload(token)
@@ -146,70 +157,9 @@ function accountIdFrom(token: string, auth: JsonRecord) {
   return isRecord(claims) ? text(claims.chatgpt_account_id) : undefined
 }
 
-export function defaultAuthPath() {
-  const dataHome = process.env.XDG_DATA_HOME || join(homedir(), ".local", "share")
-  return join(dataHome, "opencode", "auth.json")
-}
-
-export async function readOpenAICredential(authPath = defaultAuthPath()): Promise<OpenAICredential> {
-  let raw: string
-  try {
-    raw = await readFile(authPath, "utf8")
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new CodexUsageError("OpenAI login not found. Run `opencode auth login`.", "auth")
-    }
-    throw new CodexUsageError("Could not read the OpenCode authentication file.", "auth")
-  }
-
-  let file: unknown
-  try {
-    file = JSON.parse(raw)
-  } catch {
-    throw new CodexUsageError("The OpenCode authentication file is invalid.", "auth")
-  }
-
-  const openai = isRecord(file) && isRecord(file.openai) ? file.openai : undefined
-  if (!openai || openai.type !== "oauth") {
-    throw new CodexUsageError("Codex subscription quota requires an OpenAI OAuth login.", "auth")
-  }
-
-  const accessToken = text(openai.access)
-  if (!accessToken) throw new CodexUsageError("The OpenAI OAuth access token is missing.", "auth")
-
-  const expiresAt = finiteNumber(openai.expires)
-  if (expiresAt !== undefined && expiresAt <= Date.now()) {
-    throw new CodexUsageError("OpenAI login needs renewal. Use OpenAI in OpenCode or log in again.", "auth")
-  }
-
-  const accountId = accountIdFrom(accessToken, openai)
-  if (!accountId) throw new CodexUsageError("Could not determine the ChatGPT account for this login.", "auth")
-
-  return { accessToken, accountId, expiresAt }
-}
-
-export async function readDeepSeekCredential(authPath = defaultAuthPath()): Promise<DeepSeekCredential> {
-  let raw: string
-  try {
-    raw = await readFile(authPath, "utf8")
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new DeepSeekUsageError("DeepSeek login not found. Run `opencode auth login`.", "auth")
-    }
-    throw new DeepSeekUsageError("Could not read the OpenCode authentication file.", "auth")
-  }
-
-  let file: unknown
-  try {
-    file = JSON.parse(raw)
-  } catch {
-    throw new DeepSeekUsageError("The OpenCode authentication file is invalid.", "auth")
-  }
-
-  const deepseek = isRecord(file) && isRecord(file.deepseek) ? file.deepseek : undefined
-  const apiKey = deepseek?.type === "api" ? text(deepseek.key) : undefined
-  if (!apiKey) throw new DeepSeekUsageError("DeepSeek API login is unavailable.", "auth")
-  return { apiKey }
+/** Derive the optional ChatGPT account header from a resolved OAuth value. */
+export function accountIdFromAccessToken(accessToken: string, metadata?: unknown) {
+  return accountIdFrom(accessToken, isRecord(metadata) ? metadata : undefined)
 }
 
 function windowLabel(minutes: number | undefined, fallback: string) {
@@ -376,7 +326,7 @@ export function parseDeepSeekBalance(payload: unknown, now = Date.now()): DeepSe
 }
 
 export async function fetchDeepSeekBalance(
-  credential: DeepSeekCredential,
+  credential: DeepSeekCredential | string,
   options: {
     endpoint?: string
     signal?: AbortSignal
@@ -391,7 +341,7 @@ export async function fetchDeepSeekBalance(
       cache: "no-store",
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${credential.apiKey}`,
+        Authorization: `Bearer ${typeof credential === "string" ? credential : credential.apiKey}`,
         "User-Agent": "opencode-provider-usage/0.1.0",
       },
       signal: options.signal,
@@ -422,13 +372,14 @@ export async function fetchDeepSeekBalance(
 }
 
 export async function fetchCodexUsage(
-  credential: OpenAICredential,
+  credential: OpenAICredential | string,
   options: {
     endpoint?: string
     signal?: AbortSignal
     fetchImpl?: typeof fetch
     now?: number
     supportsLunaReserve?: boolean
+    accountId?: string
   } = {},
 ) {
   const now = options.now ?? Date.now()
@@ -438,10 +389,12 @@ export async function fetchCodexUsage(
       cache: "no-store",
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${credential.accessToken}`,
-        "ChatGPT-Account-Id": credential.accountId,
+        Authorization: `Bearer ${typeof credential === "string" ? credential : credential.accessToken}`,
         Originator: "opencode_codex_usage",
         "User-Agent": "opencode-codex-usage/0.1.0",
+        ...((typeof credential === "string" ? options.accountId : credential.accountId)
+          ? { "ChatGPT-Account-Id": typeof credential === "string" ? options.accountId : credential.accountId }
+          : {}),
         ...(options.supportsLunaReserve ? { "x-openai-codex-luna-reserve": "1" } : {}),
       },
       signal: options.signal,

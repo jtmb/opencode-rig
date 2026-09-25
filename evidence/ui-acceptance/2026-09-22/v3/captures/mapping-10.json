@@ -1,0 +1,239 @@
+{
+  "version": 2,
+  "source_sha256": "6a079a590f7ec773d54987c973932a6a0467ec0646ac922f8fbf2b83701c67ff",
+  "capture_generator": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+    "sha256": "de004ad8bd55316daaf82cd9460758bbb7060b487d37db7afe132677d2a46781"
+  },
+  "render_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+    "sha256": "8c9142e96754c586b7bfb5c5c75d090ed873417a0895eaec6af6d785888d78b6"
+  },
+  "native_capture_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+    "sha256": "94cd514fa1d6b4fe500b66736aa7dd244b692a8b0db53baaba97ed0e93e941eb"
+  },
+  "native_capture_output": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/native-output/mapping-10.json",
+    "sha256": "c066272e1c46d53aca2d01895a29e3892e415fb28c12ec8e5703ee801ee9f6a7",
+    "encoding": "utf-8",
+    "format": "native-opentui-capture-v1"
+  },
+  "runtime": {
+    "id": "node-26.4.0-npm-11.17.0",
+    "name": "node",
+    "version": "26.4.0",
+    "identity": "node@26.4.0",
+    "provisioning": "external-checksum",
+    "executable": "/tmp/opencode/node-v26.4.0-linux-x64/bin/node",
+    "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "package_manager": "npm",
+    "package_manager_version": "11.17.0",
+    "package_manager_identity": "npm@11.17.0",
+    "package_manager_executable": "/tmp/opencode/node-v26.4.0-linux-x64/lib/node_modules/npm/bin/npm-cli.js",
+    "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+  },
+  "renderer": {
+    "id": "opentui-0.5.11",
+    "name": "OpenTUI",
+    "version": "0.5.11",
+    "identity": "OpenTUI@0.5.11"
+  },
+  "observed_at": "2026-09-22T21:35:58.052Z",
+  "max_age_days": 1,
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "native_snapshots": [
+    {
+      "id": "mapping-10-open-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-open-before.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-open-before.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-open-before.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "mapping-10-open-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-open-after.txt",
+        "sha256": "2b9226e1f2d4db658911a655199e6de6b2a46fad102179e07c50ef9a2e28bfde",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-open-after.spans.json",
+        "sha256": "f320e30d295acf1b7d9e7bb9ce1e92eb002c1f4b24e2681f690464ff0f7956e8",
+        "semantic_sha256": "83e3beb66c033629c24460db7a44ae6bc791b434d385aadbb3bb91fbbc969f20",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-open-after.state.json",
+        "sha256": "d4f3d0643643818389a51c48a8b628d492e38f18cbac76fbf4e62cde95e1d558",
+        "semantic_sha256": "b848bccb02d2a42444b327927d34c31d71dceb16e6856ae3f242f88e19e0d293",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "mapping-10-interact-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-interact-before.txt",
+        "sha256": "2b9226e1f2d4db658911a655199e6de6b2a46fad102179e07c50ef9a2e28bfde",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-interact-before.spans.json",
+        "sha256": "f320e30d295acf1b7d9e7bb9ce1e92eb002c1f4b24e2681f690464ff0f7956e8",
+        "semantic_sha256": "83e3beb66c033629c24460db7a44ae6bc791b434d385aadbb3bb91fbbc969f20",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-interact-before.state.json",
+        "sha256": "d4f3d0643643818389a51c48a8b628d492e38f18cbac76fbf4e62cde95e1d558",
+        "semantic_sha256": "b848bccb02d2a42444b327927d34c31d71dceb16e6856ae3f242f88e19e0d293",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "mapping-10-interact-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-interact-after.txt",
+        "sha256": "2b9226e1f2d4db658911a655199e6de6b2a46fad102179e07c50ef9a2e28bfde",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-interact-after.spans.json",
+        "sha256": "f320e30d295acf1b7d9e7bb9ce1e92eb002c1f4b24e2681f690464ff0f7956e8",
+        "semantic_sha256": "83e3beb66c033629c24460db7a44ae6bc791b434d385aadbb3bb91fbbc969f20",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-interact-after.state.json",
+        "sha256": "a707e4b450187e9ab5483b4614ee9cc701ee9ab1ab10c66d8660262b1dc06681",
+        "semantic_sha256": "c029c7b861f700e54fd120317ed947db494ce725d303af1d88774518b234a4ef",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "mapping-10-close-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-close-after.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-close-after.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-close-after.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    }
+  ],
+  "native_frame": {
+    "snapshot_id": "mapping-10-interact-after",
+    "character_output": {
+      "path": "evidence/ui-acceptance/2026-09-22/v3/characters/mapping-10.txt",
+      "sha256": "2b9226e1f2d4db658911a655199e6de6b2a46fad102179e07c50ef9a2e28bfde",
+      "encoding": "utf-8"
+    },
+    "semantic_spans": {
+      "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/mapping-10/mapping-10-interact-after.spans.json",
+      "sha256": "f320e30d295acf1b7d9e7bb9ce1e92eb002c1f4b24e2681f690464ff0f7956e8",
+      "semantic_sha256": "83e3beb66c033629c24460db7a44ae6bc791b434d385aadbb3bb91fbbc969f20",
+      "encoding": "utf-8",
+      "format": "opentui-captureSpans-v1"
+    },
+    "frame_sha256": "2b9226e1f2d4db658911a655199e6de6b2a46fad102179e07c50ef9a2e28bfde",
+    "spans_sha256": "83e3beb66c033629c24460db7a44ae6bc791b434d385aadbb3bb91fbbc969f20"
+  },
+  "character_output": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/characters/mapping-10.txt",
+    "sha256": "2b9226e1f2d4db658911a655199e6de6b2a46fad102179e07c50ef9a2e28bfde",
+    "encoding": "utf-8"
+  },
+  "visual_image": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/images/mapping-10.png",
+    "sha256": "71dee9205c3443d56c7f86260f558b79e214ef636515dbbbd377e1e2618f4816",
+    "mime": "image/png",
+    "width": 840,
+    "height": 480,
+    "derived_from": {
+      "snapshot_id": "mapping-10-interact-after",
+      "frame_sha256": "2b9226e1f2d4db658911a655199e6de6b2a46fad102179e07c50ef9a2e28bfde",
+      "spans_sha256": "83e3beb66c033629c24460db7a44ae6bc791b434d385aadbb3bb91fbbc969f20",
+      "renderer": "opentui-cell-visualization-v1",
+      "cell_width": 6,
+      "cell_height": 8
+    }
+  },
+  "layout_assertions": [
+    {
+      "id": "visible_rows",
+      "operator": "<=",
+      "limit": 60
+    },
+    {
+      "id": "max_line_columns",
+      "operator": "<=",
+      "limit": 140
+    },
+    {
+      "id": "reachable_sections",
+      "operator": "==",
+      "limit": 3,
+      "targets": [
+        "- Active Subagents",
+        "Native sidebar capture",
+        "CAPTURE_FOOTER"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "phase": "open",
+      "event_id": "mapping-10-open-001",
+      "record": "evidence/ui-acceptance/2026-09-22/v3/events/mapping-10-open.json",
+      "record_sha256": "fa3f39a8605293b4036c40a7b629807b4cf27ce439966a934bfd14c58125fdd9"
+    },
+    {
+      "phase": "interact",
+      "event_id": "mapping-10-interact-001",
+      "record": "evidence/ui-acceptance/2026-09-22/v3/events/mapping-10-interact.json",
+      "record_sha256": "f01d87e57596812287219813b2f6232390efdaf2ba34c98a8a5f58729d951e07"
+    },
+    {
+      "phase": "close",
+      "event_id": "mapping-10-close-001",
+      "record": "evidence/ui-acceptance/2026-09-22/v3/events/mapping-10-close.json",
+      "record_sha256": "2eed8c2831d9797d961a8e33420371bd623b9af212c12b6b0afc395a6dae1708"
+    }
+  ]
+}

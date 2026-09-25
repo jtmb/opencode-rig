@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/tui.test.ts",
+  "test_sha256": "86441b8cd266f2dc84a452a76d372bb75114a91636fdc61417d8050a7347ab7a",
+  "source_sha256": "a0816afcd6cb4de156cc4821d6acb2aa5c1497532fa585e42ebb8cd80d1a7401",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh with repository default Node",
+  "command": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test tui.test.ts",
+  "observed_at": "2026-09-22T14:19:46Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/focused-output/source-control__test__tui.txt",
+  "output_sha256": "c864e9e0c942373f23249df753087294bd6b901b060bfb0995ee57de60b8d02a"
+}

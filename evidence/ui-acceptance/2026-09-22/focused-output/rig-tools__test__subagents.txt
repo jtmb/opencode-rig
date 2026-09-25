@@ -1,0 +1,16 @@
+bounded-command: available=7853MiB budget=3141MiB swap=785MiB node_heap=2042MiB
+Running as unit: run-r91761d8cf894460e97badd8d2ea58594.scope; invocation ID: 91a09577d7d64cbc8e1c3ed970dae4ce
+✔ renders the resolved model and variant before the child title (1.052288ms)
+✔ filters other repositories and keeps narrow rows within the panel width (0.812838ms)
+✔ keeps only bounded running sidebar rows and wraps keyboard selection (0.40012ms)
+✔ uses distinct theme surfaces and readable semantic foregrounds for focused rows (0.203179ms)
+✔ active row styles never introduce black or an undefined background fallback (0.20849ms)
+✔ falls back to session lifecycle fields when the active snapshot omits a running child (0.14313ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.727599

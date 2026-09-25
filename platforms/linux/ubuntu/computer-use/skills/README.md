@@ -27,8 +27,9 @@ comma-separated tags; the category/tag index below is derived from each
 
 - `desktop-vision` gives the assistant eyes. `desktop-control` gives it hands.
   Every GUI mutation follows observe, act, verify with a fresh screenshot.
-- `browser-assistant` shares a visible isolated Firefox window with the user.
-  `browser-headless` handles explicitly requested invisible browser work.
+- `browser-assistant` uses the user's visible Windows-default browser through
+  the WSL interop tools. `browser-headless` handles explicitly requested
+  invisible Firefox work.
 - `game-playtest` adds canvas/WebGL screenshots, bounded gameplay input, and
   browser diagnostics for game QA.
 - `github-operations` uses the GitHub MCP for context and approved mutations,
@@ -58,9 +59,9 @@ comma-separated tags; the category/tag index below is derived from each
 
 | Skill | Usage guide | Category | Tags |
 |---|---|---|---|
-| [`desktop-vision`](./desktop-vision/SKILL.md) | [`README.md`](./desktop-vision/README.md) | `desktop` | `desktop,gnome,screenshot,visual-verification` |
+| [`desktop-vision`](./desktop-vision/SKILL.md) | [`README.md`](./desktop-vision/README.md) | `desktop` | `desktop,gnome,wsl,windows,screenshot,visual-verification` |
 | [`desktop-control`](./desktop-control/SKILL.md) | [`README.md`](./desktop-control/README.md) | `desktop` | `desktop,at-spi,gui,gnome` |
-| [`browser-assistant`](./browser-assistant/SKILL.md) | [`README.md`](./browser-assistant/README.md) | `browser` | `browser,live,playwright,firefox` |
+| [`browser-assistant`](./browser-assistant/SKILL.md) | [`README.md`](./browser-assistant/README.md) | `browser` | `browser,live,wsl,windows,default-browser,accessibility` |
 | [`browser-headless`](./browser-headless/SKILL.md) | [`README.md`](./browser-headless/README.md) | `browser` | `browser,headless,playwright,automation` |
 | [`game-playtest`](./game-playtest/SKILL.md) | [`README.md`](./game-playtest/README.md) | `browser` | `games,playtesting,playwright,canvas,webgl` |
 | [`task-memory`](./task-memory/SKILL.md) | [`README.md`](./task-memory/README.md) | `memory` | `memory,preferences,decisions,pending` |
@@ -82,9 +83,10 @@ comma-separated tags; the category/tag index below is derived from each
 
 ### desktop-vision
 
-Let the assistant see the user's GNOME desktop by triggering a trusted
-screenshot shortcut when available, or asking the user to press PrintScreen.
-View only the newly created PNG with the Read tool, then delete it.
+Let the assistant see a GNOME or WSL/Windows desktop through the bounded
+`vision_capture` tool. Native GNOME uses a trusted screenshot shortcut and
+deletes its one new PNG; WSL uses a validated in-memory PNG from the checked-in
+Windows host and creates no screenshot file.
 
 Use when the user says see the screen, screenshot, look at my display, what's
 on my screen, verify visually, or when GUI work needs eyes on the result.
@@ -95,9 +97,9 @@ Example requests:
 - "Verify visually that the installer window is closed."
 - "Look at this dialog and tell me which button is focused."
 
-Requires: GNOME screenshot shortcut, `ydotool` user service with its private
-socket (agent-triggered path) or a user keypress (fallback). No permission
-changes are made from this skill.
+Requires: on native GNOME, the screenshot shortcut plus the private ydotool
+service or a user keypress fallback; on WSL2, trusted Windows PowerShell and the
+checked-in interop host. No permission changes are made from this skill.
 
 ### desktop-control
 
@@ -105,8 +107,9 @@ Inspect and operate GNOME desktop applications through AT-SPI, using desktop
 screenshots to verify each GUI action.
 
 Use when the user asks to click, type, open, close, configure, or otherwise
-interact with a desktop application or dialog. Do not use for browser pages
-when Playwright tools are available.
+interact with a desktop application or dialog. Browser pages in WSL use
+`browser-assistant` and the Windows-default-browser tools; if that bridge is
+unavailable, fail closed rather than using desktop clicking as a substitute.
 
 Example requests:
 
@@ -127,8 +130,8 @@ verify with a fresh screenshot.
 
 ### browser-assistant
 
-Interact with websites in a visible Playwright Firefox window shared by the
-user and agent, including navigation, forms, downloads, and verification.
+Interact with websites in the user's visible Windows-default browser from WSL,
+including navigation, forms, screenshots, and verification.
 
 Use when the user says live browser, browse with me, use the visible browser,
 click a website, fill a web form, or complete an interactive web workflow.
@@ -140,11 +143,12 @@ Example requests:
 - "Open the live browser and let me complete the login."
 - "Verify the checkout flow up to, but not including, payment."
 
-Requires: `playwright` MCP entry pointing at
-`../scripts/playwright-mcp.sh` and the pinned runtime in
-`../../browser-tools/`. The visible session is isolated from normal Firefox,
-but the user and agent operate the same window. Never enter passwords, MFA,
-payment details, or CAPTCHAs for the user.
+Requires: WSL2, the checked-in `wsl-interop` plugin, its Windows browser tools,
+and a working Windows host bridge. The tools open the current Windows default
+HTTP(S) browser association, select windows by explicit ID, inspect accessible
+UI Automation data, capture in-memory screenshots, and preview/apply bounded
+actions. If the bridge is unavailable, stop and report it. Never enter
+passwords, MFA, payment details, or CAPTCHAs for the user.
 
 ### browser-headless
 
@@ -161,17 +165,17 @@ Example requests:
 - "Run this browser smoke test without opening a window."
 - "Download this public artifact in the background."
 
-Requires: exactly one live `playwright` MCP plus the pinned repository runtime
-driven from the shell through `../scripts/run-bounded-command.sh`. Headless
-tasks launch an isolated context that shares no state with the live window;
-Open Rig does not register a second headless MCP.
+Requires: an explicitly requested headless task, the direct pinned `playwright`
+package, an existing Firefox executable, and
+`../scripts/run-bounded-command.sh`. Headless tasks launch an isolated context;
+they do not register an MCP or provide a visible-browser fallback.
 
 ### game-playtest
 
-Playtest browser games in Playwright Firefox with accessibility-first
-inspection, bounded input, mandatory canvas/WebGL screenshots, representative
-state coverage, console review, responsive checks, and severity-ordered
-findings.
+Playtest browser games in the visible Windows-default browser from WSL, or use
+headless Firefox only when explicitly requested, with bounded input, mandatory
+canvas/WebGL screenshots, representative state coverage, browser diagnostics,
+responsive checks, and severity-ordered findings.
 
 Use when the user requests a browser-game smoke test, gameplay QA, visual
 verification, HUD review, responsive testing, or a reproducible game bug report.
@@ -182,10 +186,11 @@ Example requests:
 - "Check the WebGL scene and HUD at desktop and narrow viewport sizes."
 - "Report gameplay bugs by severity with reproduction steps."
 
-Requires: the repository's visible Playwright Firefox by default, or headless
-only when explicitly requested. Canvas/WebGL tests require screenshots in
-addition to accessibility, console, and network evidence. Test screenshots are
-deleted immediately after inspection.
+Requires: the visible Windows-default browser tools from WSL by default, or
+headless Firefox only when explicitly requested. Canvas/WebGL tests require
+screenshots in addition to accessibility and browser diagnostics. The WSL
+bridge's UI Automation surface may not expose game-canvas controls; report that
+limitation instead of switching to another browser or interaction route.
 
 ### github-operations
 
@@ -201,11 +206,11 @@ Example requests:
 - "Review pull request 42 and report blocking concerns."
 - "Check why the latest GitHub Actions run failed."
 
-Requires: the global `github` MCP entry pointing at
-`https://api.githubcopilot.com/mcp/`. Complete hosted OAuth from OpenCode's
-`/mcps` screen; no token, header, or client secret belongs in configuration.
-The MCP tool surface is provider-owned and remains behind OpenCode's
-confirmation gates. Credentials,
+Requires: the canonical local `github` MCP, its pinned profile-owned binary,
+and an existing authenticated `gh` session. The wrapper resolves a transient
+token only when the child starts; no token, header, client secret, or GitHub
+control variable belongs in configuration. The fixed MCP tool surface remains
+behind OpenCode's confirmation gates. Credentials,
 publishing, merging, deletion, workflow/deployment actions, and security or
 permission changes retain explicit user handling and confirmation gates.
 
@@ -445,13 +450,14 @@ Example requests:
 - "Prepare the bounded change, but ask separately before commit and push."
 
 Requires: built-in `explore` for planning/reconnaissance, normally `general` for
-implementation, a hard cap of no more than three concurrent child sessions,
-complete non-overlapping prompts, a capacity check before every batch,
-conservative async/background execution for independent work, independent
-verification, preserved dirty work, and separate explicit approval gates for
-commit and push. If the capacity tool is unavailable, use serial/one-agent
-execution rather than guessing. Subagent claims are never treated as evidence,
-and destructive Git actions are forbidden.
+implementation, and the active project's `orchestration-policy.options.maxConcurrent`
+(`1..10`) as the sole enforced child-concurrency admission gate.
+`agent_memory_capacity` is an optional, read-only diagnostic; low, invalid, or
+unavailable results, or its absence, never block or reduce configured
+admission. Use complete non-overlapping prompts, conservative async/background
+execution for independent work, independent verification, preserved dirty work,
+and separate explicit approval gates for commit and push. Subagent claims are
+never treated as evidence, and destructive Git actions are forbidden.
 
 ### vscode-management
 

@@ -1,0 +1,32 @@
+bounded-command: available=7810MiB budget=3124MiB swap=781MiB node_heap=2030MiB
+Running as unit: run-rf93ace2c7dc34b71a1ffab63c6b50f8e.scope; invocation ID: be1c7acd8d3c441eabf6a151c65d0085
+✔ provider usage stays before the native footer so working directory remains last (6.870731ms)
+✔ parses overall and model-specific usage windows (12.355763ms)
+✔ derives Codex exhaustion and usage labels from the overall bucket only (1.119728ms)
+✔ clamps unexpected usage percentages (0.22085ms)
+✔ parses and formats the Luna Reserve weekly window (0.414629ms)
+✔ opts into Luna Reserve data only when requested (3.147546ms)
+✔ rejects responses without usage windows (0.3846ms)
+✔ derives optional OpenAI account metadata without reading auth.json (0.203449ms)
+✔ formats reset countdowns (0.3049ms)
+✔ formats compact, stable provider panel labels (0.386609ms)
+✔ deduplicates repeated balance measurements while retaining distinct usage (0.30471ms)
+✔ assigns semantic tones to every provider state (0.19494ms)
+✔ formats one-line provider summaries without inventing unavailable measurements (0.302669ms)
+✔ summarizes collapsed provider state in a stable native-sized header (0.16873ms)
+✔ reports only provider rows supplied by the usage snapshot (0.21844ms)
+✔ keeps empty snapshots empty instead of synthesizing offline rows (0.09047ms)
+✔ retains the last provider snapshot as STALE when a refresh fails (1.449458ms)
+✔ does not retain an offline row as visible STALE data after a failed refresh (0.38751ms)
+✔ parses and fetches the documented DeepSeek balance response (1.062248ms)
+✔ reads bounded fallback cooldowns for tracked providers (14.293421ms)
+✔ formats both OpenCode rows with stable status text and no unverified measurements (0.293779ms)
+✔ recognizes the active subscription model from either message shape (0.19462ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 440.508445

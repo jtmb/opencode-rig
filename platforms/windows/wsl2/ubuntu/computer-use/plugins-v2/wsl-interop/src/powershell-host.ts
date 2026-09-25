@@ -25,6 +25,7 @@ interface JsonRpcResponse {
 
 export interface HostRequestOptions {
   timeoutMs?: number
+  maxOutputBytes?: number
   signal?: AbortSignal
 }
 
@@ -247,6 +248,10 @@ export class PowerShellHostClient {
     if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > this.#options.timeoutMs) {
       throw new Error(`PowerShell host timeout must be 100..${this.#options.timeoutMs}ms`)
     }
+    const maxOutputBytes = options.maxOutputBytes ?? this.#options.maxOutputBytes
+    if (!Number.isInteger(maxOutputBytes) || maxOutputBytes < 4_096 || maxOutputBytes > 9 * 1024 * 1024) {
+      throw new Error("PowerShell host output limit must be 4096 bytes through 9 MiB")
+    }
     const host = await windowsPath(this.#cwd, options.signal)
     const request = createRpcRequest(method, params)
     const result = await runBoundedProcess(
@@ -257,7 +262,7 @@ export class PowerShellHostClient {
         cwd: this.#cwd,
         env: filteredEnvironment(),
         timeoutMs,
-        maxOutputBytes: this.#options.maxOutputBytes,
+        maxOutputBytes,
         signal: options.signal,
       },
     )

@@ -7,6 +7,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -18,6 +19,9 @@ SCRIPT = Path(__file__).resolve().parent / "configure.py"
 DEPLOY_SCRIPT = Path(__file__).resolve().parent / "deploy-plugins.sh"
 SETUP_SCRIPT = Path(__file__).resolve().parent / "setup-opencode.sh"
 SETUP_MCPS_SCRIPT = Path(__file__).resolve().parent / "setup-mcps.sh"
+WSL_PLUGIN_DEPENDENCY_SETUP = Path(__file__).resolve().parent / "setup-wsl-plugin-dependencies.sh"
+WSL_PLUGIN_DEPENDENCY_RUNNER = Path(__file__).resolve().parent / "run-bounded-command.sh"
+WSL_PLUGIN_ROOT = Path(__file__).resolve().parent.parent / "plugins-v2"
 SPEC = importlib.util.spec_from_file_location("wsl2_configure", SCRIPT)
 if SPEC is None or SPEC.loader is None:
     raise SystemExit("cannot import configure.py")
@@ -66,19 +70,132 @@ def assert_owned_configuration(server: Path, cli: Path, target: Path) -> None:
     if configure.load_json(cli).get("session", {}).get("permissions") != "prompt":
         raise AssertionError("CLI prompt permission is missing")
     servers = parsed.get("mcp", {}).get("servers", {})
-    if sorted(servers) != ["basic-memory", "github", "playwright"]:
+    if sorted(servers) != ["basic-memory", "chatgpt", "github"]:
         raise AssertionError(f"unexpected MCP set: {sorted(servers)}")
     expected = configure.mcp_servers(target)
     if servers != expected:
         raise AssertionError("WSL MCP declarations do not match canonical Ubuntu ownership")
-    if servers["github"].get("url") != "https://api.githubcopilot.com/mcp/":
-        raise AssertionError("GitHub MCP does not use the credential-free remote endpoint")
+    if "playwright_*" in configure.SERVER_PERMISSIONS:
+        raise AssertionError("WSL permissions still include the retired Playwright MCP tools")
+    if not {"wsl_browser_open", "wsl_browser_act"}.issubset(configure.SERVER_PERMISSIONS):
+        raise AssertionError("WSL default-browser actions are missing their exact ask permissions")
+    github = servers["github"]
+    if github.get("type") != "local" or Path(github.get("command", [""])[0]).name != "github-mcp.sh":
+        raise AssertionError("GitHub MCP does not use the canonical local wrapper")
+    if github.get("environment", {}).get("OPENCODE_MCP_PROFILE") != "wsl2":
+        raise AssertionError("GitHub MCP does not select the isolated WSL2 profile")
+    chatgpt = servers["chatgpt"]
+    if chatgpt.get("type") != "local" or Path(chatgpt.get("command", [""])[0]).name != "chatgpt-mcp.sh":
+        raise AssertionError("ChatGPT MCP does not use the canonical local wrapper")
+    if chatgpt.get("codemode") is not False:
+        raise AssertionError("ChatGPT MCP tools are not exposed directly")
+    if chatgpt.get("environment", {}).get("OPENCODE_MCP_PROFILE") != "wsl2":
+        raise AssertionError("ChatGPT MCP does not select the isolated WSL2 profile")
     if cli != target.parent / "xdg" / "opencode" / "cli.json":
         raise AssertionError(f"CLI config is not under the isolated XDG root: {cli}")
 
 
+def assert_browser_example_permissions() -> None:
+    """Verify the example asks for browser actions and no longer includes Playwright."""
+    example_path = configure.CONFIG_ROOT / "opencode.example.jsonc"
+    example = json.loads(configure.strip_jsonc(example_path.read_text(encoding="utf-8")))
+    permissions = example.get("permissions")
+    if not isinstance(permissions, list) or not all(isinstance(rule, dict) for rule in permissions):
+        raise AssertionError("WSL example permissions must be an array of objects")
+    for action in ("wsl_browser_open", "wsl_browser_act"):
+        matching = [rule for rule in permissions if rule.get("action") == action]
+        if matching != [{"action": action, "resource": "*", "effect": "ask"}]:
+            raise AssertionError(f"WSL example must contain one exact ask permission for {action}")
+    if any(rule.get("action") == "playwright_*" for rule in permissions):
+        raise AssertionError("WSL example still asks for retired Playwright tools")
+
+
+def test_wsl_plugin_dependency_setup() -> None:
+    """Verify missing dependencies fail closed and apply uses the WSL lockfile workspace."""
+    setup_source = SETUP_SCRIPT.read_text(encoding="utf-8")
+    if '"$WSL_PLUGIN_DEPENDENCY_SETUP" --apply' not in setup_source:
+        raise AssertionError("WSL apply does not provision its plugin workspace dependencies")
+    if '"$WSL_PLUGIN_DEPENDENCY_SETUP" --verify-only' not in setup_source:
+        raise AssertionError("WSL setup verification does not check its plugin workspace dependencies")
+    verify_source = (Path(__file__).resolve().parent / "verify-wsl2.sh").read_text(encoding="utf-8")
+    if 'setup-wsl-plugin-dependencies.sh" --verify-only' not in verify_source:
+        raise AssertionError("WSL source verification does not check its plugin workspace dependencies")
+
+    with tempfile.TemporaryDirectory(prefix="open-rig-wsl-plugin-dependencies-") as temporary:
+        root = Path(temporary)
+        computer_use = root / "platforms/windows/wsl2/ubuntu/computer-use"
+        scripts = computer_use / "scripts"
+        plugins = computer_use / "plugins-v2"
+        scripts.mkdir(parents=True)
+        plugins.mkdir()
+        shutil.copy2(WSL_PLUGIN_DEPENDENCY_SETUP, scripts / WSL_PLUGIN_DEPENDENCY_SETUP.name)
+        shutil.copy2(WSL_PLUGIN_DEPENDENCY_RUNNER, scripts / WSL_PLUGIN_DEPENDENCY_RUNNER.name)
+        shutil.copy2(WSL_PLUGIN_ROOT / "package.json", plugins / "package.json")
+        shutil.copy2(WSL_PLUGIN_ROOT / "package-lock.json", plugins / "package-lock.json")
+
+        home = root / "home"
+        home.mkdir()
+        env = {**os.environ, "HOME": str(home)}
+        missing = subprocess.run(
+            [str(scripts / WSL_PLUGIN_DEPENDENCY_SETUP.name), "--verify-only"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=30,
+        )
+        if missing.returncode == 0 or "dependencies are missing" not in missing.stderr:
+            raise AssertionError(f"missing WSL dependencies did not fail clearly:\n{missing.stdout}\n{missing.stderr}")
+
+        fake_bin = root / "fake-bin"
+        fake_bin.mkdir()
+        invocation_log = root / "npm-invocations.jsonl"
+        fake_npm = fake_bin / "npm"
+        fake_npm.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json, pathlib, sys\n"
+            f"log = pathlib.Path({str(invocation_log)!r})\n"
+            "args = sys.argv[1:]\n"
+            "with log.open('a', encoding='utf-8') as stream: stream.write(json.dumps(args) + '\\n')\n"
+            "prefix = pathlib.Path(args[args.index('--prefix') + 1])\n"
+            "tsc = prefix / 'node_modules/.bin/tsc'\n"
+            "tsc.parent.mkdir(parents=True, exist_ok=True)\n"
+            "tsc.write_text('#!/bin/sh\\nexit 0\\n', encoding='utf-8')\n"
+            "tsc.chmod(0o755)\n",
+            encoding="utf-8",
+        )
+        fake_npm.chmod(0o755)
+        applied = subprocess.run(
+            [str(scripts / WSL_PLUGIN_DEPENDENCY_SETUP.name), "--apply"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env={**env, "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}"},
+            timeout=30,
+        )
+        if applied.returncode != 0 or "WSL plugin workspace dependencies are ready" not in applied.stdout:
+            raise AssertionError(f"WSL plugin dependency apply failed:\n{applied.stdout}\n{applied.stderr}")
+        invocations = [json.loads(line) for line in invocation_log.read_text(encoding="utf-8").splitlines()]
+        expected = ["--prefix", str(plugins), "ci", "--ignore-scripts", "--no-audit", "--no-fund"]
+        if invocations != [expected]:
+            raise AssertionError(f"WSL dependencies were not installed from the workspace lockfile: {invocations!r}")
+
+        verified = subprocess.run(
+            [str(scripts / WSL_PLUGIN_DEPENDENCY_SETUP.name), "--verify-only"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=30,
+        )
+        if verified.returncode != 0 or len(invocation_log.read_text(encoding="utf-8").splitlines()) != 1:
+            raise AssertionError(f"installed WSL dependencies did not verify read-only:\n{verified.stdout}\n{verified.stderr}")
+
+
 def main() -> int:
     """Run disposable setup, deployment, rollback, and launcher tests."""
+    assert_browser_example_permissions()
+    test_wsl_plugin_dependency_setup()
     with tempfile.TemporaryDirectory(prefix="open-rig-wsl2-self-test-") as temporary:
         root = Path(temporary)
         boundary_root = root / "boundary"
@@ -108,6 +225,19 @@ def main() -> int:
 
         server, cli = configure.config_paths(target)
         assert_owned_configuration(server, cli, target)
+        assert {
+            name: configure.load_json(server)["agents"][name]["model"]
+            for name in configure.AGENT_MODELS.AGENT_MODELS
+        } == configure.AGENT_MODELS.AGENT_MODELS
+        architect = configure.load_json(server)["agents"]["architect"]
+        if architect["mode"] != "subagent" or not any(
+            rule == {"action": "edit", "resource": "*", "effect": "deny"}
+            for rule in architect["permissions"]
+        ) or not any(
+            rule == {"action": "shell", "resource": "*", "effect": "deny"}
+            for rule in architect["permissions"]
+        ):
+            raise AssertionError("WSL Architect must be a read-only Sol planning subagent")
 
         shared_target = root / "shared-pilot" / "config"
         configure.seed(shared_target, apply=True)
@@ -135,6 +265,10 @@ def main() -> int:
             raise AssertionError("shared deployment omitted a dual-role canonical rig-tools package")
         if not any(path.name == "repo-learning" for path in shared_server_packages & shared_cli_packages):
             raise AssertionError("shared deployment omitted canonical repo-learning roles")
+        if not any(path.name == "ponytail-adapter" for path in shared_server_packages):
+            raise AssertionError("shared deployment omitted the canonical Ponytail server role")
+        if any(path.name == "ponytail-adapter" for path in shared_cli_packages):
+            raise AssertionError("shared deployment registered the server-only Ponytail adapter in CLI")
         if not any(path.name == "wsl-interop" for path in shared_server_packages & shared_cli_packages):
             raise AssertionError("shared deployment omitted the WSL-only interop package")
         generic_packages = (shared_server_packages | shared_cli_packages) - {
@@ -144,29 +278,56 @@ def main() -> int:
         canonical_root = configure.PLATFORM_ROOT.parents[3] / "linux" / "ubuntu" / "computer-use" / "plugins-v2"
         if any(canonical_root not in path.parents for path in generic_packages):
             raise AssertionError("generic WSL profile packages are not owned by canonical Ubuntu")
+        if any(".local/opt/opencode-ponytail" in str(path) for path in shared_server_packages | shared_cli_packages):
+            raise AssertionError("WSL deployment retained the retired HOME-based Ponytail dependency")
         if (shared_target / "cli.json").exists():
             raise AssertionError("shared WSL deployment wrote a duplicate CLI config")
         setup_source = SETUP_SCRIPT.read_text(encoding="utf-8")
         if '"$SCRIPT_DIR/deploy-plugins.sh"' not in setup_source:
             raise AssertionError("WSL setup does not delegate plugin deployment to the shared wrapper")
         versions = configure.MCP.load_policy()
+        if versions.get("nodeVersion") != "22.22.2":
+            raise AssertionError("WSL MCP Node runtime must remain pinned to 22.22.2")
         wrappers = {
             "basicMemory": configure.CANONICAL_ROOT / "scripts" / "basic-memory-mcp.sh",
-            "playwright": configure.CANONICAL_ROOT / "scripts" / "playwright-mcp.sh",
+            "githubVersion": configure.CANONICAL_ROOT / "scripts" / "github-mcp.sh",
         }
+        chatgpt_wrapper = configure.CANONICAL_ROOT / "scripts" / "chatgpt-mcp.sh"
         if (Path(__file__).resolve().parent / "basic-memory-mcp.sh").exists():
             raise AssertionError("WSL keeps a duplicate Basic Memory wrapper")
         if (Path(__file__).resolve().parent / "playwright-mcp.sh").exists():
             raise AssertionError("WSL keeps a duplicate Playwright wrapper")
+        if (Path(__file__).resolve().parent / "github-mcp.sh").exists():
+            raise AssertionError("WSL keeps a duplicate GitHub wrapper")
+        if (Path(__file__).resolve().parent / "chatgpt-mcp.sh").exists():
+            raise AssertionError("WSL keeps a duplicate ChatGPT wrapper")
+        legacy_servers = {
+            **configure.mcp_servers(target),
+            "playwright": {"type": "local", "command": ["retired-project-entry"]},
+        }
+        try:
+            configure.MCP.verify_mcp_servers(
+                {"mcp": {"servers": legacy_servers}}, profile="wsl2", profile_root=target.parent
+            )
+        except configure.MCP.McpRuntimeError:
+            pass
+        else:
+            raise AssertionError("WSL configuration accepted a retired project-only Playwright MCP")
+        if chatgpt_wrapper.is_symlink() or not chatgpt_wrapper.is_file() or not os.access(chatgpt_wrapper, os.X_OK):
+            raise AssertionError("ChatGPT MCP wrapper is not a canonical executable regular file")
         if (configure.CONFIG_ROOT / "mcp-versions.json").exists():
             raise AssertionError("WSL keeps a duplicate MCP version policy")
         for key, wrapper in wrappers.items():
             source = wrapper.read_text(encoding="utf-8")
-            if str(versions["basicMemory" if key == "basicMemory" else "playwright"]) not in source:
+            if str(versions[key]) not in source:
                 if "mcp_runtime.py" not in source:
                     raise AssertionError(f"{wrapper.name} does not use the canonical policy")
-            if "/usr/bin/env -i" not in source or "mcp_runtime.py" not in source:
+            if "mcp_runtime.py" not in source:
                 raise AssertionError(f"{wrapper.name} is not environment-isolated through canonical runtime")
+            if key != "githubVersion" and "/usr/bin/env -i" not in source:
+                raise AssertionError(f"{wrapper.name} does not launch with an isolated environment")
+            if key == "githubVersion" and ("auth token" not in source or "inherited GitHub token/control" not in source):
+                raise AssertionError("GitHub wrapper does not authenticate from gh while rejecting inherited controls")
             if "@latest" in source:
                 raise AssertionError(f"{wrapper.name} uses an unpinned latest package")
         windows_setup = (Path(__file__).resolve().parent / "setup-open-rig-wsl.ps1").read_text(encoding="utf-8")
@@ -203,6 +364,218 @@ def main() -> int:
         )
         if unsupported_profile.returncode == 0 or "unsupported MCP profile" not in unsupported_profile.stderr:
             raise AssertionError("Basic Memory wrapper accepted an unsupported profile")
+        limiter_profile = root / "limiter-profile"
+        fake_bin = root / "limiter-bin"
+        fake_bin.mkdir()
+        systemd_log = root / "systemd-run.log"
+        prlimit_log = root / "prlimit.log"
+        fake_uvx = fake_bin / "uvx"
+        fake_uvx.write_text(
+            "#!/usr/bin/python3\n"
+            "import json\n"
+            "import os\n"
+            "from pathlib import Path\n"
+            "import sys\n"
+            "arguments = sys.argv[1:]\n"
+            "if 'project' in arguments and 'add' in arguments:\n"
+            "    index = arguments.index('add')\n"
+            "    project = arguments[index + 1]\n"
+            "    notes = arguments[index + 2]\n"
+            "    config = Path(os.environ['BASIC_MEMORY_CONFIG_DIR']) / 'config.json'\n"
+            "    config.write_text(json.dumps({'projects': {project: {'path': notes, 'mode': 'local'}}, "
+            "'default_project': project}) + '\\n', encoding='utf-8')\n"
+            "elif 'project' in arguments and 'default' in arguments:\n"
+            "    index = arguments.index('default')\n"
+            "    project = arguments[index + 1]\n"
+            "    config = Path(os.environ['BASIC_MEMORY_CONFIG_DIR']) / 'config.json'\n"
+            "    value = json.loads(config.read_text(encoding='utf-8'))\n"
+            "    value['default_project'] = project\n"
+            "    config.write_text(json.dumps(value) + '\\n', encoding='utf-8')\n"
+            "else:\n"
+            f"    print('Basic Memory version: {versions['basicMemory']}')\n",
+            encoding="utf-8",
+        )
+        (fake_bin / "systemctl").write_text("#!/usr/bin/env sh\nexit 0\n", encoding="utf-8")
+        (fake_bin / "systemd-run").write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            f"printf 'called\\n' >> {str(systemd_log)!r}\n"
+            "while [[ \"$#\" -gt 0 && \"$1\" != '--' ]]; do shift; done\n"
+            "[[ \"$#\" -gt 0 ]] && shift\n"
+            "exec \"$@\"\n",
+            encoding="utf-8",
+        )
+        (fake_bin / "prlimit").write_text(
+            "#!/usr/bin/env sh\n"
+            f"printf 'called\\n' >> {str(prlimit_log)!r}\n"
+            "exit 99\n",
+            encoding="utf-8",
+        )
+        for executable in fake_bin.iterdir():
+            executable.chmod(0o700)
+        limited = subprocess.run(
+            [str(wrappers["basicMemory"]), "--provision"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env={
+                **os.environ,
+                "PATH": f"{fake_bin}:{os.environ.get('PATH', '/usr/local/bin:/usr/bin:/bin')}",
+                "OPENCODE_MCP_PROFILE": "wsl2",
+                "OPENCODE_MCP_PROFILE_ROOT": str(limiter_profile),
+                "OPENCODE_MCP_UVX_BIN": str(fake_uvx),
+            },
+        )
+        if limited.returncode != 0:
+            raise AssertionError(f"Basic Memory systemd limiter path failed: {limited.stderr}")
+        if not systemd_log.is_file():
+            raise AssertionError("Basic Memory wrapper did not use the selected systemd limiter")
+        if prlimit_log.exists():
+            raise AssertionError("Basic Memory wrapper invoked prlimit after a successful systemd-run")
+        limiter_config = limiter_profile / "mcp" / "basic-memory" / "home" / "config.json"
+        limiter_value = json.loads(limiter_config.read_text(encoding="utf-8"))
+        limiter_value["default_project"] = "other"
+        limiter_config.write_text(json.dumps(limiter_value) + "\n", encoding="utf-8")
+        repaired_default = subprocess.run(
+            [str(wrappers["basicMemory"]), "--provision"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env={
+                **os.environ,
+                "PATH": f"{fake_bin}:{os.environ.get('PATH', '/usr/local/bin:/usr/bin:/bin')}",
+                "OPENCODE_MCP_PROFILE": "wsl2",
+                "OPENCODE_MCP_PROFILE_ROOT": str(limiter_profile),
+                "OPENCODE_MCP_UVX_BIN": str(fake_uvx),
+            },
+        )
+        if repaired_default.returncode != 0:
+            raise AssertionError(f"Basic Memory default-project repair failed: {repaired_default.stderr}")
+        if json.loads(limiter_config.read_text(encoding="utf-8"))["default_project"] != "computer-assistant":
+            raise AssertionError("Basic Memory provisioning did not restore the canonical default project")
+        if prlimit_log.exists():
+            raise AssertionError("Basic Memory default-project repair invoked both memory limiters")
+
+        fallback_profile = root / "fallback-profile"
+        fallback_bin = root / "fallback-bin"
+        fallback_bin.mkdir()
+        fallback_home = root / "fallback-home"
+        fallback_home.mkdir(mode=0o700)
+        fallback_runtime = root / "fallback-runtime"
+        fallback_runtime.mkdir(mode=0o700)
+        fallback_uvx = fallback_bin / "uvx"
+        fallback_uvx.write_text(
+            "#!/usr/bin/python3\n"
+            "import json\n"
+            "import mmap\n"
+            "import os\n"
+            "import sys\n"
+            "from pathlib import Path\n"
+            "mapping = mmap.mmap(-1, 2 * 1024**3, flags=mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS | mmap.MAP_NORESERVE, prot=mmap.PROT_READ | mmap.PROT_WRITE)\n"
+            "mapping.close()\n"
+            "arguments = sys.argv[1:]\n"
+            "if 'project' in arguments and 'add' in arguments:\n"
+            "    index = arguments.index('add')\n"
+            "    project = arguments[index + 1]\n"
+            "    notes = arguments[index + 2]\n"
+            "    config = Path(os.environ['BASIC_MEMORY_CONFIG_DIR']) / 'config.json'\n"
+            "    config.write_text(json.dumps({'projects': {project: {'path': notes, 'mode': 'local'}}, 'default_project': project}) + '\\n', encoding='utf-8')\n"
+            "elif 'project' in arguments and 'default' in arguments:\n"
+            "    index = arguments.index('default')\n"
+            "    project = arguments[index + 1]\n"
+            "    config = Path(os.environ['BASIC_MEMORY_CONFIG_DIR']) / 'config.json'\n"
+            "    value = json.loads(config.read_text(encoding='utf-8'))\n"
+            "    value['default_project'] = project\n"
+            "    config.write_text(json.dumps(value) + '\\n', encoding='utf-8')\n"
+            "elif 'mcp' in arguments:\n"
+            "    print('FAKE MCP STARTED')\n"
+            "else:\n"
+            f"    print('Basic Memory version: {versions['basicMemory']}')\n",
+            encoding="utf-8",
+        )
+        fallback_uvx.chmod(0o700)
+        (fallback_bin / "systemctl").write_text("#!/usr/bin/env sh\nexit 1\n", encoding="utf-8")
+        real_prlimit = shutil.which("prlimit", path=os.defpath)
+        setsid_path = shutil.which("setsid", path=os.defpath)
+        if not real_prlimit or not setsid_path:
+            raise AssertionError("focused Basic Memory fallback test requires prlimit and setsid")
+        (fallback_bin / "prlimit").write_text(
+            "#!/usr/bin/env bash\n"
+            "if [[ \"${3##*/}\" != setsid || \"${4:-}\" != --wait || \"${5:-}\" != -- ]]; then\n"
+            "  printf 'Basic Memory reused its RSS budget as an address-space ceiling\\n' >&2\n"
+            "  exit 97\n"
+            "fi\n"
+            f"exec {real_prlimit} \"$@\"\n",
+            encoding="utf-8",
+        )
+        for executable in (fallback_bin / "systemctl", fallback_bin / "prlimit"):
+            executable.chmod(0o700)
+        fallback_environment = {
+            **os.environ,
+            "HOME": str(fallback_home),
+            "PATH": f"{fallback_bin}:{os.environ.get('PATH', '/usr/local/bin:/usr/bin:/bin')}",
+            "XDG_RUNTIME_DIR": str(fallback_runtime),
+            "OPENCODE_MCP_PROFILE": "wsl2",
+            "OPENCODE_MCP_PROFILE_ROOT": str(fallback_profile),
+            "OPENCODE_MCP_UVX_BIN": str(fallback_uvx),
+        }
+        fallback_provision = subprocess.run(
+            [str(wrappers["basicMemory"]), "--provision"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=fallback_environment,
+            timeout=30,
+        )
+        if fallback_provision.returncode != 0:
+            raise AssertionError(f"Basic Memory RSS fallback provisioning failed: {fallback_provision.stderr}")
+
+        configure.MCP.prepare_profile(fallback_profile, apply=True)
+        fallback_paths = configure.MCP.profile_paths(fallback_profile)
+        basic_environment = fallback_paths["uv_environments"] / "scope" / "environment"
+        basic_executable = basic_environment / "bin" / "basic-memory"
+        basic_executable.parent.mkdir(parents=True)
+        basic_executable.write_text("#!/usr/bin/env sh\nexit 0\n", encoding="utf-8")
+        basic_executable.chmod(0o700)
+        basic_package = basic_environment / "lib" / "python3.12" / "site-packages" / f"basic_memory-{versions['basicMemory']}.dist-info"
+        basic_package.mkdir(parents=True)
+        node_bin = fallback_paths["node_root"] / "bin"
+        node_bin.mkdir(parents=True)
+        (node_bin / "node").write_text(f"#!/usr/bin/env sh\nprintf 'v{versions['nodeVersion']}\\n'\n", encoding="utf-8")
+        (node_bin / "npm").write_text("#!/usr/bin/env sh\nprintf '10.9.4\\n'\n", encoding="utf-8")
+        for runner in (node_bin / "node", node_bin / "npm"):
+            runner.chmod(0o700)
+        github = fallback_paths["github_binary"]
+        github.write_text(
+            "#!/usr/bin/env sh\n"
+            f"printf 'GitHub MCP Server\\nVersion: {versions['githubVersion']}\\n'\n",
+            encoding="utf-8",
+        )
+        github.chmod(0o700)
+        configure.MCP.mcp_provisioning(fallback_profile, profile="wsl2", apply=True, quiet=True)
+
+        timeout_log = root / "persistent-timeout.log"
+        (fallback_bin / "timeout").write_text(
+            "#!/usr/bin/env sh\n"
+            f"printf 'called\\n' >> {str(timeout_log)!r}\n"
+            "exit 99\n",
+            encoding="utf-8",
+        )
+        (fallback_bin / "timeout").chmod(0o700)
+        invalid_runtime = root / "invalid-runtime"
+        invalid_runtime.symlink_to(fallback_runtime, target_is_directory=True)
+        live_environment = {**fallback_environment, "XDG_RUNTIME_DIR": str(invalid_runtime)}
+        live = subprocess.run(
+            [str(wrappers["basicMemory"])],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=live_environment,
+            timeout=30,
+        )
+        if live.returncode != 0 or "FAKE MCP STARTED" not in live.stdout or timeout_log.exists():
+            raise AssertionError(f"Basic Memory persistent RSS fallback failed: {live.stderr or live.stdout}")
+
         basic_environment = target.parent / "cache" / "uv" / "environments-v2" / "scope" / "environment"
         basic_executable = basic_environment / "bin" / "basic-memory"
         basic_executable.parent.mkdir(parents=True)
@@ -237,14 +610,28 @@ def main() -> int:
             + "\n",
             encoding="utf-8",
         )
-        playwright_package = target.parent / "cache" / "npm" / "_npx" / "run" / "node_modules" / "@playwright" / "mcp" / "package.json"
-        playwright_package.parent.mkdir(parents=True)
-        playwright_package.write_text(json.dumps({"version": versions["playwright"]}) + "\n", encoding="utf-8")
-        revision = versions["playwrightBrowserRevision"]
-        browser = target.parent / "cache" / "ms-playwright" / f"chromium-{revision}" / "chrome-linux64" / "chrome"
-        browser.parent.mkdir(parents=True)
-        browser.write_text("#!/usr/bin/env sh\nexit 0\n", encoding="utf-8")
-        browser.chmod(0o700)
+        if (target.parent / "mcp" / "playwright").exists():
+            raise AssertionError("isolated WSL global MCP profile created project-only Playwright state")
+        if (target.parent / "cache" / "ms-playwright").exists():
+            raise AssertionError("isolated WSL global MCP profile created project-only Playwright browser state")
+        github = target.parent / "mcp" / "github" / "github-mcp-server"
+        github.parent.mkdir(parents=True, exist_ok=True)
+        github.write_text(
+            "#!/usr/bin/env sh\n"
+            f"printf 'GitHub MCP Server\\nVersion: {versions['githubVersion']}\\n'\n",
+            encoding="utf-8",
+        )
+        github.chmod(0o700)
+        fake_home = root / "fake-home"
+        fake_gh = fake_home / ".local" / "bin" / "gh"
+        fake_gh.parent.mkdir(parents=True)
+        fake_gh.write_text(
+            "#!/usr/bin/env sh\n"
+            "[ \"${1:-}\" = auth ] && [ \"${2:-}\" = token ] || exit 2\n"
+            "printf 'self-test-token\\n'\n",
+            encoding="utf-8",
+        )
+        fake_gh.chmod(0o700)
         configure.mcp_provisioning(target, apply=True)
         configure.mcp_provisioning(target, apply=False)
         profile_before_verify = {
@@ -257,6 +644,11 @@ def main() -> int:
             check=False,
             capture_output=True,
             text=True,
+            env={
+                **os.environ,
+                "HOME": str(fake_home),
+                "OPENCODE_MCP_UVX_BIN": str(configure.MCP.resolve_runner("uvx")),
+            },
         )
         if delegated.returncode != 0:
             raise AssertionError(f"WSL MCP setup did not delegate to canonical verification: {delegated.stderr}")
@@ -267,12 +659,9 @@ def main() -> int:
         }
         if profile_after_verify != profile_before_verify:
             raise AssertionError("WSL MCP verify-only changed isolated profile state")
-        playwright_package.write_text('{"version":"stale"}\n', encoding="utf-8")
-        expect_error(lambda: configure.mcp_provisioning(target, apply=False), "Playwright MCP's canonical pinned")
-        playwright_package.write_text(json.dumps({"version": versions["playwright"]}) + "\n", encoding="utf-8")
         marker = target.parent / "mcp" / "provisioned.json"
         marker_data = configure.load_json(marker)
-        marker_data["playwright"] = "stale"
+        marker_data["githubVersion"] = "stale"
         configure.atomic_write(marker, marker_data)
         expect_error(lambda: configure.mcp_provisioning(target, apply=False), "missing or stale")
         configure.mcp_provisioning(target, apply=True)
@@ -296,10 +685,32 @@ def main() -> int:
 
         server_data = configure.load_json(server)
         server_data["unrelated"] = {"preserved": True}
+        server_data["agents"]["general"]["model"] = "custom/provider-model"
         configure.atomic_write(server, server_data)
         configure.deploy(target, "all", apply=True)
         if configure.load_json(server).get("unrelated") != {"preserved": True}:
             raise AssertionError("deployment did not preserve unrelated server configuration")
+        if configure.load_json(server)["agents"]["general"]["model"] != "custom/provider-model":
+            raise AssertionError("deployment overwrote an unrelated custom agent model")
+
+        stale_models = configure.load_json(server)
+        stale_models["agents"]["plan"]["model"] = "openai/gpt-5.6-sol#max"
+        stale_models["agents"]["explore"]["model"] = "openai/gpt-5.6-luna#max"
+        configure.atomic_write(server, stale_models)
+        stale_bytes = server.read_bytes()
+        expect_error(lambda: configure.seed(target, apply=False), "GPT-5.6")
+        expect_error(lambda: configure.verify_deployment(target), "GPT-5.6")
+        if server.read_bytes() != stale_bytes:
+            raise AssertionError("WSL model verification changed isolated configuration")
+        configure.seed(target, apply=True)
+        upgraded = configure.load_json(server)
+        if upgraded["agents"]["plan"]["model"] != "openai/gpt-6-sol#max":
+            raise AssertionError("WSL Plan was not migrated to GPT-6 Sol")
+        if upgraded["agents"]["explore"]["model"] != "openai/gpt-6-luna#max":
+            raise AssertionError("WSL Explore was not migrated to GPT-6 Luna")
+        if upgraded["agents"]["general"]["model"] != "custom/provider-model":
+            raise AssertionError("WSL migration overwrote unrelated custom model")
+        configure.verify_deployment(target)
 
         disabled = configure.load_json(server)
         package = configure.validate_catalog()[0]["package"]

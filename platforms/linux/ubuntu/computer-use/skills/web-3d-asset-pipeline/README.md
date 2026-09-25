@@ -16,7 +16,7 @@ materials, textures, animation, collision, or performance characteristics. It
 owns the asset pipeline, not engine selection or runtime scene architecture.
 
 The workflow is adapted from OpenAI's public Game Studio guidance for this
-repository's Ubuntu, Blender, file-safety, and Playwright Firefox tools. See
+repository's Ubuntu, Blender, file-safety, and browser UIA tools. See
 [PROVENANCE.md](./PROVENANCE.md) and [LICENSE.txt](./LICENSE.txt).
 
 ## Prerequisites and setup verification
@@ -27,9 +27,11 @@ The agent checks, without installing anything:
 - the target engine/loader and its existing package lockfile
 - the project's asset conventions and budgets
 - the installed DCC/exporter version when a DCC is needed
-- the available visible `playwright` MCP for interactive Firefox validation
-- the pinned bounded browser runtime when headless validation was explicitly
-  requested
+- the `browser-assistant` `wsl_browser_*` UIA tools for visible work from WSL,
+  using the Windows default browser, an explicit window ID, and fresh preview
+  tokens for supported mutations
+- the pinned isolated Firefox runtime only when headless validation was
+  explicitly requested
 - any existing, approved, pinned optimization command
 
 There is no assumed Blender MCP server. If Blender is used, the agent loads the
@@ -42,8 +44,8 @@ download undeclared packages.
 - "Prepare this Blender prop for Three.js as a GLB and preserve the source."
 - "Find why this model imports at the wrong scale and rotates around the wrong
   point."
-- "Reduce this GLB if our existing toolchain supports it, then verify it in
-  Firefox."
+- "Reduce this GLB if our existing toolchain supports it, then verify it in my
+  Windows default browser from WSL."
 - "Check the hierarchy, materials, textures, animation names, and runtime load
   of this glTF."
 
@@ -60,23 +62,33 @@ A representative GLB delivery proceeds as follows:
 3. Clean only the necessary scene data and export a new versioned GLB.
 4. Reimport it into a clean scene and compare structure and transforms.
 5. Run the project's existing local server on loopback and load the exact GLB
-   in visible Playwright Firefox.
-6. Take an accessibility snapshot, inspect console and network activity, then
-   inspect a screenshot of the canvas/WebGL result.
+   in the user's Windows default browser through the WSL browser UIA tools.
+6. Take an accessibility snapshot and a screenshot of the canvas/WebGL result.
+   Inspect console and network activity only when an approved tool exposes it;
+   if diagnostics are unavailable, record a blocker rather than claiming a
+   clean console or network.
 7. Report measured size and load behavior plus structural and visual findings.
 
 Expected result: a new runtime asset that meets the explicit contract, reimports
-without unexpected loss, and loads visibly in Firefox without asset-related
-console/network failures. These are documented representative steps; they were
-not executed while creating the skill.
+without unexpected loss, and loads visibly in the Windows default browser. A
+clean console/network result is claimable only when an approved tool exposes
+those diagnostics; otherwise report the blocker and leave that check incomplete.
+These are documented representative steps; they were not executed while
+creating the skill.
 
 ## Verification and known limitations
 
 - Export must be followed by clean reimport and structural comparison.
 - Browser verification must load the exact shipping file through the actual
-  project loader, not a DCC preview.
+  project loader, not a DCC preview. Visible WSL work uses the Windows-default-
+  browser UIA connector; isolated headless Firefox requires an explicit request.
 - A browser accessibility snapshot does not describe canvas geometry;
-  screenshot inspection is mandatory for WebGL output.
+  screenshot inspection is mandatory for WebGL output. If the approved UIA
+  tools cannot expose the required screenshot or interaction, report validation
+  as incomplete and do not fall back to desktop input or Chrome/Chromium.
+- UIA does not guarantee console or network-diagnostic access. If a required
+  console/network check cannot be made through an approved tool, report the
+  limitation as a blocker; do not claim that UIA exposes browser diagnostics.
 - A desktop/mobile viewport pass does not replace testing on real mobile GPU,
   memory, touch input, and network conditions.
 - Compression is tested only when a compatible approved tool and decoder
@@ -95,7 +107,8 @@ not executed while creating the skill.
 - Renamed nodes or clips: stabilize source names and exporter settings, then
   reimport and compare before changing runtime selectors.
 - GLB works locally but not through the app: inspect exact URL, status, MIME,
-  CORS, base path, decoder availability, and console error.
+  CORS, base path, decoder availability, and console error when those
+  diagnostics are exposed; otherwise leave that part of the validation blocked.
 - Optimized asset fails: restore the preserved baseline, identify the one
   incompatible optimization, and do not stack speculative recompression.
 
@@ -114,8 +127,8 @@ and security controls are not weakened.
   and save/reopen procedures.
 - [`game-playtest`](../game-playtest/README.md) verifies interactive game states
   after the asset loads.
-- [`browser-assistant`](../browser-assistant/README.md) governs the visible
-  Playwright Firefox session.
+- [`browser-assistant`](../browser-assistant/README.md) governs visible work
+  from WSL through the Windows-default-browser `wsl_browser_*` UIA tools.
 - [`browser-headless`](../browser-headless/README.md) governs explicitly
   requested non-interactive validation through the pinned bounded runtime.
 - [`files-and-documents`](../files-and-documents/README.md) governs local

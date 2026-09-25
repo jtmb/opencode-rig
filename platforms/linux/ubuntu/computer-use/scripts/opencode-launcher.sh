@@ -11,7 +11,10 @@ if [ ! -x "$BIN" ]; then
   exit 1
 fi
 
-mkdir -p "$PILOT/config" "$PILOT/data" "$PILOT/state" "$PILOT/cache"
+if [[ ! ( "$#" -eq 2 && "$1" == service && "$2" == status ) &&
+      ! ( "$#" -eq 3 && "$1" == api && "$2" == get && "$3" == /api/info ) ]]; then
+  mkdir -p "$PILOT/config" "$PILOT/data" "$PILOT/state" "$PILOT/cache"
+fi
 
 export OPENCODE_CONFIG_DIR="$PILOT/config"
 export XDG_DATA_HOME="$PILOT/data"

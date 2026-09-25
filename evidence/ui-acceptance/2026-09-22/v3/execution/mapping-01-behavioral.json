@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-state.test.ts",
+  "test_sha256": "e42294dfefaea46d28b9a45739d4ba13b4fc280ddbcd6aa218c5d996bb74e2d3",
+  "source_sha256": "c9a8a7b48b5b10c1be9bd6bf934107a634e40ba16dd6a8e312cd849940ae3e19",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "/tmp/opencode/node-v26.4.0-linux-x64/bin/node node@26.4.0; npm CLI /tmp/opencode/node-v26.4.0-linux-x64/lib/node_modules/npm/bin/npm-cli.js npm@11.17.0; run-bounded-command.sh",
+  "command": "PATH=/tmp/opencode/node-v26.4.0-linux-x64/bin:$PATH bash ../../scripts/run-bounded-command.sh -- /tmp/opencode/node-v26.4.0-linux-x64/bin/node --experimental-strip-types --test test/provider-state.test.ts",
+  "observed_at": "2026-09-22T21:35:58.052Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/v3/execution-output/mapping-01-behavioral.txt",
+  "output_sha256": "8d98ff4e70ec2062e5446fd46f42b3712059261b9edf107934349edce9424bf0"
+}

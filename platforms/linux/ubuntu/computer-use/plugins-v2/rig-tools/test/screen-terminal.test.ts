@@ -3,6 +3,7 @@ import test from "node:test"
 
 import {
   createScreenManager,
+  inputFrames,
   inputPayload,
   normalizeScreenIntent,
   parseScreenList,
@@ -60,6 +61,8 @@ test("normalizes bounded OpenCode-only terminal intents", () => {
   assert.equal(inputPayload({ action: "input", name: "acceptance", kind: "key", key: "ctrl+a" }), "\u0001")
   assert.equal(inputPayload({ action: "input", name: "acceptance", kind: "key", key: "ctrl+p" }), "\u0010")
   assert.equal(inputPayload({ action: "input", name: "acceptance", kind: "key", key: "ctrl+s" }), "\u0013")
+  assert.deepEqual(inputFrames({ action: "input", name: "acceptance", kind: "key", key: "ctrl+x,b" }), ["\u0018", "b"])
+  assert.deepEqual(inputFrames({ action: "input", name: "acceptance", kind: "key", key: "return" }), ["\r"])
   assert.throws(() => normalizeScreenIntent({ action: "input", name: "acceptance", kind: "text", text: "bad\ntext" }), /printable ASCII/)
   assert.throws(() => normalizeScreenIntent({ action: "resize", name: "acceptance", columns: 999, rows: 24 }), /columns/)
   assert.throws(() => normalizeScreenIntent({ action: "start", name: "bad/name", directory: "/repo" }), /name/)

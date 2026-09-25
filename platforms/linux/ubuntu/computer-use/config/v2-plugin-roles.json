@@ -12,8 +12,8 @@
       }
     },
     {
-      "name": "git-tool",
-      "path": "plugins-v2/git-tool",
+      "name": "ponytail-adapter",
+      "path": "plugins-v2/ponytail-adapter",
       "roles": {
         "server": {
           "entrypoint": "server.ts",
@@ -22,16 +22,12 @@
       }
     },
     {
-      "name": "integrated-browser",
-      "path": "plugins-v2/integrated-browser",
+      "name": "git-tool",
+      "path": "plugins-v2/git-tool",
       "roles": {
         "server": {
           "entrypoint": "server.ts",
           "config": "opencode.jsonc"
-        },
-        "cli": {
-          "entrypoint": "tui.tsx",
-          "config": "cli.json"
         }
       }
     },
@@ -101,9 +97,23 @@
       "name": "codex-usage",
       "path": "plugins-v2/codex-usage",
       "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
+        },
         "cli": {
           "entrypoint": "tui.tsx",
           "config": "cli.json"
+        }
+      }
+    },
+    {
+      "name": "chatgpt-connector",
+      "path": "plugins-v2/chatgpt-connector",
+      "roles": {
+        "server": {
+          "entrypoint": "server.ts",
+          "config": "opencode.jsonc"
         }
       }
     },

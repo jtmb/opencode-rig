@@ -1,0 +1,56 @@
+{
+  "version": 3,
+  "capture_id": "rig-todo-store",
+  "phase": "test-dispatch",
+  "event_id": "rig-todo-store-test-dispatch-001",
+  "action": {
+    "type": "click",
+    "target": "todo-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "todo-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "e07a772e-df53-4310-adfa-b72eff3d55ee",
+    "dispatch_id": "rig-todo-store-test-dispatch-dispatch-001",
+    "transition_id": "rig-todo-store-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "27026668412510",
+    "transition_monotonic_ns": "27026717183652"
+  },
+  "before": {
+    "snapshot_id": "rig-todo-store-interact-before",
+    "frame_sha256": "7749a37d44cca1cf807b47426f9a6589c3a85e3bed16df97ab702f63ed05ad19",
+    "spans_sha256": "83a23ec3042c7ecacea120cacd696f917494f698d8bc2a593fde294e280cf507",
+    "state_sha256": "6107d88460bba248f3f7a360e1e792352769d538b419ce5cce9a601ff3c03b30"
+  },
+  "after": {
+    "snapshot_id": "rig-todo-store-interact-after",
+    "frame_sha256": "5326ccf2eacf3f4940e561b1297cc7063916e34e843e022a0f40fd93c770ea88",
+    "spans_sha256": "65ade76d77ba7ec53f9acc859499b290917f761f8c59657d0380a313a7dfcd97",
+    "state_sha256": "3cb191def2928a9e5ce2be825bda706b78c72b0b4abcef431e138cc9c6658852"
+  },
+  "result": {
+    "status": "passed",
+    "target": "todo-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "f31b7bba59141d3bdc408517d0f636b0a4d6f23fc9f706897ca2c1348489dee4",
+  "native_event_sha256": "b06ee189e8f9abaf63fbe22c36b37d5704c7842722a4807a9d5e308ed71c65ba"
+}

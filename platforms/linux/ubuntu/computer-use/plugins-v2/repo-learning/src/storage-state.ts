@@ -2,9 +2,8 @@
 //
 // State lives in ctx.storage (operational only, never learning content).
 // Episodes are structured summaries with fixed schemas, UTF-8 byte/count caps,
-// and 30-day retention. All parsing and mutation is fail-closed: invalid
-// input throws, over-cap state is rejected at the storage boundary, and
-// pruning is deterministic and oldest-first.
+// and 30-day retention. New writes use the pause-free schema; legacy pause state
+// is ignored during safe, bounded recovery.
 
 import { redactText } from "./redact.ts"
 
@@ -32,14 +31,14 @@ export const MAX_EPISODE_EVENTS = 512
 /** Maximum serialized state size accepted by parseState (512 KiB). */
 export const MAX_STATE_BYTES = 512 * 1024
 
-/** Schema version for forward-compatible fail-closed parsing. */
-export const LEARN_STATE_SCHEMA = 1
+/** Schema version for forward-compatible parsing. */
+export const LEARN_STATE_SCHEMA = 2
 
 const UTF8_ENCODER = new TextEncoder()
 const SAFE_SESSION_ID = /^[A-Za-z0-9_.-]+$/
 const SAFE_EPISODE_ID = /^[A-Za-z0-9_.-]+$/
 const EPISODE_KEYS = ["id", "sessionID", "startedAt", "endedAt", "toolCalls", "errors", "summary"]
-const STATE_KEYS = ["schema", "paused", "episodes"]
+const STATE_KEYS = ["schema", "episodes"]
 
 export type EpisodeSummary = {
   id: string
@@ -53,8 +52,13 @@ export type EpisodeSummary = {
 
 export type LearnState = {
   schema: number
-  paused: boolean
   episodes: EpisodeSummary[]
+}
+
+export type StateLoadResult = {
+  state: LearnState
+  diagnostics: string[]
+  changed: boolean
 }
 
 /** Return the UTF-8 byte length, rather than the JavaScript UTF-16 length. */
@@ -80,7 +84,7 @@ export function truncateUtf8(value: string, maxBytes: number): string {
 }
 
 export function createInitialState(): LearnState {
-  return { schema: LEARN_STATE_SCHEMA, paused: false, episodes: [] }
+  return { schema: LEARN_STATE_SCHEMA, episodes: [] }
 }
 
 function hasExactKeys(value: Record<string, unknown>, expected: readonly string[]): boolean {
@@ -152,7 +156,6 @@ function normalizeState(value: unknown): LearnState {
   if (
     !hasExactKeys(state, STATE_KEYS) ||
     state["schema"] !== LEARN_STATE_SCHEMA ||
-    typeof state["paused"] !== "boolean" ||
     !Array.isArray(state["episodes"]) ||
     state["episodes"].length > MAX_EPISODES
   ) {
@@ -164,7 +167,6 @@ function normalizeState(value: unknown): LearnState {
   }
   return {
     schema: LEARN_STATE_SCHEMA,
-    paused: state["paused"],
     episodes: episodes.map((episode) => normalizeEpisode(episode)),
   }
 }
@@ -178,7 +180,7 @@ export function addEpisode(state: LearnState, episode: EpisodeSummary): LearnSta
   const stored = normalizeEpisode(episode)
   const episodes = [...current.episodes, stored]
   while (episodes.length > MAX_EPISODES) episodes.shift()
-  return { schema: LEARN_STATE_SCHEMA, paused: current.paused, episodes }
+  return { schema: LEARN_STATE_SCHEMA, episodes }
 }
 
 /**
@@ -191,7 +193,6 @@ export function pruneEpisodes(state: LearnState, nowMs: number): LearnState {
   const cutoff = nowMs - EPISODE_RETENTION_MS
   return {
     schema: LEARN_STATE_SCHEMA,
-    paused: current.paused,
     episodes: current.episodes.filter((episode) => episode.endedAt >= cutoff),
   }
 }
@@ -234,7 +235,6 @@ export function parseState(text: string, nowMs?: number): LearnState {
   }
   const state = parsed as Record<string, unknown>
   if (state["schema"] !== LEARN_STATE_SCHEMA) throw new Error("parseState rejected an unknown schema version")
-  if (typeof state["paused"] !== "boolean") throw new Error("parseState rejected an invalid paused flag")
   if (!Array.isArray(state["episodes"]) || state["episodes"].length > MAX_EPISODES || !state["episodes"].every(isValidEpisode)) {
     throw new Error("parseState rejected invalid episodes")
   }
@@ -249,4 +249,95 @@ export function parseState(text: string, nowMs?: number): LearnState {
 /** Load state and apply retention before the caller uses or persists it. */
 export function loadState(text: string, nowMs: number): LearnState {
   return parseState(text, nowMs)
+}
+
+/**
+ * Recover bounded history from persisted state while reporting schema changes
+ * and rejected entries. Legacy pause state is diagnostic metadata only; it
+ * never controls whether a new recorder observes events.
+ */
+export function loadStoredState(value: unknown, nowMs = Date.now()): StateLoadResult {
+  if (!Number.isSafeInteger(nowMs) || nowMs < 0) throw new Error("loadStoredState requires a valid nowMs")
+  if (value === undefined) return { state: createInitialState(), diagnostics: [], changed: false }
+
+  const diagnostics: string[] = []
+  if (typeof value !== "string") {
+    return {
+      state: createInitialState(),
+      diagnostics: ["stored learning state was not text; starting with empty history"],
+      changed: true,
+    }
+  }
+  if (value.length === 0 || utf8ByteLength(value) > MAX_STATE_BYTES) {
+    return {
+      state: createInitialState(),
+      diagnostics: [`stored learning state exceeded the ${MAX_STATE_BYTES}-byte bound or was empty; starting with empty history`],
+      changed: true,
+    }
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(value) as unknown
+  } catch {
+    return {
+      state: createInitialState(),
+      diagnostics: ["stored learning state was malformed JSON; starting with empty history"],
+      changed: true,
+    }
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return {
+      state: createInitialState(),
+      diagnostics: ["stored learning state was not an object; starting with empty history"],
+      changed: true,
+    }
+  }
+
+  const raw = parsed as Record<string, unknown>
+  const schema = raw["schema"]
+  const legacy = schema === 1
+  if (legacy) {
+    diagnostics.push(
+      raw["paused"] === true
+        ? "migrated legacy state; its persistent paused=true flag was ignored and cannot disable configured observation"
+        : "migrated legacy state; its persistent pause flag is no longer used",
+    )
+  } else if (schema !== LEARN_STATE_SCHEMA || !hasExactKeys(raw, STATE_KEYS)) {
+    diagnostics.push("stored learning state required schema validation and bounded recovery")
+  }
+
+  const sourceEpisodes = raw["episodes"]
+  const recovered: EpisodeSummary[] = []
+  let rejected = 0
+  if (Array.isArray(sourceEpisodes)) {
+    for (const candidate of sourceEpisodes) {
+      if (!isValidEpisode(candidate)) {
+        rejected += 1
+        continue
+      }
+      try {
+        recovered.push(normalizeEpisode(candidate))
+      } catch {
+        rejected += 1
+      }
+    }
+  } else {
+    diagnostics.push("stored learning history was not an episode list; preserving no episodes")
+  }
+  if (rejected > 0) {
+    diagnostics.push(`discarded ${rejected} invalid stored episode${rejected === 1 ? "" : "s"}; retained ${recovered.length} valid episode${recovered.length === 1 ? "" : "s"}`)
+  }
+  const boundedEpisodes = recovered.slice(-MAX_EPISODES)
+  if (boundedEpisodes.length < recovered.length) {
+    diagnostics.push(`trimmed stored history to the ${MAX_EPISODES}-episode bound`)
+  }
+
+  const recoveredState = pruneEpisodes({ schema: LEARN_STATE_SCHEMA, episodes: boundedEpisodes }, nowMs)
+  const serialized = serializeState(recoveredState)
+  return {
+    state: recoveredState,
+    diagnostics,
+    changed: serialized !== value,
+  }
 }

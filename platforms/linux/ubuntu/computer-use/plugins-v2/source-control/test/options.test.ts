@@ -46,7 +46,7 @@ test("runtime options use defaults and clamp registration values", () => {
   const runtime = readRuntimeOptions(kv, {})
   assert.equal(runtime.refreshMs, 15_000)
   assert.equal(runtime.githubRefreshMs, 120_000)
-  assert.equal(runtime.maxFiles, 8)
+  assert.equal(runtime.maxFiles, 3)
   assert.equal(runtime.startCollapsed, true)
 
   const clamped = readRuntimeOptions(kv, { refreshMs: 100, githubRefreshMs: 100, maxFiles: 0 })
@@ -69,7 +69,11 @@ test("runtime options re-read live kv overrides", () => {
   assert.equal(runtime.startCollapsed, false)
 
   kv.set(KEYS.maxFiles, "many")
-  assert.equal(readRuntimeOptions(kv, {}).maxFiles, 8)
+  assert.equal(readRuntimeOptions(kv, {}).maxFiles, 3)
+})
+
+test("caps configured file previews at the compact native-sidebar bound", () => {
+  assert.equal(readRuntimeOptions(memoryKv({ [KEYS.maxFiles]: 99 }), {}).maxFiles, 3)
 })
 
 test("reposition migration minimizes the panel once", () => {

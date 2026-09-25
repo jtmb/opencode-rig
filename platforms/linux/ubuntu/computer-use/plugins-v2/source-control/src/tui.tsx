@@ -1,9 +1,10 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
 import type { Context } from "@opencode/plugin/tui/context"
-import { createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import { TextAttributes, type MouseEvent } from "@opentui/core"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 
-import { leftTruncate, statusLetter, visibleChanges, type SourceControlChange } from "./changes.ts"
+import { moreFilesPageSize, pagedChanges, statusLetter, visibleChanges, type SourceControlChange } from "./changes.ts"
 import type { GithubCheckState } from "./github.ts"
 import { createGithubMcpClient } from "./mcp.ts"
 import {
@@ -15,15 +16,119 @@ import {
   type RuntimeOptions,
 } from "./options.ts"
 import { createSourceControlStore, type SourceControlState, type SourceControlStore } from "./store.ts"
+import { sourceControlPalette, type SourceControlPalette } from "./palette.ts"
 
 const REFRESH_DEBOUNCE_MS = 750
 
-type Theme = Context["theme"]
+function statusColor(status: SourceControlChange["status"], palette: ReturnType<typeof sourceControlPalette>) {
+  if (status === "added") return palette.action
+  if (status === "deleted") return palette.removal
+  return palette.subdued
+}
 
-function statusColor(status: SourceControlChange["status"], theme: Theme) {
-  if (status === "added") return theme.diff.text.added
-  if (status === "deleted") return theme.diff.text.removed
-  return theme.text.feedback.warning.default
+type SidebarActionEvent = MouseEvent & {
+  __rigHandled?: boolean
+}
+
+function SidebarAction(props: {
+  id?: string
+  label: string
+  palette: () => SourceControlPalette
+  onActivate: () => void
+}) {
+  const [hovered, setHovered] = createSignal(false)
+  const activate = (event: SidebarActionEvent) => {
+    if (event.__rigHandled) return
+    event.__rigHandled = true
+    if (event.button !== undefined && event.button !== 0) return
+    event.preventDefault?.()
+    event.stopPropagation?.()
+    event.currentTarget?.focus?.()
+    props.onActivate()
+  }
+  return (
+    <box
+      id={props.id}
+      focusable
+      flexShrink={0}
+      onMouseOver={() => setHovered(true)}
+      onMouseOut={() => setHovered(false)}
+      onMouseDown={activate}
+      onKeyDown={(event) => {
+        if (event.name !== "return" && event.name !== "space") return
+        event.preventDefault()
+        event.stopPropagation()
+        props.onActivate()
+      }}
+    >
+      <text
+        wrapMode="none"
+        truncate
+        fg={props.palette().action}
+        attributes={hovered() ? TextAttributes.BOLD | TextAttributes.UNDERLINE : TextAttributes.UNDERLINE}
+        onMouseDown={activate}
+      >
+        <u>{props.label}</u>
+      </text>
+    </box>
+  )
+}
+
+function ChangeRow(props: {
+  change: SourceControlChange
+  palette: () => SourceControlPalette
+  hovered: () => string | undefined
+  onHover: (file: string) => void
+  onLeave: (file: string) => void
+  onActivate: (event: SidebarActionEvent) => void
+  onOpen: () => void
+}) {
+  return (
+    <box
+      flexDirection="row"
+      width="100%"
+      height={1}
+      overflow="hidden"
+      paddingLeft={2}
+      gap={1}
+      focusable
+      onMouseOver={() => props.onHover(props.change.file)}
+      onMouseOut={() => props.onLeave(props.change.file)}
+      onMouseDown={props.onActivate}
+      onKeyDown={(event) => {
+        if (event.name === "return" || event.name === "space") {
+          event.preventDefault()
+          props.onOpen()
+        }
+      }}
+    >
+      <text
+        flexShrink={0}
+        wrapMode="none"
+        fg={statusColor(props.change.status, props.palette())}
+        attributes={TextAttributes.UNDERLINE}
+        onMouseDown={props.onActivate}
+      >
+        {statusLetter(props.change.status)}
+      </text>
+      <box flexGrow={1} minWidth={0} flexShrink={1} overflow="hidden">
+        <text
+          wrapMode="none"
+          truncate
+          fg={props.hovered() === props.change.file ? props.palette().sectionCount : props.palette().primary}
+          onMouseDown={props.onActivate}
+        >
+          <u>{props.change.file}</u>
+        </text>
+      </box>
+      <text flexShrink={0} wrapMode="none" fg={props.palette().action} onMouseDown={props.onActivate}>
+        +{props.change.additions}
+      </text>
+      <text flexShrink={0} wrapMode="none" fg={props.palette().removal} onMouseDown={props.onActivate}>
+        -{props.change.deletions}
+      </text>
+    </box>
+  )
 }
 
 function checksLabel(state: GithubCheckState): string {
@@ -60,7 +165,7 @@ function openDiff(context: Context) {
   }
 }
 
-function SourceControlPanel(props: {
+export function SourceControlPanel(props: {
   store: SourceControlStore
   runtime: () => RuntimeOptions
   setStartCollapsed: (value: boolean) => void
@@ -69,22 +174,84 @@ function SourceControlPanel(props: {
   const context = usePlugin()
   const [state, setState] = createSignal<SourceControlState>(props.store.getState())
   const [hovered, setHovered] = createSignal<string | undefined>(undefined)
+  const [moreExpanded, setMoreExpanded] = createSignal(false)
+  const [morePage, setMorePage] = createSignal(0)
+  const [viewportHeight, setViewportHeight] = createSignal(context.renderer.height)
   const stop = props.store.subscribe(setState)
-  const theme = () => context.theme
+  const [themeVersion, setThemeVersion] = createSignal(0)
+  const refreshTheme = () => setThemeVersion((value) => value + 1)
+  if (typeof context.renderer.on === "function") {
+    context.renderer.on("palette", refreshTheme)
+    context.renderer.on("theme_mode", refreshTheme)
+  }
+  const theme = () => {
+    themeVersion()
+    return context.theme
+  }
+  const palette = () => sourceControlPalette(theme())
 
-  onCleanup(stop)
+  const resize = () => setViewportHeight(context.renderer.height)
+  if (typeof context.renderer.on === "function") context.renderer.on("resize", resize)
+
+  onCleanup(() => {
+    stop()
+    if (typeof context.renderer.off === "function") context.renderer.off("resize", resize)
+    if (typeof context.renderer.off === "function") {
+      context.renderer.off("palette", refreshTheme)
+      context.renderer.off("theme_mode", refreshTheme)
+    }
+  })
 
   const collapsed = () => props.runtime().startCollapsed
-  const toggle = () => props.setStartCollapsed(!collapsed())
+  const visibleLimit = () => props.runtime().maxFiles
+  const omitted = () => state().changes.slice(Math.max(1, Math.trunc(visibleLimit())))
+  const paginationOverhead = () => visibleChanges(state().changes, visibleLimit()).length +
+    (state().pullRequest ? 1 : 0) +
+    (state().error || state().githubError ? 1 : 0)
+  const pageSize = () => moreFilesPageSize(viewportHeight(), paginationOverhead())
+  const page = () => pagedChanges(omitted(), morePage(), pageSize())
+  const toggle = () => {
+    const next = !collapsed()
+    props.setStartCollapsed(next)
+    if (next) {
+      setMoreExpanded(false)
+      setMorePage(0)
+    }
+  }
+  const closeMore = () => {
+    setMoreExpanded(false)
+    setMorePage(0)
+  }
+
+  let previousChangeSignature: string | undefined
+  let previousPageSize: number | undefined
+  createEffect(() => {
+    const signature = `${visibleLimit()}\u0000${state().changes.map((change) => `${change.file}\u0000${change.status}\u0000${change.additions}\u0000${change.deletions}`).join("\u0001")}`
+    const size = pageSize()
+    if (signature !== previousChangeSignature || size !== previousPageSize) {
+      previousChangeSignature = signature
+      previousPageSize = size
+      setMorePage(0)
+    }
+    const current = page().range.page
+    if (current !== morePage()) setMorePage(current)
+    if (omitted().length === 0 && moreExpanded()) setMoreExpanded(false)
+  })
 
   // The row can be hit-tested to the container or to a text child; mark the
   // event so the first handler to see it opens the diff exactly once.
   const activateDiff = (event: { button?: number; preventDefault?: () => void; __rigHandled?: boolean }) => {
     if (event.__rigHandled) return
     event.__rigHandled = true
-    if (event.button !== 0) return
+    if (event.button !== undefined && event.button !== 0) return
     event.preventDefault?.()
     openDiff(context)
+  }
+
+  const activateMore = () => {
+    if (omitted().length === 0) return
+    setMorePage(0)
+    setMoreExpanded(true)
   }
 
   const visible = () => {
@@ -96,9 +263,10 @@ function SourceControlPanel(props: {
 
   return (
     <Show when={visible()}>
-      <box flexDirection="column" gap={0}>
+      <box flexDirection="column" gap={0} marginTop={1} flexShrink={0}>
         <box
           flexDirection="row"
+          width="100%"
           focusable
           onMouseDown={toggle}
           onKeyDown={(event) => {
@@ -108,68 +276,79 @@ function SourceControlPanel(props: {
             }
           }}
         >
-          <text fg={theme().text.default}>
-            <b>{collapsed() ? "+" : "-"} Source Control</b>
+          <text fg={palette().primary} attributes={TextAttributes.BOLD}>
+            {collapsed() ? "+ Source Control" : "- Source Control"}
           </text>
-          <text fg={theme().hue.accent[200]}>
-            <b> {state().changes.length}</b>
+          <text fg={palette().sectionCount} attributes={TextAttributes.BOLD}>
+            {` ${state().changes.length}`}
           </text>
-          <text fg={theme().text.subdued}> {state().changes.length === 1 ? "change" : "changes"}</text>
+          <text fg={palette().subdued} attributes={TextAttributes.DIM}>
+            {` ${state().changes.length === 1 ? "change" : "changes"}`}
+          </text>
         </box>
 
         <Show when={!collapsed()}>
           <For each={visibleChanges(state().changes, props.runtime().maxFiles)}>
-            {(change) => (
-              <box
-                flexDirection="row"
-                gap={1}
-                focusable
-                onMouseOver={() => setHovered(change.file)}
-                onMouseOut={() => setHovered((current) => (current === change.file ? undefined : current))}
-                onMouseDown={activateDiff}
-                onKeyDown={(event) => {
-                  if (event.name === "return" || event.name === "space") {
-                    event.preventDefault()
-                    openDiff(context)
-                  }
-                }}
-              >
-                <text fg={statusColor(change.status, theme())} onMouseDown={activateDiff}>
-                  {statusLetter(change.status)}
-                </text>
-                <text
-                  fg={hovered() === change.file ? theme().hue.accent[200] : theme().text.default}
-                  onMouseDown={activateDiff}
-                >
-                  <u>{leftTruncate(change.file, 34)}</u>
-                </text>
-                <box flexGrow={1} />
-                <text fg={theme().diff.text.added} onMouseDown={activateDiff}>
-                  +{change.additions}
-                </text>
-                <text fg={theme().diff.text.removed} onMouseDown={activateDiff}>
-                  -{change.deletions}
-                </text>
-              </box>
-            )}
+            {(change) => <ChangeRow
+              change={change}
+              palette={palette}
+              hovered={hovered}
+              onHover={setHovered}
+              onLeave={(file) => setHovered((current) => (current === file ? undefined : current))}
+              onActivate={activateDiff}
+              onOpen={() => openDiff(context)}
+            />}
           </For>
-          <Show when={hovered()}>
-            <text fg={theme().text.feedback.info.default}>click to open the diff viewer</text>
+          <Show when={state().changes.length > 0}>
+            <box paddingLeft={2} height={1} overflow="hidden">
+              <SidebarAction label="click to open the diff viewer" palette={palette} onActivate={() => openDiff(context)} />
+            </box>
           </Show>
-          <Show when={state().changes.length > props.runtime().maxFiles}>
-            <text fg={theme().text.subdued}>
-              +{state().changes.length - props.runtime().maxFiles} more
-            </text>
+          <Show when={omitted().length > 0 && !moreExpanded()}>
+            <box paddingLeft={2} height={1} overflow="hidden">
+              <SidebarAction label={`+${omitted().length} more files`} palette={palette} onActivate={activateMore} />
+            </box>
+          </Show>
+          <Show when={moreExpanded() && omitted().length > 0}>
+            <box paddingLeft={2} height={1} overflow="hidden">
+              <text wrapMode="none" truncate fg={palette().subdued} attributes={TextAttributes.DIM}>
+                {`More files ${visibleLimit() + page().range.start + 1}-${visibleLimit() + page().range.end} of ${state().changes.length}`}
+              </text>
+            </box>
+            <box flexDirection="row" paddingLeft={2} gap={1} height={1} overflow="hidden">
+              <Show when={page().range.page > 0}>
+                <SidebarAction id="opencode-rig.source-control.more.previous" label="< prev" palette={palette} onActivate={() => setMorePage((current) => Math.max(0, current - 1))} />
+              </Show>
+              <Show when={page().range.page + 1 < page().range.pageCount}>
+                <SidebarAction id="opencode-rig.source-control.more.next" label="next >" palette={palette} onActivate={() => setMorePage((current) => current + 1)} />
+              </Show>
+              <SidebarAction id="opencode-rig.source-control.more.close" label="close" palette={palette} onActivate={closeMore} />
+            </box>
+            <For each={page().items}>
+              {(change) => <ChangeRow
+                change={change}
+                palette={palette}
+                hovered={hovered}
+                onHover={setHovered}
+                onLeave={(file) => setHovered((current) => (current === file ? undefined : current))}
+                onActivate={activateDiff}
+                onOpen={() => openDiff(context)}
+              />}
+            </For>
           </Show>
           <Show when={state().pullRequest}>
             {(pullRequest) => (
-              <text fg={theme().text.feedback.info.default}>
-                PR #{pullRequest().number} - {pullRequest().state} - checks {checksLabel(pullRequest().checks)}
-              </text>
+              <box paddingLeft={2} height={1} overflow="hidden">
+                <text wrapMode="none" truncate fg={palette().action}>
+                  PR #{pullRequest().number} - {pullRequest().state} - checks {checksLabel(pullRequest().checks)}
+                </text>
+              </box>
             )}
           </Show>
           <Show when={state().error || state().githubError}>
-            <text fg={theme().text.feedback.warning.default}>Refresh failed; showing saved values.</text>
+            <box paddingLeft={2} height={1} overflow="hidden">
+              <text wrapMode="none" truncate fg={palette().measurement}>Refresh failed; showing saved values.</text>
+            </box>
           </Show>
         </Show>
       </box>

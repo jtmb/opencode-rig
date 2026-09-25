@@ -6,32 +6,44 @@ from canonical paths in this checkout.
 
 | Package | Role | Provides |
 |---|---|---|
-| [`orchestration-policy`](../../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md) | server | Hook-enforced subagents, policy-index validation, installed-binary protection, and project-memory reconciliation |
+| [`orchestration-policy`](../../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md) | server | Configured-limit subagents, policy-index validation, installed-binary protection, project-memory reconciliation, and task-scoped external GitHub issue writes |
 | [`git-tool`](../../platforms/linux/ubuntu/computer-use/plugins-v2/git-tool/README.md) | server | Bounded read-only unified diffs through OpenCode's native VCS API |
-| [`integrated-browser`](../../platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser/README.md) | server + CLI | Bounded external headed Chromium window with a shared per-session BrowserContext |
 | [`repo-learning`](../../platforms/linux/ubuntu/computer-use/plugins-v2/repo-learning/README.md) | server + CLI | Explicitly enabled structured observation and a read-only review panel |
-| [`rig-tools`](../../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md) | server | Desktop/vision tools, repository gates, capacity checks, OpenCode API/runtime/TTY management, `/tools`, and bounded cross-session context with `/session-context` |
-| [`rig-todo`](../../platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/README.md) | server + CLI | Todo tools and the live Todo panel |
+| [`rig-tools`](../../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md) | server | Desktop/vision tools, repository gates, capacity checks, OpenCode API/runtime/recovery/TTY management, `/tools`, and bounded cross-session context with `/session-context` |
+| [`rig-todo`](../../platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/README.md) | server + CLI | Todo tools, retained sidebar history, and the fullscreen `/tasks` Kanban |
 | [`codex-fallback`](../../platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback/README.md) | server | Quota-aware provider fallback routing |
+| [`chatgpt-connector`](../../platforms/linux/ubuntu/computer-use/plugins-v2/chatgpt-connector/README.md) | server | Active-OpenAI-OAuth image generation, web search, and session-private chat tools |
 | [`source-control`](../../platforms/linux/ubuntu/computer-use/plugins-v2/source-control/README.md) | CLI | Working-tree and optional PR status panel |
-| [`codex-usage`](provider-usage.md) | CLI | Provider Usage panel for Codex quota, DeepSeek balance, and OpenCode Zen status |
+| [`codex-usage`](provider-usage.md) | CLI | Compact Provider Usage panel with a versioned, downstream-consumable design ledger |
 | [`file-manager`](../../platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/README.md) | CLI | Docked Explorer tree, viewer, and explicit-save editor |
 | [`resource-monitor`](../../platforms/linux/ubuntu/computer-use/plugins-v2/resource-monitor/README.md) | CLI | Per-TUI CPU and RAM footer status |
 | [`ponytail-adapter`](ponytail.md) | server | OpenCode v2 bridge for the official Ponytail commands, skills, and per-session modes |
 
 The bounded GNU Screen acceptance tool exposed by `rig-tools` has a separate
 usage and safety guide at [`screen-terminal.md`](screen-terminal.md).
+The agent-free Basic Memory recovery CLI and the plugin's preview/apply tool are
+documented in [`opencode-recovery.md`](../scripts/opencode-recovery.md).
 
-The Ponytail bridge has a separate compatibility and lifecycle guide at
+The Ponytail bridge has a separate compatibility and dependency guide at
 [`ponytail.md`](ponytail.md), including its V1-only upstream boundary and
-bounded update procedure.
+canonical lockfile/bootstrap path.
 
 OpenCode's built-in `/settings` supplies host settings; no separate settings
 package is required. The canonical role catalog is
 [`config/v2-plugin-roles.json`](../../platforms/linux/ubuntu/computer-use/config/v2-plugin-roles.json).
-The separately managed `ponytail-adapter` is intentionally not in that general
-role catalog; `setup-ponytail-plugin.sh` owns its package, registration, and
-update timer.
+`ponytail-adapter` is included in the general server role catalog. Its official
+package is installed only through the canonical plugins-v2 workspace; the
+retired floating external setup path is not supported.
+
+The portable project and native/WSL global MCP sets are exactly
+`basic-memory`, `github`, and `chatgpt`. WSL browser actions use its
+Windows-default-browser connector and Playwright-like tools in place of the
+former project-only Playwright MCP; live browser capability remains unverified
+until bounded probes pass.
+
+The headed Chromium `integrated-browser` plugin is retired. The distinct
+[headless Firefox skill](../../platforms/linux/ubuntu/computer-use/skills/browser-headless/SKILL.md)
+remains available for isolated browser automation.
 
 ## Registration
 
@@ -73,6 +85,25 @@ rendered-UI and interaction acceptance gates.
 Open Rig does not require a monolithic install. Remove one package registration,
 restart OpenCode, and retain the rest of the harness. Do not edit generated
 `node_modules` or deployed copies as a substitute for source changes.
+
+To check for an older headed Chromium registration in the selected server and
+CLI configs, then remove only entries whose package path is the canonical
+`integrated-browser` package, use:
+
+```bash
+platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh \
+  --config-dir "$HOME/.opencode-v2-pilot/config" \
+  --cli-config "$HOME/.config/opencode/cli.json" \
+  --retire-integrated-browser --verify-only
+platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh \
+  --config-dir "$HOME/.opencode-v2-pilot/config" \
+  --cli-config "$HOME/.config/opencode/cli.json" \
+  --retire-integrated-browser --apply
+```
+
+Use the actual active config paths when they differ from these defaults. The
+retirement preserves unrelated plugin entries, settings, and files; it does not
+delete the dormant source package, browser skills, or browser caches.
 
 After changing plugins or config, restart OpenCode and run the v2 health check.
 The repository history records prior architecture; current documentation is

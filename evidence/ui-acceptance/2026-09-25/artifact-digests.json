@@ -1,0 +1,4161 @@
+{
+  "version": 1,
+  "primary_root": "/home/brajam/repos/opencode-rig",
+  "manifest": {
+    "path": "acceptance-evidence.json",
+    "sha256": "fc9cbde7a23198468b5ceb43979381ba089b943356f5065898b2d0c8848b7ab7"
+  },
+  "plan": {
+    "path": "evidence/ui-acceptance/2026-09-25/fourteen-source-ready-plan.json",
+    "sha256": "0f104f2621b2e5bfcbdc228771264f71deb38faa01a247aa9cf3b30327d406f8"
+  },
+  "generator": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+    "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+  },
+  "native_capture_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+    "sha256": "de58be33306f711228030ce294948d570bc57232cf2bef9ec954bb0d0a539b15"
+  },
+  "checker_result": "OK: acceptance evidence manifest valid (13 claims; 3 background subagents)",
+  "evidence_root": {
+    "path": "evidence/ui-acceptance/2026-09-25/v3",
+    "files": 461,
+    "digest_algorithm": "sha256(canonical-json(sorted([{path, sha256}])))",
+    "sha256": "973c719a49469c96178e266e4cde298e4c8e816d2776c8e2932cf1f24e6ad26d"
+  },
+  "counts": {
+    "mapped_sources": 14,
+    "execution_receipts": 28,
+    "captures_including_integrated": 15
+  },
+  "catalogs": {
+    "supported_runtimes": [
+      {
+        "id": "node-26.4.0-npm-11.17.0",
+        "name": "node",
+        "version": "26.4.0",
+        "identity": "node@26.4.0",
+        "provisioning": "external-checksum",
+        "executable": "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+        "package_manager": "npm",
+        "package_manager_version": "11.17.0",
+        "package_manager_identity": "npm@11.17.0",
+        "package_manager_executable": "/home/brajam/repos/opencode-rig/toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+        "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+      }
+    ],
+    "supported_renderers": [
+      {
+        "id": "opentui-0.5.11",
+        "name": "OpenTUI",
+        "version": "0.5.11",
+        "identity": "OpenTUI@0.5.11"
+      }
+    ]
+  },
+  "visible_claims": {
+    "all_planned_with_empty_evidence": true
+  },
+  "mappings": [
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+      "source_sha256": "3c6c507594a5c7d1f38db901230a86274830e7cf20507cbf6679623fdc706c84",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-state.test.ts",
+          "test_sha256": "c3f450b337d2342d3269a3a924068203ff4c899cde58229c302c57dd01b7a879",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-providers-behavioral.json",
+          "receipt_sha256": "b95bd5b03d788eb8c22863e456f38629d6389d9307b71be0736117af9643f3fd",
+          "run_id": "ff9c06ce-cded-4a90-8694-655e0a3a6c05",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/provider-state.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+          "test_sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-providers-render.json",
+          "receipt_sha256": "14723069e756a47d6b1931fb2b1bf78d8e1a673a6d47f677aba304cc3bd57b8e",
+          "run_id": "439205aa-5725-48b6-bb35-b5d4e51f3a5d",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-02.json",
+      "capture_sha256": "4277cf3dc2a7dfe064bb44dda5bd389a887011101d567fbf659dc3cc176afae5"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+      "source_sha256": "2171a8d467d738360424cb9952526dc37d33a6b500bfa4775078e7ce139ac2ef",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-visibility.test.ts",
+          "test_sha256": "621971c440af1d31c974e31d233e492df4409b6fa44a9eb2064209b100a30229",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-state-behavioral.json",
+          "receipt_sha256": "a1336080d6bf58a3326b63eb462e3421d2e5cd81be5ff69edc0ba358ce6a54b4",
+          "run_id": "2a1de529-c291-44bd-a70a-ea15feea4c86",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/provider-visibility.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+          "test_sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-state-render.json",
+          "receipt_sha256": "e6140c0c551d012f5e9c7892233a1d40dedfe17cba9c63f31cf870e874d830b7",
+          "run_id": "2810f03f-91e7-4d9b-97d0-80d245b4b15c",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-03.json",
+      "capture_sha256": "6415b507ef010363880319eeb2655214caf7bd67a9b9b5dac530e8155bc391d5"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+      "source_sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-visibility.test.ts",
+          "test_sha256": "621971c440af1d31c974e31d233e492df4409b6fa44a9eb2064209b100a30229",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-tui-behavioral.json",
+          "receipt_sha256": "6d134195b8fd8f1d02933f25df66cd904b9e6576131a62c1362f9a6712adbefb",
+          "run_id": "acad7b85-ce6f-41aa-b127-83174b6c9756",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/provider-visibility.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+          "test_sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-tui-render.json",
+          "receipt_sha256": "9ccb6d584a78e912e8938c933862a45680d8c69dbe9bd7855644f68036fefb6b",
+          "run_id": "77abd701-059e-4318-aa54-7e911d9ea689",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-01.json",
+      "capture_sha256": "86066dfc91b39a191a420a0506a1bfde489e945b831cda88ad0c3f8605d94201"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+      "source_sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/presentation.test.ts",
+          "test_sha256": "5be38bb78974ae9584bac64e0165df3bea6f2ee1e93a2c2589ea49f794e7f8bf",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-presentation-behavioral.json",
+          "receipt_sha256": "aa6dd7f046fb36b9b88217fc2a8487488cf1805f0361ac7ec877a755ff9f5566",
+          "run_id": "cbc08c96-768e-42b7-abec-aa6b4044a09d",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/presentation.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+          "test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-presentation-render.json",
+          "receipt_sha256": "eaa437c932b23303123155b5cb948d75ae3e3211eb949a33a6398e2989900523",
+          "run_id": "b8bf4de8-86e7-46e9-b681-f3ab62f57449",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-05.json",
+      "capture_sha256": "8a81ca0e700b6df6ee6bce050fa86f0310c27b2c88b8bf8a9cbb8438218a8f40"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+      "source_sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/theme.test.ts",
+          "test_sha256": "24113f95122d3faf0457f5a8c2fc9b03f67214b856d8115384f2e572af6dd125",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-theme-behavioral.json",
+          "receipt_sha256": "287c21325e3c649d380ba687ec4e4a532bf83c12c0ad589f150de192844ac896",
+          "run_id": "70a238be-c8fa-4d98-b14f-f6a1d6a485d8",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/theme.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+          "test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-theme-render.json",
+          "receipt_sha256": "49c252491eacf6054de2d4a9d82e61aa1f7c0da8816a9d7ad9ead5c13a9bc170",
+          "run_id": "3411048e-10be-4920-bae3-ba7d137e28eb",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-06.json",
+      "capture_sha256": "11d45293a30db52f3a5f5df7dd1211348b5d397aa9104f23925b762da51a2386"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+      "source_sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/viewer-contract.test.ts",
+          "test_sha256": "cb1cf8cac50b5a4cf5b11eea0d530b3d9fb9f5b2c18529d7fd9898c7328b2249",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-tui-behavioral.json",
+          "receipt_sha256": "321ca71ac8d13f7a7fe1fac5378b849b58547128e8eb6370e72fad8f5a1defec",
+          "run_id": "da81dafa-11e0-4355-912b-3ab9b42ced84",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/viewer-contract.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+          "test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-tui-render.json",
+          "receipt_sha256": "3160d213ce6f8f47cd8d18352ff5eb2a8c58f1d7fb522c4266695839daaa64a7",
+          "run_id": "d19b953b-ef34-4828-9557-600982a78b6b",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-04.json",
+      "capture_sha256": "99f52ef21fe7f65e886044026509e831ca929718f424f983f8c4d1915726bf68"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+      "source_sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/store.test.ts",
+          "test_sha256": "c2319e900c8852db72b4cc7a0563d3da874fa8c48e0ddaff73fc0db11b15f6e5",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-store-behavioral.json",
+          "receipt_sha256": "e3b56a90a43d81e73c7139521720296313565ab60325358cec622cc5221e9fda",
+          "run_id": "93e307fb-81dd-4adc-9a6c-3cd89e319728",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/store.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+          "test_sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-store-render.json",
+          "receipt_sha256": "ad5b0c21c01214f541fbb4b682aab00cf2eb25ba4680ca7694fa4629f0325ba8",
+          "run_id": "873fb0e4-8ee7-489f-a315-164348abc0ae",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-todo-store.json",
+      "capture_sha256": "7827fc4809f4e4c3828db8937a922ada5402ea502bad169275e3cd83abfb2066"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+      "source_sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks.test.ts",
+          "test_sha256": "7a973d4615d733e4701d23ecc9d929ac9fa8489fd8836acf7a5e679fa8254255",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-tasks-panel-behavioral.json",
+          "receipt_sha256": "feb7093e15ce6d47b5cac4110ba336fb8cc5fd4c8a6857a30cec5e5aa45af31e",
+          "run_id": "d523c63d-68c7-430c-8acf-4ee14015e262",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/tasks.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+          "test_sha256": "4d43b03a51b17df017e7a3c3f3b4a8c5d51d1381fbefa131acae9d1a92bc33b8",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-tasks-panel-render.json",
+          "receipt_sha256": "88363d8d585d82db61bd224f6c080b62e9cfcfe35373b9b1dfc3260f7830573d",
+          "run_id": "f31fb9b9-cf64-4650-a824-e3d8fee8b70c",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/tasks-rendered-fixture.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-todo-tasks-panel.json",
+      "capture_sha256": "cd64ca3ad342e37fd84d18a4bc5954145081d77f7fb2edecf9416215d82e2033"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+      "source_sha256": "27369397979248d96d861e6c7a5f0b26f521551284fae430ada81f71a807a8ec",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tui.test.ts",
+          "test_sha256": "d730596a97526a72775e05d3c65a7f1cde06d7eabd202d9510ea00b14bac6304",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-tui-behavioral.json",
+          "receipt_sha256": "a2e762ffb5e1a0d08637189ee9f1cc5fbaec2ee3017ec95f60e49daed27f10c3",
+          "run_id": "8058c788-847c-4e1b-ad07-cad0c5a64f4d",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/tui.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+          "test_sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-tui-render.json",
+          "receipt_sha256": "50d4bf6fb32fc2403af0d59426f45c8ed280d73b6788e1660fd90258d4f26b47",
+          "run_id": "3e90508c-0f89-449a-a124-0bc5167be9c2",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-todo-tui.json",
+      "capture_sha256": "9c0bd1f7a14a1d5c7d3c8f6453c12f5de0679c566976d06d342e3389b8704082"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+      "source_sha256": "6a079a590f7ec773d54987c973932a6a0467ec0646ac922f8fbf2b83701c67ff",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/active-subagent-row.behavior.test.ts",
+          "test_sha256": "e894cc8d800f67f3dd66461c2a7312ea99639f5a0fdf85e4ab39a849f6358645",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/active-subagent-row-behavioral.json",
+          "receipt_sha256": "6bcfae220f30658a32b4877338394375b00778a3e6e29649c9f2b02096592ae4",
+          "run_id": "a86d2780-0352-4eef-8a76-99ae3b340910",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/active-subagent-row.behavior.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+          "test_sha256": "8c9142e96754c586b7bfb5c5c75d090ed873417a0895eaec6af6d785888d78b6",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/active-subagent-row-render.json",
+          "receipt_sha256": "4c3d1eafc1b393f75b2c896772552c97c31c6559e9b468951adcdec929cd36bc",
+          "run_id": "8351d2fe-2ae3-4783-9acb-39fe52941dc7",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/active-subagent-row-exemplar.json",
+      "capture_sha256": "d0376ff9d96745c8b5f907ef9e4c22fd3e3664f858a2241cad1a7003501ff26c"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+      "source_sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel.test.ts",
+          "test_sha256": "c7e5b2379174fb39ae14d19e1b3b0f12e4e6160f4768a8ab696aa72db3186c9a",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-hermes-hooks-panel-behavioral.json",
+          "receipt_sha256": "1800c1cff4ae5226a937eba8f8f28b674634261e78ed2a3dd27a68e64cbfad8b",
+          "run_id": "5061cee5-68e9-4a65-8803-bd887109dcc0",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/hermes-hooks-panel.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+          "test_sha256": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-hermes-hooks-panel-render.json",
+          "receipt_sha256": "673ce275e47e934b494e55b077ab9b67ec500580ccf506841c1e9484108ab689",
+          "run_id": "464c2b57-78bd-421e-8160-4cd478dfae98",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/hermes-hooks-panel-rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-tools-hermes-hooks-panel.json",
+      "capture_sha256": "a4aa3e40670f8aa62ca62272b6ff38307501ae49328a7b38d418b989075cb980"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+      "source_sha256": "38f50adc2fe85e321622435e3e935217712318b40091148d8064d29731ef7a0d",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/subagents.test.ts",
+          "test_sha256": "d82fea2b668f5574d1f0f86b741e4dcb57bbab9fb30946bc2b8562468b602671",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-subagents-behavioral.json",
+          "receipt_sha256": "6fece8b059008f0db0707671b87e6d460fd24a33f3d7dc1c1fce039b004a5001",
+          "run_id": "09fb115b-65ba-43a6-bfcf-f0a9b1fa9ee1",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/subagents.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+          "test_sha256": "8c9142e96754c586b7bfb5c5c75d090ed873417a0895eaec6af6d785888d78b6",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-subagents-render.json",
+          "receipt_sha256": "e7814282e8493857db7097a41278e52a411fa815f9e8f88d65d3a4e27dbb7f4e",
+          "run_id": "f80d0821-ccdb-4ab4-aa70-29e5ce24b8d1",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-tools-subagents.json",
+      "capture_sha256": "8b108b3609bc6a7695dfe9cd50e142ea1e2afb5dc0367e183e8b245ca2271b93"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+      "source_sha256": "5f6bf42824255d25a0859486e397412c354d91379d38c22739eca41ef69c7d93",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts",
+          "test_sha256": "1faafc3f2e2f4df86cde77acb3675d0c04365a5d27aeb64c1b426ee87547aa87",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-tui-behavioral.json",
+          "receipt_sha256": "8d4e4645ba9b30b1d58409ed523e1714d1f5c6cc8625b99bfca6c2c2482dc51e",
+          "run_id": "5872f08b-1a76-4c5a-8113-76ea0c06798b",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/visible-command.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+          "test_sha256": "8c9142e96754c586b7bfb5c5c75d090ed873417a0895eaec6af6d785888d78b6",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-tui-render.json",
+          "receipt_sha256": "2089ae37f5a0670ae1b46e9198ef212c07bdb87289ebfc574aa17552e7607b51",
+          "run_id": "6169ce1a-e911-4550-9edd-5deda11d5ad6",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-tools-tui.json",
+      "capture_sha256": "225cab12be221ebb1ad273b710b59d9d22421a75924b39ac7710d61bc89b1a7f"
+    },
+    {
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+      "source_sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+      "focused_tests": {
+        "behavioral": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/tui.test.ts",
+          "test_sha256": "ce9efff741157ab23feeac631fe27d32202ea6fd15dcbccaab4db6fe6968b180",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/source-control-tui-behavioral.json",
+          "receipt_sha256": "7e85cfd60b54623b959d260591689abf09dc1b0456fa8a64a2498076618d781d",
+          "run_id": "f9a1a401-d15f-415b-8f84-b2540c56f014",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-ffi",
+            "--experimental-strip-types",
+            "--test",
+            "test/tui.test.ts"
+          ]
+        },
+        "render": {
+          "test": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+          "test_sha256": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5",
+          "receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/source-control-tui-render.json",
+          "receipt_sha256": "06389e440ccaa94af9e486978b17e88378ebfe3757d8482d3de691385577148e",
+          "run_id": "f9cf631a-7979-495d-9513-339a252d93bf",
+          "argv": [
+            "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+            "--experimental-strip-types",
+            "--test",
+            "test/rendered.test.ts"
+          ]
+        }
+      },
+      "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-12.json",
+      "capture_sha256": "ab4c279cecd798e24386e5f1fba25d500d55b00175b20490ffed1dff5ce9a776"
+    }
+  ],
+  "integrated_scenario": {
+    "id": "integrated-multi-panel-sidebar",
+    "sources": [
+      "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx"
+    ],
+    "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/integrated-sidebar.json",
+    "capture_sha256": "ca56357c8e68755ca9bb8d48cee965f03517a32d3fd93b9fe2caab3eeb9a28a5"
+  },
+  "theme_switch_evidence": {
+    "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+    "render_test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+    "render_receipt": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-theme-render.json",
+    "render_receipt_sha256": "49c252491eacf6054de2d4a9d82e61aa1f7c0da8816a9d7ad9ead5c13a9bc170",
+    "render_output": "evidence/ui-acceptance/2026-09-25/v3/execution-output/file-manager-theme-render.txt",
+    "render_output_sha256": "97a30d231eaff8ecd16fe8ac6a17db184ab29219b6c3c74e7ebfb7ba1c5588ba",
+    "marker": "RIG_FILE_MANAGER_THEME_SWITCH_RENDER_ASSERTIONS_EXECUTED",
+    "capture_artifact": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-06.json",
+    "capture_sha256": "11d45293a30db52f3a5f5df7dd1211348b5d397aa9104f23925b762da51a2386",
+    "before": {
+      "theme": "dark",
+      "accent_foreground_rgba": [
+        140,
+        200,
+        255,
+        255
+      ]
+    },
+    "after": {
+      "theme": "light",
+      "accent_foreground_rgba": [
+        255,
+        0,
+        170,
+        255
+      ]
+    }
+  },
+  "preserved_primary_vision_test_sha256": "52e1e8e4f0b2c85cd6dba74a42730246cfa9b7d7db9bfcbc8590966318948b28",
+  "files": [
+    {
+      "path": "acceptance-evidence.json",
+      "sha256": "fc9cbde7a23198468b5ceb43979381ba089b943356f5065898b2d0c8848b7ab7",
+      "kinds": [
+        "ready-manifest"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+      "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+      "kinds": [
+        "input-or-validation"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/fourteen-source-ready-plan.json",
+      "sha256": "0f104f2621b2e5bfcbdc228771264f71deb38faa01a247aa9cf3b30327d406f8",
+      "kinds": [
+        "primary-plan"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/private-checker.txt",
+      "sha256": "bfde387dcc4d6fd2f323055020dd41c1f8fffe6008b71bb97769fbddb1a458ee",
+      "kinds": [
+        "input-or-validation"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/active-subagent-row-exemplar.json",
+      "sha256": "d0376ff9d96745c8b5f907ef9e4c22fd3e3664f858a2241cad1a7003501ff26c",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/integrated-sidebar.json",
+      "sha256": "ca56357c8e68755ca9bb8d48cee965f03517a32d3fd93b9fe2caab3eeb9a28a5",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-01.json",
+      "sha256": "86066dfc91b39a191a420a0506a1bfde489e945b831cda88ad0c3f8605d94201",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-02.json",
+      "sha256": "4277cf3dc2a7dfe064bb44dda5bd389a887011101d567fbf659dc3cc176afae5",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-03.json",
+      "sha256": "6415b507ef010363880319eeb2655214caf7bd67a9b9b5dac530e8155bc391d5",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-04.json",
+      "sha256": "99f52ef21fe7f65e886044026509e831ca929718f424f983f8c4d1915726bf68",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-05.json",
+      "sha256": "8a81ca0e700b6df6ee6bce050fa86f0310c27b2c88b8bf8a9cbb8438218a8f40",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-06.json",
+      "sha256": "11d45293a30db52f3a5f5df7dd1211348b5d397aa9104f23925b762da51a2386",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/mapping-12.json",
+      "sha256": "ab4c279cecd798e24386e5f1fba25d500d55b00175b20490ffed1dff5ce9a776",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-todo-store.json",
+      "sha256": "7827fc4809f4e4c3828db8937a922ada5402ea502bad169275e3cd83abfb2066",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-todo-tasks-panel.json",
+      "sha256": "cd64ca3ad342e37fd84d18a4bc5954145081d77f7fb2edecf9416215d82e2033",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-todo-tui.json",
+      "sha256": "9c0bd1f7a14a1d5c7d3c8f6453c12f5de0679c566976d06d342e3389b8704082",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-tools-hermes-hooks-panel.json",
+      "sha256": "a4aa3e40670f8aa62ca62272b6ff38307501ae49328a7b38d418b989075cb980",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-tools-subagents.json",
+      "sha256": "8b108b3609bc6a7695dfe9cd50e142ea1e2afb5dc0367e183e8b245ca2271b93",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/captures/rig-tools-tui.json",
+      "sha256": "225cab12be221ebb1ad273b710b59d9d22421a75924b39ac7710d61bc89b1a7f",
+      "kinds": [
+        "native-capture"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/active-subagent-row-exemplar.txt",
+      "sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/integrated-sidebar.txt",
+      "sha256": "b52acd93c5a7dcc4f62e58bc23ddc1f576ad39c3ee957aacd89df8d4e4a35011",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/mapping-01.txt",
+      "sha256": "668e91ebeea1a20b9a89aaf923819f2feeb08efcbfad58950ea7dd6c55440237",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/mapping-02.txt",
+      "sha256": "b8c8ec36709de93a79da8e18335926fd0f0ef5aa772e9c10fbe4c37b1d890465",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/mapping-03.txt",
+      "sha256": "3822cf5b0c4250903c89d8e042eb72911f4a85e513094a02cf666308c629bf15",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/mapping-04.txt",
+      "sha256": "067cfc97d79f85f744c2e1932e137621fe56056e7fda71f195058aa8d8a49b7c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/mapping-05.txt",
+      "sha256": "bcd34d3119a7605d9717d7b575038e956c6155b062621edcab5a4cbedd1da8e7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/mapping-06.txt",
+      "sha256": "b806649f1196c9c11fccc5bc37798e58688fb115277b3cb122705933ffd76643",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/mapping-12.txt",
+      "sha256": "a953a38399b441cc5de9c3c61b2c4f358b4c33d90ada24587bbb38d84516098b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/rig-todo-store.txt",
+      "sha256": "5326ccf2eacf3f4940e561b1297cc7063916e34e843e022a0f40fd93c770ea88",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/rig-todo-tasks-panel.txt",
+      "sha256": "1eeb36a2a0f1dca8f381fb5d4fcf53d984b09e27c3f54cdcc474525c40ff6751",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/rig-todo-tui.txt",
+      "sha256": "4eeb42598c7f16a9523471187221ac7d7af9d31687437748e93da3ab51b83f4d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/rig-tools-hermes-hooks-panel.txt",
+      "sha256": "656f85b0b803c518e275ced1168c2e8574601bd6d3f9b2ec2f88f280deeaa7a7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/rig-tools-subagents.txt",
+      "sha256": "9c228ad7dab9aee5749899a9a9dc20c55a9b3dc88dc435b1bf50ce6919099722",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/characters/rig-tools-tui.txt",
+      "sha256": "445bbe2ea5349a59822ea2d52e6aec0c9b18edb65965e1632e774d481e1a9833",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/active-subagent-row-exemplar-test-dispatch.json",
+      "sha256": "f99534f848feedf31954c8566219952f8197464930af56f45555aa8917d89ce1",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/active-subagent-row-exemplar-test-setup.json",
+      "sha256": "d9a81f634f104d695d7df741f163aee52f565267e6c69a8646de27ca677b3049",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/active-subagent-row-exemplar-test-teardown.json",
+      "sha256": "04a42c88ad4e953d7bba56ff40b06939147ccf2cb80d867c086314dc67ee849a",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/integrated-sidebar-test-dispatch.json",
+      "sha256": "e2d484edf2281541133ff840e3f250a402353f95f63a0c735e76d8e1379cc4bd",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/integrated-sidebar-test-setup.json",
+      "sha256": "50fee5c4967f1753cfee0991b58a1da2a058e9729a41cbe958e931fedccb24bd",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/integrated-sidebar-test-teardown.json",
+      "sha256": "239e1a1115b938306a1879195b4d1039744eb133de8311aa69a95b6341af732d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-01-test-dispatch.json",
+      "sha256": "19285535f3c4b6bd947092d11097631f7faea531eff94e72df5c1c393dd88589",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-01-test-setup.json",
+      "sha256": "b51485780949df954e52769e7548e8d9581ee5de2f394b7a4a8916e2abb68267",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-01-test-teardown.json",
+      "sha256": "fbea2c3f793005b3c9e8ea2749138d4d3780605f0dd239d5a22a83f5eb7a7b89",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-02-test-dispatch.json",
+      "sha256": "e8c90b8b7a8d10e522a6ee3f7bd39e894e20077693d0947b495db9990ba3d630",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-02-test-setup.json",
+      "sha256": "8b764175c7033af14238d439d671bad4a0f51eb87e14a9ed02a00e93b4c394f8",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-02-test-teardown.json",
+      "sha256": "e84ebf3eaa56053baf6c1b58448b4c53b06c71ddd9934b99536e0c974811e440",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-03-test-dispatch.json",
+      "sha256": "0a95404cbf177f2b8f3d4b1ecc511682d63a8d404f8400161be43016f2163ac4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-03-test-setup.json",
+      "sha256": "b30037b6307c46b24b63b70a6345b321d109a5f894c27c8e0339a3a2349e4551",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-03-test-teardown.json",
+      "sha256": "89a06588c68d8854df89ab8de6e8a9d50900e3165a84107bc9f337a538ab67f3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-04-test-dispatch.json",
+      "sha256": "2e28748007e78a28fef178e657e569a770c1b09e1e676c78dfac7d05a4dd8620",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-04-test-setup.json",
+      "sha256": "d03677432f4b32fb36e59b674892def947168e4bb5987bae036319e713c66893",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-04-test-teardown.json",
+      "sha256": "2766288c9fcc8f448ab4ff6f1abd0bf1549e549a4f7b51a0d5683b5df4027590",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-05-test-dispatch.json",
+      "sha256": "a908a9adf02178227a10c5b808c16f7e5fcc4ec7da60c9416de975c4fdfe6001",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-05-test-setup.json",
+      "sha256": "042866febaaf37d986543e4873d2a28b55297ac6d2b1e917515e1b1b4a0122a3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-05-test-teardown.json",
+      "sha256": "7a2845cdd7f1d63f261bb685ad4b9c716fde39150ae7da81f5addd5227df8552",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-06-test-dispatch.json",
+      "sha256": "e4eca3fdeac986879994c9ac1cf7fc5a3153228bba5d8bd6569e5ea021bd91e8",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-06-test-setup.json",
+      "sha256": "d16354189cecebe67850842fce6f61ac2930bc012d5143a61757568b6d0f104f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-06-test-teardown.json",
+      "sha256": "77a8dad2e614f63c855d91f2085ffd537687f42c3bb51a4fef144e0577fdd3b7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-12-test-dispatch.json",
+      "sha256": "0315fdf8cffd86c7ec30aefd8d3930599a8ae7ad1f98048b8b167418ca42cdc8",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-12-test-setup.json",
+      "sha256": "812f4465624a64aae696066c46d622d022d7a691b34f8d7709c9e21ec12a36e4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-12-test-teardown.json",
+      "sha256": "c0c89d9cb8b2d9ab306ff233b71849f795c388ac5113667885f715069eac9154",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-todo-store-test-dispatch.json",
+      "sha256": "264201c5165519d693b78d2336da0bae3f2c0720a6b14779f784d309f8fa05c6",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-todo-store-test-setup.json",
+      "sha256": "7926010ac18f18a23d8d9bd467ca2e82be237136412789032ebf7a7193901038",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-todo-store-test-teardown.json",
+      "sha256": "d75c28831f58ea032a378390961123f21b31207d44b5594a0f4aa9322b70c29c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-todo-tasks-panel-test-dispatch.json",
+      "sha256": "efd012c2d62b33e342b20c75a3454c650ac5947bfc5b7246ba33afd5c763298a",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-todo-tasks-panel-test-setup.json",
+      "sha256": "fd50ffd93195714e888e71ff02d0c8d27a15e1d582dd00904986256f69b4fbb5",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-todo-tasks-panel-test-teardown.json",
+      "sha256": "f20ccbf560e798c3a7ec395df3a9da6b65a231b325884f1398c70f9d2efcfa65",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-todo-tui-test-dispatch.json",
+      "sha256": "c055c5451eef4f14092d8719c28a119b5fae4c6f4be2e166055694fdaa967617",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-todo-tui-test-setup.json",
+      "sha256": "54cd33126fe97681f0eba2359c964a5db36082a26607763ac26af36e251bfa26",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-todo-tui-test-teardown.json",
+      "sha256": "826570782ab4ca6eba9b7af9505739d365aec60d362a02b2a07107d9c6cc4187",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-hermes-hooks-panel-test-dispatch.json",
+      "sha256": "e5c648167885a4a176617093ff3aa5332ae80db5a9d87b9b1ffd289f9ccb739f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-hermes-hooks-panel-test-setup.json",
+      "sha256": "3d2afae7065eda524ab118a1a509ea9567a6dbd6a8449a2e1da955c5ea52b0ed",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-hermes-hooks-panel-test-teardown.json",
+      "sha256": "92f4f5dc25d982eb1679b39dcb43af71a74b9e3627a182ea4a40247fb96d79c7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-subagents-test-dispatch.json",
+      "sha256": "04fbda3df02c2125bd8ade3590a637a79f7b8cde97f2222d6f353dd5b61bd9a8",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-subagents-test-setup.json",
+      "sha256": "46d481eb39211d6d1a69718cb929c1f5c0b411a99c9c5882b8f4df86711110b3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-subagents-test-teardown.json",
+      "sha256": "809bcfeca426d879e37c52acab6e721d639c34f5d5a055c7f1cad3cdbce04980",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-tui-test-dispatch.json",
+      "sha256": "fd4462580a9bd11e36f51b6ba83090120173dab28e225d1056578436e46d1a11",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-tui-test-setup.json",
+      "sha256": "159ef79282b743db20b3839cb857328f9b683be78e2372e44ab7a7ea59223ea5",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-tui-test-teardown.json",
+      "sha256": "fc395bb66f68640da6dd93f7440a1bdb98a00413e1ed68dae180f4e368e4f194",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/active-subagent-row-exemplar-test-dispatch.json",
+      "sha256": "0f0081247b10b6ab8a650278c3eb678061ae12b389ba8beffb34d9e03490dd8b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/active-subagent-row-exemplar-test-setup.json",
+      "sha256": "85bb104502887c78ffe4621649b9d0fd784ba175969a126b4279a5bb7dac9b3d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/active-subagent-row-exemplar-test-teardown.json",
+      "sha256": "e2174357898e36da2b155a7534faf9aa0411c19f4eb67dd2c6a302a89051d1eb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/integrated-sidebar-test-dispatch.json",
+      "sha256": "bc6ac78996d4e6eefb47429215b63a86ec0b1dd06787fb2cf57e4519144caff7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/integrated-sidebar-test-setup.json",
+      "sha256": "23fa6d435b0c9d4e63b866fc54de3e6f605f02c138a4d788ba30b55dbb783e8a",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/integrated-sidebar-test-teardown.json",
+      "sha256": "57016cf572278a547a485b65fb3df215b1cbce55283211372e2261ff6e944c4e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-01-test-dispatch.json",
+      "sha256": "35e08c2d21fc43c67aab2dd94e31547dd03bc8f2d5f516f7ad80694361813c11",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-01-test-setup.json",
+      "sha256": "db19d10d4536065af524f0325428e8ca8e1f222052e65ba39414405cce512751",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-01-test-teardown.json",
+      "sha256": "d0b66b4124f35d336e2bfa1de1a30bc1c3d8ef4886b58d0abec928f1469345d7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-02-test-dispatch.json",
+      "sha256": "e4595f8fa0a42d3d25029a2d35b05a2381d0801b939d37fd96ff941fbb732b8f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-02-test-setup.json",
+      "sha256": "30069f82a8d64ff90a1cf168b5183a82998989b547b0f44c663370328b03c529",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-02-test-teardown.json",
+      "sha256": "c6232b19f8aff59226f12421d6f3f34a359c42cba42cbc449f6b0a178e89c9b3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-03-test-dispatch.json",
+      "sha256": "044b8eabe1881afbdf31d0c8c10d9d75d05c542940c1e817a3188e80cbaa72a4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-03-test-setup.json",
+      "sha256": "fd92c754f8a07363a781af6b05a20c361f296a02e7015dac94d5f0ebfc87ac48",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-03-test-teardown.json",
+      "sha256": "978e0c82a4bb3036d2548bec0c4a121a23216522e28648b0e720c1cdcd5cd7e8",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-04-test-dispatch.json",
+      "sha256": "460ce2cf17714d9bd1854ad9d04c49d3f01751ad73db7cef8bd59f67c2668efe",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-04-test-setup.json",
+      "sha256": "86b021c0ed9cde468ef596189b4939c045988caa1d4f499779688e837782b34d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-04-test-teardown.json",
+      "sha256": "16bdaa1f8459ea1474720eef265544a6680c33a75217a02654f44aae720cfe7d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-05-test-dispatch.json",
+      "sha256": "a0d98bae4b20c0fc94d35bbbdb395a16793b95a2d6bc27334d2751c32ca371a5",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-05-test-setup.json",
+      "sha256": "692f25afe05b1075dc59e996249bfd77eaf265969bc2b581da79ec82bdb5231e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-05-test-teardown.json",
+      "sha256": "b6c30b1f12f9c451c7ccc9a7a18801903999072d0c5b5184488c0c6aa9021b46",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-06-test-dispatch.json",
+      "sha256": "57b7c3f6df430ea703282a7288667cff3403f665703bb2fa0cf8aea8d8d9f072",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-06-test-setup.json",
+      "sha256": "1fbb36ce77ae744007ab2db7e81e40a99fe39544c1cfdc9c5f16a39b2a2429c1",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-06-test-teardown.json",
+      "sha256": "3bab0b9d7b8448496d3c9cd2f396a3342b2bc480f5e3bbff7d28633c1df1edc2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-12-test-dispatch.json",
+      "sha256": "93b1fd5105ce699947467bfaee63c59e02c42a9c9b067c985ca9b3f80a604166",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-12-test-setup.json",
+      "sha256": "a3c4c1ebd430d9d30084add6bfda6b1325df1cb481082f17e0e0c667e1fa5e09",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/mapping-12-test-teardown.json",
+      "sha256": "1b8aefd40f5aa88ad94e406cacf9abb03ca4091f538a1637410c1d0813cd890b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-todo-store-test-dispatch.json",
+      "sha256": "767ba5611058aa426dde2943c3076698420212e0a6550c4b647b6123812603d1",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-todo-store-test-setup.json",
+      "sha256": "c164e97d277a79c5aa40c9a599ec02038719d1fa2cd10c00345d370cd2e22ccd",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-todo-store-test-teardown.json",
+      "sha256": "6d270a22587c51e30a95642ade9cdc938ef9a16fb8272409e0b5a709495fc998",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-todo-tasks-panel-test-dispatch.json",
+      "sha256": "db10cd69b85a9536557bad83be8812887a24ba99fd42c474902b5eca9dbf4674",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-todo-tasks-panel-test-setup.json",
+      "sha256": "a00752ca7ae7e7aec8bf6da568b48b0f446a7163d862fef5a730be03371ef8d2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-todo-tasks-panel-test-teardown.json",
+      "sha256": "8de64ac05736b12007261cf81e5a684c7ff4c71d0958b3d74d7e73d2d68365e6",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-todo-tui-test-dispatch.json",
+      "sha256": "9283ea8b993d4d5cf4e3c689606acdb2cd3fa8361936cbf862bbb8ce1bf90b88",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-todo-tui-test-setup.json",
+      "sha256": "f4356a06487265e90582cad390653de45157b382ad7319baf64cf09157114991",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-todo-tui-test-teardown.json",
+      "sha256": "2cc7bd5892a2a26f011dc532342e068186e26b386c8cfe4eb2f00cfd001673f1",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-tools-hermes-hooks-panel-test-dispatch.json",
+      "sha256": "50d46c9c16c962db50fbb6b0c591b687a269a930806f6da75bdcfae0a872daef",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-tools-hermes-hooks-panel-test-setup.json",
+      "sha256": "f5e9e06dcb9a8a9e6d130d945778e82adc21be56a70c943b06f7744060c39084",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-tools-hermes-hooks-panel-test-teardown.json",
+      "sha256": "67c5bca306231e458c15e378cafa3d93100ae11a11d2054097da3c86b7f13d00",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-tools-subagents-test-dispatch.json",
+      "sha256": "a99ee497fa49e9162e8b57ae23294ac9effa6ea4965c79fd799e565ad8574d24",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-tools-subagents-test-setup.json",
+      "sha256": "fa412a29c71cdaccb21a129d2925c391f3aae7ab458bb7a4d5e862152675b62d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-tools-subagents-test-teardown.json",
+      "sha256": "40395842ac089efd1c1bd2f082ca3d60d57929ccaa6c30d6c0285d71306548ae",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-tools-tui-test-dispatch.json",
+      "sha256": "dc78b5f24c5d83559638b410d0f94be8348f02c0e14653c73050f6a06444c5a3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-tools-tui-test-setup.json",
+      "sha256": "475dcfbe820065a93dc5d5b42c454c130208b65e18830d35c5921772026bcb73",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/events/rig-tools-tui-test-teardown.json",
+      "sha256": "30d42bf5e320fb7c07be072c2a1acfbd7aba881451290b3fbfbe2c1f3fbb9f0b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/active-subagent-row-behavioral.txt",
+      "sha256": "2690bfb10402730f6e9b1d4dda97cdc02ab7650de78c7375c552b844c7b5e75a",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/active-subagent-row-render.txt",
+      "sha256": "feb6b5c2c7120b1d7d0c9d95ccae9b88462c02c1a436241e66cf973d15c1ed3c",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/codex-providers-behavioral.txt",
+      "sha256": "983558db96e9cad181b2f12276ba4b395183fe0f125e89b8501e0c51cb65fdf0",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/codex-providers-render.txt",
+      "sha256": "9d3c0498ef316dc1dab38a434d317aaad929c74d2ad70c390a097c346a4fdc08",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/codex-state-behavioral.txt",
+      "sha256": "3e979dcbc96feb3198600b9c9610ede250d3ed8891659d95745fc04c8fab194d",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/codex-state-render.txt",
+      "sha256": "c08449309eea315af0be359ff188bb62d98bf9a606c65ec644dfbb266ca5865c",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/codex-tui-behavioral.txt",
+      "sha256": "9df593582796d5cfe5d8e9a05ad7fb3155c6983cfe5d04b494ce60901c1c028f",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/codex-tui-render.txt",
+      "sha256": "ba6b97e2ef1fd03af5573947d632e92ffa2c42dc32118d39d0bd764387970586",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/file-manager-presentation-behavioral.txt",
+      "sha256": "81eed553fb829354549745dedf277ba71f9cbfd50983db37249dc83fd7473465",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/file-manager-presentation-render.txt",
+      "sha256": "cfed0dfe4567cc9e5127aeddae4c73b96323bd9ae4af6d900c72bb027d534e39",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/file-manager-theme-behavioral.txt",
+      "sha256": "d7380c8ae0fcf6c23023e0ef79ca583ec3903da92dcf0bf4a753e4af7b81d749",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/file-manager-theme-render.txt",
+      "sha256": "97a30d231eaff8ecd16fe8ac6a17db184ab29219b6c3c74e7ebfb7ba1c5588ba",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/file-manager-tui-behavioral.txt",
+      "sha256": "b926171fb420c2b5c7ee90999185651b461bc1d8cc3a750f39b03cbe92680a4c",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/file-manager-tui-render.txt",
+      "sha256": "13830280d810255b619526245bfafdd1f66993f287f051fc7e813acc9ecfb83e",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-todo-store-behavioral.txt",
+      "sha256": "b638f65d67628a628793f708ec881961c3d85e7f45bb7fd71a40bd5490866b0f",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-todo-store-render.txt",
+      "sha256": "715a9935ac45a6fcce17960c6a12973d11af033ed776271b271c3e21faf0da4e",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-todo-tasks-panel-behavioral.txt",
+      "sha256": "515c3d0538de0aa52a47c86adddf9b06cf089805c43e51cb64312e065b563b73",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-todo-tasks-panel-render.txt",
+      "sha256": "962fc906f49b8708e5eee2075f044bd4f3d2bd13d7c04a190924c645daa94079",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-todo-tui-behavioral.txt",
+      "sha256": "29f441c9db9e89163fcb9ba9f112776718adf2e6f5e8e45c520719784b8ce7af",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-todo-tui-render.txt",
+      "sha256": "e6dfad53865cfbc31b8f6f48a08fc96dcd97abf72439aaea7726c3b1b9b3d57f",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-tools-hermes-hooks-panel-behavioral.txt",
+      "sha256": "0f08a7422e459d07329afcf6cb3ef2d682630e39b2520edea5e87a1964729396",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-tools-hermes-hooks-panel-render.txt",
+      "sha256": "29e9f4f6b0e914fdecb20b2851c2a7817e04f6dcb6d364cabdfbdf7970955ae5",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-tools-subagents-behavioral.txt",
+      "sha256": "db9c4a0f359ac2e01c31d91600829aae8b957e059da06edeabf9c83aeb6b10e9",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-tools-subagents-render.txt",
+      "sha256": "42db98a9fb0bf0acd0f9aca24a6665262f99497f24cf25be434096ffae0c0a62",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-tools-tui-behavioral.txt",
+      "sha256": "2d6b96435d31e2f7e88fd9c811d3f06f760c3b742db48e3bb15f521478a794ba",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-tools-tui-render.txt",
+      "sha256": "b5fca9bb1fa3a2440431d129a55e7eeb564a067168cfc12369000c3e67e7c7ae",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/source-control-tui-behavioral.txt",
+      "sha256": "d1fc892ee414b19c8a12307ebbc2e701273ad1a01cc66a20fd98ee692ea73a63",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution-output/source-control-tui-render.txt",
+      "sha256": "429348e25f373053cc2cd882ca1315d8e4b64586a157cdfb387234a7fe327547",
+      "kinds": [
+        "execution-output"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/active-subagent-row-behavioral.json",
+      "sha256": "6bcfae220f30658a32b4877338394375b00778a3e6e29649c9f2b02096592ae4",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/active-subagent-row-render.json",
+      "sha256": "4c3d1eafc1b393f75b2c896772552c97c31c6559e9b468951adcdec929cd36bc",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-providers-behavioral.json",
+      "sha256": "b95bd5b03d788eb8c22863e456f38629d6389d9307b71be0736117af9643f3fd",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-providers-render.json",
+      "sha256": "14723069e756a47d6b1931fb2b1bf78d8e1a673a6d47f677aba304cc3bd57b8e",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-state-behavioral.json",
+      "sha256": "a1336080d6bf58a3326b63eb462e3421d2e5cd81be5ff69edc0ba358ce6a54b4",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-state-render.json",
+      "sha256": "e6140c0c551d012f5e9c7892233a1d40dedfe17cba9c63f31cf870e874d830b7",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-tui-behavioral.json",
+      "sha256": "6d134195b8fd8f1d02933f25df66cd904b9e6576131a62c1362f9a6712adbefb",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/codex-tui-render.json",
+      "sha256": "9ccb6d584a78e912e8938c933862a45680d8c69dbe9bd7855644f68036fefb6b",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-presentation-behavioral.json",
+      "sha256": "aa6dd7f046fb36b9b88217fc2a8487488cf1805f0361ac7ec877a755ff9f5566",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-presentation-render.json",
+      "sha256": "eaa437c932b23303123155b5cb948d75ae3e3211eb949a33a6398e2989900523",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-theme-behavioral.json",
+      "sha256": "287c21325e3c649d380ba687ec4e4a532bf83c12c0ad589f150de192844ac896",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-theme-render.json",
+      "sha256": "49c252491eacf6054de2d4a9d82e61aa1f7c0da8816a9d7ad9ead5c13a9bc170",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-tui-behavioral.json",
+      "sha256": "321ca71ac8d13f7a7fe1fac5378b849b58547128e8eb6370e72fad8f5a1defec",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/file-manager-tui-render.json",
+      "sha256": "3160d213ce6f8f47cd8d18352ff5eb2a8c58f1d7fb522c4266695839daaa64a7",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-store-behavioral.json",
+      "sha256": "e3b56a90a43d81e73c7139521720296313565ab60325358cec622cc5221e9fda",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-store-render.json",
+      "sha256": "ad5b0c21c01214f541fbb4b682aab00cf2eb25ba4680ca7694fa4629f0325ba8",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-tasks-panel-behavioral.json",
+      "sha256": "feb7093e15ce6d47b5cac4110ba336fb8cc5fd4c8a6857a30cec5e5aa45af31e",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-tasks-panel-render.json",
+      "sha256": "88363d8d585d82db61bd224f6c080b62e9cfcfe35373b9b1dfc3260f7830573d",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-tui-behavioral.json",
+      "sha256": "a2e762ffb5e1a0d08637189ee9f1cc5fbaec2ee3017ec95f60e49daed27f10c3",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-todo-tui-render.json",
+      "sha256": "50d4bf6fb32fc2403af0d59426f45c8ed280d73b6788e1660fd90258d4f26b47",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-hermes-hooks-panel-behavioral.json",
+      "sha256": "1800c1cff4ae5226a937eba8f8f28b674634261e78ed2a3dd27a68e64cbfad8b",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-hermes-hooks-panel-render.json",
+      "sha256": "673ce275e47e934b494e55b077ab9b67ec500580ccf506841c1e9484108ab689",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-subagents-behavioral.json",
+      "sha256": "6fece8b059008f0db0707671b87e6d460fd24a33f3d7dc1c1fce039b004a5001",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-subagents-render.json",
+      "sha256": "e7814282e8493857db7097a41278e52a411fa815f9e8f88d65d3a4e27dbb7f4e",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-tui-behavioral.json",
+      "sha256": "8d4e4645ba9b30b1d58409ed523e1714d1f5c6cc8625b99bfca6c2c2482dc51e",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/rig-tools-tui-render.json",
+      "sha256": "2089ae37f5a0670ae1b46e9198ef212c07bdb87289ebfc574aa17552e7607b51",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/source-control-tui-behavioral.json",
+      "sha256": "7e85cfd60b54623b959d260591689abf09dc1b0456fa8a64a2498076618d781d",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/execution/source-control-tui-render.json",
+      "sha256": "06389e440ccaa94af9e486978b17e88378ebfe3757d8482d3de691385577148e",
+      "kinds": [
+        "execution-receipt"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/active-subagent-row-exemplar.png",
+      "sha256": "18ae7254f9fb21d0032a3d1e50089abfa4e17d283931259edcfbb09d5f7cf1d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/integrated-sidebar.png",
+      "sha256": "2abae3c9dfff041d4531f35dd451fb2db7f7e9c8510170699c3f30ea218a5d47",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/mapping-01.png",
+      "sha256": "4056b26cea968b921faeef80fcbb5b983a5c29ff0b4ea63c0fe82efed8749bfb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/mapping-02.png",
+      "sha256": "639a88dedd32e47e98e14715eb48a83d328bdaf0d3dd5646a962c98202b087fa",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/mapping-03.png",
+      "sha256": "2c88560e0f5117535e4fbd00b2df1200c723e81cf666775baa55e97da4081492",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/mapping-04.png",
+      "sha256": "428702b75af5e9a961ab4f88da76d6f1226a47438c7629bdf6a4243a7037e9d5",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/mapping-05.png",
+      "sha256": "1b63806c08a85f16b0e930a09f54652815f8537456a5b3118a166428b845c8fd",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/mapping-06.png",
+      "sha256": "c11a2a6523e431f794b9d46b734ca0cdf025f4e29c149bf242b1cd90a5c5c352",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/mapping-12.png",
+      "sha256": "da796fc086f66956bb4b25dbb6b2d12e3b230d53bf144b8da46521c1b9079203",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/rig-todo-store.png",
+      "sha256": "6e25b4e330e80ff30e7f5fc9b2794b7e63dde01536ec64d988da37459852a91c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/rig-todo-tasks-panel.png",
+      "sha256": "2f524412995886607f0271d9edd599454dea043b5938cfde48b9794719035c7d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/rig-todo-tui.png",
+      "sha256": "b5521f160b97b5d536e2f2135ce9e6ece4bae960e38be99814d55e68be0e509f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/rig-tools-hermes-hooks-panel.png",
+      "sha256": "1030efd16f1693bcc0ea3856c03293a6baae0c78d1b4a97873563d768adad69c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/rig-tools-subagents.png",
+      "sha256": "384d110ef61fb9e2de779d285a982900368580abe19861071db2ea71729a177b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/images/rig-tools-tui.png",
+      "sha256": "d219e5dc8c525f68547c653320eecc0012f558db06863005edfa2b1f98ae8f24",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/active-subagent-row-exemplar.json",
+      "sha256": "4a14e9161ad407e6121d2adbc06ce244b77db8de1e4f9a2f10cfd5a057341f90",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/integrated-sidebar.json",
+      "sha256": "a50d431e71f2bfba2cfd8f4b479d4e1a826c4fdb451132e38a5df09880e8a459",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/mapping-01.json",
+      "sha256": "a4160a79793ac6f3da68264d7c033f78b63e55b9f6dcb765fc80a14e9a5e3fe3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/mapping-02.json",
+      "sha256": "ed41e01ef1485b3df00eb4692016081f582e2960e937f685fb0d4ce2c2d1eca9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/mapping-03.json",
+      "sha256": "47e0025d41887250269c5e5ad6175ad3036884c7f310e38aab336eff8dca1816",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/mapping-04.json",
+      "sha256": "a0e79cb971db3347aa41aca03e39518cd52c6f98d9732da558ea00beaba26aea",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/mapping-05.json",
+      "sha256": "e8e85a64b288473bbad63c9751249a87cbce23449e52d5c160cf603240eb55bc",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/mapping-06.json",
+      "sha256": "f30ec1b3906736c890c68c15080d72bc8ff3bffd9f7878dad93207a827b80f3f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/mapping-12.json",
+      "sha256": "e49e1f0cdeeed0a396f4ab28cd1e0fb36d2df411c494337695bcece083401722",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/rig-todo-store.json",
+      "sha256": "f31b7bba59141d3bdc408517d0f636b0a4d6f23fc9f706897ca2c1348489dee4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/rig-todo-tasks-panel.json",
+      "sha256": "ec70db8ced0ee512e720f11d4d287596f8f6911487d0139290a805e5c7fe967c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/rig-todo-tui.json",
+      "sha256": "0a342c6df091560740c2d50af1d02a9dbed5233ededd6dd33e83113974823b6d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/rig-tools-hermes-hooks-panel.json",
+      "sha256": "d662933be462b0bf7107407e769080919b6aee6cd3ec422bf911ca5bab397726",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/rig-tools-subagents.json",
+      "sha256": "05d55fe4362cc00382137df1b677941de2af5a22b5f75159c007d4dfccedc7e6",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/native-output/rig-tools-tui.json",
+      "sha256": "3ac3a811cf02eeb17241c948a3dddc092f67a44931cd28c62fe9b7d520e5c574",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-after.spans.json",
+      "sha256": "21fd77ada67abf2a7de23f53d3b6bbe777495715c55cf09f14056c33ff340a30",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-after.state.json",
+      "sha256": "a707e4b450187e9ab5483b4614ee9cc701ee9ab1ab10c66d8660262b1dc06681",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-after.txt",
+      "sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-before.spans.json",
+      "sha256": "21fd77ada67abf2a7de23f53d3b6bbe777495715c55cf09f14056c33ff340a30",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-before.state.json",
+      "sha256": "d4f3d0643643818389a51c48a8b628d492e38f18cbac76fbf4e62cde95e1d558",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-before.txt",
+      "sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-after.spans.json",
+      "sha256": "21fd77ada67abf2a7de23f53d3b6bbe777495715c55cf09f14056c33ff340a30",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-after.state.json",
+      "sha256": "d4f3d0643643818389a51c48a8b628d492e38f18cbac76fbf4e62cde95e1d558",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-after.txt",
+      "sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.spans.json",
+      "sha256": "e1eb0aaf934224ae5aa2a1fc4695c1415fd9b83f469618c683a530003f192ded",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.state.json",
+      "sha256": "0cbb084c2c048ca861d2fedebb51eb1c766687e74851a81d9ea9c641c177b844",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.txt",
+      "sha256": "b52acd93c5a7dcc4f62e58bc23ddc1f576ad39c3ee957aacd89df8d4e4a35011",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-before.spans.json",
+      "sha256": "ebb5162b87518ecebb361dea7a564d17f251123347b214b434c104935f277863",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-before.state.json",
+      "sha256": "65b289e646ea051a538542a2b8b0c48866b117fe8009b80db548f3d690d315f4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-before.txt",
+      "sha256": "42123981fbb002c5f410abde64d5bec356d3fb2e2d7e723bd923dfdbd7575ef9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-open-after.spans.json",
+      "sha256": "ebb5162b87518ecebb361dea7a564d17f251123347b214b434c104935f277863",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-open-after.state.json",
+      "sha256": "65b289e646ea051a538542a2b8b0c48866b117fe8009b80db548f3d690d315f4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-open-after.txt",
+      "sha256": "42123981fbb002c5f410abde64d5bec356d3fb2e2d7e723bd923dfdbd7575ef9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-repository-session-hover.spans.json",
+      "sha256": "947eb7c8d24b308121d1873bec3381efef648ca9db08b32cb6220482099691b2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-repository-session-hover.state.json",
+      "sha256": "65b289e646ea051a538542a2b8b0c48866b117fe8009b80db548f3d690d315f4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-repository-session-hover.txt",
+      "sha256": "42123981fbb002c5f410abde64d5bec356d3fb2e2d7e723bd923dfdbd7575ef9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed-live-count.spans.json",
+      "sha256": "334ede0751dd32811528f8e80dafdcc4c8e38d1894460aef8b514441c10e9f1e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed-live-count.state.json",
+      "sha256": "87af47140830d96c77b49ba20a2d68f445ef04a4e3422e5804e25483a032530d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed-live-count.txt",
+      "sha256": "d65e1a9c9e0157723ce5c7c96816c3c613bfbd0852c02738d2c072fea87fe121",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed.spans.json",
+      "sha256": "fd0641d33273b15c5c5498505073a33e5f3a2c2d4c64b319e105032a1f83a177",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed.state.json",
+      "sha256": "79bb107c2903d3b2f0175e1c9255ae77e1bba5ba0fd10094af0f5c51800801d6",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed.txt",
+      "sha256": "2f6585e8abcd1c18f41d0f8eafea0baf8fc698cc1cc6ffad4b76ea2ee53ce353",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-interact-after.spans.json",
+      "sha256": "03515cc641bfccd800126b0dbfd399b8575f432898a511ce054feab946179873",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-interact-after.state.json",
+      "sha256": "c5d8e00469eff093c3496eede264310f4087a82537676c484bcec512d3f4a11e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-interact-after.txt",
+      "sha256": "668e91ebeea1a20b9a89aaf923819f2feeb08efcbfad58950ea7dd6c55440237",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-interact-before.spans.json",
+      "sha256": "ca0cc401f800efbbcd15322452483bae4f57b2715a3c8a368b5a55834d49aee3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-interact-before.state.json",
+      "sha256": "c1f9a6abb442d8ed3fcdea8775ad9788da30508dc8667031aacd552db48c9ea4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-interact-before.txt",
+      "sha256": "322897bad5c52d20a01d05bebd776efd4576b9bde9bbbbceff7a41bbac45f96a",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-open-after.spans.json",
+      "sha256": "ca0cc401f800efbbcd15322452483bae4f57b2715a3c8a368b5a55834d49aee3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-open-after.state.json",
+      "sha256": "c1f9a6abb442d8ed3fcdea8775ad9788da30508dc8667031aacd552db48c9ea4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-open-after.txt",
+      "sha256": "322897bad5c52d20a01d05bebd776efd4576b9bde9bbbbceff7a41bbac45f96a",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-01/mapping-01-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-interact-after.spans.json",
+      "sha256": "c7133474c6bd32dd2bf1ea7077610f1dae78099744eee5ef6fd96592ef7c2258",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-interact-after.state.json",
+      "sha256": "c5d8e00469eff093c3496eede264310f4087a82537676c484bcec512d3f4a11e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-interact-after.txt",
+      "sha256": "b8c8ec36709de93a79da8e18335926fd0f0ef5aa772e9c10fbe4c37b1d890465",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-interact-before.spans.json",
+      "sha256": "88d7576e8939db3050cff60decb79cda80e3a408bcb3ac5c638ed2ce98c00cf3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-interact-before.state.json",
+      "sha256": "c1f9a6abb442d8ed3fcdea8775ad9788da30508dc8667031aacd552db48c9ea4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-interact-before.txt",
+      "sha256": "044753319c5ad98013a0482583875d796cd216f1277e98d5df96cddbed084aff",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-open-after.spans.json",
+      "sha256": "88d7576e8939db3050cff60decb79cda80e3a408bcb3ac5c638ed2ce98c00cf3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-open-after.state.json",
+      "sha256": "c1f9a6abb442d8ed3fcdea8775ad9788da30508dc8667031aacd552db48c9ea4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-open-after.txt",
+      "sha256": "044753319c5ad98013a0482583875d796cd216f1277e98d5df96cddbed084aff",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-02/mapping-02-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-interact-after.spans.json",
+      "sha256": "800b86c3c590be17db1369cb730f28eeb81d50b76460c599d611134ab8198e2c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-interact-after.state.json",
+      "sha256": "c5d8e00469eff093c3496eede264310f4087a82537676c484bcec512d3f4a11e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-interact-after.txt",
+      "sha256": "3822cf5b0c4250903c89d8e042eb72911f4a85e513094a02cf666308c629bf15",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-interact-before.spans.json",
+      "sha256": "0eb3105334dcb603d4e959cec3536d6d1b0fe773cbde80bb8a2cf0e7a80e213b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-interact-before.state.json",
+      "sha256": "c1f9a6abb442d8ed3fcdea8775ad9788da30508dc8667031aacd552db48c9ea4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-interact-before.txt",
+      "sha256": "f21ecb1f32fa499d19c4608f026ba02608eb0d2a337405eb360cb14c15e7fb8d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-open-after.spans.json",
+      "sha256": "0eb3105334dcb603d4e959cec3536d6d1b0fe773cbde80bb8a2cf0e7a80e213b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-open-after.state.json",
+      "sha256": "c1f9a6abb442d8ed3fcdea8775ad9788da30508dc8667031aacd552db48c9ea4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-open-after.txt",
+      "sha256": "f21ecb1f32fa499d19c4608f026ba02608eb0d2a337405eb360cb14c15e7fb8d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-03/mapping-03-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-hover-enter.spans.json",
+      "sha256": "7fb9ea7550c7a58e309f12b7eb5590e6af33fa35164a8123d5b0018ae715f3fb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-hover-enter.state.json",
+      "sha256": "ddc3d3f4f20f90de8872c26d08909f4795d2a75e0b179d58501924a6c1c588a2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-hover-enter.txt",
+      "sha256": "067cfc97d79f85f744c2e1932e137621fe56056e7fda71f195058aa8d8a49b7c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-hover-restored.spans.json",
+      "sha256": "62b4bb7d8847744e27f3e4bc393a068d4d56aaec9f8645dff099eb7c34d4c8fe",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-hover-restored.state.json",
+      "sha256": "12b69a5de9d26ef943e6541b4fcaa5dfcb47bea820b6c9af608ca56609a9bfaf",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-hover-restored.txt",
+      "sha256": "067cfc97d79f85f744c2e1932e137621fe56056e7fda71f195058aa8d8a49b7c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-interact-after.spans.json",
+      "sha256": "7fb9ea7550c7a58e309f12b7eb5590e6af33fa35164a8123d5b0018ae715f3fb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-interact-after.state.json",
+      "sha256": "ddc3d3f4f20f90de8872c26d08909f4795d2a75e0b179d58501924a6c1c588a2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-interact-after.txt",
+      "sha256": "067cfc97d79f85f744c2e1932e137621fe56056e7fda71f195058aa8d8a49b7c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-interact-before.spans.json",
+      "sha256": "62b4bb7d8847744e27f3e4bc393a068d4d56aaec9f8645dff099eb7c34d4c8fe",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-interact-before.state.json",
+      "sha256": "12b69a5de9d26ef943e6541b4fcaa5dfcb47bea820b6c9af608ca56609a9bfaf",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-interact-before.txt",
+      "sha256": "067cfc97d79f85f744c2e1932e137621fe56056e7fda71f195058aa8d8a49b7c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-open-after.spans.json",
+      "sha256": "62b4bb7d8847744e27f3e4bc393a068d4d56aaec9f8645dff099eb7c34d4c8fe",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-open-after.state.json",
+      "sha256": "12b69a5de9d26ef943e6541b4fcaa5dfcb47bea820b6c9af608ca56609a9bfaf",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-open-after.txt",
+      "sha256": "067cfc97d79f85f744c2e1932e137621fe56056e7fda71f195058aa8d8a49b7c",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-04/mapping-04-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-interact-after.spans.json",
+      "sha256": "fe067fd4baa528194a8fec92c2d66c2e368434b8be67182a97af2b2236d2ee1e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-interact-after.state.json",
+      "sha256": "5db1a7bd66b9015915a6d00016110efbd72b1a0a93554caacfdefb423df387cf",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-interact-after.txt",
+      "sha256": "bcd34d3119a7605d9717d7b575038e956c6155b062621edcab5a4cbedd1da8e7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-interact-before.spans.json",
+      "sha256": "43c5b546124f94537d81a5c9490e86b4ce66c14d3a9c5163b1bc61713010bff2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-interact-before.state.json",
+      "sha256": "62018e18e46e5332bd87b7d2e96d6c25df476c3524ff19de11fcc53a75eccfcb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-interact-before.txt",
+      "sha256": "4f621b3adfdf6dc9e74ee5c1ce8c6ae7e33ec5de9508662e2d4c1d3b861bd9a4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-open-after.spans.json",
+      "sha256": "43c5b546124f94537d81a5c9490e86b4ce66c14d3a9c5163b1bc61713010bff2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-open-after.state.json",
+      "sha256": "62018e18e46e5332bd87b7d2e96d6c25df476c3524ff19de11fcc53a75eccfcb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-open-after.txt",
+      "sha256": "4f621b3adfdf6dc9e74ee5c1ce8c6ae7e33ec5de9508662e2d4c1d3b861bd9a4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-05/mapping-05-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-interact-after.spans.json",
+      "sha256": "01007ef05d8cc2dcc5db45138471b42e562f5c3591bfd2ed2363188fc26fdf13",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-interact-after.state.json",
+      "sha256": "ae0d28d589333f8733383ebfac5776ae4245e845a44277e9d21d92c6fb85a092",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-interact-after.txt",
+      "sha256": "b806649f1196c9c11fccc5bc37798e58688fb115277b3cb122705933ffd76643",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-interact-before.spans.json",
+      "sha256": "555f52d32188c83931e2159d2d9056334fb817ce4d75fda2bd68542c1808f1eb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-interact-before.state.json",
+      "sha256": "9c8e01c4320b4e3b834623a962f76dcc5329396915ca052e62b761e71891238d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-interact-before.txt",
+      "sha256": "6888ae92fb4f426df6f38aefa3f12b5dbbcf7903fb385ce8be526e738a795525",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-open-after.spans.json",
+      "sha256": "555f52d32188c83931e2159d2d9056334fb817ce4d75fda2bd68542c1808f1eb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-open-after.state.json",
+      "sha256": "9c8e01c4320b4e3b834623a962f76dcc5329396915ca052e62b761e71891238d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-open-after.txt",
+      "sha256": "6888ae92fb4f426df6f38aefa3f12b5dbbcf7903fb385ce8be526e738a795525",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-theme-after.spans.json",
+      "sha256": "127b796f6c26e81c1d3ef4bcc53b42d036b63b2ce655e96738d282b8d4a243d7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-theme-after.state.json",
+      "sha256": "4ef47431bc1a8188cfbfcd10c1f0592db61dd27a71069499398f80e201f16c66",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-theme-after.txt",
+      "sha256": "6888ae92fb4f426df6f38aefa3f12b5dbbcf7903fb385ce8be526e738a795525",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-theme-before.spans.json",
+      "sha256": "555f52d32188c83931e2159d2d9056334fb817ce4d75fda2bd68542c1808f1eb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-theme-before.state.json",
+      "sha256": "9c8e01c4320b4e3b834623a962f76dcc5329396915ca052e62b761e71891238d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-06/mapping-06-theme-before.txt",
+      "sha256": "6888ae92fb4f426df6f38aefa3f12b5dbbcf7903fb385ce8be526e738a795525",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-first-page.spans.json",
+      "sha256": "374bdb7e043ff02888e438cb0a135f697b694ebf9b6b1e43c468caa17ed5e72d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-first-page.state.json",
+      "sha256": "7745dbbe762dbe0694f748a8682eca7cb9d9ee752aee87dc05a380fb5531d14f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-first-page.txt",
+      "sha256": "bc8e3cfa68cdc38c9e2747b56596be32060167029ba5f61b003155bcdf781794",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-interact-after.spans.json",
+      "sha256": "2120ff6bc5c34ef8743fea2d4acb1106048a38a698cae10317a080d05b5c50a3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-interact-after.state.json",
+      "sha256": "af8d95e3aa31a93844e2d1ddf45a92f62d13625c23f2fd9fcc822090d1232c43",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-interact-after.txt",
+      "sha256": "a953a38399b441cc5de9c3c61b2c4f358b4c33d90ada24587bbb38d84516098b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-interact-before.spans.json",
+      "sha256": "6d0a9588e0af754fe7887c147495aec9405629cc04475305753bf4459f8116a7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-interact-before.state.json",
+      "sha256": "5e9988011a18c59cc3e45ecf44f68e3f64a0208e06bbf9e14ef7ede6e6f5e581",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-interact-before.txt",
+      "sha256": "d97477039ec091df0bdffbad1ad1fddd1bee0abfa33a15aa18c2022f18fa374f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-open-after.spans.json",
+      "sha256": "6d0a9588e0af754fe7887c147495aec9405629cc04475305753bf4459f8116a7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-open-after.state.json",
+      "sha256": "5e9988011a18c59cc3e45ecf44f68e3f64a0208e06bbf9e14ef7ede6e6f5e581",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-open-after.txt",
+      "sha256": "d97477039ec091df0bdffbad1ad1fddd1bee0abfa33a15aa18c2022f18fa374f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/mapping-12/mapping-12-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-interact-after.spans.json",
+      "sha256": "509cf9cd4f80dc849d9227e0a2e95de68bfb94ecba33a89cd36e90569c20d25f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-interact-after.state.json",
+      "sha256": "c1f9a6abb442d8ed3fcdea8775ad9788da30508dc8667031aacd552db48c9ea4",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-interact-after.txt",
+      "sha256": "5326ccf2eacf3f4940e561b1297cc7063916e34e843e022a0f40fd93c770ea88",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-interact-before.spans.json",
+      "sha256": "ee022aa8b4f1cb0b0cf5b218dc4b3552f4387784c2191e321c67545885c0d9fd",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-interact-before.state.json",
+      "sha256": "c5d8e00469eff093c3496eede264310f4087a82537676c484bcec512d3f4a11e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-interact-before.txt",
+      "sha256": "7749a37d44cca1cf807b47426f9a6589c3a85e3bed16df97ab702f63ed05ad19",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-open-after.spans.json",
+      "sha256": "ee022aa8b4f1cb0b0cf5b218dc4b3552f4387784c2191e321c67545885c0d9fd",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-open-after.state.json",
+      "sha256": "c5d8e00469eff093c3496eede264310f4087a82537676c484bcec512d3f4a11e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-open-after.txt",
+      "sha256": "7749a37d44cca1cf807b47426f9a6589c3a85e3bed16df97ab702f63ed05ad19",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-store/rig-todo-store-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-interact-after.spans.json",
+      "sha256": "1d96626ee196b3d364be2d4bc5aab10e4642a6ec72c4b4f81f5bd6006823a432",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-interact-after.state.json",
+      "sha256": "de5c247c6871bbd9149099e07a5799713601d3134e4033e881799a52eee83907",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-interact-after.txt",
+      "sha256": "1eeb36a2a0f1dca8f381fb5d4fcf53d984b09e27c3f54cdcc474525c40ff6751",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-interact-before.spans.json",
+      "sha256": "e15b9d1b58e8d9ae957c3364484e71ef268994b78aa4feb7daa9b6cfefb968f6",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-interact-before.state.json",
+      "sha256": "b2675fda43ff8324e0934eeae830aca72704ffe9318fe0c31f585235809bc11e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-interact-before.txt",
+      "sha256": "86da6ca22b7b844009306a94ca61365d4c01b7494fa05fbacf72c21c2822c3ce",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-open-after.spans.json",
+      "sha256": "e15b9d1b58e8d9ae957c3364484e71ef268994b78aa4feb7daa9b6cfefb968f6",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-open-after.state.json",
+      "sha256": "b2675fda43ff8324e0934eeae830aca72704ffe9318fe0c31f585235809bc11e",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-open-after.txt",
+      "sha256": "86da6ca22b7b844009306a94ca61365d4c01b7494fa05fbacf72c21c2822c3ce",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tasks-panel/rig-todo-tasks-panel-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-interact-after.spans.json",
+      "sha256": "8aa5867175b261cecc7702fd7d1ca8055c4d433d387037dabf382cee4c5160b3",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-interact-after.state.json",
+      "sha256": "0728a0e64bdc19c7faa05aaa3dd6c227bb2d306cfe721ca458ba4e0630e6da31",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-interact-after.txt",
+      "sha256": "4eeb42598c7f16a9523471187221ac7d7af9d31687437748e93da3ab51b83f4d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-interact-before.spans.json",
+      "sha256": "ee022aa8b4f1cb0b0cf5b218dc4b3552f4387784c2191e321c67545885c0d9fd",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-interact-before.state.json",
+      "sha256": "cdcb5caddbe0991ecff74e62ba7f5973d7913c0bcd3dab53b40f691b25a57868",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-interact-before.txt",
+      "sha256": "7749a37d44cca1cf807b47426f9a6589c3a85e3bed16df97ab702f63ed05ad19",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-open-after.spans.json",
+      "sha256": "ee022aa8b4f1cb0b0cf5b218dc4b3552f4387784c2191e321c67545885c0d9fd",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-open-after.state.json",
+      "sha256": "cdcb5caddbe0991ecff74e62ba7f5973d7913c0bcd3dab53b40f691b25a57868",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-open-after.txt",
+      "sha256": "7749a37d44cca1cf807b47426f9a6589c3a85e3bed16df97ab702f63ed05ad19",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-todo-tui/rig-todo-tui-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-interact-after.spans.json",
+      "sha256": "9e2f67671ffd65a2b195e2e1ced7af9154da2502aaf6e8c537f010272b204d71",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-interact-after.state.json",
+      "sha256": "a54f01164248eede42bceaf1359bacae64b3454e5df4ece03de2635fa8856203",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-interact-after.txt",
+      "sha256": "656f85b0b803c518e275ced1168c2e8574601bd6d3f9b2ec2f88f280deeaa7a7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-interact-before.spans.json",
+      "sha256": "9e2f67671ffd65a2b195e2e1ced7af9154da2502aaf6e8c537f010272b204d71",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-interact-before.state.json",
+      "sha256": "1892a6aa025325a7e5fbf1fd9d0ec58bf4099e53f557d860c9d260ce46956d08",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-interact-before.txt",
+      "sha256": "656f85b0b803c518e275ced1168c2e8574601bd6d3f9b2ec2f88f280deeaa7a7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-open-after.spans.json",
+      "sha256": "9e2f67671ffd65a2b195e2e1ced7af9154da2502aaf6e8c537f010272b204d71",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-open-after.state.json",
+      "sha256": "1892a6aa025325a7e5fbf1fd9d0ec58bf4099e53f557d860c9d260ce46956d08",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-open-after.txt",
+      "sha256": "656f85b0b803c518e275ced1168c2e8574601bd6d3f9b2ec2f88f280deeaa7a7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-hermes-hooks-panel/rig-tools-hermes-hooks-panel-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-collapsed-live-count.spans.json",
+      "sha256": "f959bfe551c2e065405108715b2f0bda21a5ea6619a8cc45116920dae95b43eb",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-collapsed-live-count.state.json",
+      "sha256": "fcb64f225b686197abb33fc63fbb6d8fc3f42b880be5875a196d4ca47c15e99f",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-collapsed-live-count.txt",
+      "sha256": "51f79dfa896508dbb0bc8047cf388fd16cca6597f4ce177f8c943b3aa389fd42",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-collapsed.spans.json",
+      "sha256": "52e872c876fd0fb0af89a2cfffc17fb5d4d462ab1a13fa698ad81c161e23cba7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-collapsed.state.json",
+      "sha256": "89272b9bd50510e9881c35bf924edc54263dc816bcdaa796ec771546534b52f9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-collapsed.txt",
+      "sha256": "445bbe2ea5349a59822ea2d52e6aec0c9b18edb65965e1632e774d481e1a9833",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-interact-after.spans.json",
+      "sha256": "c66afb28f2095a7b3797113f3f78e525165a9d7f64b0aa75bc8b2b1e95274847",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-interact-after.state.json",
+      "sha256": "e93950de002d61b87aba31efe91970664a4940d7c382c80f33a81372427693ce",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-interact-after.txt",
+      "sha256": "9c228ad7dab9aee5749899a9a9dc20c55a9b3dc88dc435b1bf50ce6919099722",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-interact-before.spans.json",
+      "sha256": "3ab7500095017e635b1b73809273efae1d1472a17149866df824b3ca6b0fe48b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-interact-before.state.json",
+      "sha256": "6c963560057277e8673e3332c9272b0d714f29874d294fb736cce5ef33f19e66",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-interact-before.txt",
+      "sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-open-after.spans.json",
+      "sha256": "3ab7500095017e635b1b73809273efae1d1472a17149866df824b3ca6b0fe48b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-open-after.state.json",
+      "sha256": "6c963560057277e8673e3332c9272b0d714f29874d294fb736cce5ef33f19e66",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-open-after.txt",
+      "sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-subagents/rig-tools-subagents-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-close-after.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-close-after.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-close-after.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-interact-after.spans.json",
+      "sha256": "52e872c876fd0fb0af89a2cfffc17fb5d4d462ab1a13fa698ad81c161e23cba7",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-interact-after.state.json",
+      "sha256": "a7e4bf790adac49e062ee1c267806c6d8211988d70c4669c4fd4189acfc68478",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-interact-after.txt",
+      "sha256": "445bbe2ea5349a59822ea2d52e6aec0c9b18edb65965e1632e774d481e1a9833",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-interact-before.spans.json",
+      "sha256": "3ab7500095017e635b1b73809273efae1d1472a17149866df824b3ca6b0fe48b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-interact-before.state.json",
+      "sha256": "db0e775412e62b982853cda8234e4fc9d0874944ab922dbd9b192e8662125c2d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-interact-before.txt",
+      "sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-open-after.spans.json",
+      "sha256": "3ab7500095017e635b1b73809273efae1d1472a17149866df824b3ca6b0fe48b",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-open-after.state.json",
+      "sha256": "db0e775412e62b982853cda8234e4fc9d0874944ab922dbd9b192e8662125c2d",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-open-after.txt",
+      "sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-open-before.spans.json",
+      "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-open-before.state.json",
+      "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "evidence/ui-acceptance/2026-09-25/v3/snapshots/rig-tools-tui/rig-tools-tui-open-before.txt",
+      "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+      "kinds": [
+        "native-capture-support"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+      "sha256": "3c6c507594a5c7d1f38db901230a86274830e7cf20507cbf6679623fdc706c84",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+      "sha256": "2171a8d467d738360424cb9952526dc37d33a6b500bfa4775078e7ce139ac2ef",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+      "sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-state.test.ts",
+      "sha256": "c3f450b337d2342d3269a3a924068203ff4c899cde58229c302c57dd01b7a879",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-visibility.test.ts",
+      "sha256": "621971c440af1d31c974e31d233e492df4409b6fa44a9eb2064209b100a30229",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+      "sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+      "sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+      "sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+      "sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/presentation.test.ts",
+      "sha256": "5be38bb78974ae9584bac64e0165df3bea6f2ee1e93a2c2589ea49f794e7f8bf",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+      "sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/theme.test.ts",
+      "sha256": "24113f95122d3faf0457f5a8c2fc9b03f67214b856d8115384f2e572af6dd125",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/viewer-contract.test.ts",
+      "sha256": "cb1cf8cac50b5a4cf5b11eea0d530b3d9fb9f5b2c18529d7fd9898c7328b2249",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/test/policy.test.ts",
+      "sha256": "05d2e090ca472209210780f6ca7ccb258d530aa349e74e58da807064d8454d83",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+      "sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+      "sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+      "sha256": "27369397979248d96d861e6c7a5f0b26f521551284fae430ada81f71a807a8ec",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+      "sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/store.test.ts",
+      "sha256": "c2319e900c8852db72b4cc7a0563d3da874fa8c48e0ddaff73fc0db11b15f6e5",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+      "sha256": "4d43b03a51b17df017e7a3c3f3b4a8c5d51d1381fbefa131acae9d1a92bc33b8",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks.test.ts",
+      "sha256": "7a973d4615d733e4701d23ecc9d929ac9fa8489fd8836acf7a5e679fa8254255",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tui.test.ts",
+      "sha256": "d730596a97526a72775e05d3c65a7f1cde06d7eabd202d9510ea00b14bac6304",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/package.json",
+      "sha256": "43080385d4973266392d2f28c5070c486160376901c3e5e8dcffdcbddfea4894",
+      "kinds": [
+        "package-check-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+      "sha256": "6a079a590f7ec773d54987c973932a6a0467ec0646ac922f8fbf2b83701c67ff",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+      "sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+      "sha256": "38f50adc2fe85e321622435e3e935217712318b40091148d8064d29731ef7a0d",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+      "sha256": "5f6bf42824255d25a0859486e397412c354d91379d38c22739eca41ef69c7d93",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/active-subagent-row.behavior.test.ts",
+      "sha256": "e894cc8d800f67f3dd66461c2a7312ea99639f5a0fdf85e4ab39a849f6358645",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+      "sha256": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel.test.ts",
+      "sha256": "c7e5b2379174fb39ae14d19e1b3b0f12e4e6160f4768a8ab696aa72db3186c9a",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+      "sha256": "de58be33306f711228030ce294948d570bc57232cf2bef9ec954bb0d0a539b15",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+      "sha256": "8c9142e96754c586b7bfb5c5c75d090ed873417a0895eaec6af6d785888d78b6",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/subagents.test.ts",
+      "sha256": "d82fea2b668f5574d1f0f86b741e4dcb57bbab9fb30946bc2b8562468b602671",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts",
+      "sha256": "1faafc3f2e2f4df86cde77acb3675d0c04365a5d27aeb64c1b426ee87547aa87",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/vision.test.ts",
+      "sha256": "52e1e8e4f0b2c85cd6dba74a42730246cfa9b7d7db9bfcbc8590966318948b28",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+      "sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+      "kinds": [
+        "mapped-source"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+      "sha256": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/tui.test.ts",
+      "sha256": "ce9efff741157ab23feeac631fe27d32202ea6fd15dcbccaab4db6fe6968b180",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/scripts/bootstrap_behavior_test.py",
+      "sha256": "4ba0caf5f57bb08c33a557e636081bdc738e23727738d4049a8b88d94871684a",
+      "kinds": [
+        "input-or-validation"
+      ]
+    },
+    {
+      "path": "platforms/linux/ubuntu/computer-use/scripts/check-acceptance-evidence-self-test.py",
+      "sha256": "53d23ade6c434f9557314b65c95eb303e34cf7a5ebc353591883c0262c0477db",
+      "kinds": [
+        "input-or-validation"
+      ]
+    },
+    {
+      "path": "platforms/windows/wsl2/ubuntu/computer-use/plugins-v2/wsl-interop/test/powershell-host.test.ts",
+      "sha256": "538a34c33a827da35d06f32740ffeb04b1b5e2cafc4dd6fef8d5a98db8b8410c",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/windows/wsl2/ubuntu/computer-use/plugins-v2/wsl-interop/test/windows-ui.test.ts",
+      "sha256": "8d9f196e0fc92c850acd705ec9e4f0c6c3203cc05066eaa72327bd838cbfc1ce",
+      "kinds": [
+        "test-input"
+      ]
+    },
+    {
+      "path": "platforms/windows/wsl2/ubuntu/computer-use/scripts/self-test.py",
+      "sha256": "a5736108ce537d6b3a16066999fdafc1935869fa2f09d6f5740c2d2e237c43e2",
+      "kinds": [
+        "input-or-validation"
+      ]
+    }
+  ]
+}

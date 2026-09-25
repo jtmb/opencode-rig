@@ -8,6 +8,8 @@ test("catalog names exactly match every registered rig tool", async () => {
   const source = await readFile(new URL("../src/index.ts", import.meta.url), "utf8")
   const toolSource = source.split("await ctx.command.transform", 1)[0]
   const registered = [...toolSource.matchAll(/editor\.add\(\{\s*\n\s*name: "([a-z_]+)"/g)].map((match) => match[1]).sort()
+  if (/editor\.add\(createBasicMemoryRecoveryTool\(basicMemoryRecovery\)\)/.test(toolSource)) registered.push("basic_memory_recovery")
+  registered.sort()
   assert.deepEqual([...RIG_TOOL_NAMES].sort(), registered)
   assert.equal(new Set(RIG_TOOL_NAMES).size, RIG_TOOL_NAMES.length)
 })

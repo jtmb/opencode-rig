@@ -248,6 +248,7 @@ export type GateProgressReporter = (update: GateProgressUpdate) => void | Promis
 
 export type GateOptions = {
   qaCommand?: unknown
+  qaRuntime?: unknown
   documentationCommand?: unknown
   requiredPaths?: unknown
   timeoutMs?: unknown
@@ -518,7 +519,7 @@ export function createGitGateManager(rawOptions: GateOptions = {}, runner: GitRu
     const text = await readFile(path, "utf8").catch(() => fail(`missing repository gate configuration: ${path}`))
     const local = parseStrictJson(text)
     if (!local || typeof local !== "object" || Array.isArray(local)) fail("repository gate configuration must be a JSON object")
-    const unsupported = Object.keys(local).filter((key) => !["qaCommand", "documentationCommand", "requiredPaths", "timeoutMs", "tokenTtlMs"].includes(key))
+    const unsupported = Object.keys(local).filter((key) => !["qaCommand", "qaRuntime", "documentationCommand", "requiredPaths", "timeoutMs", "tokenTtlMs"].includes(key))
     if (unsupported.length) fail(`unsupported repository gate configuration keys: ${unsupported.join(", ")}`)
     const merged = { ...options, ...(local as GateOptions) }
     validateGateCommand(merged.qaCommand, "qaCommand")
@@ -587,7 +588,7 @@ export function createGitGateManager(rawOptions: GateOptions = {}, runner: GitRu
     ])
     const effectiveTokenTtl = tokenTtlFrom(stateOptions.tokenTtlMs)
     const operation = await operationState(root)
-    const config = JSON.stringify({ qaCommand: stateOptions.qaCommand, documentationCommand: stateOptions.documentationCommand, requiredPaths: normalizeRequiredPaths(stateOptions.requiredPaths), timeoutMs: stateOptions.timeoutMs ?? timeout, tokenTtlMs: effectiveTokenTtl })
+    const config = JSON.stringify({ qaCommand: stateOptions.qaCommand, qaRuntime: stateOptions.qaRuntime, documentationCommand: stateOptions.documentationCommand, requiredPaths: normalizeRequiredPaths(stateOptions.requiredPaths), timeoutMs: stateOptions.timeoutMs ?? timeout, tokenTtlMs: effectiveTokenTtl })
     const stagedPaths = stagedNames ? stagedNames.split("\0").filter(Boolean).sort() : []
     const status = await git(root, ["status", "--porcelain=v1", "-z"])
     const untrackedDigest = await hashUntracked(root, untracked)

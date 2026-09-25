@@ -37,17 +37,22 @@
       "effect": "ask"
     },
     {
+      "action": "wsl_browser_open",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "wsl_browser_act",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
       "action": "basic-memory_*",
       "resource": "*",
       "effect": "ask"
     },
     {
       "action": "github_*",
-      "resource": "*",
-      "effect": "ask"
-    },
-    {
-      "action": "playwright_*",
       "resource": "*",
       "effect": "ask"
     }

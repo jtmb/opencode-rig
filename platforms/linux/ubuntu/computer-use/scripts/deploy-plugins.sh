@@ -8,10 +8,14 @@ MODE_SET=0
 PLUGINS="both"
 CONFIG_DIR="${OPENCODE_V2_CONFIG_DIR:-${OPENCODE_V2_PILOT_DIR:-$HOME/.opencode-v2-pilot}/config}"
 CLI_CONFIG=""
+PLUGINS_SET=0
+CHAIN_SET=0
+RETIRE_INTEGRATED_BROWSER=0
 
 usage() {
   cat <<'EOF'
 Usage: deploy-plugins.sh [--config-dir DIR] [--cli-config FILE] [--plugins LIST] [--apply|--verify-only]
+       deploy-plugins.sh [--config-dir DIR] [--cli-config FILE] --retire-integrated-browser [--apply|--verify-only]
 
 Options:
   --config-dir DIR  v2 target directory (default: $OPENCODE_V2_CONFIG_DIR,
@@ -20,6 +24,8 @@ Options:
                      supports isolated profiles whose CLI uses a separate XDG root.
   --plugins LIST    both (default), all, server, cli, or a catalog package name
   --chain a/b,c/d   defaultChain written when adding codex-fallback
+  --retire-integrated-browser
+                    Remove only canonical integrated-browser entries from server and CLI configs
   --apply           Write changes
   --verify-only     Check only (default)
   -h, --help        Show this help
@@ -31,10 +37,11 @@ while [ "$#" -gt 0 ]; do
     --config-dir=*) CONFIG_DIR="${1#*=}"; shift ;;
     --cli-config) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; CLI_CONFIG="$2"; shift 2 ;;
     --cli-config=*) CLI_CONFIG="${1#*=}"; shift ;;
-    --plugins) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; PLUGINS="$2"; shift 2 ;;
-    --plugins=*) PLUGINS="${1#*=}"; shift ;;
-    --chain) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; CHAIN="$2"; shift 2 ;;
-    --chain=*) CHAIN="${1#*=}"; shift ;;
+    --plugins) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; PLUGINS="$2"; PLUGINS_SET=1; shift 2 ;;
+    --plugins=*) PLUGINS="${1#*=}"; PLUGINS_SET=1; shift ;;
+    --chain) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; CHAIN="$2"; CHAIN_SET=1; shift 2 ;;
+    --chain=*) CHAIN="${1#*=}"; CHAIN_SET=1; shift ;;
+    --retire-integrated-browser) [ "$RETIRE_INTEGRATED_BROWSER" -eq 0 ] || { usage >&2; exit 2; }; RETIRE_INTEGRATED_BROWSER=1; shift ;;
     --apply) [ "$MODE_SET" -eq 0 ] || { usage >&2; exit 2; }; APPLY=1; MODE_SET=1; shift ;;
     --verify-only) [ "$MODE_SET" -eq 0 ] || { usage >&2; exit 2; }; APPLY=0; MODE_SET=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -48,6 +55,7 @@ case "$PLUGINS" in
   both|all|server|cli) ;;
   ''|*[!a-z0-9-]*) echo "ERROR: --plugins must be both, all, server, cli, or a catalog package name" >&2; exit 2 ;;
 esac
+[ "$RETIRE_INTEGRATED_BROWSER" -eq 0 ] || { [ "$PLUGINS_SET" -eq 0 ] && [ "$CHAIN_SET" -eq 0 ] || { echo "ERROR: --retire-integrated-browser cannot be combined with --plugins or --chain" >&2; exit 2; }; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPUTER_USE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 V2_ROLE_CATALOG="${OPENCODE_V2_ROLE_CATALOG:-$COMPUTER_USE_ROOT/config/v2-plugin-roles.json}"
@@ -429,7 +437,7 @@ chain_options() {
   fi
 }
 
-ensure_rig_tools_permission() {
+ensure_rig_tools_cli_safety() {
   [ -n "${V2_SELECTED_FOR[rig-tools]+present}" ] || return 0
   local result
   result="$(python3 - "$CLI_CONFIG" "$APPLY" <<'PY'
@@ -485,12 +493,16 @@ try:
     session=data.get("session")
     if session is None: session={}; data["session"]=session
     if not isinstance(session, dict): raise ValueError("session is not an object")
-    current=session.get("permissions")
-    if current == "prompt": print("present"); raise SystemExit(0)
+    attention=data.get("attention")
+    if attention is None: attention={}; data["attention"]=attention
+    if not isinstance(attention, dict): raise ValueError("attention is not an object")
+    if session.get("permissions") == "prompt" and attention.get("sound") is False:
+        print("present"); raise SystemExit(0)
     if not applying:
         print("missing")
         raise SystemExit(0)
     session["permissions"]="prompt"
+    attention["sound"]=False
     directory=os.path.dirname(path) or "."; os.makedirs(directory, exist_ok=True)
     fd,tmp=tempfile.mkstemp(dir=directory, prefix=".deploy.", suffix=".tmp")
     try:
@@ -508,10 +520,10 @@ except (OSError, ValueError) as exc:
 PY
   )"
   case "$result" in
-    present) ok "CLI session.permissions is prompt for rig-tools gates" ;;
-    updated) ok "CLI session.permissions set to prompt for rig-tools gates" ;;
-    missing) fail "CLI session.permissions must be prompt when rig-tools is registered (rerun --plugins rig-tools --apply)"; PLUGIN_STATUS=1 ;;
-    *) fail "CLI config is malformed or cannot set session.permissions to prompt: $result"; PLUGIN_STATUS=1 ;;
+    present) ok "CLI prompt permissions and silent attention are enabled" ;;
+    updated) ok "CLI prompt permissions enabled and attention sounds disabled" ;;
+    missing) fail "CLI requires session.permissions=prompt and attention.sound=false when rig-tools is registered (rerun --plugins rig-tools --apply)"; PLUGIN_STATUS=1 ;;
+    *) fail "CLI config is malformed or cannot set safe rig-tools preferences: $result"; PLUGIN_STATUS=1 ;;
   esac
 }
 v2_select_name() {
@@ -562,11 +574,108 @@ v2_schema_for_role() {
 v2_options_for() {
   case "$1" in
     codex-fallback) chain_options ;;
-    orchestration-policy) printf '%s\n' '{"backgroundOnly":true,"maxConcurrent":3,"allowedAgents":["explore","general"],"allowedModels":["openai/gpt-5.6-luna#max","openai/gpt-5.6-sol#xhigh","openai/gpt-6-astra#max"],"memoryReserveMiB":512,"memoryPerAgentMiB":256}' ;;
+    orchestration-policy) printf '%s\n' '{"backgroundOnly":true,"maxConcurrent":10,"memoryReserveMiB":512,"memoryPerAgentMiB":256}' ;;
     source-control) printf '%s\n' '{"github":true,"whenEmpty":"show"}' ;;
     *) printf '%s\n' '{}' ;;
   esac
 }
+
+retire_integrated_browser() {
+  local result python_status state path count reported=0
+  if result="$(python3 - "$SERVER_CONFIG" "$CLI_CONFIG" "$COMPUTER_USE_ROOT/plugins-v2/integrated-browser" "$APPLY" "$SCRIPT_DIR/setup-opencode-jsonc.py" <<'PY'
+import importlib.util
+import json
+import os
+import stat
+import sys
+import tempfile
+
+server_path, cli_path, package_path, applying, parser_path = sys.argv[1:]
+target = os.path.realpath(package_path)
+spec = importlib.util.spec_from_file_location("opencode_jsonc", parser_path)
+if spec is None or spec.loader is None:
+    print("error\tJSONC parser is unavailable")
+    raise SystemExit(2)
+parser = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(parser)
+
+configs = []
+try:
+    for path in (server_path, cli_path):
+        if not os.path.exists(path):
+            configs.append((path, None, None, 0))
+            continue
+        metadata = os.lstat(path)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise ValueError(f"config is not a regular file: {path}")
+        data = parser.load_jsonc(path)
+        if not isinstance(data, dict):
+            raise ValueError(f"config is not an object: {path}")
+        entries = data.get("plugins")
+        if entries is None:
+            entries = []
+        if not isinstance(entries, list):
+            raise ValueError(f"plugins is not a list: {path}")
+        matches = [entry for entry in entries if isinstance(entry, dict) and entry.get("package") == target]
+        configs.append((path, data, entries, len(matches)))
+except (OSError, ValueError) as error:
+    print(f"error\t{error}")
+    raise SystemExit(2)
+
+drift = False
+for path, data, entries, count in configs:
+    if count == 0:
+        print(f"clean\t{path}\t0")
+        continue
+    if applying != "1":
+        print(f"drift\t{path}\t{count}")
+        drift = True
+        continue
+    data["plugins"] = [
+        entry for entry in entries
+        if not (isinstance(entry, dict) and entry.get("package") == target)
+    ]
+    directory = os.path.dirname(path) or "."
+    descriptor, temporary = tempfile.mkstemp(prefix=".retire-integrated-browser.", suffix=".tmp", dir=directory)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            json.dump(data, handle, indent=2)
+            handle.write("\n")
+        os.chmod(temporary, stat.S_IMODE(os.stat(path).st_mode))
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    print(f"retired\t{path}\t{count}")
+
+raise SystemExit(1 if drift else 0)
+PY
+  )"; then
+    python_status=0
+  else
+    python_status=$?
+  fi
+  while IFS=$'\t' read -r state path count; do
+    [ -n "$state" ] || continue
+    reported=1
+    case "$state" in
+      clean) ok "no canonical integrated-browser registration in $path" ;;
+      retired) ok "removed $count canonical integrated-browser registration(s) from $path" ;;
+      drift) fail "$count canonical integrated-browser registration(s) remain in $path (rerun with --apply to retire)"; PLUGIN_STATUS=1 ;;
+      error) fail "integrated-browser retirement could not be completed: $path"; PLUGIN_STATUS=1 ;;
+      *) fail "integrated-browser retirement returned an unexpected result: $state"; PLUGIN_STATUS=1 ;;
+    esac
+  done <<< "$result"
+  if [ "$python_status" -ne 0 ]; then
+    PLUGIN_STATUS=1
+    [ "$reported" -ne 0 ] || fail "integrated-browser retirement failed without a result ($result)"
+  fi
+}
+
+if [ "$RETIRE_INTEGRATED_BROWSER" -eq 1 ]; then
+  retire_integrated_browser
+  exit "$PLUGIN_STATUS"
+fi
 
 case "$PLUGINS" in
   both) v2_select_name codex-usage; v2_select_name codex-fallback ;;
@@ -595,7 +704,7 @@ if [ "$APPLY" -eq 1 ]; then
     done
   done
 fi
-ensure_rig_tools_permission
+ensure_rig_tools_cli_safety
 for name in "${V2_SELECTED_NAMES[@]}"; do
   for role in server cli; do
     key="$name:$role"

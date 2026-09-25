@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "capture_id": "rig-tools-hermes-hooks-panel",
+  "phase": "test-dispatch",
+  "event_id": "rig-tools-hermes-hooks-panel-test-dispatch-001",
+  "action": {
+    "type": "key",
+    "target": "hermes-hooks-refresh",
+    "input": "r"
+  },
+  "dispatch": {
+    "device": "keyboard",
+    "method": "pressKey",
+    "target": "hermes-hooks-refresh",
+    "input": "r"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "05268418-c4e3-472c-bfff-ebe8cda9e9b6",
+    "dispatch_id": "rig-tools-hermes-hooks-panel-test-dispatch-dispatch-001",
+    "transition_id": "rig-tools-hermes-hooks-panel-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "25390023286224",
+    "transition_monotonic_ns": "25390055231258"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-hermes-hooks-panel-interact-before",
+    "frame_sha256": "656f85b0b803c518e275ced1168c2e8574601bd6d3f9b2ec2f88f280deeaa7a7",
+    "spans_sha256": "1f849e8bc4146c3f81c12cf56103cb0c1e869da5173c038958c685734104fe2c",
+    "state_sha256": "b5e45806d92ece7986729d9fd85e850d5d2de96f7c371b7c4350b23e5778dbd0"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-hermes-hooks-panel-interact-after",
+    "frame_sha256": "656f85b0b803c518e275ced1168c2e8574601bd6d3f9b2ec2f88f280deeaa7a7",
+    "spans_sha256": "1f849e8bc4146c3f81c12cf56103cb0c1e869da5173c038958c685734104fe2c",
+    "state_sha256": "27281130d6c13a5d5eff55cfddfd7a8914b582848cae1e1a8d8cdbae491f47e0"
+  },
+  "result": {
+    "status": "passed",
+    "target": "hermes-hooks-refresh",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": false,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "e2df3ad8d2dac5c905adf98559875627a70ee7da28b727037fbaa069fc4121ae",
+  "native_event_sha256": "80b8f25eca3ee15840ba7d8416afacedbc0979d693743cce07cf8813dd26193f"
+}

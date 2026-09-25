@@ -135,9 +135,13 @@ verification output is cleaned up.
   browser-ready GLB assets.
 - [`desktop-control`](../desktop-control/README.md) and
   [`desktop-vision`](../desktop-vision/README.md) support interactive Blender.
-- [`browser-assistant`](../browser-assistant/README.md) and
-  [`browser-headless`](../browser-headless/README.md) govern visible and
-  explicitly requested headless checks of browser-based output.
+- [`browser-assistant`](../browser-assistant/README.md) governs visible WSL
+  checks through the user's Windows-default-browser `wsl_browser_*` UIA tools;
+  each operation uses an explicit window ID and supported mutations use fresh
+  preview tokens. If required evidence is unavailable, report a blocker rather
+  than falling back to desktop control or Chrome/Chromium.
+- [`browser-headless`](../browser-headless/README.md) governs isolated headless
+  Firefox checks only when the user explicitly requests them.
 - [`files-and-documents`](../files-and-documents/README.md) governs final local
   artifact organization.
 - The public Blender 5.0 manual documents

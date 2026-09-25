@@ -1,0 +1,11 @@
+bounded-command: available=7872MiB budget=3148MiB swap=787MiB node_heap=2046MiB
+Running as unit: run-r3ef9a33ff255418ea67a4d2706a19e21.scope; invocation ID: 5453ca91dda744feac5d83875b7500e7
+✔ rendered TodoPanel checks run in an isolated OpenTUI subprocess (922.361981ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1019.782005

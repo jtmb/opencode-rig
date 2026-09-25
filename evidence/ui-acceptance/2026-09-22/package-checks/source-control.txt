@@ -1,0 +1,54 @@
+
+> opencode-source-control-v2-local@0.1.0 check
+> npm run typecheck && npm test
+
+
+> opencode-source-control-v2-local@0.1.0 typecheck
+> bash ../../scripts/run-bounded-command.sh -- ../node_modules/.bin/tsc --noEmit
+
+bounded-command: available=5778MiB budget=2311MiB swap=577MiB node_heap=1502MiB
+Running as unit: run-rbd35d9e93d8c4e8f8d47bb64b2d714ef.scope; invocation ID: 951daeb0717640b38eab362b864ae45f
+
+> opencode-source-control-v2-local@0.1.0 test
+> bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts
+
+bounded-command: available=5768MiB budget=2307MiB swap=576MiB node_heap=1499MiB
+Running as unit: run-rbcea8341b7a44ffbbd77c94086af3b43.scope; invocation ID: 5168dfdedb304d64b11972deb9f50c57
+✔ normalizes, filters, and sorts working-tree changes (6.69662ms)
+✔ formats status letters and keeps hostile paths on one sanitized line (0.23702ms)
+✔ paginates first, middle, and last pages without rendering an unbounded list (0.297831ms)
+✔ handles exact boundaries, short lists, zero omitted files, and large counts (0.21459ms)
+✔ derives a bounded page size from viewport height and safely shrinks it (0.19761ms)
+✔ parses GitHub HTTPS and SSH remotes but rejects other hosts (1.70294ms)
+✔ reads the current branch and configured remote through injected git (0.28306ms)
+✔ finds the current-branch pull request and reads its check status (0.636611ms)
+✔ summarizes failing, pending, and unknown checks conservatively (0.22463ms)
+✔ builds an adaptive systemd stdio command (11.438232ms)
+✔ does not build an unbounded MCP command when memory is too low (1.364701ms)
+✔ derives the canonical wrapper path from the plugin source (0.38209ms)
+✔ forwards only non-secret GitHub profile settings through systemd (0.80171ms)
+✔ drops malformed systemd environment values (0.19328ms)
+✔ scales the MCP budget with available memory (0.75272ms)
+✔ honors the tighter cgroup and swap availability (0.14926ms)
+✔ refuses to launch when the adaptive budget is not viable (0.11939ms)
+✔ normalizes registration options and ignores invalid values (1.29261ms)
+✔ runtime options use defaults and clamp registration values (0.26714ms)
+✔ runtime options re-read live kv overrides (0.16168ms)
+✔ caps configured file previews at the compact native-sidebar bound (0.13509ms)
+✔ reposition migration minimizes the panel once (0.15097ms)
+✔ reads the sidebar order override with clamping (0.17456ms)
+✔ rendered Source Control checks run in an isolated OpenTUI subprocess (1349.254654ms)
+✔ keeps local changes and GitHub data in one refreshable state (8.634703ms)
+✔ keeps the last good local data when a later refresh fails (0.26388ms)
+✔ clears stale context data when the session directory changes (0.4082ms)
+✔ source control stays before the native footer so working directory remains last (0.84479ms)
+✔ change rows are compact one-line previews with fixed semantic counts (0.717241ms)
+✔ source-control uses a cohesive heading and visibly muted secondary text (0.27971ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2268.93259

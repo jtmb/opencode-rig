@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-teardown",
+  "event_id": "mapping-05-test-teardown-001",
+  "capture_id": "mapping-05",
+  "source_sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+  "capture_generator_sha256": "73d0c9d7b0768e2c4a4821d9090057dd77602e8ffe471c3a1f99cb75067d05dd",
+  "render_test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+  "native_capture_test_sha256": "de58be33306f711228030ce294948d570bc57232cf2bef9ec954bb0d0a539b15",
+  "native_capture_output_sha256": "8a1293b1b9c989b6ccc1da812542436fb8be51dae999f1c3a0634f647ff0c766",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "teardown",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "05268418-c4e3-472c-bfff-ebe8cda9e9b6",
+    "dispatch_id": "mapping-05-test-teardown-dispatch-001",
+    "transition_id": "mapping-05-test-teardown-transition-001",
+    "dispatch_monotonic_ns": "25388188096499",
+    "transition_monotonic_ns": "25388215155542"
+  },
+  "before": {
+    "snapshot_id": "mapping-05-interact-after",
+    "frame_sha256": "bcd34d3119a7605d9717d7b575038e956c6155b062621edcab5a4cbedd1da8e7",
+    "spans_sha256": "5971c891a833e0345f50cc90ce124dd3a2f8f2b5e514ede83d7b9374a22dff9e",
+    "state_sha256": "8b3b4818aed706fb7e4cf144d65fdb28d8f544270d7baa3ca01afa404b71e0a4"
+  },
+  "after": {
+    "snapshot_id": "mapping-05-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "605befc2f4e8d5fbc82ba8985204e1bf06a17facbc19435bd4fca5d283a32d7e",
+  "output": "evidence/ui-acceptance/2026-09-22/v3/event-output/mapping-05-test-teardown.json",
+  "output_sha256": "9e7059f72fb724f8a50743876b539cab9fc5644ba2e37e3f7a98713f38b2f22a",
+  "observed_at": "2026-09-25T07:45:16.228Z"
+}

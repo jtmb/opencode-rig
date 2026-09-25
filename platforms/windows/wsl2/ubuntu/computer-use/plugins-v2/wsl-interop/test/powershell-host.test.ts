@@ -28,7 +28,10 @@ test("rejects PATH candidates outside expected Windows installation roots", asyn
 
 test("PowerShell host exposes only fixed methods over standard input and output", async () => {
   const source = await readFile(new URL("../powershell/OpenRig.WindowsHost.ps1", import.meta.url), "utf8")
-  for (const method of ["status", "processes", "services", "path", "raw.parse", "windows.apps", "windows.find", "windows.act"]) {
+  for (const method of [
+    "status", "processes", "services", "path", "raw.parse", "windows.apps", "windows.find", "windows.act", "windows.screenshot",
+    "browser.open", "browser.windows", "browser.snapshot", "browser.screenshot", "browser.target", "browser.act",
+  ]) {
     assert.match(source, new RegExp(`"${method.replace(".", "\\.")}"`, "u"))
   }
   assert.match(source, /Console\]::In\.ReadLine/u)
@@ -38,5 +41,30 @@ test("PowerShell host exposes only fixed methods over standard input and output"
   assert.match(source, /Assert-SnapshotEqual/u)
   assert.match(source, /refuses truncated discovery/u)
   assert.match(source, /absolute local-drive path/u)
+  assert.match(source, /CopyFromScreen/u)
+  assert.match(source, /MemoryStream/u)
+  assert.match(source, /6291456/u)
+  const elementSnapshot = source.slice(source.indexOf("function Get-ElementSnapshot"), source.indexOf("\nfunction Get-ExpectedSnapshot"))
+  assert.match(elementSnapshot, /\[double\]::IsNaN/u)
+  assert.match(elementSnapshot, /\[double\]::IsInfinity/u)
+  assert.match(elementSnapshot, /10000000/u)
+  assert.match(elementSnapshot, /\$rectangle\.Width -le 0 -or \$rectangle\.Height -le 0/u)
+  assert.match(elementSnapshot, /offscreen = \[bool\]\$current\.IsOffscreen -or -not \$boundsValid/u)
+  assert.match(elementSnapshot, /x = 0\.0; y = 0\.0; width = 0\.0; height = 0\.0/u)
+  const uiAction = source.slice(source.indexOf("function Invoke-UiAction"), source.indexOf("\nwhile ($null -ne ($line"))
+  assert.match(uiAction, /if \(-not \$found\.items\[0\]\.enabled -or \$found\.items\[0\]\.offscreen\)/u)
+  assert.match(source, /Assert-BrowserParams/u)
+  assert.match(source, /UseShellExecute\s*=\s*\$true/u)
+  assert.match(source, /requestAccepted\s*=\s*\$true/u)
+  assert.match(source, /UrlAssociations/u)
+  assert.match(source, /public static extern bool PrintWindow/u)
+  assert.match(source, /DwmGetWindowAttribute/u)
+  assert.match(source, /processStartTimeTicks/u)
+  const screenshot = source.slice(source.indexOf("function Get-BrowserScreenshot"), source.indexOf("\nfunction Invoke-BrowserAction"))
+  assert.match(screenshot, /PrintWindow/u)
+  assert.match(screenshot, /Get-BrowserCaptureIdentity/u)
+  assert.match(screenshot, /Assert-BrowserWindowUnoccluded/u)
+  assert.match(screenshot, /Assert-BrowserCapturePixels/u)
+  assert.doesNotMatch(screenshot, /SetForegroundWindow|CopyFromScreen/u)
   assert.doesNotMatch(source, /TcpListener|HttpListener|NamedPipeServerStream|Invoke-Expression/u)
 })

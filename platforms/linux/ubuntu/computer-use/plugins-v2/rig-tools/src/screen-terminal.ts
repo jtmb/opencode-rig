@@ -10,6 +10,7 @@ const execute = promisify(execFile)
 const RESIZE_HELPER = fileURLToPath(new URL("../scripts/screen-resize.py", import.meta.url))
 const NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/
 const MAX_CAPTURE_BYTES = 262_144
+const KEY_SEQUENCE_DELAY_MS = 50
 const MAX_SESSIONS = 64
 const MAX_TOKENS = 64
 const TOKEN_TTL_MS = 60_000
@@ -239,6 +240,11 @@ export function inputPayload(intent: Extract<MutatingIntent, { action: "input" }
   } as const)[intent.key]
 }
 
+export function inputFrames(intent: Extract<MutatingIntent, { action: "input" }>) {
+  if (intent.kind === "key" && intent.key === "ctrl+x,b") return ["\u0018", "b"] as const
+  return [inputPayload(intent)] as const
+}
+
 export function createSystemScreenBackend(): ScreenBackend {
   return {
     async list() {
@@ -268,7 +274,13 @@ export function createSystemScreenBackend(): ScreenBackend {
       await execute("screen", args, { timeout: 10_000, maxBuffer: 262_144, encoding: "utf8", shell: false, env })
     },
     async input(intent) {
-      await command(["-S", intent.name, "-p", "0", "-X", "stuff", inputPayload(intent)])
+      const frames = inputFrames(intent)
+      for (const [index, frame] of frames.entries()) {
+        await command(["-S", intent.name, "-p", "0", "-X", "stuff", frame])
+        if (index < frames.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, KEY_SEQUENCE_DELAY_MS))
+        }
+      }
     },
     async resize(intent) {
       await execute("python3", [RESIZE_HELPER, intent.name, String(intent.columns), String(intent.rows)], {

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+  "test_sha256": "8c9142e96754c586b7bfb5c5c75d090ed873417a0895eaec6af6d785888d78b6",
+  "source_sha256": "38f50adc2fe85e321622435e3e935217712318b40091148d8064d29731ef7a0d",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "/tmp/opencode/node-v26.4.0-linux-x64/bin/node node@26.4.0; npm CLI /tmp/opencode/node-v26.4.0-linux-x64/lib/node_modules/npm/bin/npm-cli.js npm@11.17.0; run-bounded-command.sh",
+  "command": "PATH=/tmp/opencode/node-v26.4.0-linux-x64/bin:$PATH bash ../../scripts/run-bounded-command.sh -- /tmp/opencode/node-v26.4.0-linux-x64/bin/node --experimental-strip-types --test test/rendered.test.ts",
+  "observed_at": "2026-09-22T21:35:58.052Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/v3/execution-output/mapping-11-render.txt",
+  "output_sha256": "88783de66390da19fd12b3cf50ae6ab54a29368ebc23d1863188d4bde6975fda"
+}

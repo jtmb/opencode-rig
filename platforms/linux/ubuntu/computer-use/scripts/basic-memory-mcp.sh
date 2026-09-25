@@ -159,24 +159,32 @@ if [ "$PROFILE" = "wsl2" ]; then
   if user_systemd_available; then
     LIMITER="systemd-run"
   elif [ -n "$PRLIMIT" ]; then
-    LIMITER="prlimit"
+    LIMITER="prlimit-rss-tree"
   else
     fail "no memory limiter available (needs systemd-run --user with systemctl --user, or prlimit)"
   fi
   run_limited() {
-    if [ "$LIMITER" = "systemd-run" ]; then
-      "$SYSTEMD_RUN" --user --pipe --wait --collect --service-type=exec \
-        "--working-directory=$PWD" "--property=MemoryMax=$BUDGET_BYTES" \
-        "--property=MemorySwapMax=$SWAP_BUDGET_BYTES" -- \
-        /usr/bin/env -i "${environment[@]}" "$@"
-    fi
-    /usr/bin/env -i "${environment[@]}" "$PRLIMIT" "--as=$BUDGET_BYTES" -- "$@"
+    "$SCRIPT_DIR/run-bounded-command.sh" \
+      --memory-fraction "$MEMORY_FRACTION" \
+      --swap-fraction "$SWAP_FRACTION" \
+      -- /usr/bin/env -i "${environment[@]}" "$@"
+  }
+  run_persistent() {
+    "$SCRIPT_DIR/run-bounded-command.sh" \
+      --memory-fraction "$MEMORY_FRACTION" \
+      --swap-fraction "$SWAP_FRACTION" \
+      --persistent -- /usr/bin/env -i "${environment[@]}" "$@"
   }
   if [ "$PROVISION" -eq 1 ]; then
     run_limited "$UVX" --prerelease=allow --from "basic-memory==$VERSION" basic-memory --version
     if ! python3 "$RUNTIME" basic-project --config "$MCP_ROOT/home/config.json" --notes "$MCP_ROOT/notes" --project "$PROJECT" --quiet; then
-      run_limited "$UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" \
-        basic-memory project add "$PROJECT" "$MCP_ROOT/notes" --local --default
+      if python3 "$RUNTIME" basic-project --config "$MCP_ROOT/home/config.json" --notes "$MCP_ROOT/notes" --project "$PROJECT" --allow-non-default --quiet; then
+        run_limited "$UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" \
+          basic-memory project default "$PROJECT" --local
+      else
+        run_limited "$UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" \
+          basic-memory project add "$PROJECT" "$MCP_ROOT/notes" --local --default
+      fi
     fi
   fi
   if [ "$VERIFY_ONLY" -eq 1 ]; then
@@ -194,7 +202,7 @@ if [ "$PROFILE" = "wsl2" ]; then
     printf 'swap_budget_bytes=%s\n' "$SWAP_BUDGET_BYTES"
     exit 0
   fi
-  run_limited "$UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" basic-memory mcp --project "$PROJECT"
+  run_persistent "$UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" basic-memory mcp --project "$PROJECT"
   exit $?
 fi
 
@@ -216,8 +224,13 @@ if [ "$PROVISION" -eq 1 ]; then
   python3 "$RUNTIME" prepare --profile native --apply --quiet
   /usr/bin/env -i "${environment[@]}" "$NATIVE_UVX" --prerelease=allow --from "basic-memory==$VERSION" basic-memory --version
   if ! python3 "$RUNTIME" basic-project --config "$NATIVE_CONFIG/config.json" --notes "$NATIVE_NOTES" --project "$PROJECT" --quiet; then
-    /usr/bin/env -i "${environment[@]}" "$NATIVE_UVX" --offline --prerelease=allow \
-      --from "basic-memory==$VERSION" basic-memory project add "$PROJECT" "$NATIVE_NOTES" --local --default
+    if python3 "$RUNTIME" basic-project --config "$NATIVE_CONFIG/config.json" --notes "$NATIVE_NOTES" --project "$PROJECT" --allow-non-default --quiet; then
+      /usr/bin/env -i "${environment[@]}" "$NATIVE_UVX" --offline --prerelease=allow \
+        --from "basic-memory==$VERSION" basic-memory project default "$PROJECT" --local
+    else
+      /usr/bin/env -i "${environment[@]}" "$NATIVE_UVX" --offline --prerelease=allow \
+        --from "basic-memory==$VERSION" basic-memory project add "$PROJECT" "$NATIVE_NOTES" --local --default
+    fi
   fi
   python3 "$RUNTIME" basic-project --config "$NATIVE_CONFIG/config.json" --notes "$NATIVE_NOTES" --project "$PROJECT" --quiet
   exit $?

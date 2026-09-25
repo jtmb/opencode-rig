@@ -1,0 +1,95 @@
+
+> opencode-file-manager-v2-local@0.1.0 check
+> npm run typecheck && npm test
+
+
+> opencode-file-manager-v2-local@0.1.0 typecheck
+> bash ../../scripts/run-bounded-command.sh -- ../node_modules/.bin/tsc --noEmit
+
+bounded-command: available=5806MiB budget=2322MiB swap=580MiB node_heap=1509MiB
+Running as unit: run-r5f42fda7311f448bade3437467e8dec5.scope; invocation ID: 944e8fd333b542ec9c329008c1446890
+
+> opencode-file-manager-v2-local@0.1.0 test
+> bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts
+
+bounded-command: available=5818MiB budget=2327MiB swap=581MiB node_heap=1512MiB
+Running as unit: run-r478b5fec8328444ab26bdb796e659d13.scope; invocation ID: 8a3113ba5b9e4b1098f8d1f01bdf775d
+✔ Explorer leaves the native /editor command unclaimed (1.14993ms)
+✔ Explorer uses the unclaimed default binding and accepts a nonempty override (0.179409ms)
+✔ only the newest request generation can publish (0.712321ms)
+✔ invalidating a key rejects an in-flight result (0.13846ms)
+✔ navigator identity uses the active session directory basename (0.84032ms)
+✔ navigator identity has no basename when the active directory is unavailable (0.1325ms)
+✔ navigator icon is one portable terminal cell (0.191401ms)
+✔ installer creates the exact managed tree and rejects every extra before writes (1399.101713ms)
+✔ strict JSON and manifest validators reject unsafe or colliding definitions without mutation (2.31875ms)
+✔ target and source safety reject symlinks and hash tampering without touching sentinels (218.421586ms)
+✔ normalizes relative paths to posix form (0.89868ms)
+✔ protects .git paths (0.18772ms)
+✔ checks containment with path resolution (0.17953ms)
+✔ sorts directories before files and then by name (6.000151ms)
+✔ adapts bounded PathGuard listings without retaining absolute paths (0.236531ms)
+✔ filters ignored entries unless requested (0.15606ms)
+✔ flattens the tree by expansion state (0.34335ms)
+✔ maps the approved editor filetype matrix (0.17758ms)
+✔ detects dirty state, binary content, and oversize files (0.25085ms)
+✔ normalizes quick-open results and drops protected paths (0.46562ms)
+✔ wraps navigation indices (0.15128ms)
+✔ finds parent directories (0.10143ms)
+✔ the first left activation is consumed (0.79986ms)
+✔ a missing button counts as the primary button (0.129ms)
+✔ a repeated activation of the same event is ignored (0.169155ms)
+✔ non-primary buttons are marked but never act (0.1689ms)
+✔ preventDefault is left to the caller (0.14481ms)
+✔ editor clicks map to bounded rows and columns (0.672311ms)
+✔ editor clicks ignore non-primary buttons (0.16402ms)
+✔ preserves bounded UTF-16 highlight offsets by default and in character mode (1.342481ms)
+✔ converts explicit UTF-8 byte ranges to UTF-16 offsets (0.27873ms)
+✔ clamps malformed highlight ranges to finite UTF-16 bounds (0.3065ms)
+✔ manifest covers managed languages while OpenTUI languages stay bundled (0.57276ms)
+✔ real tree-sitter worker highlights bundled content when native support is available (135.327928ms)
+✔ tree labels are safe, single-line, and bounded by terminal cells (1.05214ms)
+✔ tree row structure includes a bounded explicit selected marker (0.36698ms)
+✔ tab structure contributes visible bounded padding to every hitbox (0.27783ms)
+✔ filetype matrix covers the editor's approved extensions (0.31481ms)
+✔ rendered OpenTUI checks contain native stderr in a subprocess (2037.268454ms)
+✔ normalizes safe diff paths and rejects protected paths (1.515671ms)
+✔ merges physical files with virtual changed and deleted paths (6.065591ms)
+✔ navigates visible files and identifies source and diff content (0.24884ms)
+✔ reports hunk rows and source labels (0.15809ms)
+✔ uses full-width unified rendering for one-sided diffs (0.1861ms)
+✔ canonicalizes a symlinked root and rejects lexical escapes (9.915293ms)
+✔ rejects symlink escapes and symlinks into .git (4.106121ms)
+✔ lists local directories with directories first and excludes .git (10.030772ms)
+✔ directory listing omits inside and outside symlink entries without reading outside data (16.322804ms)
+✔ directory listing refuses special files (4.011241ms)
+✔ directory listing enforces entry, name, aggregate text, path, and depth bounds (363.247171ms)
+✔ directory listing fails closed when an entry disappears during enumeration (71.108256ms)
+✔ directory listing fails closed when stable metadata changes during enumeration (122.163457ms)
+✔ rejects directories, binary bytes, invalid UTF-8, and oversized reads (15.972563ms)
+✔ writes atomically, preserves mode bits, and leaves no temporary file (6.801352ms)
+✔ refuses to overwrite an externally changed disk file (4.561387ms)
+✔ parses bounded editor commands without shell interpolation (0.80815ms)
+✔ normalizes only safe relative paths (0.17049ms)
+✔ openTab adds and activates, and re-opening activates without duplicating (1.436891ms)
+✔ updateTab and markSaved track the dirty baseline (0.22689ms)
+✔ revisions keep a newer edit dirty when an older save completes (0.27775ms)
+✔ dirty guards include the path and content revision (0.21979ms)
+✔ replaceTab refreshes an existing tab without changing the closed stack (0.19657ms)
+✔ closeTab selects the neighbor and records the closed path (0.26308ms)
+✔ takeClosed pops the most recent or a named path (0.2031ms)
+✔ nextTab wraps in both directions (0.18785ms)
+✔ persistence round-trips paths and active (0.513191ms)
+✔ restorePaths tolerates malformed input and drops duplicates (0.35329ms)
+✔ activateTab ignores unknown paths (0.16827ms)
+✔ normalizes a partial theme before panel colors are read (1.17672ms)
+✔ Explorer opens fullscreen and renders repository source and VCS diffs (0.74591ms)
+✔ Explorer exposes native-style review controls without replacing guarded editing (0.28541ms)
+ℹ tests 71
+ℹ suites 0
+ℹ pass 71
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6040.845765

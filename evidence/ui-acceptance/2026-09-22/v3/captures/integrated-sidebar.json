@@ -1,0 +1,241 @@
+{
+  "version": 2,
+  "source_sha256": "e2b67a7c337f565b0c13f1f9371ceb4f71fc483f04d5e53715a4d333afd7e225",
+  "capture_generator": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+    "sha256": "de004ad8bd55316daaf82cd9460758bbb7060b487d37db7afe132677d2a46781"
+  },
+  "render_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/composed-rendered-fixture.ts",
+    "sha256": "f1008cfc7c16b091ab30a11fc7f947a23bf7498d215a73c2653f9441b5849f6a"
+  },
+  "native_capture_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+    "sha256": "94cd514fa1d6b4fe500b66736aa7dd244b692a8b0db53baaba97ed0e93e941eb"
+  },
+  "native_capture_output": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/native-output/integrated-sidebar.json",
+    "sha256": "7143782dc4cfc72bef3e80df35f65e8634af32568c762fe3beb611bd407f4a47",
+    "encoding": "utf-8",
+    "format": "native-opentui-capture-v1"
+  },
+  "runtime": {
+    "id": "node-26.4.0-npm-11.17.0",
+    "name": "node",
+    "version": "26.4.0",
+    "identity": "node@26.4.0",
+    "provisioning": "external-checksum",
+    "executable": "/tmp/opencode/node-v26.4.0-linux-x64/bin/node",
+    "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "package_manager": "npm",
+    "package_manager_version": "11.17.0",
+    "package_manager_identity": "npm@11.17.0",
+    "package_manager_executable": "/tmp/opencode/node-v26.4.0-linux-x64/lib/node_modules/npm/bin/npm-cli.js",
+    "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+  },
+  "renderer": {
+    "id": "opentui-0.5.11",
+    "name": "OpenTUI",
+    "version": "0.5.11",
+    "identity": "OpenTUI@0.5.11"
+  },
+  "observed_at": "2026-09-22T21:35:58.052Z",
+  "max_age_days": 1,
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "native_snapshots": [
+    {
+      "id": "integrated-sidebar-open-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-open-before.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-open-before.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-open-before.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-open-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-open-after.txt",
+        "sha256": "1a9d1b3c40d80f1d60a510cda6b32b9b81bbd297e5c480d2b5c6a4dca4af4226",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-open-after.spans.json",
+        "sha256": "c4d0ff4cf6f1196efcf6db842dd07427179de38034970e8be88323e5f5038c59",
+        "semantic_sha256": "752db67f33b1e8ffab19814f37a0b3bd914c0dffda5413aee3a5c39e26358765",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-open-after.state.json",
+        "sha256": "e6cf18d8c68e9c622901e524e678cf81f1fe51e85b03a1175c352a8561cc967c",
+        "semantic_sha256": "a6c56f5d073bc28b3fc11242386603702fd42f6532a683be0972df79d6a00e2f",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-interact-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-before.txt",
+        "sha256": "1a9d1b3c40d80f1d60a510cda6b32b9b81bbd297e5c480d2b5c6a4dca4af4226",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-before.spans.json",
+        "sha256": "c4d0ff4cf6f1196efcf6db842dd07427179de38034970e8be88323e5f5038c59",
+        "semantic_sha256": "752db67f33b1e8ffab19814f37a0b3bd914c0dffda5413aee3a5c39e26358765",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-before.state.json",
+        "sha256": "e6cf18d8c68e9c622901e524e678cf81f1fe51e85b03a1175c352a8561cc967c",
+        "semantic_sha256": "a6c56f5d073bc28b3fc11242386603702fd42f6532a683be0972df79d6a00e2f",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-interact-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.txt",
+        "sha256": "7d2b6423b424c50fd15e2666bed4dbf2ac643160b1b01af55bb79283624fe214",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.spans.json",
+        "sha256": "ff3ea1814b190c6ac938ecf6e4415e9b9632a86881a922ca1d282a4297460254",
+        "semantic_sha256": "30ce3eadcef21dde331eb9b51daa82472b73b6e019f3b4be42de00e017bdb1b6",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.state.json",
+        "sha256": "a3a0871dbe248e3ded2436d861bdee8111bbded3fec96ca30cefb521a16b6116",
+        "semantic_sha256": "580fb0cb0670321d8b2a08f65e7a077b5132cde419025b927321e605da89d223",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-close-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-close-after.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-close-after.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-close-after.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    }
+  ],
+  "native_frame": {
+    "snapshot_id": "integrated-sidebar-interact-after",
+    "character_output": {
+      "path": "evidence/ui-acceptance/2026-09-22/v3/characters/integrated-sidebar.txt",
+      "sha256": "7d2b6423b424c50fd15e2666bed4dbf2ac643160b1b01af55bb79283624fe214",
+      "encoding": "utf-8"
+    },
+    "semantic_spans": {
+      "path": "evidence/ui-acceptance/2026-09-22/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.spans.json",
+      "sha256": "ff3ea1814b190c6ac938ecf6e4415e9b9632a86881a922ca1d282a4297460254",
+      "semantic_sha256": "30ce3eadcef21dde331eb9b51daa82472b73b6e019f3b4be42de00e017bdb1b6",
+      "encoding": "utf-8",
+      "format": "opentui-captureSpans-v1"
+    },
+    "frame_sha256": "7d2b6423b424c50fd15e2666bed4dbf2ac643160b1b01af55bb79283624fe214",
+    "spans_sha256": "30ce3eadcef21dde331eb9b51daa82472b73b6e019f3b4be42de00e017bdb1b6"
+  },
+  "character_output": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/characters/integrated-sidebar.txt",
+    "sha256": "7d2b6423b424c50fd15e2666bed4dbf2ac643160b1b01af55bb79283624fe214",
+    "encoding": "utf-8"
+  },
+  "visual_image": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/images/integrated-sidebar.png",
+    "sha256": "2e9d8c8156d6c37cee9ceeae02e60820c1e8f2e64b93107d159e5a7853ecf339",
+    "mime": "image/png",
+    "width": 840,
+    "height": 480,
+    "derived_from": {
+      "snapshot_id": "integrated-sidebar-interact-after",
+      "frame_sha256": "7d2b6423b424c50fd15e2666bed4dbf2ac643160b1b01af55bb79283624fe214",
+      "spans_sha256": "30ce3eadcef21dde331eb9b51daa82472b73b6e019f3b4be42de00e017bdb1b6",
+      "renderer": "opentui-cell-visualization-v1",
+      "cell_width": 6,
+      "cell_height": 8
+    }
+  },
+  "layout_assertions": [
+    {
+      "id": "visible_rows",
+      "operator": "<=",
+      "limit": 60
+    },
+    {
+      "id": "max_line_columns",
+      "operator": "<=",
+      "limit": 140
+    },
+    {
+      "id": "reachable_sections",
+      "operator": "==",
+      "limit": 5,
+      "targets": [
+        "- Active Subagents",
+        "+ Todo",
+        "- Source Control",
+        "+ Provider Usage",
+        "CAPTURE_FOOTER"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "phase": "open",
+      "event_id": "integrated-sidebar-open-001",
+      "record": "evidence/ui-acceptance/2026-09-22/v3/events/integrated-sidebar-open.json",
+      "record_sha256": "9f601c9284f07785b0c4bc699625221a6ac350cec1921de762c58351bb510158"
+    },
+    {
+      "phase": "interact",
+      "event_id": "integrated-sidebar-interact-001",
+      "record": "evidence/ui-acceptance/2026-09-22/v3/events/integrated-sidebar-interact.json",
+      "record_sha256": "88da65918ab478f3ad0e20cce6b2ac789cdcf6757a850f5f4ac4635b1c8d3db8"
+    },
+    {
+      "phase": "close",
+      "event_id": "integrated-sidebar-close-001",
+      "record": "evidence/ui-acceptance/2026-09-22/v3/events/integrated-sidebar-close.json",
+      "record_sha256": "1c4511b053b4fbe7dcc6de2d2f88d0daea9e78da4ccbb2d9b7c5e35903dd526b"
+    }
+  ]
+}

@@ -49,7 +49,8 @@ with tempfile.TemporaryDirectory(prefix="opencode-launcher-test-", dir=TMP_ROOT)
         "  '--version') printf 'opencode v2.test\\n' ;;\n"
         "  'service start') printf 'http://127.0.0.1:49374\\n' ;;\n"
         "  'service status') printf 'http://127.0.0.1:49374\\n' ;;\n"
-        "  'pair --url http://127.0.0.1:49374') printf 'Username opencode\\nPassword test-only\\n' ;;\n"
+        "  'api get /api/info') printf '{\"version\":\"v2.test\"}\\n' ;;\n"
+        "  'pair --url http://127.0.0.1:49374') printf 'pair complete\\n' ;;\n"
         "esac\n",
         encoding="utf-8",
     )
@@ -73,6 +74,32 @@ with tempfile.TemporaryDirectory(prefix="opencode-launcher-test-", dir=TMP_ROOT)
     env.pop("OPENCODE_DISABLE_PROJECT_CONFIG", None)
     env.pop("RIG_PARSERS_DIR", None)
 
+    for args, expected in (
+        (["service", "status"], "http://127.0.0.1:49374\n"),
+        (["api", "get", "/api/info"], '{"version":"v2.test"}\n'),
+    ):
+        probe_pilot = root / f"pilot-{args[0]}"
+        probe_env = dict(env, OPENCODE_V2_PILOT_DIR=str(probe_pilot))
+        calls.write_text("", encoding="utf-8")
+        probe = run(args, probe_env)
+        assert probe.stdout == expected
+        assert not probe_pilot.exists(), f"{args} created pilot state"
+        assert calls.read_text(encoding="utf-8").splitlines() == [" ".join(args)]
+
+    start_pilot = root / "pilot-start"
+    start_env = dict(env, OPENCODE_V2_PILOT_DIR=str(start_pilot))
+    calls.write_text("", encoding="utf-8")
+    started = run(["service", "start"], start_env)
+    assert started.stdout == "http://127.0.0.1:49374\n"
+    assert calls.read_text(encoding="utf-8").splitlines() == ["service start"]
+    assert all(
+        (start_pilot / name).is_dir()
+        for name in ("config", "data", "state", "cache")
+    )
+
+    calls.write_text("", encoding="utf-8")
+    project_env.write_text("", encoding="utf-8")
+    parser_env.write_text("", encoding="utf-8")
     version = run(["--version"], env)
     assert version.stdout == "opencode v2.test\n"
     assert calls.read_text(encoding="utf-8").splitlines() == ["--version"]
@@ -80,8 +107,14 @@ with tempfile.TemporaryDirectory(prefix="opencode-launcher-test-", dir=TMP_ROOT)
     assert parser_env.read_text(encoding="utf-8").splitlines() == [str(root / "pilot/cache/opencode-rig/parsers")]
 
     calls.write_text("", encoding="utf-8")
-    web = run(["web"], env)
-    assert "Username opencode" in web.stdout
+    web_pilot = root / "pilot-web"
+    web_env = dict(env, OPENCODE_V2_PILOT_DIR=str(web_pilot))
+    web = run(["web"], web_env)
+    assert web.stdout == "pair complete\n"
+    assert all(
+        (web_pilot / name).is_dir()
+        for name in ("config", "data", "state", "cache")
+    )
     assert opened.read_text(encoding="utf-8").strip() == "http://127.0.0.1:49374"
     assert calls.read_text(encoding="utf-8").splitlines() == [
         "service start",
@@ -90,7 +123,7 @@ with tempfile.TemporaryDirectory(prefix="opencode-launcher-test-", dir=TMP_ROOT)
 
     calls.write_text("", encoding="utf-8")
     opened.unlink()
-    run(["web", "--no-open"], env)
+    run(["web", "--no-open"], web_env)
     assert not opened.exists()
     assert calls.read_text(encoding="utf-8").splitlines() == [
         "service start",
@@ -102,7 +135,7 @@ with tempfile.TemporaryDirectory(prefix="opencode-launcher-test-", dir=TMP_ROOT)
     project_env.write_text("", encoding="utf-8")
     calls.write_text("", encoding="utf-8")
     run(["--version"], explicit)
-    run(["web", "--no-open"], explicit)
+    run(["web", "--no-open"], dict(explicit, OPENCODE_V2_PILOT_DIR=str(web_pilot)))
     assert project_env.read_text(encoding="utf-8").splitlines() == ["1", "1", "1"]
 
     calls.write_text("", encoding="utf-8")

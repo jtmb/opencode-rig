@@ -21,13 +21,17 @@ commands, skills, and instruction runtime.
 
 ## What the adapter does
 
-The adapter registers with the v2 server API as plugin id `ponytail`. It loads
-the package from `options.packageRoot`, or from
-`$HOME/.local/opt/opencode-ponytail/current/node_modules/@dietrichgebert/ponytail`
-when no option is supplied. It requires the exact official package name,
-bounded regular non-symlink files, valid command/skill frontmatter, and the
-three expected CommonJS runtime functions. It rejects malformed, oversized,
-lookalike, and symlinked package inputs before registration.
+The adapter registers with the v2 server API as plugin id `ponytail`. Its
+default resolver asks Node to resolve `@dietrichgebert/ponytail` from the
+adapter's own module and walks to that package's manifest. It never consults a
+developer's `HOME` or a separate install root. The resolver and loader require
+the exact official `4.10.0` identity, bounded regular non-symlink files, the
+published six commands and six skills, valid frontmatter, and the three
+expected CommonJS runtime functions. They reject malformed, oversized,
+lookalike, wrong-version, lifecycle-script, and symlinked package inputs before
+registration. An absolute `options.packageRoot` override remains only for
+disposable tests or controlled compatibility fixtures and is subject to the
+same validation.
 
 It maps the package's current Markdown commands to `ctx.command.transform`,
 skills to `ctx.skill.transform`, and instructions to the v2 `context` and
@@ -56,19 +60,25 @@ current commands are `/ponytail-review`, `/ponytail-audit`, `/ponytail-debt`,
 
 ## Install and verify
 
-Use the read-only-by-default setup script; its full safety contract, timer,
-rollback, disable, and uninstall commands are documented in
-[`setup-ponytail-plugin.md`](../scripts/setup-ponytail-plugin.md):
+Use the repository-owned dependency setup; verification is read-only and the
+only install path uses the checked-in lockfile with lifecycle scripts disabled:
 
 ```bash
-./platforms/linux/ubuntu/computer-use/scripts/setup-ponytail-plugin.sh --verify-only
-./platforms/linux/ubuntu/computer-use/scripts/setup-ponytail-plugin.sh --apply
+./platforms/linux/ubuntu/computer-use/scripts/setup-plugin-dependencies.sh --verify-only
+./platforms/linux/ubuntu/computer-use/scripts/setup-plugin-dependencies.sh --apply
 ```
 
-`--apply` stages the exact npm version in a versioned directory, installs with
-`--ignore-scripts --no-audit --no-fund`, runs the private mock-provider probe,
-atomically switches the `current` symlink, and restarts/verifies OpenCode. A
-failed activation restores the prior package link and config backup.
+Native Ubuntu and WSL2 bootstrap invoke this helper before role deployment.
+`deploy-plugins.sh --plugins all` owns the single catalog registration, and the
+portable project `opencode.json` owns one direct repository registration.
+There is no floating update lookup, user timer, separate version store, or
+rollback symlink to override the canonical dependency.
+
+The focused package check is also available:
+
+```bash
+npm --prefix platforms/linux/ubuntu/computer-use/plugins-v2/ponytail-adapter run verify:package
+```
 
 The runtime probe uses only a temporary loopback mock provider and an isolated
 OpenCode server. It verifies six commands, six skills, `ultra` and `off` mode

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "package": "opencode-codex-usage-v2-local",
+  "surface": "provider-usage-sidebar",
+  "sidebar": {
+    "rowsPerProvider": 1,
+    "fieldOrder": ["provider", "measurement", "status"],
+    "wrap": false,
+    "overflow": "truncate",
+    "updatedTimestamp": "hidden",
+    "themeRoles": {
+      "provider": "text.default",
+      "measurement": "text.subdued",
+      "status": {
+        "READY": "text.feedback.success.default",
+        "EMPTY": "text.feedback.error.default",
+        "COOLING": "text.subdued",
+        "OFFLINE": "text.subdued",
+        "STALE": "text.subdued"
+      }
+    }
+  },
+  "measurement": {
+    "source": "provider.usage.snapshot.rows[].usage",
+    "sourcePrecedence": [
+      {
+        "source": "current-verified-adapter-value",
+        "priority": 1
+      },
+      {
+        "source": "explicitly-retained-last-good-value",
+        "condition": "status-is-STALE",
+        "priority": 2
+      }
+    ],
+    "fallback": "omit-when-missing-or-unverified",
+    "remainingRatioAffectsColor": false
+  },
+  "details": {
+    "command": "/provider-usage",
+    "contains": [
+      "full-provider-details",
+      "diagnostics",
+      "reset-times",
+      "updated-timestamp"
+    ]
+  }
+}

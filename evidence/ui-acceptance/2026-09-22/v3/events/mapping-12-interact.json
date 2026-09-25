@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "phase": "interact",
+  "event_id": "mapping-12-interact-001",
+  "capture_id": "mapping-12",
+  "source_sha256": "34a5ae7bc0ee376596c3696884c1459db0c13fc9affa2f9c674cc95c16982c50",
+  "capture_generator_sha256": "de004ad8bd55316daaf82cd9460758bbb7060b487d37db7afe132677d2a46781",
+  "render_test_sha256": "ce9efff741157ab23feeac631fe27d32202ea6fd15dcbccaab4db6fe6968b180",
+  "native_capture_test_sha256": "94cd514fa1d6b4fe500b66736aa7dd244b692a8b0db53baaba97ed0e93e941eb",
+  "native_capture_output_sha256": "1c67bc1551b2d920e4b14c6ad2fc6375cb5f6386451ee0c2bee9c6e1d7c4085e",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "click",
+    "target": "source-control-change:native-preview-file-0.tsx",
+    "input": {
+      "x": 5,
+      "y": 2
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "source-control-change:native-preview-file-0.tsx",
+    "input": {
+      "x": 5,
+      "y": 2
+    }
+  },
+  "before": {
+    "snapshot_id": "mapping-12-interact-before",
+    "frame_sha256": "e1d529803e20fa00a1c985f645bbdcadc8ab657360d00ba1cae74cc99e765a55",
+    "spans_sha256": "194e18abc362822aa97cdeed1855fe053d29fee69ee5b76dbb22aa0fe57cf882",
+    "state_sha256": "215b7a46831015ad4e35ce7d2e18a83693ac40cd1217a10b0da16bb0146dd115"
+  },
+  "after": {
+    "snapshot_id": "mapping-12-interact-after",
+    "frame_sha256": "e1d529803e20fa00a1c985f645bbdcadc8ab657360d00ba1cae74cc99e765a55",
+    "spans_sha256": "194e18abc362822aa97cdeed1855fe053d29fee69ee5b76dbb22aa0fe57cf882",
+    "state_sha256": "47eb19fa4fe64cb2ac1d639159f196a479ed70f3961adb586c7c9cc246a28a17"
+  },
+  "result": {
+    "status": "passed",
+    "target": "source-control-change:native-preview-file-0.tsx",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": false,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "4e6c0532a85263b188e10b01e1a7e3df7639f1f509671b2c43baeeab6fa96fce",
+  "output": "evidence/ui-acceptance/2026-09-22/v3/event-output/mapping-12-interact.json",
+  "output_sha256": "55755edfe72d1d9dab73131840e91d0b345f222cb1d71b38d92d6bd5795a6c5b",
+  "observed_at": "2026-09-22T21:35:58.052Z"
+}

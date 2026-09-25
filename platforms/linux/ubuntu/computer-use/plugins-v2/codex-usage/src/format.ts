@@ -1,6 +1,18 @@
-import { lunaReserveWindow, overallWeeklyWindow, type CodexUsageSnapshot } from "./usage.ts"
-import type { UsageState } from "./store.ts"
+import {
+  lunaReserveWindow,
+  overallWeeklyWindow,
+  type CodexUsageSnapshot,
+  type DeepSeekBalanceSnapshot,
+} from "./usage.ts"
 import type { ProviderState, ProviderStatus } from "./providers.ts"
+
+type LegacyUsageState = {
+  status: "loading" | "ready" | "error"
+  snapshot?: CodexUsageSnapshot
+  deepSeekBalance?: DeepSeekBalanceSnapshot
+  message?: string
+  providers?: ProviderState[]
+}
 
 export function percent(value: number) {
   return `${Math.round(value)}%`
@@ -35,6 +47,12 @@ export function providerStatusLabel(status: ProviderStatus) {
   return "OFFLINE"
 }
 
+export function providerTone(status: ProviderStatus): "success" | "warning" | "error" {
+  if (status === "available") return "success"
+  if (status === "cooling" || status === "stale" || status === "usage-unavailable") return "warning"
+  return "error"
+}
+
 export function providerPanelDetail(provider: ProviderState) {
   const insufficient = /^Insufficient balance \((.+)\)\.$/.exec(provider.detail)
   if (insufficient) return `Insufficient · ${insufficient[1]}`
@@ -47,6 +65,29 @@ export function providerPanelDetail(provider: ProviderState) {
   if (provider.detail === "Disabled in provider catalog.") return "Disabled in provider catalog."
   if (provider.detail === "Not available in the provider catalog.") return "Not in provider catalog."
   return provider.detail
+}
+
+export function providerDetailLine(provider: ProviderState) {
+  const parts = providerDetailParts(provider)
+  return parts.usage ? `${parts.detail} · ${parts.usage}` : parts.detail
+}
+
+function comparableMeasurement(value: string) {
+  return value
+    .toLocaleLowerCase("en-US")
+    .replace(/\b(?:balance|usage|quota)\b/g, "")
+    .replace(/[^a-z0-9%+.-]+/g, " ")
+    .trim()
+}
+
+export function providerDetailParts(provider: ProviderState): { detail: string; usage?: string } {
+  const detail = providerPanelDetail(provider)
+  const usage = provider.usage?.trim()
+  if (!usage) return { detail }
+  const comparableDetail = comparableMeasurement(detail)
+  const comparableUsage = comparableMeasurement(usage)
+  if (comparableUsage && comparableDetail.includes(comparableUsage)) return { detail }
+  return { detail, usage }
 }
 
 export function providerCompactParts(provider: ProviderState, snapshot?: CodexUsageSnapshot) {
@@ -66,7 +107,12 @@ export function providerCompactParts(provider: ProviderState, snapshot?: CodexUs
 
 export function providerCompactLine(provider: ProviderState, snapshot?: CodexUsageSnapshot) {
   const parts = providerCompactParts(provider, snapshot)
-  return [`${parts.label} ${parts.status}`, ...parts.measurements].join(" · ")
+  return `${parts.label} ${providerCompactStatus(provider, snapshot)}`
+}
+
+export function providerCompactStatus(provider: ProviderState, snapshot?: CodexUsageSnapshot) {
+  const parts = providerCompactParts(provider, snapshot)
+  return [parts.status, ...parts.measurements].join(" · ")
 }
 
 export function providerUsageSummary(providers: readonly ProviderState[]) {
@@ -102,7 +148,7 @@ export function updatedAgo(fetchedAt: number, now = Date.now()) {
   return `Updated ${time} (${Math.floor(minutes / 60)}h ago)`
 }
 
-export function usageUpdatedLabel(state: UsageState, now = Date.now()) {
+export function usageUpdatedLabel(state: LegacyUsageState, now = Date.now()) {
   const fetchedAt = Math.max(state.snapshot?.fetchedAt ?? 0, state.deepSeekBalance?.fetchedAt ?? 0)
   const updated = updatedAgo(fetchedAt, now)
   return state.status === "error" ? `Saved values · ${updated}` : updated
@@ -119,7 +165,7 @@ function exactTime(timestampSeconds: number | undefined) {
   })
 }
 
-export function formatDetails(state: UsageState, now = Date.now()) {
+export function formatDetails(state: LegacyUsageState, now = Date.now()) {
   const providerLines = state.providers?.map(
     (provider) => `${provider.label}: ${providerStatusLabel(provider.status)} — ${providerPanelDetail(provider)}`,
   ) ?? []

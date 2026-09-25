@@ -14,18 +14,19 @@ SCRIPT = Path(__file__).resolve().with_name("deploy-plugins.sh")
 CATALOG_TOOL = Path(__file__).resolve().with_name("v2-plugin-catalog.py")
 COMPUTER_USE_ROOT = SCRIPT.parent.parent
 PLUGIN_ROOT = COMPUTER_USE_ROOT / "plugins-v2"
-SERVER_NAMES = ["orchestration-policy", "git-tool", "integrated-browser", "repo-learning", "rig-tools", "rig-todo", "codex-fallback"]
-CLI_NAMES = ["rig-tools", "rig-todo", "repo-learning", "source-control", "codex-usage", "file-manager", "integrated-browser", "resource-monitor"]
+SERVER_NAMES = ["orchestration-policy", "ponytail-adapter", "git-tool", "repo-learning", "rig-tools", "rig-todo", "codex-fallback", "codex-usage", "chatgpt-connector"]
+CLI_NAMES = ["rig-tools", "rig-todo", "repo-learning", "source-control", "codex-usage", "file-manager", "resource-monitor"]
 PACKAGE_ROLES = {
     "orchestration-policy": {"server"},
+    "ponytail-adapter": {"server"},
     "git-tool": {"server"},
-    "integrated-browser": {"server", "cli"},
     "repo-learning": {"server", "cli"},
     "rig-tools": {"server", "cli"},
     "rig-todo": {"server", "cli"},
     "codex-fallback": {"server"},
+    "chatgpt-connector": {"server"},
     "source-control": {"cli"},
-    "codex-usage": {"cli"},
+    "codex-usage": {"server", "cli"},
     "file-manager": {"cli"},
     "resource-monitor": {"cli"},
 }
@@ -126,7 +127,108 @@ def test_catalog_rejects_duplicate_package(tmp: Path) -> None:
         raise AssertionError("catalog validator accepted a duplicate package")
 
 
+def test_active_workspace_set() -> None:
+    expected = set(SERVER_NAMES) | set(CLI_NAMES)
+    package_manifest = json.loads((PLUGIN_ROOT / "package.json").read_text(encoding="utf-8"))
+    lock = json.loads((PLUGIN_ROOT / "package-lock.json").read_text(encoding="utf-8"))
+    locked = lock["packages"][""]["workspaces"]
+    if len(expected) != 12 or "chatgpt-connector" not in expected:
+        raise AssertionError("expected plugin set must contain twelve packages including ChatGPT")
+    if set(PACKAGE_ROLES) != expected:
+        raise AssertionError("server/CLI exact sets do not cover the twelve expected packages")
+    if set(package_manifest["workspaces"]) != expected or set(locked) != expected:
+        raise AssertionError("package manifest and lockfile must contain exactly the twelve active packages")
+    if len(package_manifest["workspaces"]) != 12 or len(locked) != 12:
+        raise AssertionError("workspace manifest and lockfile must each contain twelve packages")
+
+
+def test_retire_integrated_browser(tmp: Path) -> None:
+    config_dir = tmp / "retire-integrated-browser"
+    server_path = config_dir / "opencode.jsonc"
+    active_cli = tmp / "active-cli" / "cli.json"
+    canonical = str((PLUGIN_ROOT / "integrated-browser").resolve())
+    rig_tools = str((PLUGIN_ROOT / "rig-tools").resolve())
+    unrelated_same_name = "/opt/custom/plugins-v2/integrated-browser"
+    server_data = {
+        "model": "preserve/provider-model",
+        "custom": {"keep": [1, 2, 3]},
+        "plugins": [
+            {"package": canonical, "options": {"old": True}},
+            {"package": rig_tools, "options": {"keep": True}, "customField": "preserve"},
+            {"package": canonical, "options": {"duplicate": True}},
+            {"package": unrelated_same_name, "options": {"custom": True}},
+        ],
+    }
+    cli_data = {
+        "theme": {"name": "custom-theme"},
+        "customSetting": {"keep": True},
+        "plugins": [
+            {"package": canonical, "options": {}},
+            {"package": rig_tools, "options": {"cli": True}},
+            {"package": unrelated_same_name, "options": {"custom": "keep"}},
+        ],
+    }
+    server_path.parent.mkdir(parents=True)
+    server_path.write_text("// preserve unrelated server settings\n" + json.dumps(server_data) + "\n", encoding="utf-8")
+    write_config(active_cli, cli_data)
+    os.chmod(server_path, 0o600)
+    os.chmod(active_cli, 0o640)
+    unrelated_file = config_dir / "custom.jsonc"
+    unrelated_file.write_text('{"untouched": true}\n', encoding="utf-8")
+    before = (server_path.read_bytes(), active_cli.read_bytes(), unrelated_file.read_bytes())
+
+    implicit_apply = run(
+        "--config-dir", str(config_dir), "--cli-config", str(active_cli),
+        "--retire-integrated-browser", expected=1,
+    )
+    if "remain" not in implicit_apply.stderr:
+        raise AssertionError("default retirement mode did not report stale canonical registrations")
+    if (server_path.read_bytes(), active_cli.read_bytes(), unrelated_file.read_bytes()) != before:
+        raise AssertionError("retirement without --apply changed a config or unrelated file")
+
+    verify = run(
+        "--config-dir", str(config_dir), "--cli-config", str(active_cli),
+        "--retire-integrated-browser", "--verify-only", expected=1,
+    )
+    if "remain" not in verify.stderr:
+        raise AssertionError("verify-only did not report stale canonical registrations")
+    if (server_path.read_bytes(), active_cli.read_bytes(), unrelated_file.read_bytes()) != before:
+        raise AssertionError("verify-only rewrote a config or unrelated file")
+
+    run(
+        "--config-dir", str(config_dir), "--cli-config", str(active_cli),
+        "--retire-integrated-browser", "--apply",
+    )
+    retired_server = load_jsonc(server_path)
+    retired_cli = load_jsonc(active_cli)
+    if retired_server["plugins"] != [server_data["plugins"][1], server_data["plugins"][3]]:
+        raise AssertionError("server retirement removed unrelated plugin entries or changed their data")
+    if retired_cli["plugins"] != [cli_data["plugins"][1], cli_data["plugins"][2]]:
+        raise AssertionError("CLI retirement removed unrelated plugin entries or changed their data")
+    if retired_server["model"] != server_data["model"] or retired_server["custom"] != server_data["custom"]:
+        raise AssertionError("server retirement changed unrelated config fields")
+    if retired_cli["theme"] != cli_data["theme"] or retired_cli["customSetting"] != cli_data["customSetting"]:
+        raise AssertionError("CLI retirement changed unrelated config fields")
+    if (server_path.stat().st_mode & 0o777, active_cli.stat().st_mode & 0o777) != (0o600, 0o640):
+        raise AssertionError("retirement did not preserve config modes")
+    if unrelated_file.read_bytes() != before[2]:
+        raise AssertionError("retirement changed an unrelated file")
+
+    retired_before = (server_path.read_bytes(), active_cli.read_bytes(), unrelated_file.read_bytes())
+    run(
+        "--config-dir", str(config_dir), "--cli-config", str(active_cli),
+        "--retire-integrated-browser", "--apply",
+    )
+    if (server_path.read_bytes(), active_cli.read_bytes(), unrelated_file.read_bytes()) != retired_before:
+        raise AssertionError("idempotent retirement rewrote configs or an unrelated file")
+    run(
+        "--config-dir", str(config_dir), "--cli-config", str(active_cli),
+        "--retire-integrated-browser", "--verify-only",
+    )
+
+
 def main() -> int:
+    test_active_workspace_set()
     with tempfile.TemporaryDirectory(prefix="opencode-v2-deploy-") as directory:
         tmp = Path(directory)
 
@@ -141,12 +243,16 @@ def main() -> int:
         run("--config-dir", str(all_dir), "--plugins", "all", "--verify-only")
         if load_jsonc(all_dir / "cli.json")["session"]["permissions"] != "prompt":
             raise AssertionError("rig-tools deployment did not enable prompt permissions")
+        if load_jsonc(all_dir / "cli.json").get("attention", {}).get("sound") is not False:
+            raise AssertionError("rig-tools deployment did not disable attention sounds")
         orchestration = next(
             entry for entry in load_jsonc(all_dir / "opencode.jsonc")["plugins"]
             if Path(entry["package"]).name == "orchestration-policy"
         )
-        if orchestration["options"].get("maxConcurrent") != 3 or orchestration["options"].get("backgroundOnly") is not True:
+        if orchestration["options"].get("maxConcurrent") != 10 or orchestration["options"].get("backgroundOnly") is not True:
             raise AssertionError("orchestration policy defaults were not deployed")
+        if "allowedAgents" in orchestration["options"] or "allowedModels" in orchestration["options"]:
+            raise AssertionError("orchestration deployment leaked deprecated identity options")
         server_dir = tmp / "server"
         run("--config-dir", str(server_dir), "--plugins", "server", "--apply")
         assert_selection(server_dir, set(SERVER_NAMES), set())
@@ -175,7 +281,7 @@ def main() -> int:
 
         both_dir = tmp / "both"
         run("--config-dir", str(both_dir), "--plugins", "both", "--apply")
-        assert_selection(both_dir, {"codex-fallback"}, {"codex-usage"})
+        assert_selection(both_dir, {"codex-fallback", "codex-usage"}, {"codex-usage"})
 
         for name, roles in PACKAGE_ROLES.items():
             single_dir = tmp / f"single-{name}"
@@ -308,6 +414,7 @@ def main() -> int:
             raise AssertionError("unknown catalog package was not rejected")
 
         test_catalog_rejects_duplicate_package(tmp)
+        test_retire_integrated_browser(tmp)
 
     print("OK: v2 deployment self-tests passed")
     return 0

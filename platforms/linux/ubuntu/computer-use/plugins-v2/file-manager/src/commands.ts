@@ -1,6 +1,6 @@
 export const EXPLORER_SLASH = {
   name: "explorer",
-  aliases: ["editor", "files"],
+  aliases: ["files"],
 }
 
 export const DEFAULT_EXPLORER_BIND = "ctrl+alt+x"

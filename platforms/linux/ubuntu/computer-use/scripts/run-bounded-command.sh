@@ -6,13 +6,15 @@
 # process from a compiler or test process exhausting the whole login session.
 set -euo pipefail
 
-MEMORY_FRACTION=40
+MEMORY_FRACTION=45
 SWAP_FRACTION=25
-NODE_HEAP_FRACTION=65
+NODE_HEAP_FRACTION=80
 COMMAND_TIMEOUT="15m"
 LOCK_TIMEOUT=30
 PRINT_BUDGET=0
 REQUIRE_CGROUP=0
+PERSISTENT=0
+COMMAND_TIMEOUT_SET=0
 MAX_TREE_PROCESSES=256
 MAX_TREE_DEPTH=64
 MAX_CHILD_ENTRIES=512
@@ -26,11 +28,12 @@ Usage: run-bounded-command.sh [options] -- command [args...]
 Run one command with an adaptive memory budget and timeout.
 
 Options:
-  --memory-fraction PERCENT  Share of effective available memory (default: 40)
+  --memory-fraction PERCENT  Share of effective available memory (default: 45)
   --swap-fraction PERCENT    Share of the memory budget usable as swap (default: 25)
-  --node-heap-fraction PERCENT  Share of the memory budget for V8 (default: 65)
+  --node-heap-fraction PERCENT  Share of the memory budget for V8 (default: 80)
   --timeout DURATION         Maximum runtime accepted by timeout (default: 15m)
   --lock-timeout SECONDS     Maximum time to wait for another check (default: 30)
+  --persistent               Run a long-lived process without the check lock or timeout
   --print-budget             Print the current calculated budget and exit
   --require-cgroup           Refuse the process-tree fallback
   -h, --help                 Show this help
@@ -528,9 +531,11 @@ run_prlimit_fallback() {
   command -v prlimit >/dev/null 2>&1 || fail "prlimit is required for the safe fallback"
   command -v setsid >/dev/null 2>&1 || fail "setsid is required for the safe fallback"
   command -v sleep >/dev/null 2>&1 || fail "sleep is required for the safe fallback"
-  timeout_seconds="$(duration_seconds "$COMMAND_TIMEOUT" || true)"
-  [ -n "$timeout_seconds" ] || fail "fallback requires timeout in seconds, minutes, hours, or days"
-  [ "$timeout_seconds" -gt 0 ] || fail "fallback timeout must be greater than zero"
+  if [ "$PERSISTENT" -eq 0 ]; then
+    timeout_seconds="$(duration_seconds "$COMMAND_TIMEOUT" || true)"
+    [ -n "$timeout_seconds" ] || fail "fallback requires timeout in seconds, minutes, hours, or days"
+    [ "$timeout_seconds" -gt 0 ] || fail "fallback timeout must be greater than zero"
+  fi
 
   # This is intentionally much larger than the RSS budget. It prevents a
   # runaway virtual mapping without imposing the adaptive RSS budget on V8's
@@ -586,7 +591,7 @@ run_prlimit_fallback() {
       wait "$ROOT_PID" 2>/dev/null || true
       return 137
     fi
-    if [ "$SECONDS" -ge "$timeout_seconds" ]; then
+    if [ "$PERSISTENT" -eq 0 ] && [ "$SECONDS" -ge "$timeout_seconds" ]; then
       printf 'bounded-command: command exceeded timeout %ss; terminating\n' "$timeout_seconds" >&2
       terminate_fallback_group TERM || true
       sleep 1
@@ -654,10 +659,12 @@ while [ "$#" -gt 0 ]; do
     --timeout)
       [ "$#" -ge 2 ] || fail "--timeout requires a value"
       COMMAND_TIMEOUT="$2"
+      COMMAND_TIMEOUT_SET=1
       shift 2
       ;;
     --timeout=*)
       COMMAND_TIMEOUT="${1#*=}"
+      COMMAND_TIMEOUT_SET=1
       shift
       ;;
     --lock-timeout)
@@ -675,6 +682,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --require-cgroup)
       REQUIRE_CGROUP=1
+      shift
+      ;;
+    --persistent)
+      PERSISTENT=1
       shift
       ;;
     --)
@@ -701,6 +712,7 @@ validate_percent "--memory-fraction" "$MEMORY_FRACTION"
 validate_percent "--swap-fraction" "$SWAP_FRACTION"
 validate_percent "--node-heap-fraction" "$NODE_HEAP_FRACTION"
 validate_seconds "--lock-timeout" "$LOCK_TIMEOUT"
+[ "$PERSISTENT" -eq 0 ] || [ "$COMMAND_TIMEOUT_SET" -eq 0 ] || fail "--persistent cannot be combined with --timeout"
 
 if [ "$PRINT_BUDGET" -eq 1 ]; then
   [ "$#" -eq 0 ] || fail "--print-budget cannot be combined with a command"
@@ -709,19 +721,21 @@ if [ "$PRINT_BUDGET" -eq 1 ]; then
 fi
 
 [ "$#" -gt 0 ] || fail "a command is required after --"
-command -v timeout >/dev/null 2>&1 || fail "timeout is required"
-command -v flock >/dev/null 2>&1 || fail "flock is required"
-TIMEOUT_BIN="$(command -v timeout)"
+if [ "$PERSISTENT" -eq 0 ]; then
+  command -v timeout >/dev/null 2>&1 || fail "timeout is required"
+  command -v flock >/dev/null 2>&1 || fail "flock is required"
+  TIMEOUT_BIN="$(command -v timeout)"
 
-command -v stat >/dev/null 2>&1 || fail "stat is required for safe runtime coordination"
-command -v id >/dev/null 2>&1 || fail "id is required for safe runtime coordination"
-command -v readlink >/dev/null 2>&1 || fail "readlink is required for safe runtime coordination"
-prepare_runtime_dir
-prepare_lock_file
-if ! flock -n 9; then
-  printf 'bounded-command: another check is running; waiting up to %ss\n' "$LOCK_TIMEOUT" >&2
-  if ! flock -w "$LOCK_TIMEOUT" 9; then
-    fail "timed out after ${LOCK_TIMEOUT}s waiting for another bounded command"
+  command -v stat >/dev/null 2>&1 || fail "stat is required for safe runtime coordination"
+  command -v id >/dev/null 2>&1 || fail "id is required for safe runtime coordination"
+  command -v readlink >/dev/null 2>&1 || fail "readlink is required for safe runtime coordination"
+  prepare_runtime_dir
+  prepare_lock_file
+  if ! flock -n 9; then
+    printf 'bounded-command: another check is running; waiting up to %ss\n' "$LOCK_TIMEOUT" >&2
+    if ! flock -w "$LOCK_TIMEOUT" 9; then
+      fail "timed out after ${LOCK_TIMEOUT}s waiting for another bounded command"
+    fi
   fi
 fi
 
@@ -755,12 +769,16 @@ if command -v systemd-run >/dev/null 2>&1 && command -v systemctl >/dev/null 2>&
   # caller environment and standard descriptors are inherited without a shell
   # or an environment file. --wait and --pipe are intentionally omitted:
   # systemd-run rejects both with --scope.
+  SYSTEMD_COMMAND=("$@")
+  if [ "$PERSISTENT" -eq 0 ]; then
+    SYSTEMD_COMMAND=("$TIMEOUT_BIN" --kill-after=10s "$COMMAND_TIMEOUT" "$@")
+  fi
   systemd-run --user --scope \
     --property="MemoryMax=$MEMORY_BYTES" \
     --property="MemorySwapMax=$SWAP_BYTES" \
     --property="TasksMax=$MAX_TREE_PROCESSES" \
     --property="CPUQuota=200%" \
-    -- "$TIMEOUT_BIN" --kill-after=10s "$COMMAND_TIMEOUT" "$@"
+    -- "${SYSTEMD_COMMAND[@]}"
   exit $?
 fi
 

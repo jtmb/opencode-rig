@@ -14,13 +14,13 @@ child TypeScript process must not be able to exhaust the entire desktop login.
 The script recalculates its budget on every invocation. It takes the lower of
 Linux `MemAvailable` and the minimum remaining finite `memory.max -
 memory.current` across the active cgroup and its bounded ancestors, when cgroup
-limits are available. The default command budget is 40% of that effective
+limits are available. The default command budget is 45% of that effective
 value. An exhausted or malformed finite ancestor fails closed.
 The default swap portion is 25% of the command budget, further limited by
 currently free swap and the remaining finite cgroup `memory.swap.max` budget.
 If a finite cgroup memory limit is already exhausted, availability is zero and
 the command is refused rather than falling back to host memory. For Node
-commands, `NODE_OPTIONS` is set to 65% of the command budget as the V8 heap
+commands, `NODE_OPTIONS` is set to 80% of the command budget as the V8 heap
 ceiling.
 
 These are percentages, not machine-specific byte limits. They therefore scale
@@ -64,6 +64,9 @@ refused when the calculated budget is too small to provide a useful runtime.
 - Commands stop when they exceed the default fifteen-minute runtime. The
   systemd path uses `timeout` with a ten-second grace period; the RSS fallback
   supervises the process group directly and returns status 124 on timeout.
+- `--persistent` supports long-lived services by omitting the check lock and
+  timeout while keeping the adaptive resource budget. It cannot be combined
+  with `--timeout`.
 - The command's stdout and stderr remain attached to the caller through the
   inherited scope descriptors.
 
@@ -74,16 +77,17 @@ failed check returns a non-zero status without killing the active session.
 
 | Option | Default | Meaning |
 |--------|---------|---------|
-| `--memory-fraction` | `40` | Percentage of effective available memory for the child. |
+| `--memory-fraction` | `45` | Percentage of effective available memory for the child. |
 | `--swap-fraction` | `25` | Percentage of the child budget allowed as swap. |
-| `--node-heap-fraction` | `65` | Percentage of the child budget assigned to Node's V8 heap. |
+| `--node-heap-fraction` | `80` | Percentage of the child budget assigned to Node's V8 heap. |
 | `--timeout` | `15m` | Maximum command runtime. |
 | `--lock-timeout` | `30` | Maximum seconds to wait for another bounded command. |
+| `--persistent` | off | Omit the check lock and timeout for a long-lived process; retain resource limits. |
 | `--print-budget` | off | Print the calculated budget without running a command. |
 
-All percentages must be greater than zero and no greater than ninety. The
-plugin package checks use the defaults; a caller can lower them for a known
-memory-constrained test.
+All percentages must be greater than zero and no greater than ninety. Most
+plugin package checks use these defaults; packages with measured needs may set
+per-command fractions, while the runner still applies the process-tree cap.
 
 The focused coordination self-test is safe to run directly. It also installs
 and verifies the pinned file-manager parser assets into a temporary target

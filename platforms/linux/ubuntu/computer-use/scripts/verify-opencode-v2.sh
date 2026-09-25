@@ -3,7 +3,7 @@
 #
 # It inspects the v2 binary, config, skills, commands, plugins, tools, and MCP
 # declarations without connecting any MCP server (so it never launches
-# Firefox). Override paths with OPENCODE_V2_PILOT_DIR, OPENCODE_V2_BIN,
+# a browser). Override paths with OPENCODE_V2_PILOT_DIR, OPENCODE_V2_BIN,
 # OPENCODE_V2_REPO, OPENCODE_V2_CONFIG_DIR, or OPENCODE_V2_ROLE_CATALOG.
 set -euo pipefail
 
@@ -16,6 +16,8 @@ COMPUTER_USE_ROOT="$REPO/platforms/linux/ubuntu/computer-use"
 ROLE_CATALOG="${OPENCODE_V2_ROLE_CATALOG:-$COMPUTER_USE_ROOT/config/v2-plugin-roles.json}"
 CATALOG_TOOL="$REPO/platforms/linux/ubuntu/computer-use/scripts/v2-plugin-catalog.py"
 JSONC_HELPER="$REPO/platforms/linux/ubuntu/computer-use/scripts/setup-opencode-jsonc.py"
+BOUNDED_RUNNER="$REPO/platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh"
+PONYTAIL_VERIFIER="$PLUGINS/ponytail-adapter/scripts/verify-package.mjs"
 
 preflight_config_paths() {
   python3 - "$CONFIG" "$CONFIG/opencode.jsonc" "$CONFIG/cli.json" "$REPO/opencode.json" <<'PY'
@@ -79,6 +81,13 @@ else
   fail "v2 plugin role catalog or validator missing"
 fi
 
+if [ -x "$BOUNDED_RUNNER" ] && [ -f "$PONYTAIL_VERIFIER" ] && command -v node >/dev/null 2>&1 \
+    && "$BOUNDED_RUNNER" -- node --experimental-strip-types "$PONYTAIL_VERIFIER"; then
+  ok "pinned official Ponytail package, hooks, six commands, and six skills"
+else
+  fail "pinned official @dietrichgebert/ponytail@4.10.0 dependency or Ponytail surface is unavailable"
+fi
+
 if python3 - "$CONFIG" "$PLUGINS" "$REPO" "$catalog_json" "$JSONC_HELPER" <<'PY'
 import json
 import importlib.util
@@ -120,6 +129,11 @@ try:
 except (OSError, ValueError, json.JSONDecodeError) as error:
     project = {}
     failures.append(f"cannot read project config: {error}")
+try:
+    helper.verify_agent_models(project, source=True)
+    ok("portable project Build/Explore/General Luna and Plan/Architect Sol role models")
+except ValueError as error:
+    fail(f"portable project role models: {error}")
 try:
     catalog = json.loads(catalog_text)
 except ValueError as error:
@@ -166,24 +180,41 @@ mcp = mcp_config.get("servers", {}) if isinstance(mcp_config, dict) else {}
 if not isinstance(mcp_config, dict) or not isinstance(mcp, dict):
     fail("mcp.servers is not an object")
 else:
+    expected_mcp_names = {"basic-memory", "github", "chatgpt"}
+    if set(mcp) != expected_mcp_names:
+        fail(f"global MCP server set is not exactly canonical: {sorted(mcp)}")
     basic_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh")
-    playwright_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh")
-    policy_path = os.path.join(repo, "platforms/linux/ubuntu/computer-use/config/mcp-versions.json")
-    try:
-        with open(policy_path, encoding="utf-8") as handle:
-            github_remote = json.load(handle)["githubRemote"]
-    except (OSError, ValueError, KeyError) as error:
-        github_remote = ""
-        failures.append(f"cannot read canonical MCP policy: {error}")
-    portable_playwright_command = ["./platforms/linux/ubuntu/computer-use/scripts/playwright-mcp.sh"]
+    github_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh")
+    chatgpt_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/chatgpt-mcp.sh")
     portable_basic_command = ["./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"]
+    portable_github_command = ["./platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"]
+    portable_chatgpt_command = ["./platforms/linux/ubuntu/computer-use/scripts/chatgpt-mcp.sh"]
     github = mcp.get("github")
-    if isinstance(github, dict) and github.get("type") == "remote" and github.get("url") == github_remote \
+    if isinstance(github, dict) and github.get("type") == "local" and ( \
+            github.get("command") == [github_wrapper] \
+            or (github.get("command") == portable_github_command and github.get("cwd", ".") == ".") \
+        ) \
             and github.get("disabled", False) is not True \
-            and not any(key in github for key in ("authorization", "headers", "environment", "client_secret", "clientSecret", "token")):
-        ok("global GitHub MCP uses the hosted OAuth endpoint")
+            and not any(key in github for key in ("authorization", "headers", "environment", "client_secret", "clientSecret", "token", "url")):
+        ok("global GitHub MCP uses the local gh-authenticated wrapper")
     else:
-        fail("global GitHub MCP is not the credential-free hosted OAuth endpoint")
+        fail("global GitHub MCP is not the exact enabled local or workspace-relative gh-authenticated wrapper")
+    chatgpt = mcp.get("chatgpt")
+    chatgpt_base = {
+        "type": "local",
+        "codemode": False,
+        "disabled": False,
+        "timeout": {"startup": 30000},
+    }
+    global_chatgpt_entries = (
+        {**chatgpt_base, "command": [chatgpt_wrapper]},
+        {**chatgpt_base, "command": portable_chatgpt_command},
+        {**chatgpt_base, "command": portable_chatgpt_command, "cwd": "."},
+    )
+    if chatgpt in global_chatgpt_entries:
+        ok("global ChatGPT MCP uses the direct-tool local wrapper without configured credentials")
+    else:
+        fail("global ChatGPT MCP is not the exact enabled direct-tool local wrapper")
     for name, wrapper in (("basic-memory", basic_wrapper),):
         entry = mcp.get(name)
         if isinstance(entry, dict) and (
@@ -197,7 +228,7 @@ else:
         fail("global Playwright MCP must be absent")
     else:
         ok("global Playwright MCP absent")
-    for name in ("github", "playwright", "basic-memory"):
+    for name in ("github", "playwright", "basic-memory", "chatgpt"):
         if name in mcp_config:
             fail(f"legacy flat MCP key remains: mcp.{name}")
         else:
@@ -208,37 +239,56 @@ if isinstance(session, dict) and session.get("permissions") == "prompt":
     ok("CLI session permissions are prompt")
 else:
     fail("CLI session.permissions must be prompt")
+attention = cli.get("attention") if isinstance(cli, dict) else None
+if isinstance(attention, dict) and attention.get("sound") is False:
+    ok("CLI attention sounds are disabled")
+else:
+    fail("CLI attention.sound must be false")
 
 project_mcp_config = project.get("mcp", {}) if isinstance(project, dict) else {}
 project_servers = project_mcp_config.get("servers", {}) if isinstance(project_mcp_config, dict) else {}
-project_playwright = project_servers.get("playwright") if isinstance(project_servers, dict) else None
 project_basic = project_servers.get("basic-memory") if isinstance(project_servers, dict) else None
 project_github = project_servers.get("github") if isinstance(project_servers, dict) else None
-project_command = project_playwright.get("command") if isinstance(project_playwright, dict) else None
-portable_cwd = project_playwright.get("cwd", ".") if isinstance(project_playwright, dict) else None
-if isinstance(project_playwright, dict) and (
-    project_command == [playwright_wrapper]
-    or (project_command == portable_playwright_command and portable_cwd == ".")
-) and project_playwright.get("disabled", False) is not True:
-    ok("project Playwright MCP uses the local wrapper")
-else:
-    fail("project Playwright MCP is not the exact enabled local or workspace-relative wrapper")
+project_chatgpt = project_servers.get("chatgpt") if isinstance(project_servers, dict) else None
 if isinstance(project_basic, dict) and project_basic.get("command") == portable_basic_command \
         and project_basic.get("disabled", False) is not True:
     ok("portable project Basic Memory MCP uses the workspace-relative wrapper")
 else:
     fail("portable project Basic Memory MCP is not the exact enabled workspace-relative wrapper")
-if isinstance(project_github, dict) and project_github.get("type") == "remote" \
-        and project_github.get("url") == github_remote \
+if isinstance(project_github, dict) and project_github.get("type") == "local" \
+        and project_github.get("command") == portable_github_command \
+        and project_github.get("cwd", ".") == "." \
         and project_github.get("disabled", False) is not True \
-        and not any(key in project_github for key in ("authorization", "headers", "environment", "client_secret", "clientSecret", "token")):
-    ok("portable project GitHub MCP uses the credential-free hosted OAuth endpoint")
+        and not any(key in project_github for key in ("authorization", "headers", "environment", "client_secret", "clientSecret", "token", "url")):
+    ok("portable project GitHub MCP uses the workspace-relative gh-authenticated wrapper")
 else:
-    fail("portable project GitHub MCP is not the credential-free hosted OAuth endpoint")
-if isinstance(project_servers, dict) and set(project_servers) != {"basic-memory", "github", "playwright"}:
+    fail("portable project GitHub MCP is not the exact workspace-relative gh-authenticated wrapper")
+project_chatgpt_expected = {
+    "type": "local",
+    "command": portable_chatgpt_command,
+    "codemode": False,
+    "disabled": False,
+    "timeout": {"startup": 30000},
+}
+if project_chatgpt == project_chatgpt_expected:
+    ok("portable project ChatGPT MCP uses the direct-tool workspace-relative wrapper without configured credentials")
+else:
+    fail("portable project ChatGPT MCP is not the exact workspace-relative direct-tool wrapper")
+if isinstance(project_servers, dict) and set(project_servers) != {"basic-memory", "github", "chatgpt"}:
     fail(f"portable project MCP server set is not exactly canonical: {sorted(project_servers)}")
-if isinstance(project_mcp_config, dict) and any(name in project_mcp_config for name in ("github", "playwright", "basic-memory")):
+if isinstance(project_mcp_config, dict) and any(name in project_mcp_config for name in ("github", "basic-memory", "chatgpt")):
     fail("legacy flat MCP key remains in project config")
+
+portable_ponytail = "./platforms/linux/ubuntu/computer-use/plugins-v2/ponytail-adapter"
+project_plugins = project.get("plugins") if isinstance(project, dict) else None
+if not isinstance(project_plugins, list):
+    fail("portable project plugins is not a list")
+else:
+    ponytail_entries = [entry for entry in project_plugins if isinstance(entry, dict) and entry.get("package") == portable_ponytail]
+    if len(ponytail_entries) != 1 or ponytail_entries[0].get("options") != {}:
+        fail("portable project config must register ponytail-adapter exactly once with empty options")
+    else:
+        ok("portable project config registers ponytail-adapter exactly once")
 
 expected = {"server": {}, "cli": {}}
 for plugin in catalog.get("plugins", []) if isinstance(catalog, dict) else []:
@@ -315,15 +365,32 @@ if isinstance(theme, dict) and theme.get("name") == "aura":
 else:
     fail(f"theme is not aura: {theme!r}")
 
+try:
+    helper.verify_agent_models(server)
+    ok("selected server Build/Explore/General Luna and Plan/Architect Sol role models")
+except ValueError as error:
+    fail(f"selected server role models: {error}")
+
 example = os.path.join(repo, "platforms/linux/ubuntu/computer-use/config/v2-opencode.example.jsonc")
 try:
-    example_config = load_jsonc(example).get("mcp", {})
+    example_data = load_jsonc(example)
+    helper.verify_agent_models(example_data, source=True)
+    ok("canonical v2 example Build/Explore/General Luna and Plan/Architect Sol role models")
+    example_config = example_data.get("mcp", {})
     example_mcp = example_config.get("servers", {}) if isinstance(example_config, dict) else {}
-    example_play = [name for name in example_mcp if "playwright" in name]
-    if example_play == ["playwright"]:
-        ok("v2 example declares exactly one playwright MCP")
+    example_mcp_names = set(example_mcp) if isinstance(example_mcp, dict) else set()
+    if example_mcp_names == {"basic-memory", "github", "chatgpt"}:
+        ok("v2 example declares exactly the portable three MCPs")
     else:
-        fail(f"v2 example playwright declarations: {example_play or '<none>'}")
+        fail(f"v2 example MCP server set is not exactly canonical: {sorted(example_mcp_names)}")
+    example_plugins = example_data.get("plugins") if isinstance(example_data, dict) else None
+    if not isinstance(example_plugins, list) or sum(
+        isinstance(entry, dict) and "ponytail-adapter" in entry.get("package", "")
+        for entry in example_plugins
+    ) != 1:
+        fail("v2 example must register ponytail-adapter exactly once")
+    else:
+        ok("v2 example registers ponytail-adapter exactly once")
 except (OSError, ValueError, json.JSONDecodeError) as error:
     fail(f"cannot read v2 example: {error}")
 

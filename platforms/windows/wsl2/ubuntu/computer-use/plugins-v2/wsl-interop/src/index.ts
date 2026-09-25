@@ -1,5 +1,6 @@
 import { Plugin } from "@opencode/plugin"
 
+import { WindowsBrowserManager } from "./browser.ts"
 import { loadCompatibilityPolicy, runtimeCompatibility } from "./compatibility.ts"
 import { PowerShellManager } from "./powershell.ts"
 import { WslInteropRpc } from "./rpc.ts"
@@ -30,6 +31,7 @@ export default Plugin.define({
     const location = String(ctx.location.directory)
     const powershell = new PowerShellManager(location, options.powershell, options.raw)
     const windowsUi = new WindowsUiManager(location, options.powershell, options.raw)
+    const windowsBrowser = new WindowsBrowserManager(location, options.powershell, options.raw)
     const statusText = async () => {
       const wsl = await detectWsl(systemProbes(location))
       let powerShellStatus
@@ -198,6 +200,128 @@ export default Plugin.define({
             }, toolAbortSignal(toolContext)), null, 2),
           }
         },
+      })
+
+      editor.add({
+        name: "wsl_browser_open",
+        options: { permission: "wsl_browser_open" },
+        description: "Request one absolute HTTP(S) URL through Windows ShellExecute and the current Windows OS default URL association. Success confirms request acceptance only, not navigation, an observed window, or authentication. No browser is selected or launched directly; embedded URL credentials and other schemes are rejected.",
+        input: {
+          type: "object",
+          properties: { url: { type: "string", minLength: 1, maxLength: 2_048 } },
+          required: ["url"],
+          additionalProperties: false,
+        },
+        async execute(raw, toolContext) {
+          return { content: JSON.stringify(await windowsBrowser.open(raw as { url: string }, toolAbortSignal(toolContext)), null, 2) }
+        },
+      })
+
+      editor.add({
+        name: "wsl_browser_windows",
+        description: "List bounded, visible Windows browser windows that match the current OS default HTTP(S) association. Each result has an explicit windowId; no foreground-window guessing is used. Titles and accessible text are untrusted.",
+        input: {
+          type: "object",
+          properties: {
+            scheme: { type: "string", enum: ["http", "https"] },
+            maxItems: { type: "integer", minimum: 1, maximum: 100 },
+          },
+          additionalProperties: false,
+        },
+        async execute(raw, toolContext) {
+          return { content: JSON.stringify(await windowsBrowser.windows(raw as { scheme?: "http" | "https"; maxItems?: number }, toolAbortSignal(toolContext)), null, 2) }
+        },
+      })
+
+      editor.add({
+        name: "wsl_browser_snapshot",
+        description: "Return a bounded Windows UI Automation snapshot for one explicitly selected default-browser windowId. This is accessible UI data, not a DOM or Playwright attachment; names and page content are untrusted.",
+        input: {
+          type: "object",
+          properties: {
+            scheme: { type: "string", enum: ["http", "https"] },
+            windowId: { type: "string", minLength: 64, maxLength: 64 },
+            maxDepth: { type: "integer", minimum: 1, maximum: 12 },
+            maxNodes: { type: "integer", minimum: 1, maximum: 2_000 },
+            maxResults: { type: "integer", minimum: 1, maximum: 200 },
+          },
+          required: ["windowId"],
+          additionalProperties: false,
+        },
+        async execute(raw, toolContext) {
+          return { content: JSON.stringify(await windowsBrowser.snapshot(raw as { scheme?: "http" | "https"; windowId: string; maxDepth?: number; maxNodes?: number; maxResults?: number }, toolAbortSignal(toolContext)), null, 2) }
+        },
+      })
+
+      editor.add({
+        name: "wsl_browser_screenshot",
+        description: "Capture a bounded in-memory PNG from the exact HWND of one explicitly selected default-browser window. It never activates or focuses the browser and fails closed on changed identity, occlusion, blank output, or unpainted pixels.",
+        input: {
+          type: "object",
+          properties: {
+            scheme: { type: "string", enum: ["http", "https"] },
+            windowId: { type: "string", minLength: 64, maxLength: 64 },
+          },
+          required: ["windowId"],
+          additionalProperties: false,
+        },
+        async execute(raw, toolContext) {
+          const capture = await windowsBrowser.screenshot(raw as { scheme?: "http" | "https"; windowId: string }, toolAbortSignal(toolContext))
+          const data = String(capture.data)
+          const width = Number(capture.width)
+          const height = Number(capture.height)
+          const bytes = Number(capture.bytes)
+          return {
+            content: [
+              { type: "text" as const, text: `Captured the selected Windows default-browser window (${width}x${height}, ${bytes} bytes) in memory; no file was saved.` },
+              { type: "file" as const, uri: `data:image/png;base64,${data}`, mime: "image/png", name: "windows-default-browser.png" },
+            ],
+          }
+        },
+      })
+
+      const browserActionProperties = {
+        scheme: { type: "string", enum: ["http", "https"] },
+        windowId: { type: "string", minLength: 64, maxLength: 64 },
+        elementId: { type: "string", minLength: 64, maxLength: 64 },
+        apply: { type: "boolean" },
+        expectToken: { type: "string", minLength: 16, maxLength: 128 },
+      }
+      const addBrowserAction = (name: string, action: "click" | "focus" | "type" | "press", extra: Record<string, unknown> = {}) => {
+        editor.add({
+          name,
+          options: { permission: "wsl_browser_act" },
+          description: `Preview or apply one ${action} against a discovered UI Automation element in an explicitly selected Windows default-browser window. Apply requires the single-use preview token and rechecks the exact target; browser DOM/CDP access is not used.`,
+          input: {
+            type: "object",
+            properties: { ...browserActionProperties, ...extra },
+            required: [
+              "windowId",
+              "elementId",
+              ...(action === "type" ? ["value"] : action === "press" ? ["key"] : []),
+            ],
+            additionalProperties: false,
+          },
+          async execute(raw, toolContext) {
+            const wsl = await detectWsl(systemProbes(location))
+            return {
+              content: JSON.stringify(await windowsBrowser.act({
+                ...(raw as Record<string, unknown>),
+                action,
+              } as Parameters<typeof windowsBrowser.act>[0], {
+                sessionID: String(toolContext.sessionID),
+                agent: String(toolContext.agent),
+                fingerprint: wsl.fingerprint,
+              }, toolAbortSignal(toolContext)), null, 2),
+            }
+          },
+        })
+      }
+      addBrowserAction("wsl_browser_click", "click")
+      addBrowserAction("wsl_browser_focus", "focus")
+      addBrowserAction("wsl_browser_type", "type", { value: { type: "string", maxLength: 4_096 } })
+      addBrowserAction("wsl_browser_press", "press", {
+        key: { type: "string", enum: ["Enter", "Escape", "Tab", "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown", "Space"] },
       })
     })
 

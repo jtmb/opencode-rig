@@ -27,10 +27,9 @@ path and preserves the configured options:
     {
       "package": "/absolute/path/to/plugins-v2/codex-fallback",
       "options": {
-        "defaultChain": ["deepseek/deepseek-v4-flash", "opencode/big-pickle"],
-        "agents": {
-          "plan": { "mode": "off" }
-        }
+        "defaultChain": ["deepseek/deepseek-flash", "opencode/mimo-v2.6-flash-free", "anthropic/claude-sonnet-5"],
+        "proactive": true,
+        "triggerOn": "quota"
       }
     }
   ]
@@ -38,7 +37,10 @@ path and preserves the configured options:
 ```
 
 The plugin requires OpenCode v2.0.7 or a compatible v2 API. It is inactive
-when the effective fallback chain is empty.
+when the effective fallback chain is empty. The declared first tier
+`deepseek/deepseek-flash` is the DeepSeek V4.1 Flash runtime model ID (display
+name "DeepSeek V4.1 Flash"); the historical `deepseek/deepseek-v4-flash`
+identifier is not a runtime model ID and leaves the chain empty on that tier.
 
 ## Lifecycle and hooks
 

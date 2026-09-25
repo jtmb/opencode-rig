@@ -41,11 +41,22 @@ plugin source.
   dispatch the supported host `diff.open` command on a left click (or
   Enter/Space when focused). The canonical CLI config starts that viewer in
   **Uncommitted** mode with `diffs.source: "working"`; an in-view choice made
-  with `d` lasts until the TUI exits. File paths are underlined to show they are interactive, hovering a
-  row highlights the path and shows a `click to open the diff viewer` hint,
+  with `d` lasts until the TUI exits. File paths and status markers are
+  underlined to show the row is interactive; hovering a row highlights its path
+  and shows a `click to open the diff viewer` hint,
   and the built-in viewer's own mouse file tree selects the individual file.
   Click handlers require terminal mouse capture (`"mouse": true` in
   `cli.json`).
+- When the cap omits files, `+N more files` is a real underlined cyan action.
+  Opening it shows only a bounded page of omitted files: the page size is
+  derived from the current sidebar height and fixed at no more than six rows,
+  while reserving room for the heading, visible rows, pagination controls, and
+  footer. The compact range line uses the full-change numbering (`4-9 of 10`),
+  and `< prev`, `next >`, and `close` appear only when applicable. Each
+  control supports mouse activation and Enter/Space when focused. A refresh,
+  viewport shrink, or collapse resets the page; page requests are also
+  clamped to the current last page. This keeps the sidebar bounded instead of
+  rendering hundreds of changed files at once.
 - `/changes` opens details, and the `source-control.refresh` command refreshes
   both local and GitHub data.
 - GitHub is read-only and optional. The panel hides the GitHub row when the

@@ -5,7 +5,9 @@
   "type": "module",
   "description": "OpenCode v2 CLI plugin: weekly Codex quota sidebar panel.",
   "exports": {
-    "./tui": "./src/tui.tsx"
+    "./server": "./src/server.ts",
+    "./tui": "./src/tui.tsx",
+    "./design-ledger": "./design-ledger.json"
   },
   "scripts": {
     "check": "npm run typecheck && npm test",

@@ -17,10 +17,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.22.2
+      - name: Provision pinned checkout-local Node QA runtime
+        run: |
+          set -euo pipefail
+          python3 platforms/linux/ubuntu/computer-use/scripts/setup-qa-runtime.py --apply
+          python3 platforms/linux/ubuntu/computer-use/scripts/setup-qa-runtime.py --verify-only
 
       - name: Install locked test dependencies
         run: |
@@ -28,6 +29,7 @@ jobs:
           workspace=platforms/linux/ubuntu/computer-use/plugins-v2
           browser_tools=platforms/linux/ubuntu/browser-tools
           wrapper=platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh
+          export PATH="$GITHUB_WORKSPACE/toolchains/node/bin:$PATH"
           bash "$wrapper" -- npm --prefix "$workspace" ci --ignore-scripts
           bash "$wrapper" -- npm --prefix "$browser_tools" ci --ignore-scripts
 

@@ -92,8 +92,13 @@ An exported file passes structure only after a clean reimport:
 5. Remove only task-created temporary reimport files after the comparison.
 
 Reimport can prove file structure but not target-runtime compatibility. For a
-web asset, also load it through the project's existing loader in Firefox,
-inspect console and network errors, and inspect the rendered result.
+web asset, load it through the project's existing loader using the approved
+Windows-default-browser UIA tools from WSL, or isolated headless Firefox only
+when explicitly requested. Inspect the rendered screenshot. UIA may not expose
+console or network diagnostics; do not claim that it does, and report required
+diagnostics as a blocker if no approved tool provides them. If required
+screenshots or interactions are unavailable, leave the browser validation
+incomplete rather than switching to Chrome/Chromium or desktop control.
 
 ## Official sources
 

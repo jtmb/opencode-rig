@@ -173,6 +173,48 @@ test("local token TTL is validated and governs every preview token", async () =>
   } finally { await rm(root, { recursive: true, force: true }) }
 })
 
+test("QA runtime pins are accepted and bound into repository gate evidence", async () => {
+  const root = await mkdtemp(join(tmpdir(), "rig-tools-qa-runtime-state-"))
+  const command = [process.execPath, "-e", "process.stdout.write('gate-ok')"]
+  const runtime = {
+    name: "node",
+    version: "26.4.0",
+    executable: "toolchains/node/bin/node",
+    sha256: "a".repeat(64),
+    packageManager: {
+      name: "npm",
+      executable: "toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+      sha256: "b".repeat(64),
+    },
+  }
+  try {
+    const git = (args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8" })
+    git(["init", "-q"])
+    git(["config", "user.email", "test@example.invalid"])
+    git(["config", "user.name", "Gate Test"])
+    await mkdir(join(root, ".opencode"))
+    await writeFile(join(root, "HANDOFF.md"), "handoff\n")
+    await writeFile(join(root, "ROADMAP.md"), "roadmap\n")
+    await writeFile(join(root, "tracked.txt"), "one\n")
+    const configPath = join(root, ".opencode/rig-gates.json")
+    const configuration = { qaCommand: command, qaRuntime: runtime, documentationCommand: command }
+    await writeFile(configPath, JSON.stringify(configuration))
+    git(["add", "."])
+    git(["commit", "-q", "-m", "base"])
+
+    const manager = createGitGateManager({ qaCommand: command, documentationCommand: command })
+    const preview = JSON.parse(await manager.runGate(root, "qa", "preview", undefined, "qa-runtime-state"))
+    configuration.qaRuntime.sha256 = "c".repeat(64)
+    await writeFile(configPath, JSON.stringify(configuration))
+    await assert.rejects(
+      manager.runGate(root, "qa", "apply", preview.token, "qa-runtime-state"),
+      /repository changed since gate preview/,
+    )
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
 test("token records have a finite live capacity and prune only expired records", async () => {
   const root = await mkdtemp(join(tmpdir(), "rig-tools-token-cap-"))
   const command = [process.execPath, "-e", "process.stdout.write('ok')"]

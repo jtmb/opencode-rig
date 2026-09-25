@@ -4,11 +4,13 @@ set -euo pipefail
 
 APPLY=0
 MODE_SET=0
+USER_ONLY=0
+USER_ONLY_SET=0
 for arg in "$@"; do
   case "$arg" in
     --apply)
       if [ "$MODE_SET" -ne 0 ]; then
-        echo "Usage: $0 [--verify-only|--apply]" >&2
+        echo "Usage: $0 [--verify-only|--apply] [--user-only]" >&2
         exit 2
       fi
       APPLY=1
@@ -16,17 +18,25 @@ for arg in "$@"; do
       ;;
     --verify-only)
       if [ "$MODE_SET" -ne 0 ]; then
-        echo "Usage: $0 [--verify-only|--apply]" >&2
+        echo "Usage: $0 [--verify-only|--apply] [--user-only]" >&2
         exit 2
       fi
       MODE_SET=1
       ;;
+    --user-only)
+      if [ "$USER_ONLY_SET" -ne 0 ]; then
+        echo "Usage: $0 [--verify-only|--apply] [--user-only]" >&2
+        exit 2
+      fi
+      USER_ONLY=1
+      USER_ONLY_SET=1
+      ;;
     -h|--help)
-      echo "Usage: $0 [--verify-only|--apply]"
+      echo "Usage: $0 [--verify-only|--apply] [--user-only]"
       exit 0
       ;;
     *)
-      echo "Usage: $0 [--verify-only|--apply]" >&2
+      echo "Usage: $0 [--verify-only|--apply] [--user-only]" >&2
       exit 2
       ;;
   esac
@@ -41,6 +51,7 @@ OPENCODE_BIN="${OPENCODE_V2_BIN:-$HOME/.local/opt/opencode-v2/opencode}"
 OPENCODE_CONFIG_JSON="$V2_CONFIG_DIR/opencode.json"
 OPENCODE_CONFIG_JSONC="$V2_CONFIG_DIR/opencode.jsonc"
 CLI_CONFIG="$V2_CONFIG_DIR/cli.json"
+ACTIVE_CLI_CONFIG="${OPENCODE_V2_ACTIVE_CLI_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/cli.json}"
 MCP_RUNTIME="$SCRIPT_DIR/mcp_runtime.py"
 REQUIRED_PACKAGES=(python3-pyatspi ydotool wl-clipboard)
 
@@ -56,15 +67,15 @@ global_mcp_config_path() {
 }
 
 preflight_v2_config() {
-  python3 - "$V2_CONFIG_DIR" "$OPENCODE_CONFIG_JSON" "$OPENCODE_CONFIG_JSONC" "$CLI_CONFIG" "$PROJECT_CONFIG_JSON" <<'PY'
+  python3 - "$V2_CONFIG_DIR" "$OPENCODE_CONFIG_JSON" "$OPENCODE_CONFIG_JSONC" "$CLI_CONFIG" "$ACTIVE_CLI_CONFIG" "$PROJECT_CONFIG_JSON" <<'PY'
 import os
 import stat
 import sys
 
-root, json_path, jsonc_path, cli_path, project_path = sys.argv[1:]
+root, json_path, jsonc_path, cli_path, active_cli_path, project_path = sys.argv[1:]
 if os.path.exists(json_path) and os.path.exists(jsonc_path):
     raise SystemExit(f"both {json_path} and {jsonc_path} exist; consolidate them before setup")
-for path in (root, json_path, jsonc_path, cli_path, project_path):
+for path in (root, json_path, jsonc_path, cli_path, active_cli_path, project_path):
     absolute = os.path.abspath(path)
     current = os.path.dirname(absolute) if path != root else absolute
     while current != os.path.dirname(current):
@@ -126,6 +137,10 @@ initialize_local_state() {
   "$SCRIPT_DIR/setup-opencode.sh" --config-dir "$V2_CONFIG_DIR" --prepare
   echo "=== v2 plugins ==="
   "$SCRIPT_DIR/deploy-plugins.sh" --config-dir "$V2_CONFIG_DIR" --plugins all --apply
+  if [ "$ACTIVE_CLI_CONFIG" != "$CLI_CONFIG" ]; then
+    "$SCRIPT_DIR/deploy-plugins.sh" --config-dir "$V2_CONFIG_DIR" --cli-config "$ACTIVE_CLI_CONFIG" --plugins cli --apply
+  fi
+  "$SCRIPT_DIR/deploy-plugins.sh" --config-dir "$V2_CONFIG_DIR" --cli-config "$ACTIVE_CLI_CONFIG" --retire-integrated-browser --apply
   echo "=== canonical MCP configuration ==="
   python3 "$MCP_RUNTIME" config --scope global --config "$(global_mcp_config_path)" --apply
   python3 "$MCP_RUNTIME" config --scope project --config "$PROJECT_CONFIG_JSON"
@@ -133,19 +148,18 @@ initialize_local_state() {
   "$SCRIPT_DIR/setup-mcps.sh" --profile native --apply
 }
 
-verify() {
-  local status=0
-  local package
-  local mcp_list=""
-  echo "=== computer assistant verify ==="
-
-  if [ -x "$OPENCODE_BIN" ] && [[ "$("$OPENCODE_BIN" --version 2>/dev/null || true)" == "opencode v2."* ]]; then
-    ok "OpenCode v2 binary $OPENCODE_BIN"
+apply() {
+  if [ "$USER_ONLY" -eq 0 ]; then
+    install_system_dependencies
   else
-    fail "OpenCode v2 binary $OPENCODE_BIN"
-    status=1
+    echo "NOTICE: --user-only skips system packages, GNOME settings, input-group changes, and ydotool activation."
   fi
+  initialize_local_state
+}
 
+verify_system_dependencies() {
+  local package
+  local status=0
   for package in "${REQUIRED_PACKAGES[@]}"; do
     if dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null | grep -q '^installed$'; then
       ok "package $package"
@@ -191,6 +205,28 @@ verify() {
     fail "desktop-control AT-SPI inspection"
     status=1
   fi
+  return "$status"
+}
+
+verify() {
+  local status=0
+  local mcp_list=""
+  echo "=== computer assistant verify ==="
+
+  if [ -x "$OPENCODE_BIN" ] && [[ "$("$OPENCODE_BIN" --version 2>/dev/null || true)" == "opencode v2."* ]]; then
+    ok "OpenCode v2 binary $OPENCODE_BIN"
+  else
+    fail "OpenCode v2 binary $OPENCODE_BIN"
+    status=1
+  fi
+
+  if [ "$USER_ONLY" -eq 0 ]; then
+    if ! verify_system_dependencies; then
+      status=1
+    fi
+  else
+    echo "NOTICE: --user-only does not verify privileged desktop prerequisites."
+  fi
 
   if python3 "$MCP_RUNTIME" config --scope project --config "$PROJECT_CONFIG_JSON"; then
     ok "portable project MCP configuration remains canonical"
@@ -205,7 +241,7 @@ verify() {
     status=1
   fi
   if "$SCRIPT_DIR/setup-mcps.sh" --profile native --verify-only; then
-    ok "pinned Basic Memory, Node.js, Playwright MCP, and Chrome runtimes"
+    ok "pinned Basic Memory, GitHub MCP, and ChatGPT launchers"
   else
     fail "canonical native MCP runtimes"
     status=1
@@ -214,7 +250,7 @@ verify() {
   if [ -x "$OPENCODE_BIN" ]; then
     mcp_list="$( (cd "$REPO_ROOT"; OPENCODE_CONFIG_DIR="$V2_CONFIG_DIR" "$OPENCODE_BIN" mcp list 2>&1) || true )"
   fi
-  for name in basic-memory playwright; do
+  for name in basic-memory github chatgpt; do
     if printf '%s\n' "$mcp_list" | grep -q "$name .*connected"; then
       ok "OpenCode $name MCP connected"
     else
@@ -222,13 +258,6 @@ verify() {
       status=1
     fi
   done
-  if printf '%s\n' "$mcp_list" | grep -qE 'github .*(connected|needs_auth)'; then
-    ok "OpenCode GitHub hosted MCP connected or awaiting operator OAuth"
-  else
-    fail "OpenCode GitHub hosted MCP declaration/connection"
-    status=1
-  fi
-
   if "$SCRIPT_DIR/setup-opencode.sh" --config-dir "$V2_CONFIG_DIR" --verify-only; then
     ok "all OpenCode skills, commands, and tools deployed"
   else
@@ -241,6 +270,20 @@ verify() {
     fail "OpenCode v2 plugins missing, stale, or session permissions are not prompt"
     status=1
   fi
+  if [ "$ACTIVE_CLI_CONFIG" != "$CLI_CONFIG" ]; then
+    if "$SCRIPT_DIR/deploy-plugins.sh" --config-dir "$V2_CONFIG_DIR" --cli-config "$ACTIVE_CLI_CONFIG" --plugins cli --verify-only; then
+      ok "active native CLI plugins and silent attention are registered in $ACTIVE_CLI_CONFIG"
+    else
+      fail "active native CLI plugins or silent attention are missing/stale in $ACTIVE_CLI_CONFIG"
+      status=1
+    fi
+  fi
+  if "$SCRIPT_DIR/deploy-plugins.sh" --config-dir "$V2_CONFIG_DIR" --cli-config "$ACTIVE_CLI_CONFIG" --retire-integrated-browser --verify-only; then
+    ok "retired integrated-browser registration absent from server and active CLI configs"
+  else
+    fail "retired integrated-browser registration remains in server or active CLI config"
+    status=1
+  fi
   return "$status"
 }
 
@@ -250,8 +293,7 @@ if ! preflight_v2_config; then
 fi
 
 if [ "$APPLY" -eq 1 ]; then
-  install_system_dependencies
-  initialize_local_state
+  apply
 fi
 
 verify

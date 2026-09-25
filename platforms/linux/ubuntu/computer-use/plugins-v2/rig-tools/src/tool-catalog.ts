@@ -1,6 +1,6 @@
 export type RigToolCatalogEntry = {
   name: string
-  access: "read-only" | "preview/apply" | "gated"
+  access: "read-only" | "preview/apply" | "gated" | "mixed"
   purpose: string
   usage: string
   apply?: string
@@ -13,7 +13,7 @@ export const RIG_TOOL_CATALOG: readonly RigToolCatalogEntry[] = [
   { name: "desktop_windows", access: "read-only", purpose: "List top-level windows, states, and bounds.", usage: '{"showing":true,"maxDepth":8,"maxNodes":1000}' },
   { name: "desktop_act", access: "preview/apply", purpose: "Click, focus, or replace accessible field text with a target-bound token.", usage: '{"verb":"action","app":"Ptyxis","name":"Open Rig"}', apply: '{"verb":"action","app":"Ptyxis","name":"Open Rig","apply":true,"expectToken":"<preview token>"}' },
   { name: "desktop_input", access: "preview/apply", purpose: "Send one bounded key/chord or printable text input through ydotool.", usage: '{"kind":"key","key":"ctrl+s"}', apply: '{"kind":"key","key":"ctrl+s","apply":true,"expectToken":"<preview token>"}' },
-  { name: "vision_capture", access: "read-only", purpose: "Capture and delete one announced GNOME screenshot.", usage: '{"mode":"window"}' },
+  { name: "vision_capture", access: "mixed", purpose: "Capture an announced screenshot; optionally retain a bounded PNG beneath the working directory.", usage: '{"mode":"window","savePath":"evidence/screenshot.png"}' },
   { name: "text_fold", access: "read-only", purpose: "Fold bounded in-memory text by words or exact Unicode code-point width.", usage: '{"text":"one two three","width":8,"mode":"word"}' },
   { name: "python_sandbox", access: "read-only", purpose: "Run bounded Python with a read-only project, ephemeral temporary storage, no network, and no inherited environment.", usage: '{"code":"import sys; print(sys.stdin.read().upper())","stdin":"hello"}' },
   { name: "binary_inspect", access: "read-only", purpose: "Stat, find bytes in, or extract a bounded range from a regular non-symlink binary file.", usage: '{"action":"find","path":"/absolute/file","needle":"marker","contextBytes":64}' },
@@ -26,7 +26,9 @@ export const RIG_TOOL_CATALOG: readonly RigToolCatalogEntry[] = [
   { name: "repo_documentation_gate", access: "preview/apply", purpose: "Run configured documentation checks and issue state-bound evidence.", usage: '{"repo":"/absolute/repository","action":"preview"}', apply: '{"repo":"/absolute/repository","action":"apply","expectToken":"<preview token>"}' },
   { name: "repo_commit", access: "gated", purpose: "Preview/apply an exact staged commit after fresh QA and documentation evidence.", usage: '{"repo":"/absolute/repository","message":"Describe change","qaToken":"<qa token>","documentationToken":"<docs token>"}', apply: '{"repo":"/absolute/repository","message":"Describe change","qaToken":"<qa token>","documentationToken":"<docs token>","action":"apply","expectToken":"<preview token>","approval":true}' },
   { name: "repo_push", access: "gated", purpose: "Preview/apply an explicit branch push with separate approval.", usage: '{"repo":"/absolute/repository","remote":"origin","ref":"refs/heads/feature"}', apply: '{"repo":"/absolute/repository","remote":"origin","ref":"refs/heads/feature","action":"apply","expectToken":"<preview token>","approval":true}' },
-  { name: "agent_memory_capacity", access: "read-only", purpose: "Approve a conservative one-to-three-agent concurrency count from host/cgroup headroom.", usage: '{"requestedAgents":3}' },
+  { name: "agent_memory_capacity", access: "read-only", purpose: "Approve a conservative one-to-ten-agent concurrency count from host/cgroup headroom.", usage: '{"requestedAgents":10}' },
+  { name: "opencode_recovery_status", access: "read-only", purpose: "Diagnose bounded MCP/plugin state and show ownership, QA, and GNU Screen control-plane handoffs without mutating runtime state.", usage: "{}" },
+  { name: "basic_memory_recovery", access: "preview/apply", purpose: "Verify/preview/apply the canonical native MCP marker, skip reload when Basic Memory is connected, otherwise reload the whole current location's MCP collection through ctx.mcp.reload (not a targeted Basic Memory connect), and return connected-awaiting_read_note; status and location binding are not authentication or read_note proof, so the caller may verify a successful separate live read_note for the selected location only when available and connected, and note/storage data remains read-only.", usage: '{"identifier":"safe/health","directory":"/current/location","markerAction":"preview"}', apply: '{"identifier":"safe/health","directory":"/current/location","markerAction":"apply","preview":{"target":"canonical-mcp-runtime-marker","profile":"native","policyDigest":"<digest>","stateDigest":"<digest>"},"approval":true}' },
   { name: "opencode_runtime_status", access: "read-only", purpose: "Inspect bounded MCP, plugin, provider, and model state through V2 APIs.", usage: "{}" },
   { name: "opencode_runtime_reload", access: "preview/apply", purpose: "Reload MCP/model/provider registries through V2 APIs after a state-bound preview.", usage: '{"target":"mcp","action":"preview"}', apply: '{"target":"mcp","action":"apply","expectToken":"<preview token>"}' },
   { name: "opencode_self_usage", access: "read-only", purpose: "Analyze OpenCode process-tree and host CPU, RAM, swap, and storage pressure.", usage: "{}" },

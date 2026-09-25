@@ -18,18 +18,23 @@ interaction evidence records the input and the observed post-action state.
 | Surface | Rendered result | Interaction result |
 |---|---|---|
 | System resources | Intel i5-6200U, 2 physical / 4 logical cores, RAM, swap, `/`, `/boot/efi`, and removable-storage rows | Opened `System resources`; Escape closed the fullscreen panel |
-| Provider Usage | Codex `READY` with weekly remaining, DeepSeek `EMPTY`, OpenCode Go `OFFLINE` / not in catalog, OpenCode Zen `READY` / available | Expanded in the sidebar after restart; rows remained visible beside Source Control |
+| Provider Usage | Codex `READY` with weekly remaining, DeepSeek `EMPTY`, OpenCode Go `OFFLINE` / not in catalog, OpenCode Zen `READY` / available | Expanded in the sidebar after restart; rows remained visible beside Source Control. This predates the no-wrap/empty-summary correction and does not prove its responsive layout. |
 | Source Control diff | `Uncommitted · ...HEAD 0/402` with a rendered patch and file tree | Clicked `.githooks/pre-push`; the deployed `diffs.source: "working"` default opened Uncommitted directly; Escape returned to the session |
 | Fullscreen repository Explorer | At 140×60, `/explorer` rendered the native-style two-pane layout with the complete safe repository tree and 410 working-tree changes. The initial all-changes view showed split patches; selecting clean `.gitignore` showed syntax-highlighted source, selecting modified `AGENTS.md` showed its split diff, and deleted `docs/migration/opencode-v2.md` automatically used the full content width | The sidebar and `/explorer` opened fullscreen. Mouse selection switched clean/diff content, `e` entered the preserved editor, Escape returned to viewing, and `d` opened the working-tree/main-branch/last-turn source selector. The clickable `[Diff: side by side]` header control changed the all-changes view to `[Diff: full width]`; `v` remains the keyboard equivalent |
 | Integrated browser controller | After explicit installation approval, pinned Chromium 153.0.8010.12 revision 1243 opened a separate headed window at 1280×720. The tool returned a rendered JPEG and an ARIA snapshot containing the `Example Domain` heading and `Learn more` link. The fullscreen controller rendered `ready · 1 tab · tab-1`, `Example Domain`, enabled controls, and the same bounded snapshot | The tool launched `https://example.com/`, clicked `Learn more` by accessible role/name, and reached IANA's `Example Domains` page. The fullscreen controller independently launched Example Domain from its URL prompt, rendered the snapshot, confirmed close, returned to `stopped · 0 tabs`, and removed the Chrome application |
-| Explorer-first sidebar without Context | After the corrected TUI restart, the 140×60 sidebar rendered Explorer first, no Context section, `- MCP` with connected Basic Memory/GitHub/Playwright rows, `Active subagents 1`, animated `running · General`, `Model · openai/gpt-5.6-luna#max`, and Todo. Earlier 99-column evidence retained the no-spinner fallback | Clicking Explorer opened the real fullscreen panel; clicking the active row opened the real child; Todo collapsed; the MCP header collapsed to `+ MCP (3 active)` and expanded again. Native `/mcps` remains the management surface |
+| Superseded plugin-owned sidebar composition | Historical 140×60 evidence rendered Explorer, a plugin-owned `- MCP` section, Active subagents, and Todo after replacing native `sidebar.content` | Historical clicks covered Explorer, the active child, Todo, and the plugin-owned MCP collapse control. On 2026-09-21 that custom MCP renderer was deleted at the operator's request. This row is retained as historical evidence only and is not acceptance of the current additive/native composition. |
+
+Fresh 140/80/60-column rendered and interaction evidence is pending for the
+current composition: OpenCode's sole native MCP row, additive Active subagents,
+additive Todo, preserved native sidebar content, and compact Provider Usage.
 
 ## Runtime and package evidence
 
 - Authenticated `/api/info`: OpenCode `2.0.7`; final verified restart PID
   `2776129`.
 - Runtime status after deployment: 92 active plugins, zero failed; Basic Memory,
-  GitHub, and Playwright MCPs connected.
+  GitHub, and Playwright MCPs connected under the then-current configuration.
+  This is not evidence for the later profile-owned local GitHub server.
 - Focused checks: `rig-tools` 111 tests, `file-manager` 69 with three documented
   native-render skips, `rig-todo` 9, `repo-learning` 78,
   `integrated-browser` 13, `source-control` 21, `codex-usage` 16,

@@ -9,7 +9,7 @@ export type MemoryCapacityOptions = {
 export type MemoryFiles = Record<string, string | undefined>
 export type MemoryReader = (path: string) => Promise<string>
 
-const MAX_AGENTS = 3
+const MAX_AGENTS = 10
 const DEFAULT_RESERVE_MIB = 512
 // Delegated sessions are remote-model orchestration overhead, not local
 // compiler/browser workloads. Those remain separately bounded by the shared

@@ -39,9 +39,9 @@ test("missing cgroup files fall back to host memory and invalid config is serial
   assert.equal((await invalid(3)).recommendedCount, 1)
 })
 
-test("approves exactly three when the bounded orchestration budget permits it", async () => {
+test("approves exactly ten when the bounded orchestration budget permits it", async () => {
   const files: Record<string, string> = {
-    "/proc/meminfo": "MemAvailable: 4096 kB\n",
+    "/proc/meminfo": "MemAvailable: 16384 kB\n",
     "/proc/self/cgroup": "0::/agent\n",
     "/sys/fs/cgroup/agent/memory.max": "1048576000",
     "/sys/fs/cgroup/agent/memory.current": "0",
@@ -49,7 +49,7 @@ test("approves exactly three when the bounded orchestration budget permits it", 
     "/sys/fs/cgroup/memory.current": "0",
   }
   const evaluate = createMemoryCapacityEvaluator({ memoryReserveMiB: 1, memoryPerAgentMiB: 1 }, async (path) => files[path] ?? (() => { throw new Error(`missing ${path}`) })())
-  assert.equal((await evaluate(3)).recommendedCount, 3)
+  assert.equal((await evaluate(10)).recommendedCount, 10)
 })
 
 test("accepts a WSL cgroup namespace root that exposes controllers without root limit files", async () => {
@@ -61,7 +61,7 @@ test("accepts a WSL cgroup namespace root that exposes controllers without root 
     "/sys/fs/cgroup/cgroup.controllers": "cpuset cpu io memory pids\n",
   }
   const evaluate = createMemoryCapacityEvaluator({}, async (path) => files[path] ?? (() => { throw new Error(`missing ${path}`) })())
-  for (const requested of [1, 2, 3]) {
+  for (const requested of [1, 2, 3, 10]) {
     const result = await evaluate(requested)
     assert.equal(result.approvedCount, requested)
     assert.equal(result.recommendedCount, requested)
@@ -106,11 +106,11 @@ test("fails closed for oversized host swap availability", async () => {
   assert.equal((await evaluate(3)).limitingSource, "invalid-metrics-or-configuration")
 })
 
-test("rejects requested counts outside the one-through-three contract", async () => {
+test("rejects requested counts outside the one-through-ten contract", async () => {
   const evaluate = createMemoryCapacityEvaluator()
-  await assert.rejects(() => evaluate(0), /integer from 1 through 3/)
-  await assert.rejects(() => evaluate(4), /integer from 1 through 3/)
-  await assert.rejects(() => evaluate(1.5), /integer from 1 through 3/)
+  await assert.rejects(() => evaluate(0), /integer from 1 through 10/)
+  await assert.rejects(() => evaluate(11), /integer from 1 through 10/)
+  await assert.rejects(() => evaluate(1.5), /integer from 1 through 10/)
 })
 
 test("reduces to the valid budget and never exceeds the hard cap", async () => {

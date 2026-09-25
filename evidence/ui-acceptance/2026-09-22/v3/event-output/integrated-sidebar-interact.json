@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "capture_id": "integrated-sidebar",
+  "phase": "interact",
+  "event_id": "integrated-sidebar-interact-001",
+  "action": {
+    "type": "click",
+    "target": "integrated-sidebar:todo-header",
+    "input": {
+      "x": 1,
+      "y": 7
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "integrated-sidebar:todo-header",
+    "input": {
+      "x": 1,
+      "y": 7
+    }
+  },
+  "before": {
+    "snapshot_id": "integrated-sidebar-interact-before",
+    "frame_sha256": "1a9d1b3c40d80f1d60a510cda6b32b9b81bbd297e5c480d2b5c6a4dca4af4226",
+    "spans_sha256": "752db67f33b1e8ffab19814f37a0b3bd914c0dffda5413aee3a5c39e26358765",
+    "state_sha256": "a6c56f5d073bc28b3fc11242386603702fd42f6532a683be0972df79d6a00e2f"
+  },
+  "after": {
+    "snapshot_id": "integrated-sidebar-interact-after",
+    "frame_sha256": "7d2b6423b424c50fd15e2666bed4dbf2ac643160b1b01af55bb79283624fe214",
+    "spans_sha256": "30ce3eadcef21dde331eb9b51daa82472b73b6e019f3b4be42de00e017bdb1b6",
+    "state_sha256": "580fb0cb0670321d8b2a08f65e7a077b5132cde419025b927321e605da89d223"
+  },
+  "result": {
+    "status": "passed",
+    "target": "integrated-sidebar:todo-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "7143782dc4cfc72bef3e80df35f65e8634af32568c762fe3beb611bd407f4a47",
+  "native_event_sha256": "990bf8ea519ce962893796fd2c85294c01a3b9e565d403caa9ffede943b14291"
+}

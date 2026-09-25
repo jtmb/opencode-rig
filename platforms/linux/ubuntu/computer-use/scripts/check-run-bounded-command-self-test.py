@@ -140,8 +140,14 @@ def main() -> int:
         if "--setenv" in argv_text or "--wait" in argv_text or "--collect" in argv_text:
             print("ERROR: incompatible or environment-serializing systemd option used", file=sys.stderr)
             return 1
-        if "--foreground" in argv_text or "TasksMax=256" not in argv_text or "CPUQuota=200%" not in argv_text:
-            print("ERROR: systemd scope is missing aggregate process/CPU limits or uses foreground-only timeout", file=sys.stderr)
+        if (
+            "--foreground" in argv_text
+            or "MemoryMax=" not in argv_text
+            or "MemorySwapMax=" not in argv_text
+            or "TasksMax=256" not in argv_text
+            or "CPUQuota=200%" not in argv_text
+        ):
+            print("ERROR: systemd scope is missing resource caps or uses foreground-only timeout", file=sys.stderr)
             return 1
         nonzero = run([str(wrapper), "--", "/bin/sh", "-c", "exit 37"], systemd_env)
         if nonzero.returncode != 37:
@@ -270,6 +276,27 @@ def main() -> int:
         (fake_proc / "meminfo").write_text("MemAvailable: 1048576 kB\nSwapFree: 1048576 kB\n", encoding="utf-8")
         (fake_proc / "self").mkdir()
         (fake_proc / "self" / "cgroup").write_text("", encoding="utf-8")
+        default_budget = run(
+            [str(wrapper), "--print-budget"],
+            {
+                **environment,
+                "BOUNDED_COMMAND_TESTING": "1",
+                "BOUNDED_COMMAND_PROC_ROOT": str(fake_proc),
+                "BOUNDED_COMMAND_CGROUP_ROOT": str(base / "fake-cgroup"),
+            },
+        )
+        expected_budget = (
+            "available_bytes=1073741824",
+            "memory_budget_bytes=483183820",
+            "node_heap_mb=368",
+        )
+        if default_budget.returncode != 0 or any(
+            value not in default_budget.stdout for value in expected_budget
+        ):
+            print("ERROR: default adaptive memory/heap fractions changed", file=sys.stderr)
+            print(default_budget.stdout, file=sys.stderr, end="")
+            print(default_budget.stderr, file=sys.stderr, end="")
+            return 1
         stub = base / "prlimit-stub"
         stub.write_text(
             "#!/bin/bash\n"

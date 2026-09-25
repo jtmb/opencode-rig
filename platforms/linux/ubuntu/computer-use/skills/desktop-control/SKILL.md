@@ -1,6 +1,6 @@
 ---
 name: desktop-control
-description: Inspect and operate GNOME desktop applications through AT-SPI, using desktop screenshots to verify each GUI action. Use when the user asks to click, type, open, close, configure, or otherwise interact with a desktop application or dialog. Do not use for browser pages when Playwright tools are available.
+description: Inspect and operate non-browser GNOME desktop applications through AT-SPI, using desktop screenshots to verify each GUI action. Use when the user asks to click, type, open, close, configure, or otherwise interact with a desktop application or dialog.
 metadata:
   schema-version: "1"
   category: "desktop"
@@ -12,6 +12,19 @@ metadata:
 Operate GNOME applications with an observe-act-verify loop. Prefer named
 AT-SPI controls over screen coordinates; this desktop uses fractional
 scaling, so screenshot pixels are not reliable click coordinates.
+
+## Browser boundary
+
+- Use this skill for desktop applications, not browser pages.
+- For visible authenticated browser work from WSL, use the `browser-assistant`
+  skill's `wsl_browser_*` UIA tools against the user's Windows default browser.
+  Specify the explicit window ID for each operation and use fresh preview tokens
+  for supported mutations.
+- If the browser connector, required action, or required evidence is unavailable,
+  stop and report a blocker. Do not use Chrome/Chromium, project Playwright,
+  GNOME desktop-control, or coordinate clicking as a browser fallback.
+- Isolated headless Firefox is available only when the user explicitly requests
+  it; see `browser-headless`.
 
 ## Workflow
 
@@ -69,10 +82,11 @@ Wait for the app to appear in `desktop-control.py apps` before querying it.
 
 ## Fallbacks
 
-- Some custom canvases and sandboxed apps expose little AT-SPI data.
+- Some non-browser custom canvases and sandboxed apps expose little AT-SPI data.
   Use documented keyboard navigation (Tab, arrows, Enter, Escape) and
   GNOME shortcuts through the existing user-owned `ydotool` service.
-- Coordinate clicks are a last resort and require a fresh screenshot,
+- For non-browser desktop applications only, coordinate clicks are a last resort
+  and require a fresh screenshot,
   known scaling transform, and immediate visual verification. Never map
   screenshot pixels directly on this fractionally scaled desktop.
 - If the target remains inaccessible, describe the exact manual action

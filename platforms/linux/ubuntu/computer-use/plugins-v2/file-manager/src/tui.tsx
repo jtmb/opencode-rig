@@ -2,7 +2,17 @@
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
 import type { Context, PanelInput } from "@opencode/plugin/tui/context"
 import type { FileDiffInfo } from "@opencode/client"
-import { SyntaxStyle, getTreeSitterClient, type ScrollBoxRenderable, type TextareaRenderable } from "@opentui/core"
+import {
+  createClipboard,
+  createHostClipboard,
+  createRendererClipboardAdapter,
+  SyntaxStyle,
+  TextAttributes,
+  getTreeSitterClient,
+  type ClipboardService,
+  type ScrollBoxRenderable,
+  type TextareaRenderable,
+} from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { spawn } from "node:child_process"
@@ -64,6 +74,8 @@ import {
   type FileTab,
   type TabsState,
 } from "./tabs.ts"
+import { normalizeExplorerTheme, type ExplorerTheme } from "./theme.ts"
+import { activeSessionDirectoryBasename, FILE_NAVIGATOR_ICON, SESSION_COPY_ICON } from "./identity.ts"
 
 const PANEL_NAME = "file-manager.files"
 const SEARCH_DEBOUNCE_MS = 150
@@ -85,7 +97,180 @@ function projectDirectory(context: Context, sessionID: string): string {
   )
 }
 
-function createSyntaxStyle(theme: Context["theme"]): SyntaxStyle {
+export type SessionIDClipboard = Pick<ClipboardService, "writeText">
+
+type ClipboardWriteResult = Awaited<ReturnType<ClipboardService["writeText"]>>
+
+function clipboardWriteSucceeded(result: ClipboardWriteResult): boolean {
+  return result.host.status === "written" || result.terminal.status === "attempted"
+}
+
+export async function copySessionID(context: Context, sessionID: string, provided?: SessionIDClipboard): Promise<void> {
+  let owned: ClipboardService | undefined
+  let clipboard = provided
+  if (!clipboard) {
+    try {
+      const host = createHostClipboard()
+      owned = createClipboard({ host, terminal: createRendererClipboardAdapter(context.renderer) })
+      clipboard = owned
+    } catch (error) {
+      const terminal = createRendererClipboardAdapter(context.renderer)
+      const result = terminal.writeText(sessionID, "clipboard")
+      if (result.status === "attempted") return
+      throw error
+    }
+  }
+
+  try {
+    const result = await clipboard.writeText(sessionID, { destination: "all-available" })
+    if (!clipboardWriteSucceeded(result)) throw new Error("No supported clipboard destination is available")
+  } finally {
+    if (owned) await owned.dispose()
+  }
+}
+
+type IdentityEvent = {
+  button?: number
+  preventDefault?: () => void
+  stopPropagation?: () => void
+  currentTarget?: unknown
+  __rigHandled?: boolean
+}
+
+function isPrimaryMouseEvent(event: IdentityEvent): boolean {
+  return event.button === undefined || event.button === 0
+}
+
+function SessionIDCopy(props: { sessionID: string; clipboard?: SessionIDClipboard; wrap?: boolean }) {
+  const context = usePlugin()
+  const [themeVersion, setThemeVersion] = createSignal(0)
+  const refreshTheme = () => setThemeVersion((value) => value + 1)
+  if (typeof context.renderer.on === "function") {
+    context.renderer.on("palette", refreshTheme)
+    context.renderer.on("theme_mode", refreshTheme)
+  }
+  onCleanup(() => {
+    if (typeof context.renderer.off === "function") {
+      context.renderer.off("palette", refreshTheme)
+      context.renderer.off("theme_mode", refreshTheme)
+    }
+  })
+  const theme = () => {
+    themeVersion()
+    return normalizeExplorerTheme(context.theme)
+  }
+  const [hovered, setHovered] = createSignal(false)
+  const copy = async () => {
+    try {
+      await copySessionID(context, props.sessionID, props.clipboard)
+      context.ui.toast.show({ variant: "success", title: "Files", message: "Session ID copied to clipboard." })
+    } catch {
+      context.ui.toast.show({ variant: "error", title: "Files", message: "Unable to copy the session ID." })
+    }
+  }
+  const activate = (event: IdentityEvent) => {
+    if (event.__rigHandled || !isPrimaryMouseEvent(event)) return
+    event.__rigHandled = true
+    event.preventDefault?.()
+    event.stopPropagation?.()
+    if (event.currentTarget && typeof (event.currentTarget as { focus?: unknown }).focus === "function") {
+      (event.currentTarget as { focus: () => void }).focus()
+    }
+    void copy()
+  }
+
+  return (
+    <box
+      focusable
+      flexShrink={0}
+      minWidth={0}
+      width={props.wrap ? "100%" : undefined}
+      backgroundColor={hovered() ? theme().background.action.primary.hovered : theme().background.default}
+      onMouseOver={() => setHovered(true)}
+      onMouseOut={() => setHovered(false)}
+      onMouseDown={activate}
+      onKeyDown={(event) => {
+        if (event.name !== "return" && event.name !== "space") return
+        event.preventDefault()
+        event.stopPropagation()
+        void copy()
+      }}
+    >
+      <text
+        wrapMode={props.wrap ? "char" : "none"}
+        fg={hovered() ? theme().text.action.primary.hovered : theme().text.subdued}
+        attributes={hovered() ? TextAttributes.BOLD | TextAttributes.UNDERLINE : TextAttributes.DIM}
+      >
+        {SESSION_COPY_ICON} {props.sessionID}
+      </text>
+    </box>
+  )
+}
+
+function SessionIdentity(props: { sessionID: string; clipboard?: SessionIDClipboard; fill?: boolean }) {
+  const context = usePlugin()
+  const [themeVersion, setThemeVersion] = createSignal(0)
+  const refreshTheme = () => setThemeVersion((value) => value + 1)
+  if (typeof context.renderer.on === "function") {
+    context.renderer.on("palette", refreshTheme)
+    context.renderer.on("theme_mode", refreshTheme)
+  }
+  onCleanup(() => {
+    if (typeof context.renderer.off === "function") {
+      context.renderer.off("palette", refreshTheme)
+      context.renderer.off("theme_mode", refreshTheme)
+    }
+  })
+  const theme = () => {
+    themeVersion()
+    return normalizeExplorerTheme(context.theme)
+  }
+  const basename = activeSessionDirectoryBasename(context, props.sessionID)
+  return (
+    <box
+      flexDirection={props.fill ? "column" : "row"}
+      width={props.fill ? "100%" : undefined}
+      flexGrow={props.fill ? undefined : 1}
+      gap={props.fill ? 0 : 1}
+      overflow="hidden"
+    >
+      <Show when={basename}>
+        <text flexShrink={0} wrapMode="none" truncate fg={theme().sectionCount}><b>{FILE_NAVIGATOR_ICON} {basename}</b></text>
+      </Show>
+      <Show when={basename && !props.fill}>
+        <box flexGrow={1} />
+      </Show>
+      <SessionIDCopy sessionID={props.sessionID} clipboard={props.clipboard} wrap={props.fill} />
+    </box>
+  )
+}
+
+export function FilesSidebar(props: { sessionID: string; clipboard?: SessionIDClipboard }) {
+  const context = usePlugin()
+  const open = () => context.ui.panel.open(PANEL_NAME, { presentation: "fullscreen" })
+  return (
+    <box
+      flexDirection="row"
+      width="100%"
+      flexShrink={0}
+      focusable
+      onMouseDown={(event) => {
+        if (!isPrimaryMouseEvent(event)) return
+        event.preventDefault?.()
+        open()
+      }}
+      onKeyDown={(event) => {
+        if (event.name !== "return" && event.name !== "space") return
+        event.preventDefault()
+        open()
+      }}
+    >
+      <SessionIdentity sessionID={props.sessionID} clipboard={props.clipboard} fill />
+    </box>
+  )
+}
+
+function createSyntaxStyle(theme: ExplorerTheme): SyntaxStyle {
   return SyntaxStyle.fromStyles({
     default: { fg: theme.text.default },
     comment: { fg: theme.syntax.comment, italic: true },
@@ -103,11 +288,12 @@ function createSyntaxStyle(theme: Context["theme"]): SyntaxStyle {
   })
 }
 
-function FilesView(props: { sessionID: string; panel: PanelInput }) {
+export function FilesView(props: { sessionID: string; panel: PanelInput }) {
   const context = usePlugin()
   const directory = projectDirectory(context, props.sessionID)
   const pathGuardPromise = createPathGuard(directory)
-  const syntaxStyle = createSyntaxStyle(context.theme)
+  const theme = () => normalizeExplorerTheme(context.theme)
+  const syntaxStyle = createSyntaxStyle(theme())
 
   const [children, setChildren] = createSignal<Map<string, FileNode[]>>(new Map())
   const [diffs, setDiffs] = createSignal<Map<string, FileDiffInfo>>(new Map())
@@ -1113,13 +1299,12 @@ function FilesView(props: { sessionID: string; panel: PanelInput }) {
     syntaxStyle.destroy()
   })
 
-  const theme = () => context.theme
   const treeWidth = () => Math.max(24, Math.min(36, Math.floor(props.panel.width * 0.25)))
 
   return (
     <box flexDirection="column" flexGrow={1} minHeight={0}>
       <box flexDirection="row" height={1} flexShrink={0} overflow="hidden" gap={1} paddingLeft={1} paddingRight={1}>
-        <text fg={theme().text.default}><b>Explorer</b></text>
+        <SessionIdentity sessionID={props.sessionID} />
         <text fg={theme().text.subdued}>{diffSourceLabel(diffSource())}</text>
         <box flexGrow={1} />
         <Show when={diffLoading()}><text fg={theme().text.subdued}>Loading…</text></Show>
@@ -1407,24 +1592,8 @@ export default Plugin.define({
 
     const stopSidebar = context.ui.slot({
       before: "sidebar.content",
-      render: () => (
-        <box
-          flexDirection="row"
-          focusable
-          onMouseDown={() => {
-            context.ui.panel.open(PANEL_NAME, { presentation: "fullscreen" })
-          }}
-          onKeyDown={(event) => {
-            if (event.name === "return" || event.name === "space") {
-              event.preventDefault()
-              context.ui.panel.open(PANEL_NAME, { presentation: "fullscreen" })
-            }
-          }}
-        >
-          <text fg={context.theme.hue.accent[200]}>
-            <b>Explorer</b>
-          </text>
-        </box>
+      render: ({ sessionID }) => (
+        <FilesSidebar sessionID={sessionID} />
       ),
     })
 

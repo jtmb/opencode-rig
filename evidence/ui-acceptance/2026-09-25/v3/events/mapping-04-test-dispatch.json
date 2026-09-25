@@ -1,0 +1,93 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "mapping-04-test-dispatch-001",
+  "capture_id": "mapping-04",
+  "source_sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+  "native_capture_test_sha256": "de58be33306f711228030ce294948d570bc57232cf2bef9ec954bb0d0a539b15",
+  "native_capture_output_sha256": "a0e79cb971db3347aa41aca03e39518cd52c6f98d9732da558ea00beaba26aea",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "input",
+    "target": "repository-session-header:ses_native_parent",
+    "input": {
+      "steps": [
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 1
+        }
+      ]
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "moveTo+moveTo+moveTo",
+    "target": "repository-session-header:ses_native_parent",
+    "input": {
+      "steps": [
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 1
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "e07a772e-df53-4310-adfa-b72eff3d55ee",
+    "dispatch_id": "mapping-04-test-dispatch-dispatch-001",
+    "transition_id": "mapping-04-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "27025869447303",
+    "transition_monotonic_ns": "27025966673191"
+  },
+  "before": {
+    "snapshot_id": "mapping-04-interact-before",
+    "frame_sha256": "067cfc97d79f85f744c2e1932e137621fe56056e7fda71f195058aa8d8a49b7c",
+    "spans_sha256": "69ce6a9e6dbe10cc20b8ed4c2b1d87eba430ace4089bdeb9df0c9456a98916a9",
+    "state_sha256": "ca8e2ac24ae3ed6e33085d5cdbca9cd8fb7f8c45ae10845303312bd490547a1b"
+  },
+  "after": {
+    "snapshot_id": "mapping-04-interact-after",
+    "frame_sha256": "067cfc97d79f85f744c2e1932e137621fe56056e7fda71f195058aa8d8a49b7c",
+    "spans_sha256": "2ab23f739272f1ca345ccac0de46ac3dd41f5d82872e5094e1cae20601720bc9",
+    "state_sha256": "0345f5d0890ddf80f0682b55cd435416f59456b08b529760101c8e32a5e7795c"
+  },
+  "result": {
+    "status": "passed",
+    "target": "repository-session-header:ses_native_parent",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "916ab2a6de2bea3e0a972f62be0c2000dae19312bc8849ff6794c9bfad414f06",
+  "output": "evidence/ui-acceptance/2026-09-25/v3/event-output/mapping-04-test-dispatch.json",
+  "output_sha256": "2e28748007e78a28fef178e657e569a770c1b09e1e676c78dfac7d05a4dd8620",
+  "observed_at": "2026-09-25T08:12:33.892Z"
+}

@@ -1,0 +1,13 @@
+bounded-command: available=7874MiB budget=3149MiB swap=787MiB node_heap=2047MiB
+Running as unit: run-r5798ae41c55b4bd5ad517007c943918f.scope; invocation ID: f4d82473f09945d6a3ae57a7d153b9c0
+✔ visible slash commands use the CLI dialog path, not a synthetic inbox body (1.195428ms)
+✔ sidebar preserves native MCP content while adding Explorer, Todo, and active subagents (0.23571ms)
+✔ canonical role catalog and CLI example register both rig-tools roles (0.589019ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 113.939706

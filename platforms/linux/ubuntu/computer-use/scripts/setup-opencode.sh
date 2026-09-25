@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Deploy the OpenCode v2 (2.0.x) harness surface: complete skill copies, the four
-# global commands, starting opencode.jsonc/cli.json, and pinned Explorer parser
-# assets. Read-only verification is the default; --apply writes. The target
+# Deploy the OpenCode v2 (2.0.x) harness surface: complete skill copies, the
+# opt-in ChatGPT agent, four global commands, starting opencode.jsonc/cli.json,
+# and pinned Explorer parser assets. Read-only verification is the default;
+# --apply writes. The target
 # defaults to the isolated Open Rig config directory and is overridden with
 # --config-dir or OPENCODE_V2_CONFIG_DIR.
 #
-# Skill bundles and commands deploy as content-aware copies from this checkout;
+# Skill bundles, the managed agent, and commands deploy as content-aware copies
+# from this checkout;
 # config files seed only when missing, and existing config is never overwritten.
 #
 # Usage:
@@ -35,8 +37,8 @@ Options:
   --verify-only            Check only (default)
   -h, --help               Show this help
 
-The script recursively deploys the 19 skill bundles from this checkout and the four
-global commands, seeds opencode.jsonc and cli.json only when missing, installs
+The script recursively deploys the 19 skill bundles from this checkout, the
+opt-in ChatGPT agent, and four global commands, seeds opencode.jsonc and cli.json only when missing, installs
 the exact locked plugin dependencies and managed Explorer parser assets when
 needed. Apply runs verify-opencode-v2.sh; prepare defers that health check for
 callers that must register plugins between seeding and verification.
@@ -84,12 +86,15 @@ COMPUTER_USE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$COMPUTER_USE_ROOT/../../../.." && pwd)"
 SKILLS_SRC="$COMPUTER_USE_ROOT/skills"
 COMMANDS_SRC="$COMPUTER_USE_ROOT/commands"
+AGENTS_SRC="$COMPUTER_USE_ROOT/agents"
 CONFIG_EXAMPLES="$COMPUTER_USE_ROOT/config"
 SKILLS_DEST="$CONFIG_DIR/skills"
 COMMANDS_DEST="$CONFIG_DIR/commands"
+AGENTS_DEST="$CONFIG_DIR/agents"
 VERIFY_SCRIPT="$SCRIPT_DIR/verify-opencode-v2.sh"
 JSONC_HELPER="$SCRIPT_DIR/setup-opencode-jsonc.py"
 BOUNDED_RUNNER="$SCRIPT_DIR/run-bounded-command.sh"
+PLUGIN_DEPENDENCY_SETUP="$SCRIPT_DIR/setup-plugin-dependencies.sh"
 PLUGINS_ROOT="$COMPUTER_USE_ROOT/plugins-v2"
 FILE_MANAGER_ROOT="$PLUGINS_ROOT/file-manager"
 PARSER_PACKAGE_JSON="$PLUGINS_ROOT/node_modules/tree-sitter-wasm/package.json"
@@ -123,6 +128,7 @@ REQUIRED_COMMANDS=(
   promote-skills
   resume
 )
+REQUIRED_AGENTS=(chatgpt-private)
 
 status=0
 ok() { echo "OK: $*"; }
@@ -162,24 +168,26 @@ NODE
 }
 
 ensure_workspace_dependencies() {
+  [ -x "$PLUGIN_DEPENDENCY_SETUP" ] || { fail "pinned plugin dependency setup is missing or not executable: $PLUGIN_DEPENDENCY_SETUP"; return 1; }
+  "$PLUGIN_DEPENDENCY_SETUP" --apply
   if workspace_parser_dependency_ok; then
     ok "workspace dependency tree-sitter-wasm@2.0.1"
-    return 0
-  fi
-  command -v npm >/dev/null 2>&1 || { fail "npm is required to install the pinned plugin workspace dependencies"; return 1; }
-  [ -x "$BOUNDED_RUNNER" ] || { fail "bounded command runner is not executable: $BOUNDED_RUNNER"; return 1; }
-  if (
-    cd "$PLUGINS_ROOT"
-    "$BOUNDED_RUNNER" -- npm ci --ignore-scripts --no-audit --no-fund
-  ) && workspace_parser_dependency_ok; then
-    ok "installed pinned plugin workspace dependencies"
   else
-    fail "pinned plugin workspace dependency installation failed"
+    fail "pinned plugin workspace dependency installation did not provide tree-sitter-wasm@2.0.1"
     return 1
   fi
 }
 
 verify_workspace_dependencies() {
+  if [ -x "$PLUGIN_DEPENDENCY_SETUP" ]; then
+    if "$PLUGIN_DEPENDENCY_SETUP" --verify-only; then
+      ok "pinned Ponytail package, adapter workspace, and six-command/six-skill surface"
+    else
+      fail "pinned Ponytail package, adapter workspace, or six-command/six-skill surface missing (run with --apply)"
+    fi
+  else
+    fail "pinned plugin dependency setup is missing or not executable: $PLUGIN_DEPENDENCY_SETUP"
+  fi
   if workspace_parser_dependency_ok; then
     ok "workspace dependency tree-sitter-wasm@2.0.1"
   else
@@ -227,6 +235,16 @@ done
 for name in "${REQUIRED_COMMANDS[@]}"; do
   if [ ! -f "$COMMANDS_SRC/$name.md" ]; then
     echo "ERROR: required command source missing: $COMMANDS_SRC/$name.md" >&2
+    source_missing=1
+  fi
+done
+if [ -L "$AGENTS_SRC" ] || [ ! -d "$AGENTS_SRC" ]; then
+  echo "ERROR: required agent source directory missing or symlinked: $AGENTS_SRC" >&2
+  source_missing=1
+fi
+for name in "${REQUIRED_AGENTS[@]}"; do
+  if [ -L "$AGENTS_SRC/$name.md" ] || [ ! -f "$AGENTS_SRC/$name.md" ]; then
+    echo "ERROR: required agent source missing or symlinked: $AGENTS_SRC/$name.md" >&2
     source_missing=1
   fi
 done
@@ -420,6 +438,70 @@ verify_commands() {
   done
 }
 
+validate_agent_destination() {
+  local name dest
+  if path_has_symlink_ancestor "$AGENTS_DEST"; then
+    fail "agent destination has a symlink ancestor: $AGENTS_DEST"
+    return 1
+  fi
+  if [ -L "$AGENTS_DEST" ]; then
+    fail "agent destination is a symlink: $AGENTS_DEST"
+    return 1
+  fi
+  if [ -e "$AGENTS_DEST" ] && [ ! -d "$AGENTS_DEST" ]; then
+    fail "agent destination is not a directory: $AGENTS_DEST"
+    return 1
+  fi
+  for name in "${REQUIRED_AGENTS[@]}"; do
+    dest="$AGENTS_DEST/$name.md"
+    if [ -L "$dest" ]; then
+      fail "agent destination is a symlink: $dest"
+      return 1
+    fi
+    if [ -e "$dest" ] && [ ! -f "$dest" ]; then
+      fail "agent destination is not a regular file: $dest"
+      return 1
+    fi
+  done
+  return 0
+}
+
+ensure_agents() {
+  local name src dest
+  validate_agent_destination || return 0
+  mkdir -p -- "$AGENTS_DEST"
+  for name in "${REQUIRED_AGENTS[@]}"; do
+    src="$AGENTS_SRC/$name.md"
+    dest="$AGENTS_DEST/$name.md"
+    if [ -L "$src" ] || [ ! -f "$src" ]; then
+      fail "agent source is missing or symlinked: $src"
+      continue
+    fi
+    if [ -f "$dest" ] && cmp -s -- "$src" "$dest"; then
+      ok "agent $name deployed"
+      continue
+    fi
+    cp -p -- "$src" "$dest"
+    ok "deployed agent $name"
+  done
+}
+
+verify_agents() {
+  local name src dest
+  validate_agent_destination || return 0
+  for name in "${REQUIRED_AGENTS[@]}"; do
+    src="$AGENTS_SRC/$name.md"
+    dest="$AGENTS_DEST/$name.md"
+    if [ -L "$src" ] || [ ! -f "$src" ]; then
+      fail "agent source is missing or symlinked: $src"
+    elif [ ! -f "$dest" ] || ! cmp -s -- "$src" "$dest"; then
+      fail "agent $name missing or stale (run with --apply)"
+    else
+      ok "agent $name deployed"
+    fi
+  done
+}
+
 verify_config() {
   local path="$1"
   if [ ! -f "$path" ]; then
@@ -485,10 +567,17 @@ if [ "$APPLY" -eq 1 ]; then
   mkdir -p -- "$CONFIG_DIR"
   seed_config opencode.jsonc "$CONFIG_EXAMPLES/v2-opencode.example.jsonc"
   seed_config cli.json "$CONFIG_EXAMPLES/v2-cli.example.json"
+  if python3 "$JSONC_HELPER" --apply-agent-models \
+    "$CONFIG_EXAMPLES/v2-opencode.example.jsonc" "$CONFIG_DIR/opencode.jsonc"; then
+    ok "Open Rig agent role models reconciled in selected server config"
+  else
+    fail "Open Rig agent role models could not be reconciled in selected server config"
+  fi
   for name in "${REQUIRED_SKILLS[@]}"; do
     ensure_skill_bundle "$name"
   done
   ensure_commands
+  ensure_agents
   # Copy helpers intentionally accumulate bundle failures so prepare can
   # report every problem, but the final status gate below must still fail.
   for name in "${REQUIRED_SKILLS[@]}"; do
@@ -512,8 +601,15 @@ for name in "${REQUIRED_SKILLS[@]}"; do
   skill_bundle_ok "$name" || true
 done
 verify_commands
+verify_agents
 verify_config "$CONFIG_DIR/opencode.jsonc"
 verify_config "$CONFIG_DIR/cli.json"
+if [ -f "$CONFIG_DIR/opencode.jsonc" ] && python3 "$JSONC_HELPER" --verify-agent-models \
+    "$CONFIG_EXAMPLES/v2-opencode.example.jsonc" "$CONFIG_DIR/opencode.jsonc"; then
+  ok "Open Rig Build/Explore/General Luna and Plan/Architect Sol role models verified"
+else
+  fail "Open Rig agent role models are missing or stale in selected server config"
+fi
 
 echo "--- v2 deployment health check ---"
 if OPENCODE_V2_CONFIG_DIR="$CONFIG_DIR" OPENCODE_V2_REPO="$REPO_ROOT" "$VERIFY_SCRIPT"; then
@@ -526,7 +622,7 @@ echo ""
 if [ "$status" -eq 0 ]; then
   echo "OK: v2 deployment verified ($CONFIG_DIR)"
   if [ "$APPLY" -eq 1 ]; then
-    echo "Restart OpenCode so updated skills and commands are loaded."
+    echo "Restart OpenCode so updated skills, agents, and commands are loaded."
   fi
 else
   echo "FAIL: v2 deployment incomplete; see MISSING/STALE lines above." >&2

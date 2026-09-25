@@ -1,9 +1,21 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { activeSubagentRows, formatSubagentRow, nextSubagentIndex, resolveSubagentRows, subagentActivityLabel, subagentAnimationsEnabled, subagentStatus } from "../src/subagents.ts"
+import { activeSubagentRowStyle, activeSubagentRows, formatSubagentRow, nextSubagentIndex, resolveSubagentRows, subagentActivityLabel, subagentAnimationsEnabled, subagentStatus } from "../src/subagents.ts"
 
 const parent = { id: "ses_parent", projectID: "project", location: { directory: "/repo" } }
+const rowTheme = {
+  hue: { accent: { 200: "accent-pink" } },
+  text: {
+    default: "default-text",
+    subdued: "subdued-text",
+    action: { primary: { default: "selected-text" } },
+  },
+  background: {
+    default: "sidebar-surface",
+    action: { primary: { default: "primary-surface", selected: "selection-surface" } },
+  },
+}
 
 test("renders the resolved model and variant before the child title", () => {
   const rows = resolveSubagentRows([
@@ -73,6 +85,89 @@ test("keeps only bounded running sidebar rows and wraps keyboard selection", () 
   assert.equal(subagentAnimationsEnabled(true, 80), false)
   assert.equal(subagentActivityLabel("⠋"), "⠋ running")
   assert.equal(subagentActivityLabel(), "running")
+})
+
+test("live active count includes a subsequent running child even while the body is collapsed", () => {
+  const first = {
+    sessionID: "ses_first",
+    agent: "General",
+    model: "openai/gpt-5.6-luna#max",
+    title: "First child",
+    status: "running" as const,
+  }
+  const second = {
+    sessionID: "ses_second",
+    agent: "General",
+    model: "openai/gpt-5.6-luna#max",
+    title: "Second child",
+    status: "running" as const,
+  }
+  const render = (rows: readonly typeof first[], collapsed: boolean) => ({
+    count: activeSubagentRows(rows).length,
+    body: collapsed ? [] : activeSubagentRows(rows),
+  })
+  const initial = render([first], true)
+  const refreshed = render([first, second], true)
+  const restored = render([first, second], false)
+
+  assert.equal(initial.count, 1)
+  assert.deepEqual(initial.body, [])
+  assert.equal(refreshed.count, 2)
+  assert.deepEqual(refreshed.body, [])
+  assert.deepEqual(restored.body.map((row) => row.sessionID), ["ses_first", "ses_second"])
+})
+
+test("keeps focused rows on the shared sidebar surface with muted supporting text", () => {
+  const focused = activeSubagentRowStyle(rowTheme, true)
+  const unfocused = activeSubagentRowStyle(rowTheme, false)
+
+  assert.equal(focused.backgroundColor, "sidebar-surface")
+  assert.equal(focused.backgroundToken, "background.default")
+  assert.equal(focused.markerColor, "accent-pink")
+  assert.equal(focused.markerToken, "hue.accent.200")
+  assert.equal(focused.agentColor, "default-text")
+  assert.equal(focused.modelColor, "subdued-text")
+  assert.equal(focused.taskColor, "subdued-text")
+  assert.equal(focused.agentToken, "text.default")
+  assert.equal(focused.modelToken, "text.subdued")
+  assert.equal(focused.taskToken, "text.subdued")
+
+  assert.equal(unfocused.backgroundColor, "sidebar-surface")
+  assert.equal(unfocused.backgroundToken, "background.default")
+  assert.equal(unfocused.agentColor, "default-text")
+  assert.equal(unfocused.modelColor, "subdued-text")
+  assert.equal(unfocused.taskColor, "subdued-text")
+  assert.equal(focused.backgroundColor, unfocused.backgroundColor)
+})
+
+test("active row styles never introduce black or an undefined background fallback", () => {
+  for (const focused of [false, true]) {
+    const style = activeSubagentRowStyle(rowTheme, focused)
+    assert.notEqual(style.backgroundColor, undefined)
+    assert.notEqual(style.backgroundColor, "black")
+    assert.notEqual(style.backgroundColor, "#000")
+    assert.notEqual(style.backgroundColor, "#000000")
+    assert.notEqual(style.backgroundColor, "0x000000")
+  }
+
+  const missingSelected = activeSubagentRowStyle({
+    ...rowTheme,
+    background: { default: "sidebar-surface", action: { primary: { default: "primary-surface" } } },
+  }, true)
+  assert.equal(missingSelected.backgroundColor, "sidebar-surface")
+  assert.equal(missingSelected.backgroundToken, "background.default")
+  assert.notEqual(missingSelected.backgroundColor, undefined)
+
+  const missingFocusedText = activeSubagentRowStyle({
+    ...rowTheme,
+    text: { ...rowTheme.text, action: { primary: {} } },
+  }, true)
+  assert.equal(missingFocusedText.agentColor, "default-text")
+  assert.equal(missingFocusedText.modelColor, "subdued-text")
+  assert.equal(missingFocusedText.taskColor, "subdued-text")
+  assert.equal(missingFocusedText.agentToken, "text.default")
+  assert.equal(missingFocusedText.modelToken, "text.subdued")
+  assert.equal(missingFocusedText.taskToken, "text.subdued")
 })
 
 test("falls back to session lifecycle fields when the active snapshot omits a running child", () => {

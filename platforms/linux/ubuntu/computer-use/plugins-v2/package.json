@@ -4,16 +4,19 @@
   "private": true,
   "type": "module",
   "description": "OpenCode v2 plugins for the opencode-rig harness.",
+  "scripts": {
+    "test:browser-retirement": "python3 ../scripts/deploy-plugins-self-test.py && python3 ../scripts/setup-opencode-self-test.py"
+  },
   "workspaces": [
     "codex-fallback",
     "codex-usage",
     "source-control",
     "file-manager",
-    "integrated-browser",
     "orchestration-policy",
     "ponytail-adapter",
     "git-tool",
     "repo-learning",
+    "chatgpt-connector",
     "rig-tools",
     "rig-todo",
     "resource-monitor"

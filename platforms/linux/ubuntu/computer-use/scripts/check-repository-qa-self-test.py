@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import os
 import subprocess
@@ -253,6 +254,91 @@ def test_self_test_discovery(qa, root: Path) -> None:
         qa.SELF_TEST_NAMES = original_names
 
 
+def make_runtime_fixture(root: Path) -> tuple[Path, Path]:
+    """Create a relative checksum-bound Node/npm declaration for QA tests."""
+    config_dir = root / ".opencode"
+    bin_dir = root / "toolchains" / "node" / "bin"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    node = bin_dir / "node"
+    npm = bin_dir / "npm"
+    node.write_bytes(b"fixture node runtime\n")
+    npm.write_bytes(b"fixture npm launcher\n")
+    node.chmod(0o755)
+    npm.chmod(0o755)
+    (config_dir / "rig-gates.json").write_text(
+        json.dumps(
+            {
+                "qaRuntime": {
+                    "name": "node",
+                    "version": "26.4.0",
+                    "executable": "toolchains/node/bin/node",
+                    "sha256": hashlib.sha256(node.read_bytes()).hexdigest(),
+                    "packageManager": {
+                        "name": "npm",
+                        "executable": "toolchains/node/bin/npm",
+                        "sha256": hashlib.sha256(npm.read_bytes()).hexdigest(),
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    return node, npm
+
+
+def test_runtime_selection(qa, root: Path) -> None:
+    """Require a relative digest-bound runtime and reject ambient-path fallbacks."""
+    missing = root / "missing"
+    missing.mkdir()
+    expect_failure(
+        lambda: qa.load_qa_runtime(missing),
+        "missing runtime declaration",
+        "QA runtime configuration",
+    )
+    node, npm = make_runtime_fixture(root)
+    original_path = os.environ.get("PATH")
+    os.environ["PATH"] = "/definitely/not-a-runtime"
+    try:
+        runtime = qa.load_qa_runtime(root)
+    finally:
+        if original_path is None:
+            os.environ.pop("PATH", None)
+        else:
+            os.environ["PATH"] = original_path
+    assert runtime.name == "node"
+    assert runtime.version == "26.4.0"
+    assert runtime.executable == node
+    assert runtime.package_manager == npm
+    assert runtime.path == f"{node.parent}:/usr/bin:/bin"
+
+    config_path = root / ".opencode/rig-gates.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["qaRuntime"]["sha256"] = "0" * 64
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    expect_failure(
+        lambda: qa.load_qa_runtime(root),
+        "runtime digest mismatch",
+        "does not match",
+    )
+    config["qaRuntime"]["sha256"] = hashlib.sha256(node.read_bytes()).hexdigest()
+    config["qaRuntime"]["name"] = "python"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    expect_failure(
+        lambda: qa.load_qa_runtime(root),
+        "unsupported runtime",
+        "unsupported QA runtime",
+    )
+    config["qaRuntime"]["name"] = "node"
+    config["qaRuntime"]["executable"] = str(node)
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    expect_failure(
+        lambda: qa.load_qa_runtime(root),
+        "absolute runtime path",
+        "absolute developer paths",
+    )
+
+
 def test_child_environment_and_bytecode(qa, root: Path) -> None:
     helper = root / "bytecode_helper.py"
     report = root / "environment.json"
@@ -292,26 +378,79 @@ pathlib.Path({str(report)!r}).write_text(
     assert not list(root.rglob("__pycache__"))
 
 
-def test_workspace_count(qa, root: Path) -> None:
+def test_workspace_catalog(qa, root: Path) -> None:
     workspace = root / "plugins-v2"
     workspace.mkdir()
-    packages = [f"package-{index}" for index in range(12)]
-    (workspace / "package.json").write_text(
+    runtime = make_runtime_fixture(root)
+    packages = [
+        "codex-fallback",
+        "codex-usage",
+        "source-control",
+        "file-manager",
+        "orchestration-policy",
+        "ponytail-adapter",
+        "git-tool",
+        "repo-learning",
+        "chatgpt-connector",
+        "rig-tools",
+        "rig-todo",
+        "resource-monitor",
+    ]
+    package_manifest = workspace / "package.json"
+    package_manifest.write_text(
         json.dumps({"workspaces": packages}), encoding="utf-8"
     )
     calls = []
     original_run = qa.run_command
-    qa.run_command = lambda argv, cwd, **kwargs: calls.append((argv, cwd))
+    qa.run_command = lambda argv, cwd, **kwargs: calls.append((argv, cwd, kwargs))
     try:
-        assert qa.run_package_checks(root, workspace) == 12
+        assert qa.run_package_checks(root, workspace, qa.load_qa_runtime(root)) == 12
         assert len(calls) == 12
-        (workspace / "package.json").write_text(
+        assert all(call[0][0] == str(runtime[1]) for call in calls)
+        assert all(
+            call[2].get("path_override") == f"{runtime[0].parent}:/usr/bin:/bin"
+            for call in calls
+        )
+        package_manifest.write_text(
             json.dumps({"workspaces": packages[:-1]}), encoding="utf-8"
         )
         expect_failure(
-            lambda: qa.run_package_checks(root, workspace),
+            lambda: qa.run_package_checks(root, workspace, qa.load_qa_runtime(root)),
             "incomplete workspace catalog",
-            "exactly twelve",
+            "exactly twelve unique curated",
+        )
+
+        package_manifest.write_text(
+            json.dumps({"workspaces": packages + ["integrated-browser"]}),
+            encoding="utf-8",
+        )
+        expect_failure(
+            lambda: qa.run_package_checks(root, workspace, qa.load_qa_runtime(root)),
+            "retired workspace in catalog",
+            "excluding integrated-browser",
+        )
+
+        retired_substitution = [
+            "integrated-browser" if package == "chatgpt-connector" else package
+            for package in packages
+        ]
+        package_manifest.write_text(
+            json.dumps({"workspaces": retired_substitution}), encoding="utf-8"
+        )
+        expect_failure(
+            lambda: qa.run_package_checks(root, workspace, qa.load_qa_runtime(root)),
+            "connector missing from workspace catalog",
+            "including chatgpt-connector",
+        )
+
+        duplicate_packages = packages[:-1] + [packages[0]]
+        package_manifest.write_text(
+            json.dumps({"workspaces": duplicate_packages}), encoding="utf-8"
+        )
+        expect_failure(
+            lambda: qa.run_package_checks(root, workspace, qa.load_qa_runtime(root)),
+            "duplicate workspace catalog entry",
+            "exactly twelve unique curated",
         )
     finally:
         qa.run_command = original_run
@@ -321,7 +460,10 @@ def test_staged_diff_check(qa, root: Path) -> None:
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
     path = root / "staged.txt"
     path.write_text("clean\n", encoding="utf-8")
-    subprocess.run(["git", "add", "staged.txt"], cwd=root, check=True)
+    (root / "wsl-session.md").write_text(
+        "historical terminal export with trailing whitespace  \n", encoding="utf-8"
+    )
+    subprocess.run(["git", "add", "staged.txt", "wsl-session.md"], cwd=root, check=True)
     subprocess.run(
         [
             "git",
@@ -347,6 +489,34 @@ def test_staged_diff_check(qa, root: Path) -> None:
         "command failed",
     )
 
+    path.write_text("clean again\n", encoding="utf-8")
+    subprocess.run(["git", "add", "staged.txt"], cwd=root, check=True)
+    qa.check_git_diff(root)
+
+    head_path = root / "head.txt"
+    head_path.write_text("non-exempt HEAD whitespace  \n", encoding="utf-8")
+    subprocess.run(["git", "add", "head.txt"], cwd=root, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Repository QA",
+            "-c",
+            "user.email=qa@example.invalid",
+            "commit",
+            "-q",
+            "-m",
+            "bad HEAD fixture",
+        ],
+        cwd=root,
+        check=True,
+    )
+    expect_failure(
+        lambda: qa.check_git_diff(root),
+        "non-exempt HEAD whitespace error",
+        "command failed",
+    )
+
 
 def main() -> int:
     qa = load_module()
@@ -364,13 +534,17 @@ def main() -> int:
         discovery_root.mkdir()
         test_self_test_discovery(qa, discovery_root)
 
+        runtime_root = root / "runtime"
+        runtime_root.mkdir()
+        test_runtime_selection(qa, runtime_root)
+
         bytecode_root = root / "bytecode"
         bytecode_root.mkdir()
         test_child_environment_and_bytecode(qa, bytecode_root)
 
         workspace_root = root / "workspace"
         workspace_root.mkdir()
-        test_workspace_count(qa, workspace_root)
+        test_workspace_catalog(qa, workspace_root)
 
         staged_root = root / "staged"
         staged_root.mkdir()
@@ -378,8 +552,9 @@ def main() -> int:
 
     print(
         "OK: repository QA self-test rejects command, deadline, output, format, "
-        "link, self-test discovery, and workspace-count failures; cleanup, "
-        "environment, ordering, staged diff, and no-bytecode invariants passed"
+        "link, self-test discovery, and workspace-catalog failures; cleanup, "
+        "environment, declared runtime/checksum, ordering, staged diff, and "
+        "no-bytecode invariants passed"
     )
     return 0
 

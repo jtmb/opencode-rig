@@ -1,0 +1,14 @@
+bounded-command: available=7942MiB budget=3177MiB swap=794MiB node_heap=2065MiB
+Running as unit: run-r136ce212e93041b7bd376770e2d5ad81.scope; invocation ID: 35b19a4ed5634857b771406dff962f73
+(node:2679964) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+RIG_COMPOSED_SIDEBAR_RENDER_ASSERTIONS_EXECUTED
+✔ composed production plugin sections fit a narrow sidebar before the footer sentinel (799.25662ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1541.835153

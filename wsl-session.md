@@ -2461,7 +2461,7 @@ Read file /home/brajam/repos/opencode-rig/docs/scripts/setup-computer-assistant.
 79: 
 80: - Runs `setup-opencode.sh --prepare` to seed the complete canonical examples,
 81:   deploy v2 skills/commands, and install/verify pinned parser assets without
-82:   running a premature health check (see [`setup-opencode.md`](setup-opencode.md)).
+82:   running a premature health check (see [`setup-opencode.md`](docs/scripts/setup-opencode.md)).
 83:   It does not recreate the retired legacy JSON memory store.
 84: - Registers all catalog v2 plugins after preparation. The final `verify()` phase
 85:   then runs exactly one real `setup-opencode.sh --verify-only` health check.
@@ -2617,9 +2617,9 @@ Read file /home/brajam/repos/opencode-rig/docs/scripts/setup-computer-assistant.
 235:   new machine; the script prints a notice and verification fails until then.
 236: - GitHub authentication is handled only by OpenCode's hosted OAuth flow from
 237:   `/mcps`; never add a token, header, or client secret to configuration.
-238: - Reading order: [`setup-opencode.md`](setup-opencode.md),
-239:   [`setup-live-dictation.md`](setup-live-dictation.md),
-240:   [`github-mcp.md`](github-mcp.md), [`playwright-mcp.md`](playwright-mcp.md).
+238: - Reading order: [`setup-opencode.md`](docs/scripts/setup-opencode.md),
+239:   [`setup-live-dictation.md`](docs/scripts/setup-live-dictation.md),
+240:   [`github-mcp.md`](docs/scripts/github-mcp.md), [`playwright-mcp.md`](docs/scripts/playwright-mcp.md).
 
 **Tool: read**
 
@@ -2766,11 +2766,11 @@ Found 81 matches
 
 
 /home/brajam/repos/opencode-rig/platforms/linux/ubuntu/README.md:
-  Line 8: | Browser tools | [`browser-tools/`](browser-tools/) | Pinned Playwright MCP package for live and headless Firefox |
+  Line 8: | Browser tools | [`browser-tools/`](platforms/linux/ubuntu/browser-tools/) | Pinned Playwright MCP package for live and headless Firefox |
 
 
 /home/brajam/repos/opencode-rig/docs/README.md:
-  Line 84: | [`scripts/playwright-mcp.md`](scripts/playwright-mcp.md) | The visible, user-shared Playwright Firefox launcher |
+  Line 84: | [`scripts/playwright-mcp.md`](docs/scripts/playwright-mcp.md) | The visible, user-shared Playwright Firefox launcher |
 
 
 /home/brajam/repos/opencode-rig/platforms/windows/wsl2/ubuntu/computer-use/plugins-v2/package-lock.json:
@@ -2842,7 +2842,7 @@ Found 81 matches
 /home/brajam/repos/opencode-rig/platforms/linux/ubuntu/computer-use/skills/README.md:
   Line 30: - `browser-assistant` shares a visible isolated Firefox window with the user.
 
-  Line 63: | [`browser-assistant`](./browser-assistant/SKILL.md) | [`README.md`](./browser-assistant/README.md) | `browser` | `browser,live,playwright,firefox` |
+  Line 63: | [`browser-assistant`](platforms/linux/ubuntu/computer-use/skills/browser-assistant/SKILL.md) | [`README.md`](platforms/linux/ubuntu/computer-use/skills/browser-assistant/README.md) | `browser` | `browser,live,playwright,firefox` |
 
   Line 130: Interact with websites in a visible Playwright Firefox window shared by the
 

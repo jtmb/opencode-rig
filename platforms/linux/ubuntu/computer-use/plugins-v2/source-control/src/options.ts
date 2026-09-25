@@ -38,7 +38,8 @@ export const DEFAULT_REFRESH_MS = 15_000
 export const MIN_REFRESH_MS = 5_000
 export const DEFAULT_GITHUB_REFRESH_MS = 120_000
 export const MIN_GITHUB_REFRESH_MS = 30_000
-export const DEFAULT_MAX_FILES = 8
+export const DEFAULT_MAX_FILES = 3
+export const MAX_VISIBLE_FILES = 3
 export const DEFAULT_START_COLLAPSED = true
 export const DEFAULT_ORDER = 50
 export const MIN_ORDER = 1
@@ -95,7 +96,10 @@ export function readRuntimeOptions(kv: OptionsKV, options: PluginOptions): Runti
       options.githubRefreshMs ?? DEFAULT_GITHUB_REFRESH_MS,
       MIN_GITHUB_REFRESH_MS,
     ),
-    maxFiles: bounded(kv.get(KEYS.maxFiles, options.maxFiles), options.maxFiles ?? DEFAULT_MAX_FILES, 1),
+    maxFiles: Math.min(
+      MAX_VISIBLE_FILES,
+      bounded(kv.get(KEYS.maxFiles, options.maxFiles), options.maxFiles ?? DEFAULT_MAX_FILES, 1),
+    ),
     startCollapsed: booleanValue(
       kv.get(KEYS.startCollapsed),
       options.startCollapsed ?? DEFAULT_START_COLLAPSED,

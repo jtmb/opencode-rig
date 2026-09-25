@@ -5,6 +5,9 @@
     "mode": "dark"
   },
   "animations": true,
+  "attention": {
+    "sound": false
+  },
   "session": {
     "permissions": "prompt",
     "sidebar": "auto",
@@ -31,10 +34,6 @@
     },
     {
       "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
-      "options": {}
-    },
-    {
-      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/integrated-browser",
       "options": {}
     },
     {

@@ -10,7 +10,6 @@ import { resolve } from "node:path"
 const adapter = resolve(process.argv[2] || new URL("..", import.meta.url).pathname)
 const packageRoot = process.argv[3] ? resolve(process.argv[3]) : undefined
 const binary = process.env.OPENCODE_V2_BIN || resolve(process.env.HOME, ".local/opt/opencode-v2/opencode")
-assert.ok(packageRoot, "usage: verify-runtime.mjs ADAPTER_DIRECTORY PONYTAIL_PACKAGE_DIRECTORY")
 
 const root = await mkdtemp(`${tmpdir()}/opencode-ponytail-v2-`)
 const requests = []
@@ -47,7 +46,7 @@ for (const name of ["CONFIG", "DATA", "CACHE", "STATE"]) env[`XDG_${name}_HOME`]
 const configDirectory = `${env.XDG_CONFIG_HOME}/opencode`
 await mkdir(configDirectory, { recursive: true })
 await writeFile(`${configDirectory}/opencode.json`, JSON.stringify({
-  plugins: [{ package: adapter, options: { packageRoot } }],
+  plugins: [{ package: adapter, options: packageRoot ? { packageRoot } : {} }],
   model: "test/probe",
   update: "disable",
   default_agent: "probe",

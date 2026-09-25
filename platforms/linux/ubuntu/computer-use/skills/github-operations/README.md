@@ -23,12 +23,12 @@ Appropriate requests include:
 
 ## Prerequisites and setup verification
 
-The repository setup registers GitHub's credential-free hosted OAuth endpoint
-`https://api.githubcopilot.com/mcp/` as the global `github` MCP. It does not
-write a token, authorization header, client secret, or local credential field.
-Start OpenCode, open `/mcps`, select `github`, and complete OAuth in the
-browser. Do not paste a token into `opencode.json`, a repository file, chat, or
-task memory.
+The repository setup installs the pinned official GitHub MCP Server below the
+selected profile and registers the canonical local wrapper. Authenticate the
+GitHub CLI yourself with `gh auth login --hostname github.com`. At server start,
+the wrapper obtains a transient token from that saved login and passes it only
+in the child environment. Do not paste a token into `opencode.json`, a
+repository file, chat, logs, or task memory.
 
 The agent can verify installation and connection without displaying a token:
 
@@ -36,8 +36,8 @@ The agent can verify installation and connection without displaying a token:
 opencode mcp list
 ```
 
-Before OAuth, `needs_auth` is the expected fail-closed status rather than a
-connected result.
+The local MCP must report `connected`; `needs_auth` and `failed` are not
+accepted results.
 
 ## How to request it
 
@@ -84,8 +84,8 @@ and filters some untrusted public issue content.
 Known limitations:
 
 - The wrapper resolves its credential when the MCP starts; running sessions do
-  not reload environment variables or MCP configuration, so restart OpenCode
-  after logging in or changing a token.
+  not reload the saved `gh` login or MCP configuration, so restart OpenCode
+  after changing authentication.
 - Read-only mode does not reduce the token's underlying account permissions.
 - Lockdown mode is a best-effort content filter, not a security boundary.
 - GitHub Actions, releases, discussions, projects, and security toolsets are not
@@ -94,8 +94,9 @@ Known limitations:
 
 ## Troubleshooting
 
-- MCP says authentication is not configured: open `/mcps` and complete the
-  hosted OAuth flow; never add a token or header to the config.
+- MCP says authentication is not configured: the operator checks `gh auth
+  status --hostname github.com` or runs `gh auth login` outside the agent, then
+  restarts OpenCode. Never add a token or header to the config.
 - `401` or `403`: check token expiration, selected repositories, permissions,
   organization SSO authorization, and organization MCP policy without printing
   the token.
@@ -112,7 +113,8 @@ Known limitations:
 
 Authentication, token creation, SSO authorization, OAuth/App authorization, and
 permission changes require the user's participation and immediate approval.
-The agent never asks for, reads, types, logs, or stores the credential.
+The agent never asks for, displays, types, logs, or stores the credential; the
+wrapper alone reads it from the authenticated `gh` session at process start.
 
 The agent also asks immediately before publishing or sending GitHub content,
 merging, pushing, triggering deployments or workflows, deleting remote data, or

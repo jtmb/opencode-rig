@@ -9,22 +9,25 @@ import {
   formatDetails,
   formatSnapshot,
   providerCompactLine,
+  providerCompactStatus,
+  providerDetailLine,
   providerPanelDetail,
   providerStatusLabel,
+  providerTone,
   providerUsageSummary,
   relativeTime,
-  usageUpdatedLabel,
 } from "../src/format.ts"
 import { isCodexSubscriptionModel, latestSessionModel, messageModel } from "../src/model.ts"
 import { createUsageStore } from "../src/store.ts"
+import { codexUsage } from "../src/server.ts"
 import {
   providerStates,
   readProviderCooldowns,
-  withCodexStatus,
-  withDeepSeekStatus,
   withProviderCooldowns,
 } from "../src/providers.ts"
 import {
+  accountIdFromAccessToken,
+  codexLimitReached,
   CodexUsageError,
   fetchDeepSeekBalance,
   fetchCodexUsage,
@@ -32,8 +35,6 @@ import {
   overallWeeklyWindow,
   parseDeepSeekBalance,
   parseUsagePayload,
-  readDeepSeekCredential,
-  readOpenAICredential,
 } from "../src/usage.ts"
 
 test("provider usage stays before the native footer so working directory remains last", async () => {
@@ -41,7 +42,34 @@ test("provider usage stays before the native footer so working directory remains
   assert.match(source, /before: "sidebar\.footer"/)
   assert.doesNotMatch(source, /append: "sidebar\.footer"/)
   assert.match(source, /provider-usage-settings-v2[^\n]+collapsed: true/)
-  assert.doesNotMatch(source, /flexGrow=\{1\}/)
+  assert.doesNotMatch(source, /<box flexDirection="column" gap=\{0\} flexGrow/)
+  assert.match(source, /attributes=\{TextAttributes\.BOLD\}[\s\S]+Provider Usage/)
+  assert.match(source, /\{\(state\(\)\.providers \?\? \[\]\)\.length\}/)
+  assert.match(source, /palette\(\)\.sectionCount/)
+  assert.doesNotMatch(source, />•<\/text>/)
+  assert.match(source, /<text wrapMode="none" truncate fg=\{palette\(\)\.primary\} attributes=\{TextAttributes\.BOLD\}>\{props\.provider\.label\}<\/text>/)
+  assert.match(source, /<box flexGrow=\{1\} \/>/)
+  assert.match(source, /providerDetailParts\(props\.provider\)/)
+  assert.match(source, /paddingLeft=\{2\}/)
+  assert.match(source, /wrapMode="word"/)
+  assert.match(source, /attributes=\{TextAttributes\.DIM\}/)
+  assert.match(source, /palette\.measurement/)
+   assert.match(source, /<b>\{token\.text\}<\/b>/)
+  assert.doesNotMatch(source.slice(source.indexOf("export function ProviderRow"), source.indexOf("function providerUpdatedLabel")), /providerCompactStatus\(props\.provider\)/)
+  assert.doesNotMatch(source, /snapshot: UsageState\["snapshot"\]/)
+  assert.doesNotMatch(source, /snapshot=\{state\(\)\.snapshot\}/)
+  assert.match(source, /flexDirection="row"\s+width="100%"[\s\S]+palette\(\)\.primary/)
+  assert.match(source, /props\.provider\.status === "available"/)
+  assert.match(source, /palette\(\)\.ready/)
+  assert.match(source, /palette\(\)\.offline/)
+  assert.match(source, /providerPalette/)
+  assert.match(source, /Refresh Codex quota, DeepSeek balance, Anthropic rate limits, and provider status\./)
+  assert.match(source, /Show verified Codex limits, DeepSeek balance, Anthropic rate limits, and provider statuses\./)
+  assert.doesNotMatch(source, /Refresh failed; saved values retained\./)
+  assert.match(source, /<text wrapMode="none" truncate[\s\S]+fg=\{palette\(\)\.subdued\}/)
+  assert.match(source, /<Show when=\{collapsed\(\) \? summary\(\) : ""\}>/)
+  assert.doesNotMatch(source, /providerCompactParts/)
+  assert.match(source, /paddingLeft=\{2\}/)
 })
 
 test("parses overall and model-specific usage windows", () => {
@@ -82,6 +110,54 @@ test("parses overall and model-specific usage windows", () => {
   assert.match(displayed, /Overall weekly limit/)
   assert.match(displayed, /23% left/)
   assert.doesNotMatch(displayed, /5h|Spark|Credits/)
+})
+
+test("derives Codex exhaustion and usage labels from the overall bucket only", () => {
+  const now = Date.UTC(2026, 8, 15, 12, 0, 0)
+  const specializedExhausted = parseUsagePayload({
+    rate_limit: {
+      allowed: true,
+      primary_window: { used_percent: 10, limit_window_seconds: 18000 },
+      secondary_window: { used_percent: 20, limit_window_seconds: 604800 },
+    },
+    additional_rate_limits: [{
+      metered_feature: "specialized-model",
+      rate_limit: { primary_window: { used_percent: 100, limit_window_seconds: 300 } },
+    }],
+  }, now)
+  assert.equal(codexLimitReached(specializedExhausted), false)
+   assert.deepEqual(codexUsage(specializedExhausted), { outcome: "ok", usage: "Weekly: 80% left", remainingRatio: 0.8 })
+
+  const reachedType = parseUsagePayload({
+    rate_limit: { allowed: true, secondary_window: { used_percent: 20, limit_window_seconds: 604800 } },
+    rate_limit_reached_type: "weekly",
+  }, now)
+  assert.equal(codexLimitReached(reachedType), true)
+  assert.equal(codexUsage(reachedType).outcome, "empty")
+
+  const disallowed = parseUsagePayload({
+    rate_limit: { allowed: false, secondary_window: { used_percent: 20, limit_window_seconds: 604800 } },
+  }, now)
+  assert.equal(codexLimitReached(disallowed), true)
+  assert.equal(codexUsage(disallowed).outcome, "empty")
+
+  const explicitlyLimited = parseUsagePayload({
+    rate_limit: { limit_reached: true, secondary_window: { used_percent: 20, limit_window_seconds: 604800 } },
+  }, now)
+  assert.equal(codexLimitReached(explicitlyLimited), true)
+  assert.equal(codexUsage(explicitlyLimited).outcome, "empty")
+
+  const inferredLimited = parseUsagePayload({
+    rate_limit: { secondary_window: { used_percent: 100, limit_window_seconds: 604800 } },
+  }, now)
+  assert.equal(codexLimitReached(inferredLimited), true)
+  assert.equal(codexUsage(inferredLimited).outcome, "empty")
+
+  const explicitlyAllowed = parseUsagePayload({
+    rate_limit: { allowed: true, secondary_window: { used_percent: 100, limit_window_seconds: 604800 } },
+  }, now)
+  assert.equal(codexLimitReached(explicitlyAllowed), false)
+   assert.deepEqual(codexUsage(explicitlyAllowed), { outcome: "ok", usage: "Weekly: 0% left", remainingRatio: 0 })
 })
 
 test("clamps unexpected usage percentages", () => {
@@ -142,34 +218,9 @@ test("rejects responses without usage windows", () => {
   )
 })
 
-test("reads OpenCode OAuth metadata without requiring JWT decoding", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "codex-usage-test-"))
-  const authPath = join(directory, "auth.json")
-  try {
-    await writeFile(
-      authPath,
-      JSON.stringify({
-        openai: {
-          type: "oauth",
-          access: "test-token",
-          refresh: "not-read-by-plugin",
-          expires: Date.now() + 60_000,
-          accountId: "account-test",
-        },
-        deepseek: { type: "api", key: "deepseek-test-key" },
-      }),
-      { mode: 0o600 },
-    )
-    const credential = await readOpenAICredential(authPath)
-    assert.deepEqual(credential, {
-      accessToken: "test-token",
-      accountId: "account-test",
-      expiresAt: credential.expiresAt,
-    })
-    assert.deepEqual(await readDeepSeekCredential(authPath), { apiKey: "deepseek-test-key" })
-  } finally {
-    await rm(directory, { recursive: true, force: true })
-  }
+test("derives optional OpenAI account metadata without reading auth.json", () => {
+  assert.equal(accountIdFromAccessToken("opaque-token", { accountId: "account-test" }), "account-test")
+  assert.equal(accountIdFromAccessToken("opaque-token", {}), undefined)
 })
 
 test("formats reset countdowns", () => {
@@ -197,6 +248,33 @@ test("formats compact, stable provider panel labels", () => {
   }), "Insufficient · USD -0.15")
 })
 
+test("deduplicates repeated balance measurements while retaining distinct usage", () => {
+  assert.equal(providerDetailLine({
+    id: "deepseek",
+    label: "DeepSeek",
+    status: "quota-exhausted",
+    detail: "Insufficient balance (USD -0.15).",
+    usage: "Balance USD -0.15",
+  }), "Insufficient · USD -0.15")
+  assert.equal(providerDetailLine({
+    id: "codex",
+    label: "Codex",
+    status: "available",
+    detail: "Usage is verified.",
+    usage: "Weekly: 15% left",
+  }), "Usage is verified. · Weekly: 15% left")
+})
+
+test("assigns semantic tones to every provider state", () => {
+  assert.equal(providerTone("available"), "success")
+  for (const status of ["cooling", "stale", "usage-unavailable"] as const) {
+    assert.equal(providerTone(status), "warning")
+  }
+  for (const status of ["quota-exhausted", "unavailable"] as const) {
+    assert.equal(providerTone(status), "error")
+  }
+})
+
 test("formats one-line provider summaries without inventing unavailable measurements", () => {
   const now = Date.UTC(2026, 8, 15, 12, 0, 0)
   const snapshot = parseUsagePayload({
@@ -214,6 +292,12 @@ test("formats one-line provider summaries without inventing unavailable measurem
     status: "available",
     detail: "Subscription quota available.",
   }, snapshot), "Codex READY · Weekly 67% · Reserve 52%")
+  assert.equal(providerCompactStatus({
+    id: "codex",
+    label: "Codex",
+    status: "available",
+    detail: "Subscription quota available.",
+  }, snapshot), "READY · Weekly 67% · Reserve 52%")
   assert.equal(providerCompactLine({
     id: "deepseek",
     label: "DeepSeek",
@@ -229,6 +313,7 @@ test("formats one-line provider summaries without inventing unavailable measurem
 })
 
 test("summarizes collapsed provider state in a stable native-sized header", () => {
+  assert.equal(providerUsageSummary([]), "")
   assert.equal(providerUsageSummary([
     { id: "codex", label: "Codex", status: "available", detail: "ready" },
     { id: "deepseek", label: "DeepSeek", status: "quota-exhausted", detail: "empty" },
@@ -237,29 +322,90 @@ test("summarizes collapsed provider state in a stable native-sized header", () =
   ]), "2 ready · 1 empty · 1 offline")
 })
 
-test("reports provider availability without inventing balances", () => {
-  const states = providerStates([
-    { id: "deepseek", activation: "enabled" },
-    { id: "opencode-go", canonical: "opencode", activation: "enabled" },
-    { id: "opencode", canonical: "opencode-go", activation: "enabled" },
+test("reports only provider rows supplied by the usage snapshot", () => {
+  const states = providerStates({
+    generated: 1,
+    rows: [
+      { id: "deepseek", name: "DeepSeek", status: "READY", detail: "An active connection is available." },
+      { id: "opencode-go", name: "OpenCode Go", status: "EMPTY", detail: "Verified usage is exhausted." },
+    ],
+    diagnostics: [],
+  })
+  assert.deepEqual(states, [
+    { id: "deepseek", label: "DeepSeek", status: "available", detail: "An active connection is available." },
+    { id: "opencode-go", label: "OpenCode Go", status: "quota-exhausted", detail: "Verified usage is exhausted." },
   ])
-  assert.equal(states.find((provider) => provider.id === "deepseek")?.status, "available")
-  assert.equal(states.find((provider) => provider.id === "opencode-go")?.status, "available")
-  assert.equal(states.find((provider) => provider.id === "opencode-go")?.label, "OpenCode Go")
-  assert.equal(states.find((provider) => provider.id === "opencode-zen")?.status, "available")
-  assert.equal(states.find((provider) => provider.id === "opencode-zen")?.label, "OpenCode Zen")
-  assert.equal(states.find((provider) => provider.id === "codex")?.status, "unavailable")
-  assert.equal(providerStates([{ id: "deepseek" }]).find((provider) => provider.id === "deepseek")?.status, "available")
-  const exhausted = withCodexStatus(states, { hasSnapshot: true, leftPercent: 0 })
-  assert.equal(exhausted.find((provider) => provider.id === "codex")?.status, "quota-exhausted")
 })
 
-test("keeps missing and disabled provider entries offline", () => {
-  const states = providerStates([{ id: "opencode-go", activation: "disabled" }])
-  assert.equal(states.find((provider) => provider.id === "opencode-go")?.status, "unavailable")
-  assert.equal(states.find((provider) => provider.id === "opencode-go")?.detail, "Disabled in provider catalog.")
-  assert.equal(states.find((provider) => provider.id === "opencode-zen")?.status, "unavailable")
-  assert.equal(providerStatusLabel(providerStates(undefined)[0]?.status ?? "unavailable"), "OFFLINE")
+test("keeps empty snapshots empty instead of synthesizing offline rows", () => {
+  assert.deepEqual(providerStates({ generated: 1, rows: [], diagnostics: [] }), [])
+  assert.deepEqual(providerStates(undefined), [])
+  assert.equal(providerStatusLabel("unavailable"), "OFFLINE")
+})
+
+test("retains the last provider snapshot as STALE when a refresh fails", async () => {
+  let attempts = 0
+  const store = createUsageStore({
+    fetchSnapshot: async () => {
+      attempts += 1
+      if (attempts === 1) {
+        return {
+          generated: 1,
+          rows: [{
+            id: "codex",
+            name: "Codex",
+            status: "READY" as const,
+            detail: "Usage is verified.",
+            usage: "Weekly: 80% left",
+          }],
+          diagnostics: [],
+        }
+      }
+      throw new Error("Bearer CANARY_ACCESS_TOKEN")
+    },
+  })
+
+  const ready = await store.refresh(true)
+  assert.equal(ready.status, "ready")
+  assert.equal(ready.providers?.[0]?.status, "available")
+
+  const stale = await store.refresh(true)
+  assert.equal(stale.status, "error")
+  assert.equal(stale.providers?.[0]?.status, "stale")
+  assert.equal(stale.providers?.[0]?.usage, "Weekly: 80% left")
+  assert.equal(stale.providerSnapshot?.rows[0]?.status, "STALE")
+  assert.match(stale.message ?? "", /Bearer \[redacted\]/)
+  assert.doesNotMatch(stale.message ?? "", /CANARY_ACCESS_TOKEN/)
+  assert.equal(attempts, 2)
+  store.dispose()
+})
+
+test("does not retain an offline row as visible STALE data after a failed refresh", async () => {
+  let attempts = 0
+  const store = createUsageStore({
+    fetchSnapshot: async () => {
+      attempts += 1
+      if (attempts === 1) {
+        return {
+          generated: 1,
+          rows: [{
+            id: "ingenium",
+            name: "Ingenium",
+            status: "OFFLINE" as const,
+            detail: "No active provider connection.",
+          }],
+          diagnostics: [],
+        }
+      }
+      throw new Error("transient refresh failure")
+    },
+  })
+
+  await store.refresh(true)
+  const failed = await store.refresh(true)
+  assert.deepEqual(failed.providers, [])
+  assert.deepEqual(failed.providerSnapshot?.rows, [])
+  store.dispose()
 })
 
 test("parses and fetches the documented DeepSeek balance response", async () => {
@@ -294,7 +440,11 @@ test("parses and fetches the documented DeepSeek balance response", async () => 
   assert.equal(authorization, "Bearer test-key")
   assert.deepEqual(snapshot, parsed)
 
-  const state = withDeepSeekStatus(providerStates([{ providerID: "deepseek" }]), { snapshot })
+  const state = providerStates({
+    generated: now,
+    rows: [{ id: "deepseek", name: "DeepSeek", status: "EMPTY", detail: "Insufficient balance (USD 0.00)." }],
+    diagnostics: [],
+  })
   assert.equal(state.find((provider) => provider.id === "deepseek")?.status, "quota-exhausted")
   assert.match(state.find((provider) => provider.id === "deepseek")?.detail ?? "", /USD 0\.00/)
 })
@@ -317,15 +467,26 @@ test("reads bounded fallback cooldowns for tracked providers", async () => {
     assert.equal(cooldowns.deepseek, now + 120_000)
     assert.equal(cooldowns["opencode-zen"], now + 180_000)
     assert.equal(cooldowns["opencode-go"], now + 300_000)
-    const states = withProviderCooldowns(providerStates([
-      { id: "deepseek" },
-      { id: "opencode" },
-      { id: "opencode-go" },
-    ]), cooldowns, now)
+    const states = withProviderCooldowns(providerStates({
+      generated: now,
+      rows: [
+        { id: "deepseek", name: "DeepSeek", status: "READY", detail: "ready" },
+        { id: "opencode-zen", name: "OpenCode Zen", status: "READY", detail: "ready" },
+        { id: "opencode-go", name: "OpenCode Go", status: "READY", detail: "ready" },
+      ],
+      diagnostics: [],
+    }), cooldowns, now)
     assert.equal(states.find((provider) => provider.id === "deepseek")?.status, "cooling")
     assert.equal(states.find((provider) => provider.id === "opencode-zen")?.status, "cooling")
     assert.equal(states.find((provider) => provider.id === "opencode-go")?.status, "cooling")
-    const zenOnly = withProviderCooldowns(providerStates([{ id: "opencode" }, { id: "opencode-go" }]), {
+    const zenOnly = withProviderCooldowns(providerStates({
+      generated: now,
+      rows: [
+        { id: "opencode-zen", name: "OpenCode Zen", status: "READY", detail: "ready" },
+        { id: "opencode-go", name: "OpenCode Go", status: "READY", detail: "ready" },
+      ],
+      diagnostics: [],
+    }), {
       "opencode-zen": now + 180_000,
     }, now)
     assert.equal(zenOnly.find((provider) => provider.id === "opencode-zen")?.status, "cooling")
@@ -338,7 +499,14 @@ test("reads bounded fallback cooldowns for tracked providers", async () => {
 test("formats both OpenCode rows with stable status text and no unverified measurements", () => {
   const details = formatDetails({
     status: "ready",
-    providers: providerStates([{ id: "opencode" }, { id: "opencode-go" }]),
+    providers: providerStates({
+      generated: Date.now(),
+      rows: [
+        { id: "opencode-zen", name: "OpenCode Zen", status: "READY", detail: "Available in provider catalog." },
+        { id: "opencode-go", name: "OpenCode Go", status: "READY", detail: "Available in provider catalog." },
+      ],
+      diagnostics: [],
+    }),
   })
   assert.match(details, /OpenCode Go: READY — Available in provider catalog\./)
   assert.match(details, /OpenCode Zen: READY — Available in provider catalog\./)
@@ -346,49 +514,6 @@ test("formats both OpenCode rows with stable status text and no unverified measu
   const forbiddenUsagePhrase = ["no", "usage", "API"].join(" ")
   assert.equal(details.includes(forbiddenCatalogPhrase), false)
   assert.equal(details.includes(forbiddenUsagePhrase), false)
-})
-
-test("marks retained provider data stale when only part of a refresh succeeds", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "provider-partial-refresh-"))
-  const authPath = join(directory, "auth.json")
-  let deepSeekFails = false
-  try {
-    await writeFile(authPath, JSON.stringify({
-      openai: { type: "oauth", access: "test-token", accountId: "account-test", expires: Date.now() + 60_000 },
-      deepseek: { type: "api", key: "deepseek-test-key" },
-    }), { mode: 0o600 })
-    const store = createUsageStore({
-      authPath,
-      endpoint: "https://usage.example/codex",
-      deepSeekEndpoint: "https://usage.example/deepseek",
-      fallbackStatePath: join(directory, "missing-fallback.json"),
-      fetchImpl: async (input) => {
-        const url = String(input)
-        if (url.endsWith("/deepseek")) {
-          if (deepSeekFails) return new Response("failed", { status: 503 })
-          return new Response(JSON.stringify({
-            is_available: true,
-            balance_infos: [{ currency: "USD", total_balance: "4.00", granted_balance: "4.00", topped_up_balance: "0.00" }],
-          }), { status: 200, headers: { "content-type": "application/json" } })
-        }
-        return new Response(JSON.stringify({
-          rate_limit: { secondary_window: { used_percent: 20, limit_window_seconds: 604800 } },
-        }), { status: 200, headers: { "content-type": "application/json" } })
-      },
-    })
-    store.updateProviders([{ providerID: "openai" }, { providerID: "deepseek" }])
-    assert.equal((await store.refresh(true)).status, "ready")
-    deepSeekFails = true
-    const partial = await store.refresh(true)
-    assert.equal(partial.status, "error")
-    assert.equal(partial.providers?.find((provider) => provider.id === "codex")?.status, "available")
-    assert.equal(partial.providers?.find((provider) => provider.id === "deepseek")?.status, "stale")
-    assert.match(partial.message ?? "", /DeepSeek balance/)
-    assert.match(usageUpdatedLabel(partial), /^Saved values · Updated /)
-    store.dispose()
-  } finally {
-    await rm(directory, { recursive: true, force: true })
-  }
 })
 
 test("recognizes the active subscription model from either message shape", () => {

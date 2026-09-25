@@ -1,4 +1,7 @@
 import type { AgentInfo, SessionInfo } from "@opencode/client"
+import type { ColorInput } from "@opentui/core"
+
+import { sidebarPalette } from "./palette.ts"
 
 export const MAX_SUBAGENT_ROWS = 32
 export const MAX_ACTIVE_SUBAGENT_ROWS = 8
@@ -12,6 +15,64 @@ export type SubagentRow = {
   model: string
   title: string
   status: SubagentStatus
+}
+
+export type ActiveSubagentRowTheme = {
+  readonly hue: {
+    readonly accent: Readonly<Record<200, ColorInput>>
+  }
+  readonly text: {
+    readonly default: ColorInput
+    readonly subdued: ColorInput
+    readonly action: {
+      readonly primary: {
+        readonly default?: ColorInput
+      }
+    }
+  }
+  readonly background: {
+    readonly default: ColorInput
+    readonly action: {
+      readonly primary: {
+        readonly default: ColorInput
+        readonly selected?: ColorInput
+      }
+    }
+  }
+  readonly syntax?: {
+    readonly keyword?: ColorInput
+    readonly type?: ColorInput
+  }
+}
+
+export type ActiveSubagentRowStyle = {
+  readonly backgroundColor: ColorInput
+  readonly markerColor: ColorInput
+  readonly agentColor: ColorInput
+  readonly modelColor: ColorInput
+  readonly taskColor: ColorInput
+  readonly backgroundToken: "background.default" | "background.action.primary.default" | "background.action.primary.selected"
+  readonly markerToken: "hue.accent.200"
+  readonly agentToken: "text.default" | "text.action.primary.default"
+  readonly modelToken: "text.default" | "text.subdued" | "text.action.primary.default"
+  readonly taskToken: "text.default" | "text.subdued" | "text.action.primary.default"
+}
+
+export function activeSubagentRowStyle(theme: ActiveSubagentRowTheme, focused: boolean): ActiveSubagentRowStyle {
+  void focused
+  const palette = sidebarPalette(theme)
+  return {
+    backgroundColor: theme.background.default,
+    markerColor: palette.sectionCount,
+    agentColor: palette.primary,
+    modelColor: palette.subdued,
+    taskColor: palette.subdued,
+    backgroundToken: "background.default",
+    markerToken: "hue.accent.200",
+    agentToken: "text.default",
+    modelToken: "text.subdued",
+    taskToken: "text.subdued",
+  }
 }
 
 type ParentSession = Pick<SessionInfo, "id" | "projectID" | "location">
