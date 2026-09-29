@@ -151,13 +151,13 @@
         "name": "node",
         "version": "26.4.0",
         "identity": "node@26.4.0",
-        "provisioning": "external-checksum",
-        "executable": "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "provisioning": "project",
+        "executable": "toolchains/node/bin/node",
         "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
         "package_manager": "npm",
         "package_manager_version": "11.17.0",
         "package_manager_identity": "npm@11.17.0",
-        "package_manager_executable": "/home/brajam/repos/opencode-rig/toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+        "package_manager_executable": "toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
         "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
       }
     ],

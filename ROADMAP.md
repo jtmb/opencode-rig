@@ -467,6 +467,11 @@ missing `shellcheck` on the runner; both workflows now install it, and
 `git-gates.ts` sends a plain fast-forward for an existing ref so a protected
 branch still accepts a legitimate advance. Operator action: merge PR #5 once CI
 is green.
+CI additionally failed on a hard-coded absolute QA-runtime path in
+`acceptance-evidence.json`; the manifest now uses repository-relative
+`toolchains/node/...` executables (`provisioning: project`) and the validator
+tolerates the absolute path recorded in existing artifacts by matching the
+path suffix and digests.
 
 ## Implemented
 

@@ -213,7 +213,11 @@ render/interaction records validate. This supports only `sidebar-coexistence`
 as `limited`. Eight other user-visible claims remain `planned` with empty
 evidence. The validator binds declared provenance and image bytes, not capture
 origin; native span PNGs alone cannot establish foreground host acceptance.
-The optional exact-window/causal-action-receipt extension is representable but
+`ui_acceptance.supported_runtimes[]` may declare a repository-relative
+`toolchains/...` executable with `provisioning: project` so the manifest works
+in any checkout; a capture artifact that records the absolute equivalent path
+(as the generator writes it) is accepted when the runtime name/version/digests
+and the executable path suffix match.The optional exact-window/causal-action-receipt extension is representable but
 unused by the canonical manifest, so it promotes no claim; a genuine retained
 pair is still required.
 

@@ -259,6 +259,13 @@ fail at canonical QA (the runner lacks `shellcheck`). Both workflows now install
 for an existing ref (keeping the empty lease only for a new ref), with
 rig-tools git-gates 20/20. After CI is green the operator merges PR #5; direct
 pushes to `main` remain disallowed by branch protection.
+**CI runtime-path portability fix:** CI also failed canonical QA because
+`acceptance-evidence.json` hard-coded the absolute local QA-runtime path
+(`/home/brajam/repos/opencode-rig/toolchains/node/bin/node`), absent on the
+runner. It now declares `provisioning: project` with repository-relative
+`toolchains/node/...` executables, and the validator accepts a recorded runtime
+whose executable path is the absolute equivalent (identity/digests/path-suffix
+match; `provisioning` is not compared). Manifest and self-test pass locally.
 
 ## 2026-09-29 active Build continuation
 

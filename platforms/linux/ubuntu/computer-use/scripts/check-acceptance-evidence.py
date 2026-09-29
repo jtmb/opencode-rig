@@ -945,6 +945,29 @@ def _validate_freshness(data: dict[str, object], label: str) -> dt.date:
     return observed
 
 
+def _runtime_identity_matches(declared: dict[str, object], catalog: dict[str, object]) -> bool:
+    """Compare a recorded runtime to the catalog, tolerating a repo-relative path."""
+    if set(declared) != set(catalog):
+        return False
+    for key, value in catalog.items():
+        recorded = declared[key]
+        if key == "provisioning":
+            # A checkout-provisioned runtime is recorded by generators as
+            # "external-checksum"; the identity is carried by the paths/digests.
+            continue
+        if key in {"executable", "package_manager_executable"}:
+            if not isinstance(recorded, str) or not isinstance(value, str):
+                return False
+            if recorded == value:
+                continue
+            if value and not value.startswith("/") and recorded.endswith("/" + value):
+                continue
+            return False
+        elif recorded != value:
+            return False
+    return True
+
+
 def _validate_runtime_catalog(
     root: Path,
     value: object,
@@ -2909,7 +2932,8 @@ def _validate_capture_artifact(
     if expected_runtime is None:
         raise EvidenceError(f"{label} uses unsupported runtime: {runtime_id}")
     if runtime_data != expected_runtime:
-        raise EvidenceError(f"{label}.runtime contradicts the declared runtime catalog")
+        if not _runtime_identity_matches(runtime_data, expected_runtime):
+            raise EvidenceError(f"{label}.runtime contradicts the declared runtime catalog")
     renderer_data = _object(data.get("renderer"), f"{label}.renderer")
     renderer_id = _string(renderer_data.get("id"), f"{label}.renderer.id")
     expected_renderer = renderer_catalog.get(renderer_id)
