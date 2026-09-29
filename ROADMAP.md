@@ -459,6 +459,15 @@ not a real `ctx.storage` round-trip. (146) No shared Hermes telemetry path
 exists in config (the override appears only in docs/tests/source). All five stay
 blocked on operator prerequisites/approvals.
 
+**2026-09-29 release/CI:** `migration/opencode-v2` was pushed to commit
+`a2b6549` through the QA and documentation gates. `main` is a protected branch
+(no direct/leased push accepted), so the merge is via PR #5, which was blocked
+because the `verify`/`verify-wsl2-source` CI jobs failed at canonical QA for a
+missing `shellcheck` on the runner; both workflows now install it, and
+`git-gates.ts` sends a plain fast-forward for an existing ref so a protected
+branch still accepts a legitimate advance. Operator action: merge PR #5 once CI
+is green.
+
 ## Implemented
 
 The full implementation chronology and detailed evidence remain in the

@@ -247,6 +247,18 @@ is now **0 pending / 0 in progress / 33 completed / 11 cancelled**. Boundary: a
 managed Screen client text hardcopy, not a retained operator-console PNG pair, so
 no manifest claim was promoted and row `planned` statuses are unchanged; the push
 gate (actionable-Todo count) is now clear.
+**2026-09-29 release push:** commit `a2b6549` was created through the QA +
+documentation gates and `migration/opencode-v2` was pushed to it. Merging to
+`main` is blocked by the remote: `main` is a protected branch
+(`list_branches` reports `protected: true`; `migration/opencode-v2` is not), so
+both a leased and a plain fast-forward push are refused; the GitHub API merge
+path is policy-blocked for agents. PR #5 exists with head `a2b6549` but its
+mergeable state is `blocked` because the `verify` and `verify-wsl2-source` jobs
+fail at canonical QA (the runner lacks `shellcheck`). Both workflows now install
+`shellcheck` before those steps, and `git-gates.ts` sends a plain fast-forward
+for an existing ref (keeping the empty lease only for a new ref), with
+rig-tools git-gates 20/20. After CI is green the operator merges PR #5; direct
+pushes to `main` remain disallowed by branch protection.
 
 ## 2026-09-29 active Build continuation
 

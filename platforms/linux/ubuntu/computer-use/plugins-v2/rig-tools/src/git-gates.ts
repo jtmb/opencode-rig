@@ -811,7 +811,15 @@ export function createGitGateManager(rawOptions: GateOptions = {}, runner: GitRu
       const fresh = await pushTarget(current.root, remote, ref)
       if (record.kind !== "push" || record.state.fingerprint !== current.fingerprint || current.head !== fresh.head || record.remote !== remote || record.ref !== ref || record.url !== fresh.url || record.advertised !== fresh.advertised || record.remoteSha !== fresh.remoteSha || JSON.stringify(record.outgoing) !== JSON.stringify(fresh.outgoing)) fail("push preview is stale or destination/range changed")
       record.used = true
-      await run("git", ["push", "--no-verify", `--force-with-lease=${ref}:${record.remoteSha}`, record.url, `${current.head}:${ref}`], current.root).catch(() => fail("push was refused; the destination changed or the lease was not accepted"))
+      // For an existing target the preview/apply flow already proved this is a
+      // fast-forward and a plain push still lets git reject any concurrent
+      // non-fast-forward update, so we avoid a forced update that a protected
+      // branch would refuse. A brand-new target keeps the empty lease so a
+      // concurrent creation is still detected.
+      const pushArgs = ["push", "--no-verify"]
+      if (!record.remoteSha) pushArgs.push(`--force-with-lease=${ref}:`)
+      pushArgs.push(record.url, `${current.head}:${ref}`)
+      await run("git", pushArgs, current.root).catch(() => fail("push was refused; the destination changed or the lease was not accepted"))
       const verifiedSha = await verifyPushedRef(current.root, record.url, ref, current.head)
       return result(record, "applied", { operation: "push", remote, ref, url: redactRemoteUrl(record.url), head: current.head, remoteSha: record.remoteSha, outgoing: record.outgoing, verifiedSha, result: "pushed" })
     }

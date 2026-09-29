@@ -36,6 +36,12 @@ jobs:
       - name: Focused repository QA self-test
         run: python3 platforms/linux/ubuntu/computer-use/scripts/check-repository-qa-self-test.py
 
+      - name: Install shellcheck for canonical QA
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
       - name: Canonical repository QA
         run: python3 platforms/linux/ubuntu/computer-use/scripts/check-repository-qa.py
 

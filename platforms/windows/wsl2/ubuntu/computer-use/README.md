@@ -113,6 +113,8 @@ The server plugin exposes:
   skipped because `PrintWindow` renders the captured window's own DC content and
   system chrome does not occlude it; any other overlapping visible window still
   rejects the capture.
+- The `verify-wsl2-source` GitHub workflow installs `shellcheck` before running
+  `verify-wsl2.sh --source`, since the hosted runner image does not provide it.
 - The shared `vision_capture` tool delegates to the fixed
   `windows.screenshot` host method when it detects WSL2 and the native
   GNOME/ydotool backend is unavailable. The capture stays in memory, is bounded
