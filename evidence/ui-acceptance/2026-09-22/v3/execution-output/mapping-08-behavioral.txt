@@ -1,0 +1,19 @@
+bounded-command: available=7878MiB budget=3151MiB swap=787MiB node_heap=2048MiB
+Running as unit: run-r3231af8928e344d7a2d610e575eb8ce7.scope; invocation ID: 5b22d9a8c58241bd96c0de81a992f72d
+✔ normalizes valid todos and drops malformed entries (1.415598ms)
+✔ keeps only the first in-progress item and demotes the rest (0.21446ms)
+✔ orders current work before stable completed history (0.23209ms)
+✔ keeps only actionable work visible when completed history overflows (0.265149ms)
+✔ aggregates all completed history without dropping current or pending work (0.20699ms)
+✔ never exposes completed or cancelled body content in sidebar display (0.138409ms)
+✔ history summary is truthful for hidden rows (0.336686ms)
+✔ summarizes counts and markers (0.59535ms)
+✔ empty list summarizes cleanly (1.301767ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 115.916378

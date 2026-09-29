@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "capture_id": "rig-tools-subagents",
+  "phase": "test-teardown",
+  "event_id": "rig-tools-subagents-test-teardown-001",
+  "action": {
+    "type": "teardown",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "8369984e-25b6-40d2-8f4c-5b3877b9da97",
+    "dispatch_id": "rig-tools-subagents-test-teardown-dispatch-001",
+    "transition_id": "rig-tools-subagents-test-teardown-transition-001",
+    "dispatch_monotonic_ns": "55428807292381",
+    "transition_monotonic_ns": "55428823317054"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-subagents-interact-after",
+    "frame_sha256": "9c228ad7dab9aee5749899a9a9dc20c55a9b3dc88dc435b1bf50ce6919099722",
+    "spans_sha256": "3e76da1ff193b2f93d78c87d86d80a7b64e6f25efbcc6ce3a6b624d1d928dfa7",
+    "state_sha256": "45fbed7fb2aef1b239edd3b05a94f6fb5cfd9de759075b15027156cfca662815"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-subagents-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "77246a61995c55362a309ff641f7a4e9c46a8b2c9df573191e8f99d5785871a9",
+  "native_event_sha256": "0d8971cbddbdbd19a13706b77173b98357dc43248f8d53c5586bb369deb7f805"
+}

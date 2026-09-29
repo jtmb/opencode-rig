@@ -1,0 +1,24 @@
+✔ V2 credential connection makes Codex READY without consulting auth.json (5.85524ms)
+✔ disabled providers are absent and hidden auto providers are not represented as OFFLINE (0.765559ms)
+✔ auto providers require a working connection or recent authoritative activity (0.398299ms)
+✔ enabled providers without a connection are hidden until recent use qualifies OFFLINE (0.21046ms)
+✔ credential and environment connections establish READY (0.22516ms)
+✔ probe outcomes have explicit precedence and retain transient usage (1.306559ms)
+✔ verified normalized remaining ratios cross the provider state boundary (0.30065ms)
+✔ canonical aliases deduplicate under the first configured display name (0.20723ms)
+✔ empty visible state produces no provider rows, no client rows, and a hidden panel (2.941357ms)
+✔ collapsed summary counts only visible server rows (0.697929ms)
+✔ serialized snapshots and client rows never leak credential canaries (0.38602ms)
+✔ provider adapter renders exactly the server rows and never synthesizes catalog rows (0.23787ms)
+✔ server RPC and stale refresh retain rows with sanitized diagnostics (1.593418ms)
+✔ refresh polling stays throttled while authoritative events may force and concurrent work coalesces (4.342417ms)
+✔ client snapshot integration is explicit rather than a legacy catalog fallback (1.093969ms)
+✔ native MCP-style provider rows remain single-line at 140, 80, and 60 columns (0.825465ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 156.598317

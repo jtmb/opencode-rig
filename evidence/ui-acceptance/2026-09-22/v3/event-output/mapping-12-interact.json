@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "capture_id": "mapping-12",
+  "phase": "interact",
+  "event_id": "mapping-12-interact-001",
+  "action": {
+    "type": "click",
+    "target": "source-control-change:native-preview-file-0.tsx",
+    "input": {
+      "x": 5,
+      "y": 2
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "source-control-change:native-preview-file-0.tsx",
+    "input": {
+      "x": 5,
+      "y": 2
+    }
+  },
+  "before": {
+    "snapshot_id": "mapping-12-interact-before",
+    "frame_sha256": "e1d529803e20fa00a1c985f645bbdcadc8ab657360d00ba1cae74cc99e765a55",
+    "spans_sha256": "194e18abc362822aa97cdeed1855fe053d29fee69ee5b76dbb22aa0fe57cf882",
+    "state_sha256": "215b7a46831015ad4e35ce7d2e18a83693ac40cd1217a10b0da16bb0146dd115"
+  },
+  "after": {
+    "snapshot_id": "mapping-12-interact-after",
+    "frame_sha256": "e1d529803e20fa00a1c985f645bbdcadc8ab657360d00ba1cae74cc99e765a55",
+    "spans_sha256": "194e18abc362822aa97cdeed1855fe053d29fee69ee5b76dbb22aa0fe57cf882",
+    "state_sha256": "47eb19fa4fe64cb2ac1d639159f196a479ed70f3961adb586c7c9cc246a28a17"
+  },
+  "result": {
+    "status": "passed",
+    "target": "source-control-change:native-preview-file-0.tsx",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": false,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "1c67bc1551b2d920e4b14c6ad2fc6375cb5f6386451ee0c2bee9c6e1d7c4085e",
+  "native_event_sha256": "4e6c0532a85263b188e10b01e1a7e3df7639f1f509671b2c43baeeab6fa96fce"
+}

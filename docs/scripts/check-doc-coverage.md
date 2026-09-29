@@ -26,6 +26,22 @@ Check evaluation is **first matching rule wins**, so an exception rule (for
 example a self-test that shares its parent's page) must appear before the
 general rule.
 
+Current shared-parent exceptions include `bootstrap_behavior_test.py` with
+`docs/scripts/bootstrap.md`, `deploy-plugins-self-test.py` with
+`docs/scripts/deploy-plugins.md`, `deploy-hermes-plugin-self-test.py` with
+`docs/scripts/deploy-hermes-plugin.md`, and
+`recover-orchestration-lockout-self-test.py` with
+`docs/scripts/orchestration-lockout-recovery.md`; these tests do not require
+duplicate stem-named pages.
+
+The `opencode-recovery` rule pairs the target-bound recovery CLI, its QA
+self-test wrapper, and the nested Python unittest module with
+[`opencode-recovery.md`](opencode-recovery.md). The
+`rig-tools-basic-memory-recovery` rule pairs the TypeScript manager and tool
+registration with the package README and the same recovery contract. Catalog
+source and parity tests also retain their Screen guide mapping while requiring
+the recovery contract through an additional documentation rule.
+
 ## Documentation map
 
 `documentation-map.json` at the repository root is the single source of truth:
@@ -52,8 +68,12 @@ general rule.
 | `onAdd` | Optional. When a matched file is **added**, at least one of these must also change (index/overview upkeep) |
 
 `docs` paths may use placeholders: `{stem}` (file name without extension),
-`{plugin}` (directory under `.../plugins/`), and `{skill}` (directory under
-`.../skills/`).
+`{plugin}` (directory under `.../plugins-v2/`), and `{skill}` (directory under
+`.../skills/`). The v2 plugin workspace
+(`platforms/linux/ubuntu/computer-use/plugins-v2/**`) is matched by a rule
+whose documentation is the workspace
+[`plugins-v2/README.md`](../../platforms/linux/ubuntu/computer-use/plugins-v2/README.md)
+rather than a per-plugin page.
 
 ### `rules` and `additional`
 
@@ -65,11 +85,17 @@ general rule.
   `onAdd` is not allowed in `additional`.
 
 The current `rules` cover scripts, plugins, skills, commands, config examples,
-the browser manifests, the GitHub tools, the Git hooks, and the map itself. The
-single `additional` rule (`handoff`) requires `HANDOFF.md` to be updated
+the browser manifests, the GitHub tools, the Git hooks, the checkout-local QA
+runtime and its gate/CI integration, and the map itself. The independent WSL2
+rule maps its source tree and dedicated workflow to the
+platform README, root README, and bounded WSL2 acceptance artifact; additions
+also require the documentation index. The single `additional` rule (`handoff`)
+requires `HANDOFF.md` to be updated
 whenever an environment-defining artifact changes: the map and hooks, CI
 workflows, global commands, plugin registration, the skills catalog, the
-setup/MCP/deploy scripts, the browser manifests, or the GitHub tools README.
+setup/MCP/deploy scripts (including `basic-memory-mcp.sh`,
+`setup-opencode.sh`, and `verify-opencode-v2.sh`), the browser manifests,
+or the GitHub tools README.
 
 ## Options
 

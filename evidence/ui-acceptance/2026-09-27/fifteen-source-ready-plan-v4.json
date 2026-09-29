@@ -1,0 +1,604 @@
+{
+  "root": "/home/brajam/repos/opencode-rig",
+  "evidence_root": "evidence/ui-acceptance/2026-09-27/v4",
+  "runtime": {
+    "id": "node-26.4.0-npm-11.17.0",
+    "name": "node",
+    "version": "26.4.0",
+    "identity": "node@26.4.0",
+    "provisioning": "external-checksum",
+    "executable": "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+    "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "package_manager": "npm",
+    "package_manager_version": "11.17.0",
+    "package_manager_identity": "npm@11.17.0",
+    "package_manager_executable": "/home/brajam/repos/opencode-rig/toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+    "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+  },
+  "renderer": {
+    "id": "opentui-0.5.11",
+    "name": "OpenTUI",
+    "version": "0.5.11",
+    "identity": "OpenTUI@0.5.11"
+  },
+  "executions": [
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/active-subagent-row.behavior.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/active-subagent-row.behavior.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/active-subagent-row-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/active-subagent-row-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/active-subagent-row-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/active-subagent-row-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-state.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/provider-state.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/codex-providers-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/codex-providers-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/codex-providers-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/codex-providers-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-visibility.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/provider-visibility.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/codex-state-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/codex-state-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/codex-state-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/codex-state-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-visibility.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/provider-visibility.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/codex-tui-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/codex-tui-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/codex-tui-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/codex-tui-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/presentation.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/presentation.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/file-manager-presentation-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/file-manager-presentation-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/file-manager-presentation-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/file-manager-presentation-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/theme.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/theme.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/file-manager-theme-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/file-manager-theme-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/file-manager-theme-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/file-manager-theme-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/viewer-contract.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/viewer-contract.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/file-manager-tui-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/file-manager-tui-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/file-manager-tui-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/file-manager-tui-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/tui.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/tui.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/source-control-tui-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/source-control-tui-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/source-control-tui-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/source-control-tui-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/store.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/store.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-todo-store-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-todo-store-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-todo-store-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-todo-store-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/tasks.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-todo-tasks-panel-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-todo-tasks-panel-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/tasks-rendered-fixture.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-todo-tasks-panel-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-todo-tasks-panel-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tui.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/tui.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-todo-tui-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-todo-tui-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-todo-tui-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-todo-tui-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/hermes-hooks-panel.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-tools-hermes-hooks-panel-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-tools-hermes-hooks-panel-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/hermes-hooks-panel-rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-tools-hermes-hooks-panel-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-tools-hermes-hooks-panel-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/subagents.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/subagents.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-tools-subagents-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-tools-subagents-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-tools-subagents-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-tools-subagents-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/visible-command.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-tools-tui-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-tools-tui-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-tools-tui-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-tools-tui-render.json"
+    },
+    {
+      "kind": "behavioral",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/goal-slot.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/goal-slot.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-tools-goal-handoff-behavioral.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-tools-goal-handoff-behavioral.json"
+    },
+    {
+      "kind": "render",
+      "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts",
+      "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+      "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+      "argv": [
+        "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+        "--experimental-ffi",
+        "--experimental-strip-types",
+        "--test",
+        "test/rendered.test.ts"
+      ],
+      "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-tools-goal-handoff-render.txt",
+      "report": "evidence/ui-acceptance/2026-09-27/v4/execution/rig-tools-goal-handoff-render.json"
+    }
+  ],
+  "captures": [
+    {
+      "id": "active-subagent-row-exemplar",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/active-subagent-row-exemplar.json"
+    },
+    {
+      "id": "mapping-02",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/mapping-02.json"
+    },
+    {
+      "id": "mapping-03",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/mapping-03.json"
+    },
+    {
+      "id": "mapping-01",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/mapping-01.json"
+    },
+    {
+      "id": "mapping-05",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/mapping-05.json"
+    },
+    {
+      "id": "mapping-06",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/mapping-06.json"
+    },
+    {
+      "id": "mapping-04",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/mapping-04.json"
+    },
+    {
+      "id": "mapping-12",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/mapping-12.json"
+    },
+    {
+      "id": "integrated-sidebar",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+        "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+        "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+        "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+        "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+        "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+        "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/integrated-sidebar.json"
+    },
+    {
+      "id": "rig-todo-store",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/rig-todo-store.json"
+    },
+    {
+      "id": "rig-todo-tasks-panel",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/rig-todo-tasks-panel.json"
+    },
+    {
+      "id": "rig-todo-tui",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/rig-todo-tui.json"
+    },
+    {
+      "id": "rig-tools-hermes-hooks-panel",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/rig-tools-hermes-hooks-panel.json"
+    },
+    {
+      "id": "rig-tools-subagents",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/rig-tools-subagents.json"
+    },
+    {
+      "id": "rig-tools-tui",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/rig-tools-tui.json"
+    },
+    {
+      "id": "rig-tools-goal-handoff",
+      "sources": [
+        "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts"
+      ],
+      "renderTest": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+      "artifact": "evidence/ui-acceptance/2026-09-27/v4/captures/rig-tools-goal-handoff.json"
+    }
+  ]
+}

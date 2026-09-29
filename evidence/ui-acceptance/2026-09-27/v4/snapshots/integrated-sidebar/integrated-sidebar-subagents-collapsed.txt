@@ -1,0 +1,60 @@
+> opencode-rig-native-capture-RhFDNK                                                                                                        
+# ses_native_parent                                                                                                                         
+                                                                                                                                            
++ Active Subagents 1                                                                                                                        
+                                                                                                                                            
+- Todo                                                                                                                           history 6/7
+  [~] in-progress native capture                                                                                                            
+  +6 history items hidden                                                                                                                   
+                                                                                                                                            
+- Source Control 10 changes                                                                                                                 
+  A src/sidebar/native-preview-file-0.tsx                                                                                              +1 -0
+  M src/sidebar/native-preview-file-1.tsx                                                                                              +2 -1
+  M src/sidebar/native-preview-file-2.tsx                                                                                              +3 -2
+  click to open the diff viewer                                                                                                             
+  +7 more files                                                                                                                             
+                                                                                                                                            
++ Provider Usage                                                                                                                   1 ready 1
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                            
+CAPTURE_FOOTER                                                                                                                              

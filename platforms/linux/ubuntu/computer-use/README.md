@@ -1,340 +1,106 @@
-# Computer Use for Linux Ubuntu
+# Open Rig for Ubuntu
 
-Local computer-use skills and supporting tools for OpenCode on Ubuntu GNOME.
+This component supplies Open Rig's canonical Ubuntu computer-use skills, v2
+plugins, profile-aware bounded MCP launchers, configuration examples, and
+verification scripts. Ubuntu-on-WSL2 delegates its generic MCP surface here
+while keeping a separate profile, runtime, cache, and notes root.
 
-This repo makes OpenCode able to see the GNOME desktop, operate accessible
-application controls, automate an isolated Firefox session, inspect GitHub,
-work with Blender and browser-ready 3D assets, playtest browser games, remember
-durable preferences and pending work, and install, diagnose, organize, and
-automate routine computer tasks with bounded, verifiable actions.
+Native Ubuntu and isolated WSL2 profiles use exactly three MCPs:
+`basic-memory`, `github`, and `chatgpt`. Visible browser work and QA from WSL use
+the Windows-default-browser tools documented in the
+[`browser-assistant` guide](skills/browser-assistant/README.md). The direct-pinned
+Playwright package is not an MCP; use it only for explicitly requested headless
+Firefox tasks.
 
 ## Supported environment
 
-- Ubuntu 26.04.1 LTS, amd64
-- GNOME Shell with Wayland session
-- OpenCode 1.18.31+
-- Node via fnm default alias (`~/.local/share/fnm/aliases/default/bin`)
-- System packages: `python3-pyatspi`, `ydotool`, `wl-clipboard`
-- Optional 3D packages: Ubuntu `blender` 5.0.1 plus `python3-numpy` for
-  glTF import/export; the distribution build lacks optional Draco compression
+- Ubuntu 26.04.1 LTS amd64
+- GNOME Shell on Wayland
+- OpenCode v2.0.7 (or a compatible v2 release validated by the checks)
+- Node.js 22.6+ for plugin checks and Python 3
+- `python3-pyatspi`, `ydotool`, and `wl-clipboard`
+- Optional Blender 5.0.1 and NumPy for 3D workflows
 
-## Monorepo Layout
+Other Linux distributions are not claimed as supported.
 
-```text
-platforms/linux/ubuntu/
-├── README.md
-├── browser-tools/
-│   ├── README.md
-│   ├── package.json
-│   └── package-lock.json
-├── github-tools/
-│   └── README.md
-└── computer-use/
-    ├── README.md
-    ├── commands/
-    ├── config/
-    ├── plugins/
-    │   ├── codex-fallback/
-    │   └── codex-usage/
-    ├── scripts/
-    └── skills/
-```
+## Install and verify
 
-This component owns the skills, scripts, plugins, and configuration. The
-sibling `../browser-tools/` component owns the pinned Playwright package and
-generated Firefox runtime. `../github-tools/` documents and holds the generated
-pinned GitHub MCP executable.
-
-Generated and local-only paths (never committed):
-
-- `../browser-tools/node_modules/`, `../browser-tools/browsers/`
-- `../github-tools/bin/`
-- `scripts/__pycache__/`
-- `plugins/codex-usage/node_modules/`, `plugins/codex-fallback/node_modules/`
-- `~/Documents/computer-assistant/memory.json` (owner-only app data)
-- `/tmp/opencode/playwright*/` (transient MCP output)
-- `~/Pictures/Screenshots/*.png` (viewed once, then deleted)
-
-## Install
-
-From a checkout at `~/repos/opencode-rig`:
+From the repository root, use the active v2-only scripts:
 
 ```bash
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
 ./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --apply
+./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --plugins all --apply
+./platforms/linux/ubuntu/computer-use/scripts/verify-opencode-v2.sh
 ```
 
-What `--apply` does:
+The first command is read-only. Review the
+[`setup-computer-assistant.sh` reference](../../../../docs/scripts/setup-computer-assistant.md)
+before applying its AT-SPI, `ydotool`, and GitHub runtime changes. It also
+links skills, deploys commands, and seeds missing v2 config files; plugin
+deployment registers canonical local packages.
 
-- Installs `python3-pyatspi`, `ydotool`, `wl-clipboard` via APT.
-- Adds the user to the `input` group if missing (logout/login may be needed
-  for `/dev/uinput` access).
-- Enables GNOME toolkit accessibility (`toolkit-accessibility=true`).
-- Enables the user-owned `ydotool.service` (private socket only, no system
-  permission broadening).
-- Deploys all sixteen complete skill bundles to `~/.config/opencode/skills/`.
-- Deploys the repository-managed `/promote-skills` command to
-  `~/.config/opencode/commands/promote-skills.md`.
-- Initializes the owner-only memory store at
-  `~/Documents/computer-assistant/memory.json` (dir `700`, file `600`).
-- Installs the pinned Playwright MCP (`@playwright/mcp@0.0.80`) and Firefox
-  runtime under the sibling `../browser-tools/` component, and registers live
-  visible and isolated headless MCP wrappers in the project `opencode.json`
-  (project-only, never global).
-- Downloads the official GitHub MCP Server `v1.12.1` amd64 archive, verifies its
-  published SHA-256, installs the native executable under `../github-tools/`,
-  and registers a project-only wrapper limited to read-only, lockdown-protected
-  repository, issue, and pull request tools. Credentials are not stored.
+## Layout
 
-Read-only checks:
+| Path | Purpose |
+|---|---|
+| `skills/` | Capability-specific agent instructions |
+| `plugins-v2/` | Server and CLI plugin packages |
+| `config/` | v2 server/CLI examples and role catalog |
+| `scripts/` | Bounded setup, deployment, launch, and health checks |
+| `../browser-tools/` | Direct-pinned Playwright package for explicitly requested headless Firefox; no MCP or browser downloads |
+| `config/mcp-versions.json` | Basic Memory, Node.js, and GitHub runtime pins |
 
-```bash
-./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --verify-only
-python3 platforms/linux/ubuntu/computer-use/scripts/desktop-control.py apps
-python3 platforms/linux/ubuntu/computer-use/scripts/assistant-memory.py validate
-opencode mcp list
-opencode debug skill
-```
+## Configuration and operation
 
-Restart OpenCode after deploying skills, changing MCP configuration, or
-changing plugin registration/TUI configuration. Running sessions do not
-hot-reload them.
+Server plugins use `opencode.jsonc` and CLI plugins use `cli.json`; both use
+`plugins` object entries with a canonical package path. The complete shapes are
+[`config/v2-opencode.example.jsonc`](config/v2-opencode.example.jsonc) and
+[`config/v2-cli.example.json`](config/v2-cli.example.json). The role catalog is
+[`config/v2-plugin-roles.json`](config/v2-plugin-roles.json).
+The portable project and seeded profile assign GPT-6 Luna `#max` to Build,
+Explore, and General, and GPT-6 Sol `#max` to Plan and the read-only Architect
+subagent. Selected profiles verify
+these role defaults; setup `--apply` upgrades only known older assignments
+while preserving unrelated custom model choices.
 
-After restart, `/promote-skills` validates the canonical skill documentation,
-deploys every complete bundle globally through `setup-opencode.sh --apply`, and
-verifies source parity plus OpenCode discovery. `/deploy` registers the local
-plugins globally or into a repository's `.opencode/` directory (and optionally
-copies the bootstrap scripts) through `scripts/deploy-plugins.sh`.
+The twelve local v2 workspaces are documented in
+[`plugins-v2/README.md`](plugins-v2/README.md). Explorer opens with
+`/explorer`, `/files`, or `Ctrl+Alt+X`; OpenCode's native `/editor` command
+remains separate. Its wider IDE roadmap is explicitly planned, not complete.
+Resource-aware fallback is documented in the
+[`codex-fallback` README](plugins-v2/codex-fallback/README.md).
 
-[`plugins/codex-usage/`](plugins/codex-usage/README.md) is a local OpenCode TUI
-sidebar for the weekly Codex quota. [`plugins/codex-fallback/`](plugins/codex-fallback/README.md)
-is a server plugin that fails over from the Codex subscription to a
-configurable chain of any OpenCode providers, with per-agent overrides and
-automatic return to Codex when the quota resets.
+`ponytail-adapter` is one of the twelve catalog-managed server/CLI workspace
+packages. Its official `@dietrichgebert/ponytail@4.10.0` dependency is pinned
+in `plugins-v2/package-lock.json`; native and WSL2 setup verify or install that
+workspace before deploying the role.
 
-Both are user-registered local packages, not setup-script deployments:
-codex-usage loads from `~/.config/opencode/tui.json`, codex-fallback from the
-`plugin` array in `~/.config/opencode/opencode.jsonc`. Register them with
-`/deploy` or `scripts/deploy-plugins.sh`; their runtime and verification
-commands live in their READMEs.
+`resource-monitor` adds compact CPU and RAM usage for each TUI's local process
+tree while excluding the shared `opencode serve --service` subtree. The footer,
+system overlay, Provider Usage details, and Explorer baseline have fresh
+standalone TTY evidence. Setup and deployment are verified in disposable config;
+provider data and visible-browser interaction remain runtime-dependent.
 
-## New Chat Handoff
+The agent-free OpenCode recovery CLI and `rig-tools` recovery tools provide
+bounded MCP diagnosis and Basic Memory readiness checks. Marker repair is
+preview-first, and connected status never substitutes for a caller-owned live
+`read_note` check. See the
+[`OpenCode recovery guide`](../../../../docs/scripts/opencode-recovery.md).
 
-After restarting OpenCode, copy the prompt in the root
-[`HANDOFF.md`](../../../../HANDOFF.md) into
-the first message of a new chat. It tells the model which files to read, runs a
-read-only health check, records the current skill/MCP/runtime state, and sets
-the desktop, browser, memory, privacy, and confirmation boundaries.
+The `github` MCP is the pinned official local server. Its wrapper reads only the
+existing authenticated `gh` session at process start and passes the transient
+token in the child environment. Do not add a token, authorization header,
+client secret, or GitHub control variable to configuration. Restart OpenCode
+after changing skills, MCP declarations, config, or plugins.
+Remove an individual plugin by removing its v2 registration object and
+restarting; the rest of the harness remains usable.
 
-## Skills
+## Safety and checks
 
-See [`skills/README.md`](skills/README.md) for the full catalog, trigger
-phrases, example requests, and how the skills combine.
-
-| Skill | Usage guide | Purpose |
-|-------|-------------|---------|
-| `desktop-vision` | [Usage guide](skills/desktop-vision/README.md) | See the GNOME desktop via a trusted screenshot shortcut, view once, delete immediately |
-| `desktop-control` | [Usage guide](skills/desktop-control/README.md) | Operate named GNOME controls through AT-SPI with screenshot verification |
-| `browser-assistant` | [Usage guide](skills/browser-assistant/README.md) | Share a visible isolated Playwright Firefox window with the user |
-| `browser-headless` | [Usage guide](skills/browser-headless/README.md) | Run explicitly requested non-interactive tasks in isolated headless Firefox |
-| `game-playtest` | [Usage guide](skills/game-playtest/README.md) | Test browser games with bounded input plus semantic, visual, console, and network evidence |
-| `github-operations` | [Usage guide](skills/github-operations/README.md) | Inspect GitHub through a bounded read-only MCP and perform separately approved remote operations |
-| `blender` | [Usage guide](skills/blender/README.md) | Inspect, script, render, save, reopen, and export Blender scenes safely |
-| `web-3d-asset-pipeline` | [Usage guide](skills/web-3d-asset-pipeline/README.md) | Prepare and validate GLB/glTF assets for browser runtimes |
-| `task-memory` | [Usage guide](skills/task-memory/README.md) | Store and retrieve private preferences, facts, decisions, and pending work |
-| `app-setup` | [Usage guide](skills/app-setup/README.md) | Install, configure, update, verify, and safely remove applications |
-| `system-troubleshooting` | [Usage guide](skills/system-troubleshooting/README.md) | Diagnose Ubuntu failures evidence-first and apply bounded repairs |
-| `files-and-documents` | [Usage guide](skills/files-and-documents/README.md) | Find, organize, summarize, and export files while preserving originals |
-| `routine-automation` | [Usage guide](skills/routine-automation/README.md) | Turn proven workflows into idempotent scripts and safe schedules |
-| `opencode-db-maintenance` | [Usage guide](skills/opencode-db-maintenance/README.md) | Diagnose and reclaim `opencode.db` growth, back up chats, manage weekly maintenance |
-| `skill-maintenance` | [Usage guide](skills/skill-maintenance/README.md) | Create, update, audit, catalog, deploy, rename, or retire OpenCode skills safely |
-| `vscode-management` | [Usage guide](skills/vscode-management/README.md) | Install, configure, and troubleshoot VS Code; prefer its integrated browser for in-editor web testing |
-
-## Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `scripts/setup-computer-assistant.sh` | Provision and verify the full assistant stack (`--verify-only` default, `--apply` to change the system) |
-| `scripts/setup-live-dictation.sh` | Reproduce and verify local incremental Vosk dictation on `Alt+X` without login autostart |
-| `scripts/setup-opencode.sh` | Verify by default; with `--apply`, persist `OPENCODE_ENABLE_EXA=1`, recursively deploy complete skill bundles, and deploy repository-managed global commands |
-| `scripts/deploy-plugins.sh` | Register the local plugins globally or into a repository's `.opencode/`, optionally copying the bootstrap scripts |
-| `scripts/desktop-control.py` | AT-SPI inspection with traversal status, short-lived target tokens, focus/text verification, and protected-field refusal |
-| `scripts/check-skill-docs.py` | Read-only validation for skill metadata, usage guides, deployed-set links, unsafe modes, symlinks, and generated artifacts |
-| `scripts/check-skill-docs-self-test.py` | Isolated negative tests proving invalid skill metadata and documentation are rejected |
-| `scripts/check-doc-coverage.py` | Enforce that mapped sources update or create their documentation (completeness + change-aware) |
-| `scripts/check-doc-coverage-self-test.py` | Isolated negative tests proving the documentation gate rejects undocumented changes |
-| `scripts/setup-git-hooks.sh` | Install or verify the versioned pre-push hook that runs the documentation gate |
-| `scripts/assistant-memory.py` | Private JSON memory store; record changes require `--apply`, credentials rejected |
-| `scripts/playwright-mcp.sh` | Launch the visible live Firefox MCP shared by user and agent |
-| `scripts/playwright-headless-mcp.sh` | Launch the separate isolated headless Firefox MCP |
-| `scripts/github-mcp.sh` | Launch the pinned GitHub MCP with limited read-only toolsets and fail-closed authentication |
-| `scripts/opencode-db-maintain.py` | Diagnose, prune, and vacuum `opencode.db` (read-only by default) |
-| `scripts/opencode-chat-backup.py` | Export chats to `~/Documents/opencode-backups/` |
-| `scripts/opencode-maintenance-cron.sh` | Weekly wrapper: chat backup always, DB cleanup when OpenCode is closed |
-
-## Configuration examples
-
-- [`config/opencode.example.jsonc`](config/opencode.example.jsonc)
-  documents the expected project-level Playwright and GitHub MCP registrations
-  (project `opencode.json` only, never global).
-- [`config/maintenance.cron.example`](config/maintenance.cron.example)
-  documents the weekly maintenance schedule and required cron `PATH`.
-- Plugin registration examples live in
-  [`plugins/codex-usage/README.md`](plugins/codex-usage/README.md) and
-  [`plugins/codex-fallback/README.md`](plugins/codex-fallback/README.md)
-  (global `~/.config/opencode/tui.json` and `opencode.jsonc`; plugins are
-  registered manually, not deployed by the setup scripts).
-
-The examples use this machine's checkout and account paths. Adjust the
-absolute paths before reusing them on another account or checkout.
-
-## Live Dictation
-
-The optional live-dictation setup uses a checksum-pinned Vosk 0.3.45 runtime,
-the small US English model, PipeWire capture, and the existing private
-`ydotool` user service. It is tuned for the supported i5-6200U laptop and types
-partial hypotheses plus corrections into the focused field.
-
-Provision the assistant stack first so `ydotool` and its bounded input access
-are available, then run:
-
-```bash
-./platforms/linux/ubuntu/computer-use/scripts/setup-live-dictation.sh --verify-only
-./platforms/linux/ubuntu/computer-use/scripts/setup-live-dictation.sh --apply
-./platforms/linux/ubuntu/computer-use/scripts/setup-live-dictation.sh --verify-only
-```
-
-The script defaults to read-only verification and performs no APT, group,
-permission, or login-autostart changes. `--apply` installs under `~/.local/`,
-calibrates Mic Boost to `33%` (`+10 dB` on this ALC255), detects the current
-default PipeWire source, and binds `Alt+X` to the toggle wrapper. Override
-hardware-specific values with `--audio-source`, `--alsa-card`, and
-`--mic-boost-percent`.
-
-Press `Alt+X` once to start. Press it again to suspend recognition and close
-the microphone stream; the model remains suspended in memory for fast reuse.
-The service remains disabled at login and exits with the user session.
-
-The previous shortcut values are saved in
-`~/.config/nerd-dictation/shortcut-backup.txt`. To restore this machine's Handy
-shortcut without deleting either dictation installation:
-
-```bash
-systemctl --user stop live-dictation.service
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/handy/ name 'Handy Dictation'
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/handy/ command "$HOME/scripts/Handy_0.9.6_amd64.AppImage --toggle-transcription"
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/handy/ binding '<Alt>x'
-```
-
-## Browser runtime
-
-`../browser-tools/` pins `@playwright/mcp@0.0.80` with `package-lock.json`.
-The `playwright` MCP launches a visible isolated Firefox window shared by the
-user and agent. `playwright_headless` launches a separate invisible context.
-Neither inherits cookies or tabs from the normal Firefox profile. Browser
-binaries download into `../browser-tools/browsers/` on first `--apply` and are
-excluded from Git.
-
-## GitHub runtime
-
-`../github-tools/bin/github-mcp-server` is generated from the official GitHub
-MCP Server `v1.12.1` Linux x86_64 release after its published SHA-256 is
-verified. `scripts/github-mcp.sh` enables only `context`, `repos`, `issues`, and
-`pull_requests` with read-only and lockdown modes.
-
-The wrapper authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` or `GH_TOKEN` in
-OpenCode's launch environment, falling back to the logged-in `gh` CLI, and
-fails closed when none is available. Prefer a fine-grained PAT restricted to the
-required repositories and read permissions. Never put a token in this
-repository or `opencode.json`; restart OpenCode after changing its launch
-environment.
-
-## Memory store
-
-`scripts/assistant-memory.py` manages `~/Documents/computer-assistant/memory.json`.
-Record writes preview by default and require `--apply`; store initialization
-is the documented exception. Categories: `preference`,
-`system`, `workflow`, `decision`, `pending`. Sources: `user`, `observed`,
-`verified`. Obvious credential shapes are rejected, but that is only a
-guardrail — never store passwords, tokens, keys, payment details, or full
-private conversations.
-
-## Verification
-
-From `~/repos/opencode-rig`:
-
-```bash
-bash -n platforms/linux/ubuntu/computer-use/scripts/*.sh
-shellcheck platforms/linux/ubuntu/computer-use/scripts/*.sh
-python3 -m py_compile platforms/linux/ubuntu/computer-use/scripts/*.py
-python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs.py
-python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.py
-./platforms/linux/ubuntu/computer-use/scripts/setup-opencode.sh --verify-only
-./platforms/linux/ubuntu/computer-use/scripts/setup-computer-assistant.sh --verify-only
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-usage run check
-npm --prefix platforms/linux/ubuntu/computer-use/plugins/codex-fallback run check
-opencode debug skill
-opencode mcp list
-```
-
-Each plugin package needs one `npm install` before its check; the generated
-`node_modules/` directories are excluded from Git. Plugin registration lives
-in user-owned files that the setup scripts do not verify.
-
-## Troubleshooting
-
-- GNOME Shell screenshot D-Bus (`org.gnome.Shell.Screenshot`) is private and
-  returns `AccessDenied` for arbitrary callers. `desktop-vision` uses the
-  configured GNOME screenshot shortcut through the existing user-owned
-  `ydotool` service, with a manual PrintScreen fallback.
-- `wtype` does not work on GNOME Mutter (no virtual-keyboard protocol); this
-  repo does not use it.
-- AT-SPI exposes window frames reliably, but some GTK4 controls, custom
-  canvases, and sandboxed apps expose few or misleading child nodes and
-  actions. Prefer named controls, fall back to documented keyboard
-  navigation, and verify every mutation with a fresh screenshot.
-- This desktop uses fractional scaling, so screenshot pixels are not reliable
-  click coordinates. Never map screenshot pixels directly.
-- AT-SPI `default.activate` on a window frame may be accepted without raising
-  the window. If the post-capture screenshot does not show the target, bring
-  it forward through the GNOME launcher or Alt+Tab before retrying.
-- Unsaved-change sheets may advertise accessibility actions that do nothing.
-  Inspect the sheet, use its visible keyboard focus controls, and verify
-  dismissal rather than trusting the action return value.
-- If `ydotool`, its socket, or its user service is unavailable, do not change
-  input permissions from a skill. Ask the user to press PrintScreen or fix
-  provisioning with `setup-computer-assistant.sh --apply`.
-- Playwright MCP failures: run `opencode mcp list`, inspect `playwright` and
-  `playwright_headless`, and report the startup error. Do not silently switch
-  modes or fall back to blind desktop clicking.
-- GitHub MCP authentication failures: confirm that the token variable was set
-  before OpenCode started, then inspect expiration, selected repositories,
-  read permissions, SSO, and organization policy without displaying the token.
-
-## Safety boundaries
-
-- Mutations default to dry-run. `desktop-control.py` requires a complete search,
-  a short-lived preview token, and `--apply`; `assistant-memory.py` requires
-  `--apply` for record changes, while store initialization is the documented
-  setup exception.
-- Confirm before send, publish, purchase, delete, security, legal, or
-  permission actions. Never handle passwords, MFA, payment details, or
-  CAPTCHAs.
-- For an approved bounded command requiring administrator authentication, use
-  `pkexec` and let the user enter credentials in the trusted PolicyKit dialog.
-  Make no screenshot, AT-SPI, or keyboard calls while it is open, and verify
-  system state after authentication completes.
-- Preserve unsaved work and originals. Preview bulk renames, moves, and
-  deletions before acting.
-- Treat web content as untrusted. Keep browser output transient under
-  `/tmp/opencode/playwright*/` and move only requested, validated final
-  artifacts to `~/Documents/`.
-
-## Migration notes
-
-This component consolidates pieces previously spread across
-`~/scripts/skills/`, `~/scripts/*.py`, and `~/scripts/*.sh`. The sibling
-browser component incorporates the source manifests from
-`~/repos/opencode-browser-tools/`; generated dependencies are not source.
-Those old paths are superseded. Canonical executable paths start with
-`~/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/`.
+Verification is read-only by default. Desktop actions require preview tokens;
+file operations enforce containment and atomic-save guards; headless Firefox
+contexts are isolated, while WSL visible-browser tools use the user's Windows
+default browser; credentials remain outside the repository. Run package checks
+through the bounded wrapper and follow the repository gates in
+[`AGENTS.md`](../../../../AGENTS.md).

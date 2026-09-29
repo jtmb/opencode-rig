@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-visibility.test.ts",
+  "test_sha256": "fa57e930039819cc95e73aab1432440f0d26c3565daf6256bebe5241d6184adf",
+  "source_sha256": "52113435aee133d7234277df66432bf570b1a4d8252b7381f09d0d90f7c003f8",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh with repository default Node",
+  "command": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test provider-visibility.test.ts",
+  "observed_at": "2026-09-22T14:19:46Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/focused-output/codex-usage__test__provider-visibility.txt",
+  "output_sha256": "2ddec86088ba3d2d3fdc1677c54813005d06f0ae0975304a14bb2235d657b2e3"
+}

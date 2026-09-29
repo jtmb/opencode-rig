@@ -8,12 +8,17 @@ Category: `browser`
 
 Tags: `games`, `playtesting`, `playwright`, `canvas`, `webgl`
 
+The `playwright` tag refers only to the explicitly requested isolated headless
+Firefox runtime; visible browser work uses the Windows-default-browser UIA path.
+
 ## Purpose and when to use it
 
 Use this skill for browser-game smoke tests, gameplay QA, canvas/WebGL visual
 checks, HUD and overlay review, responsive sanity checks, console-error review,
-and reproducible bug reports. It uses the repository's Playwright Firefox tools
-and verifies player-visible postconditions rather than assuming an input worked.
+and reproducible bug reports. Visible authenticated browser work from WSL uses
+the Windows-default-browser UIA tools documented by `browser-assistant`; isolated
+headless Firefox is reserved for requests that explicitly ask for it. The skill
+verifies player-visible postconditions rather than assuming an input worked.
 
 The workflow is adapted from OpenAI's public Game Studio playtest concepts for
 this repository. See [PROVENANCE.md](./PROVENANCE.md) and
@@ -26,18 +31,21 @@ The agent checks:
 - the exact game URL and build/commit under test
 - documented controls, main verbs, and expected states
 - the project's existing start command and lockfile for local games
-- `opencode mcp list` when Playwright availability is uncertain
-- whether normal visible Firefox or explicitly requested headless Firefox is in
-  scope
+- the `browser-assistant` `wsl_browser_*` tools for visible work from WSL, with
+  an explicit window ID and fresh preview token for each supported mutation
+- the pinned isolated Firefox runtime only when headless mode was explicitly
+  requested
 
 No package, browser extension, profiler, or dependency is installed merely to
 start a playtest. A temporary local server stays on loopback unless network
-exposure was explicitly requested. The visible Playwright browser is isolated
-from the user's normal Firefox profile.
+exposure was explicitly requested. Visible work uses the user's configured
+Windows default browser and authenticated session through UIA; do not switch to
+Chrome/Chromium, desktop-control, or coordinate input if the connector is
+unavailable. Stop and report a blocker instead.
 
 ## How to request it
 
-- "Smoke-test this browser game in the visible Firefox window."
+- "Smoke-test this browser game in my Windows default browser from WSL."
 - "Exercise movement, jump, attack, pause, and restart, then report bugs by
   severity."
 - "Check the WebGL scene and HUD at desktop and mobile viewport sizes."
@@ -50,12 +58,14 @@ viewports, and any prohibited state-changing actions.
 
 ## Worked workflow and expected result
 
-A representative visible-browser smoke test is:
+A representative visible-browser smoke test from WSL is:
 
 1. Start the existing project command on loopback if needed.
-2. Inspect an accessibility snapshot before input.
-3. Check boot console messages and failed asset requests.
-4. Inspect a mandatory screenshot of the canvas/WebGL initial state.
+2. Inspect an accessibility snapshot from the explicit browser window before input.
+3. Check boot console messages and failed asset requests only if an approved
+   `wsl_browser_*` tool exposes them; otherwise record the diagnostics blocker.
+4. Inspect a mandatory screenshot of the canvas/WebGL initial state through the
+   approved browser tools; if unavailable, stop without claiming visual QA.
 5. Focus the identified game surface and send one bounded input for each main
    verb.
 6. After each action, inspect fresh semantic state and a fresh screenshot.
@@ -65,8 +75,11 @@ A representative visible-browser smoke test is:
    text report with exact reproduction steps and testing gaps.
 
 Expected result: a reproducible assessment of boot, input, rendering, HUD, and
-responsive behavior with no retained screenshot files. These are documented
-representative steps; they were not executed while creating the skill.
+responsive behavior with no retained screenshot files. A clean console/network
+result is claimable only when an approved tool actually exposes those
+diagnostics; otherwise the report records the blocker and incomplete check.
+These are documented representative steps; they were not executed while
+creating the skill.
 
 ## Verification and known limitations
 
@@ -75,9 +88,12 @@ representative steps; they were not executed while creating the skill.
 - The DOM can expose the canvas element and surrounding HUD; it cannot prove or
   directly drive the internal rendered scene.
 - Each input is verified against a post-state or visible frame change.
-- Console and network evidence is checked at boot and after exercised states.
-- Resizing Firefox to a mobile viewport does not emulate every touch, safe-area,
-  GPU, memory, power, or network characteristic of a phone.
+- Console and network evidence is required at boot and after exercised states.
+  UIA does not guarantee access to browser diagnostics: do not claim it exposes
+  console errors, and treat missing diagnostics as a blocker/incomplete check.
+- Resizing the browser to a narrow viewport, when the approved UIA tools support
+  and expose that operation, does not emulate every touch, safe-area, GPU,
+  memory, power, or network characteristic of a phone.
 - Pointer lock, gamepad, multitouch, timing-sensitive combinations, multiplayer,
   and long-session performance may need user or device testing.
 - Headless and visible rendering or timing can differ; the report identifies
@@ -95,8 +111,10 @@ representative steps; they were not executed while creating the skill.
   user takeover.
 - Pointer lock or gesture cannot be automated reliably: use bounded user
   takeover, then inspect fresh state after handoff.
-- Playwright unavailable: inspect the registered MCP and report its actual
-  startup error; do not switch to blind desktop clicking.
+- WSL browser UIA tools unavailable: stop and report a visible-browser blocker.
+  Do not inspect Playwright MCP registration or fall back to Chrome/Chromium,
+  GNOME desktop-control, or coordinate clicking. For explicitly requested
+  headless mode only, verify the pinned Firefox runtime.
 - Nondeterministic animation or physics: use a known deterministic test surface
   if the project already provides one, otherwise report frequency and evidence
   without claiming certainty.
@@ -115,8 +133,8 @@ inspection. The retained output is a text report.
 
 ## Related skills and documents
 
-- [`browser-assistant`](../browser-assistant/README.md) governs the visible,
-  user-shared Playwright Firefox session.
+- [`browser-assistant`](../browser-assistant/README.md) governs visible work
+  from WSL through the user's Windows-default-browser `wsl_browser_*` UIA tools.
 - [`browser-headless`](../browser-headless/README.md) governs explicitly
   requested non-interactive browser work.
 - [`web-3d-asset-pipeline`](../web-3d-asset-pipeline/README.md) diagnoses and

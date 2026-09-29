@@ -1,0 +1,102 @@
+bounded-command: available=7868MiB budget=3147MiB swap=786MiB node_heap=2045MiB
+Running as unit: run-r021b2ba351c84032a5e1928df4fc597b.scope; invocation ID: 8ed560c4101541c28c781cba8c2236cd
+TAP version 13
+# Subtest: V2 credential connection makes Codex READY without consulting auth.json
+ok 1 - V2 credential connection makes Codex READY without consulting auth.json
+  ---
+  duration_ms: 6.75487
+  type: 'test'
+  ...
+# Subtest: disabled providers are absent and hidden auto providers are not represented as OFFLINE
+ok 2 - disabled providers are absent and hidden auto providers are not represented as OFFLINE
+  ---
+  duration_ms: 1.004128
+  type: 'test'
+  ...
+# Subtest: auto providers require a working connection or recent authoritative activity
+ok 3 - auto providers require a working connection or recent authoritative activity
+  ---
+  duration_ms: 0.2606
+  type: 'test'
+  ...
+# Subtest: enabled providers without a connection are hidden until recent use qualifies OFFLINE
+ok 4 - enabled providers without a connection are hidden until recent use qualifies OFFLINE
+  ---
+  duration_ms: 0.292739
+  type: 'test'
+  ...
+# Subtest: credential and environment connections establish READY
+ok 5 - credential and environment connections establish READY
+  ---
+  duration_ms: 0.2177
+  type: 'test'
+  ...
+# Subtest: probe outcomes have explicit precedence and retain transient usage
+ok 6 - probe outcomes have explicit precedence and retain transient usage
+  ---
+  duration_ms: 1.013518
+  type: 'test'
+  ...
+# Subtest: canonical aliases deduplicate under the first configured display name
+ok 7 - canonical aliases deduplicate under the first configured display name
+  ---
+  duration_ms: 0.204479
+  type: 'test'
+  ...
+# Subtest: empty visible state produces no provider rows, no client rows, and a hidden panel
+ok 8 - empty visible state produces no provider rows, no client rows, and a hidden panel
+  ---
+  duration_ms: 3.52902
+  type: 'test'
+  ...
+# Subtest: collapsed summary counts only visible server rows
+ok 9 - collapsed summary counts only visible server rows
+  ---
+  duration_ms: 0.667829
+  type: 'test'
+  ...
+# Subtest: serialized snapshots and client rows never leak credential canaries
+ok 10 - serialized snapshots and client rows never leak credential canaries
+  ---
+  duration_ms: 0.426909
+  type: 'test'
+  ...
+# Subtest: provider adapter renders exactly the server rows and never synthesizes catalog rows
+ok 11 - provider adapter renders exactly the server rows and never synthesizes catalog rows
+  ---
+  duration_ms: 0.303324
+  type: 'test'
+  ...
+# Subtest: server RPC and stale refresh retain rows with sanitized diagnostics
+ok 12 - server RPC and stale refresh retain rows with sanitized diagnostics
+  ---
+  duration_ms: 1.512633
+  type: 'test'
+  ...
+# Subtest: refresh polling stays throttled while authoritative events may force and concurrent work coalesces
+ok 13 - refresh polling stays throttled while authoritative events may force and concurrent work coalesces
+  ---
+  duration_ms: 3.074425
+  type: 'test'
+  ...
+# Subtest: client snapshot integration is explicit rather than a legacy catalog fallback
+ok 14 - client snapshot integration is explicit rather than a legacy catalog fallback
+  ---
+  duration_ms: 1.443452
+  type: 'test'
+  ...
+# Subtest: native MCP-style provider rows remain single-line at 140, 80, and 60 columns
+ok 15 - native MCP-style provider rows remain single-line at 140, 80, and 60 columns
+  ---
+  duration_ms: 1.039478
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 147.839465

@@ -14,7 +14,8 @@ retirement of a skill.
 6. Validate the bundle and report unrelated opportunities without changing
    them.
 
-Never edit `~/.config/opencode/skills/` directly. It is generated state.
+Never edit the selected v2 config directory's `skills/` tree directly. It is
+generated state (default `~/.opencode-v2-pilot/config/skills/`).
 
 ## Rename
 

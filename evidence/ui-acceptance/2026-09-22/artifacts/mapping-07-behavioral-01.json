@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tui.test.ts",
+  "test_sha256": "b525c453075065a7f39e1e87c13d84a6732107f14c8f691f748e0b535b9db067",
+  "source_sha256": "3ec08fd05e4d01d4833b1033552be589acf309c0d392e52f9018e70fd8386d72",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh with Node v26.4.0 via PATH",
+  "command": "PATH=/tmp/opencode/node-v26.4.0-linux-x64/bin:$PATH bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test tui.test.ts",
+  "observed_at": "2026-09-22T14:19:46Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/focused-output/rig-todo__test__tui.txt",
+  "output_sha256": "1dbbcb84f12cf6ebb1d6b9c852c5f555c9682e026fa8e9b5e5de6446cdaff9b4"
+}

@@ -1,0 +1,12 @@
+✔ visible slash commands use the CLI dialog path, not a synthetic inbox body (2.143881ms)
+✔ sidebar preserves native MCP content while adding Explorer, Todo, and active subagents (0.244459ms)
+✔ queries bounded direct child sessions across worktree directories (0.305828ms)
+✔ canonical role catalog and CLI example register both rig-tools roles (0.635518ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 105.821584

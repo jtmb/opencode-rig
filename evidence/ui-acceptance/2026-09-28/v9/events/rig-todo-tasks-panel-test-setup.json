@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-setup",
+  "event_id": "rig-todo-tasks-panel-test-setup-001",
+  "capture_id": "rig-todo-tasks-panel",
+  "source_sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4d43b03a51b17df017e7a3c3f3b4a8c5d51d1381fbefa131acae9d1a92bc33b8",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "4c0ddac4d995884ee4c453a4420d0561f2a6c2f2d93ceec1246eb24f6b0bf74d",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "dispatch_id": "rig-todo-tasks-panel-test-setup-dispatch-001",
+    "transition_id": "rig-todo-tasks-panel-test-setup-transition-001",
+    "dispatch_monotonic_ns": "11838108327177",
+    "transition_monotonic_ns": "11838241932049"
+  },
+  "before": {
+    "snapshot_id": "rig-todo-tasks-panel-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "rig-todo-tasks-panel-open-after",
+    "frame_sha256": "86da6ca22b7b844009306a94ca61365d4c01b7494fa05fbacf72c21c2822c3ce",
+    "spans_sha256": "98e542787ddc2fe95700189399f74bb997b2130b06d1ae44f2100cb8c4e297cd",
+    "state_sha256": "1cd40fe339ef8931b30ccdf81a7f593a866dabf452f178fa1e26710525e89dfa"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "30e900fb38b28b4ecc3157370b9cedf0d78c071fdd6afb5cb0d2ac0d1944b1ae",
+  "output": "evidence/ui-acceptance/2026-09-28/v9/event-output/rig-todo-tasks-panel-test-setup.json",
+  "output_sha256": "c50a805228bd899cfe47510edd5fa51a9d30c5b70b365828d93dc3bd7da561eb",
+  "observed_at": "2026-09-28T23:13:46.959Z"
+}

@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-setup",
+  "event_id": "rig-todo-store-test-setup-001",
+  "capture_id": "rig-todo-store",
+  "source_sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "f0af530e5229a73f8a2968cae138e58c72abc4a4fb18a9850aa7cf6c40919f5e",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "caa81767-d422-4bf6-a1c4-0448742b6725",
+    "dispatch_id": "rig-todo-store-test-setup-dispatch-001",
+    "transition_id": "rig-todo-store-test-setup-transition-001",
+    "dispatch_monotonic_ns": "67464290930012",
+    "transition_monotonic_ns": "67464374334895"
+  },
+  "before": {
+    "snapshot_id": "rig-todo-store-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "rig-todo-store-open-after",
+    "frame_sha256": "7749a37d44cca1cf807b47426f9a6589c3a85e3bed16df97ab702f63ed05ad19",
+    "spans_sha256": "83a23ec3042c7ecacea120cacd696f917494f698d8bc2a593fde294e280cf507",
+    "state_sha256": "6107d88460bba248f3f7a360e1e792352769d538b419ce5cce9a601ff3c03b30"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "5a790cd6ecc712f9dd18864c549dc9c33d7626817e6d06eb1822f7c56d974c89",
+  "output": "evidence/ui-acceptance/2026-09-28/v6/event-output/rig-todo-store-test-setup.json",
+  "output_sha256": "5127768da83bcf330ed9f177c31c6e88f239c9899b6c1bfcb487b2827b691127",
+  "observed_at": "2026-09-28T19:02:42.533Z"
+}

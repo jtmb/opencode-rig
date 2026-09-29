@@ -3,9 +3,21 @@ platforms/linux/ubuntu/browser-tools/node_modules/
 platforms/linux/ubuntu/browser-tools/browsers/
 platforms/linux/ubuntu/computer-use/plugins/codex-usage/node_modules/
 platforms/linux/ubuntu/computer-use/plugins/codex-fallback/node_modules/
+platforms/linux/ubuntu/computer-use/plugins/source-control/node_modules/
+platforms/linux/ubuntu/computer-use/plugins/tui-settings/node_modules/
+platforms/linux/ubuntu/computer-use/plugins/file-manager/node_modules/
 
-# Generated GitHub MCP runtime - never commit.
-platforms/linux/ubuntu/github-tools/bin/
+# Generated desktop custom-tool dependencies - never commit.
+platforms/linux/ubuntu/computer-use/tools/node_modules/
+
+# Generated OpenCode v2 plugin dependencies - never commit.
+platforms/linux/ubuntu/computer-use/plugins-v2/node_modules/
+platforms/linux/ubuntu/computer-use/plugins-v2/*/node_modules/
+platforms/windows/wsl2/ubuntu/computer-use/plugins-v2/node_modules/
+
+# Generated checkout-local QA runtime - never commit.
+/toolchains/node/
+/toolchains/.node-qa-stage-*/
 
 # Python caches.
 __pycache__/
@@ -17,3 +29,7 @@ __pycache__/
 
 # Local memory temp files (the real store lives outside the repo).
 .memory.*.tmp
+
+# Local OpenCode credentials - never commit.
+.env
+.env.local

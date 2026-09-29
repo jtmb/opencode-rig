@@ -18,8 +18,9 @@ keeping changes bounded, reviewable, and consistent with repository policy.
   authority for skills in this repository.
 - Canonical sources live at
   `platforms/linux/ubuntu/computer-use/skills/<name>/`.
-- `~/.config/opencode/skills/<name>/` is a generated deployed copy. Never edit
-  it directly.
+- The selected v2 config directory's `skills/<name>/` is a generated deployed
+  copy (default `~/.opencode-v2-pilot/config/skills/<name>/`). Never edit it
+  directly.
 - Use `platforms/linux/ubuntu/computer-use/skills/README.md` as the skill
   catalog. Do not introduce or maintain `SKILL-INDEX.md`.
 - Do not assume project-specific MCP servers, databases, agents, companion
@@ -74,7 +75,7 @@ without replacing `SKILL.md`.
 ### Deploy the complete bundle
 
 Deployment must copy the entire skill directory recursively from canonical
-source to `~/.config/opencode/skills/<name>/`, including references and other
+source to the selected v2 config directory's `skills/<name>/`, including references and other
 runtime files. It must be idempotent and remove nothing unexpectedly. Verify
 source and deployed files match. If repository deployment tooling copies only
 `SKILL.md`, report the mismatch and obtain authority to fix that tooling; do

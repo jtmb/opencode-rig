@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "capture_id": "integrated-sidebar",
+  "phase": "test-teardown",
+  "event_id": "integrated-sidebar-test-teardown-001",
+  "action": {
+    "type": "teardown",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "caa81767-d422-4bf6-a1c4-0448742b6725",
+    "dispatch_id": "integrated-sidebar-test-teardown-dispatch-001",
+    "transition_id": "integrated-sidebar-test-teardown-transition-001",
+    "dispatch_monotonic_ns": "67464276859584",
+    "transition_monotonic_ns": "67464285554458"
+  },
+  "before": {
+    "snapshot_id": "integrated-sidebar-interact-after",
+    "frame_sha256": "08d2c420fa5f400a98e091ecd6a6f94e866e6b4a98074469197953b4d73d3faa",
+    "spans_sha256": "33bf86eecf66c2c1b346a5b91a5499992a5ea94be6add9ff8847389ee6c4eabb",
+    "state_sha256": "2a5ee7fafed309452d3e585c8e3642a310226d88887eaecfaeb15d65071fdec3"
+  },
+  "after": {
+    "snapshot_id": "integrated-sidebar-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "1c941e4576fe9a9ed5b05068d9d1f9fb94f8512cadd438d90dbfa941047e070f",
+  "native_event_sha256": "680a5d504c334d2a12aa75f2a1ef7860c5fdb816acd1e70a7646c925979e11a0"
+}

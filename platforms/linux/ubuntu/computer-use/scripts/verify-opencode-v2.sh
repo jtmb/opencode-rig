@@ -1,0 +1,412 @@
+#!/usr/bin/env bash
+# Read-only health check for the isolated OpenCode v2 pilot stack.
+#
+# It inspects the v2 binary, config, skills, commands, plugins, tools, and MCP
+# declarations without connecting any MCP server (so it never launches
+# a browser). Override paths with OPENCODE_V2_PILOT_DIR, OPENCODE_V2_BIN,
+# OPENCODE_V2_REPO, OPENCODE_V2_CONFIG_DIR, or OPENCODE_V2_ROLE_CATALOG.
+set -euo pipefail
+
+PILOT="${OPENCODE_V2_PILOT_DIR:-$HOME/.opencode-v2-pilot}"
+BIN="${OPENCODE_V2_BIN:-$HOME/.local/opt/opencode-v2/opencode}"
+REPO="${OPENCODE_V2_REPO:-$HOME/repos/opencode-rig}"
+CONFIG="${OPENCODE_V2_CONFIG_DIR:-$PILOT/config}"
+PLUGINS="$REPO/platforms/linux/ubuntu/computer-use/plugins-v2"
+COMPUTER_USE_ROOT="$REPO/platforms/linux/ubuntu/computer-use"
+ROLE_CATALOG="${OPENCODE_V2_ROLE_CATALOG:-$COMPUTER_USE_ROOT/config/v2-plugin-roles.json}"
+CATALOG_TOOL="$REPO/platforms/linux/ubuntu/computer-use/scripts/v2-plugin-catalog.py"
+JSONC_HELPER="$REPO/platforms/linux/ubuntu/computer-use/scripts/setup-opencode-jsonc.py"
+BOUNDED_RUNNER="$REPO/platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh"
+PONYTAIL_VERIFIER="$PLUGINS/ponytail-adapter/scripts/verify-package.mjs"
+
+preflight_config_paths() {
+  python3 - "$CONFIG" "$CONFIG/opencode.jsonc" "$CONFIG/cli.json" "$REPO/opencode.json" <<'PY'
+import os
+import sys
+
+root, *files = sys.argv[1:]
+def check(path, label):
+    absolute = os.path.abspath(path)
+    if os.path.islink(absolute):
+        raise SystemExit(f"refusing symlinked {label}: {path}")
+    parent = os.path.dirname(absolute)
+    while parent != os.path.dirname(parent):
+        if os.path.islink(parent):
+            raise SystemExit(f"refusing symlink ancestor for {label}: {path}")
+        parent = os.path.dirname(parent)
+for path in [root, *files]:
+    check(path, "config root" if path == root else "config file")
+PY
+}
+
+if ! preflight_config_paths; then
+  printf 'FAIL: unsafe v2 config path\n' >&2
+  exit 1
+fi
+
+status=0
+ok() { printf 'OK: %s\n' "$*"; }
+fail() { printf 'FAIL: %s\n' "$*" >&2; status=1; }
+
+if [ -x "$BIN" ]; then
+  ok "v2 binary: $BIN"
+else
+  fail "v2 binary missing: $BIN"
+fi
+version="$("$BIN" --version 2>/dev/null || true)"
+case "$version" in
+  "opencode v2."*) ok "version: $version" ;;
+  *) fail "unexpected version: ${version:-<none>}" ;;
+esac
+
+if [ -f "$CONFIG/opencode.jsonc" ]; then
+  ok "server config present"
+else
+  fail "missing $CONFIG/opencode.jsonc"
+fi
+if [ -f "$CONFIG/cli.json" ]; then
+  ok "cli config present"
+else
+  fail "missing $CONFIG/cli.json"
+fi
+
+catalog_json='{"plugins": []}'
+if [ -f "$ROLE_CATALOG" ] && [ -f "$CATALOG_TOOL" ]; then
+  if catalog_json="$(python3 "$CATALOG_TOOL" --catalog "$ROLE_CATALOG" --root "$COMPUTER_USE_ROOT" --json 2>&1)"; then
+    ok "v2 plugin role catalog valid"
+  else
+    fail "v2 plugin role catalog invalid: $catalog_json"
+  fi
+else
+  fail "v2 plugin role catalog or validator missing"
+fi
+
+if [ -x "$BOUNDED_RUNNER" ] && [ -f "$PONYTAIL_VERIFIER" ] && command -v node >/dev/null 2>&1 \
+    && "$BOUNDED_RUNNER" -- node --experimental-strip-types "$PONYTAIL_VERIFIER"; then
+  ok "pinned official Ponytail package, hooks, six commands, and six skills"
+else
+  fail "pinned official @dietrichgebert/ponytail@4.10.0 dependency or Ponytail surface is unavailable"
+fi
+
+if python3 - "$CONFIG" "$PLUGINS" "$REPO" "$catalog_json" "$JSONC_HELPER" <<'PY'
+import json
+import importlib.util
+import os
+import sys
+
+config, plugins_root, repo, catalog_text, helper_path = sys.argv[1:6]
+failures: list[str] = []
+spec = importlib.util.spec_from_file_location("setup_opencode_jsonc", helper_path)
+helper = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(helper)
+
+
+def ok(message: str) -> None:
+    print(f"OK: {message}")
+
+
+def fail(message: str) -> None:
+    failures.append(message)
+
+
+def load_jsonc(path: str):
+    return helper.load_jsonc(path)
+
+
+try:
+    server = load_jsonc(os.path.join(config, "opencode.jsonc"))
+except (OSError, ValueError, json.JSONDecodeError) as error:
+    server = {}
+    failures.append(f"cannot read server config: {error}")
+try:
+    cli = load_jsonc(os.path.join(config, "cli.json"))
+except (OSError, ValueError, json.JSONDecodeError) as error:
+    cli = {}
+    failures.append(f"cannot read cli config: {error}")
+try:
+    project = load_jsonc(os.path.join(repo, "opencode.json"))
+except (OSError, ValueError, json.JSONDecodeError) as error:
+    project = {}
+    failures.append(f"cannot read project config: {error}")
+try:
+    helper.verify_agent_models(project, source=True)
+    ok("portable project Build/Explore/General Luna and Plan/Architect Sol role models")
+except ValueError as error:
+    fail(f"portable project role models: {error}")
+try:
+    catalog = json.loads(catalog_text)
+except ValueError as error:
+    catalog = {"plugins": []}
+    failures.append(f"cannot read normalized role catalog: {error}")
+
+skills_dir = os.path.join(config, "skills")
+try:
+    skills = [name for name in os.listdir(skills_dir) if os.path.isdir(os.path.join(skills_dir, name))]
+    if len(skills) == 20:
+        ok(f"skills source has 20 entries")
+    else:
+        fail(f"skills source has {len(skills)} entries (expected 20)")
+except OSError:
+    fail(f"skills source missing: {skills_dir}")
+
+try:
+    skill_symlinks = []
+    for root, dirs, files in os.walk(skills_dir, followlinks=False):
+        skill_symlinks.extend(
+            os.path.join(root, name)
+            for name in dirs + files
+            if os.path.islink(os.path.join(root, name))
+        )
+    if skill_symlinks:
+        fail(f"skills source/deployed tree contains symlinks: {skill_symlinks}")
+    else:
+        ok("skills source/deployed tree contains no symlinks")
+except OSError as error:
+    fail(f"cannot inspect skills for symlinks: {error}")
+
+commands_dir = os.path.join(config, "commands")
+try:
+    commands = [name for name in os.listdir(commands_dir) if name.endswith(".md")]
+    if len(commands) >= 4:
+        ok(f"commands: {len(commands)}")
+    else:
+        fail(f"commands: {len(commands)} (expected at least 4)")
+except OSError:
+    fail(f"commands dir missing: {commands_dir}")
+
+mcp_config = server.get("mcp", {})
+mcp = mcp_config.get("servers", {}) if isinstance(mcp_config, dict) else {}
+if not isinstance(mcp_config, dict) or not isinstance(mcp, dict):
+    fail("mcp.servers is not an object")
+else:
+    expected_mcp_names = {"basic-memory", "github", "chatgpt"}
+    if set(mcp) != expected_mcp_names:
+        fail(f"global MCP server set is not exactly canonical: {sorted(mcp)}")
+    basic_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh")
+    github_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh")
+    chatgpt_wrapper = os.path.join(repo, "platforms/linux/ubuntu/computer-use/scripts/chatgpt-mcp.sh")
+    portable_basic_command = ["./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"]
+    portable_github_command = ["./platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"]
+    portable_chatgpt_command = ["./platforms/linux/ubuntu/computer-use/scripts/chatgpt-mcp.sh"]
+    github = mcp.get("github")
+    if isinstance(github, dict) and github.get("type") == "local" and ( \
+            github.get("command") == [github_wrapper] \
+            or (github.get("command") == portable_github_command and github.get("cwd", ".") == ".") \
+        ) \
+            and github.get("disabled", False) is not True \
+            and not any(key in github for key in ("authorization", "headers", "environment", "client_secret", "clientSecret", "token", "url")):
+        ok("global GitHub MCP uses the local gh-authenticated wrapper")
+    else:
+        fail("global GitHub MCP is not the exact enabled local or workspace-relative gh-authenticated wrapper")
+    chatgpt = mcp.get("chatgpt")
+    chatgpt_base = {
+        "type": "local",
+        "codemode": False,
+        "disabled": False,
+        "timeout": {"startup": 30000},
+    }
+    global_chatgpt_entries = (
+        {**chatgpt_base, "command": [chatgpt_wrapper]},
+        {**chatgpt_base, "command": portable_chatgpt_command},
+        {**chatgpt_base, "command": portable_chatgpt_command, "cwd": "."},
+    )
+    if chatgpt in global_chatgpt_entries:
+        ok("global ChatGPT MCP uses the direct-tool local wrapper without configured credentials")
+    else:
+        fail("global ChatGPT MCP is not the exact enabled direct-tool local wrapper")
+    for name, wrapper in (("basic-memory", basic_wrapper),):
+        entry = mcp.get(name)
+        if isinstance(entry, dict) and (
+            entry.get("command") == [wrapper]
+            or (entry.get("command") == portable_basic_command and entry.get("cwd", ".") == ".")
+        ) and entry.get("disabled", False) is not True:
+            ok(f"global {name} MCP declared with exact local wrapper")
+        else:
+            fail(f"global {name} MCP is not the exact enabled local wrapper")
+    if any(name in mcp for name in ("playwright",)):
+        fail("global Playwright MCP must be absent")
+    else:
+        ok("global Playwright MCP absent")
+    for name in ("github", "playwright", "basic-memory", "chatgpt"):
+        if name in mcp_config:
+            fail(f"legacy flat MCP key remains: mcp.{name}")
+        else:
+            ok(f"legacy flat MCP key absent: mcp.{name}")
+
+session = cli.get("session") if isinstance(cli, dict) else None
+if isinstance(session, dict) and session.get("permissions") == "prompt":
+    ok("CLI session permissions are prompt")
+else:
+    fail("CLI session.permissions must be prompt")
+attention = cli.get("attention") if isinstance(cli, dict) else None
+if isinstance(attention, dict) and attention.get("sound") is False:
+    ok("CLI attention sounds are disabled")
+else:
+    fail("CLI attention.sound must be false")
+
+project_mcp_config = project.get("mcp", {}) if isinstance(project, dict) else {}
+project_servers = project_mcp_config.get("servers", {}) if isinstance(project_mcp_config, dict) else {}
+project_basic = project_servers.get("basic-memory") if isinstance(project_servers, dict) else None
+project_github = project_servers.get("github") if isinstance(project_servers, dict) else None
+project_chatgpt = project_servers.get("chatgpt") if isinstance(project_servers, dict) else None
+if isinstance(project_basic, dict) and project_basic.get("command") == portable_basic_command \
+        and project_basic.get("disabled", False) is not True:
+    ok("portable project Basic Memory MCP uses the workspace-relative wrapper")
+else:
+    fail("portable project Basic Memory MCP is not the exact enabled workspace-relative wrapper")
+if isinstance(project_github, dict) and project_github.get("type") == "local" \
+        and project_github.get("command") == portable_github_command \
+        and project_github.get("cwd", ".") == "." \
+        and project_github.get("disabled", False) is not True \
+        and not any(key in project_github for key in ("authorization", "headers", "environment", "client_secret", "clientSecret", "token", "url")):
+    ok("portable project GitHub MCP uses the workspace-relative gh-authenticated wrapper")
+else:
+    fail("portable project GitHub MCP is not the exact workspace-relative gh-authenticated wrapper")
+project_chatgpt_expected = {
+    "type": "local",
+    "command": portable_chatgpt_command,
+    "codemode": False,
+    "disabled": False,
+    "timeout": {"startup": 30000},
+}
+if project_chatgpt == project_chatgpt_expected:
+    ok("portable project ChatGPT MCP uses the direct-tool workspace-relative wrapper without configured credentials")
+else:
+    fail("portable project ChatGPT MCP is not the exact workspace-relative direct-tool wrapper")
+if isinstance(project_servers, dict) and set(project_servers) != {"basic-memory", "github", "chatgpt"}:
+    fail(f"portable project MCP server set is not exactly canonical: {sorted(project_servers)}")
+if isinstance(project_mcp_config, dict) and any(name in project_mcp_config for name in ("github", "basic-memory", "chatgpt")):
+    fail("legacy flat MCP key remains in project config")
+
+portable_ponytail = "./platforms/linux/ubuntu/computer-use/plugins-v2/ponytail-adapter"
+project_plugins = project.get("plugins") if isinstance(project, dict) else None
+if not isinstance(project_plugins, list):
+    fail("portable project plugins is not a list")
+else:
+    ponytail_entries = [entry for entry in project_plugins if isinstance(entry, dict) and entry.get("package") == portable_ponytail]
+    if len(ponytail_entries) != 1 or ponytail_entries[0].get("options") != {}:
+        fail("portable project config must register ponytail-adapter exactly once with empty options")
+    else:
+        ok("portable project config registers ponytail-adapter exactly once")
+
+expected = {"server": {}, "cli": {}}
+for plugin in catalog.get("plugins", []) if isinstance(catalog, dict) else []:
+    if not isinstance(plugin, dict):
+        failures.append("role catalog contains a malformed plugin")
+        continue
+    name = plugin.get("name")
+    package = plugin.get("package")
+    roles = plugin.get("roles")
+    if not isinstance(name, str) or not isinstance(package, str) or not isinstance(roles, dict):
+        failures.append("role catalog contains an incomplete plugin")
+        continue
+    for role, descriptor in roles.items():
+        if role not in expected or not isinstance(descriptor, dict):
+            failures.append(f"role catalog contains an invalid role for {name}")
+            continue
+        expected[role][name] = (os.path.realpath(package), descriptor.get("entrypoint"))
+
+
+def config_entries(data, role):
+    entries = data.get("plugins") if isinstance(data, dict) else None
+    if not isinstance(entries, list):
+        failures.append(f"{role} plugins is not a list")
+        return {}
+    result = {}
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict) or not isinstance(entry.get("package"), str):
+            failures.append(f"{role} plugin entry {index} is malformed")
+            continue
+        package = entry["package"]
+        canonical = os.path.realpath(package)
+        if not os.path.isabs(package) or package != canonical:
+            failures.append(f"{role} plugin entry {index} is not a canonical absolute path")
+        if canonical in result:
+            failures.append(f"{role} plugin is declared more than once: {canonical}")
+        result[canonical] = entry
+    return result
+
+
+server_entries = config_entries(server, "server")
+cli_entries = config_entries(cli, "cli")
+actual_by_role = {"server": server_entries, "cli": cli_entries}
+known_packages = {}
+for role, plugins in expected.items():
+    for name, (package, entrypoint) in plugins.items():
+        known_packages.setdefault(package, set()).add(role)
+        if not os.path.isfile(entrypoint):
+            failures.append(f"plugin role entrypoint missing: {name} ({role})")
+        else:
+            ok(f"plugin role entrypoint: {name} ({role})")
+
+for role, plugins in expected.items():
+    actual = actual_by_role[role]
+    missing = [name for name, (package, _) in plugins.items() if package not in actual]
+    if missing:
+        fail(f"{role} plugins missing: {missing}")
+    else:
+        ok(f"{role} plugins declared: {list(plugins)}")
+    for package in actual:
+        allowed_roles = known_packages.get(package)
+        if allowed_roles is not None and role not in allowed_roles:
+            failures.append(f"{role} contains plugin registered for another role: {package}")
+
+for role, actual in actual_by_role.items():
+    for package in actual:
+        for name, (expected_package, _) in expected[role].items():
+            if expected_package == package:
+                ok(f"plugin package canonical: {name} ({role})")
+                break
+
+theme = cli.get("theme")
+if isinstance(theme, dict) and theme.get("name") == "aura":
+    ok("theme is aura")
+else:
+    fail(f"theme is not aura: {theme!r}")
+
+try:
+    helper.verify_agent_models(server)
+    ok("selected server Build/Explore/General Luna and Plan/Architect Sol role models")
+except ValueError as error:
+    fail(f"selected server role models: {error}")
+
+example = os.path.join(repo, "platforms/linux/ubuntu/computer-use/config/v2-opencode.example.jsonc")
+try:
+    example_data = load_jsonc(example)
+    helper.verify_agent_models(example_data, source=True)
+    ok("canonical v2 example Build/Explore/General Luna and Plan/Architect Sol role models")
+    example_config = example_data.get("mcp", {})
+    example_mcp = example_config.get("servers", {}) if isinstance(example_config, dict) else {}
+    example_mcp_names = set(example_mcp) if isinstance(example_mcp, dict) else set()
+    if example_mcp_names == {"basic-memory", "github", "chatgpt"}:
+        ok("v2 example declares exactly the portable three MCPs")
+    else:
+        fail(f"v2 example MCP server set is not exactly canonical: {sorted(example_mcp_names)}")
+    example_plugins = example_data.get("plugins") if isinstance(example_data, dict) else None
+    if not isinstance(example_plugins, list) or sum(
+        isinstance(entry, dict) and "ponytail-adapter" in entry.get("package", "")
+        for entry in example_plugins
+    ) != 1:
+        fail("v2 example must register ponytail-adapter exactly once")
+    else:
+        ok("v2 example registers ponytail-adapter exactly once")
+except (OSError, ValueError, json.JSONDecodeError) as error:
+    fail(f"cannot read v2 example: {error}")
+
+for message in failures:
+    print(f"FAIL: {message}", file=sys.stderr)
+sys.exit(1 if failures else 0)
+PY
+then
+  :
+else
+  status=1
+fi
+
+if [ "$status" -eq 0 ]; then
+  echo "OK: v2 pilot health check passed"
+else
+  echo "FAIL: v2 pilot health check failed" >&2
+fi
+exit "$status"

@@ -1,0 +1,53 @@
+{
+  "version": 2,
+  "phase": "open",
+  "event_id": "mapping-08-open-001",
+  "capture_id": "mapping-08",
+  "source_sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226",
+  "capture_generator_sha256": "de004ad8bd55316daaf82cd9460758bbb7060b487d37db7afe132677d2a46781",
+  "render_test_sha256": "1e9fd72a1a25c67f532484b99e401c66a66fac439800fa4a3dc088292ec59e9e",
+  "native_capture_test_sha256": "94cd514fa1d6b4fe500b66736aa7dd244b692a8b0db53baaba97ed0e93e941eb",
+  "native_capture_output_sha256": "21d67bf9237820c104183915b30710957b6b68dafc528c97cf4fd7f5ff2bb497",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "open",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "before": {
+    "snapshot_id": "mapping-08-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "mapping-08-open-after",
+    "frame_sha256": "ce876e5e5f35cedcef3f101f99a383ed63858b2a9c9284e9be56c73f1f2f812b",
+    "spans_sha256": "a3c70f10ef2d700c0d9cf001b8cbdce521d9108179a55fdb38e6434aaad59063",
+    "state_sha256": "6107d88460bba248f3f7a360e1e792352769d538b419ce5cce9a601ff3c03b30"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "7dc1d505252623154b0fd047826a655afd047f00f60cdfbdce146f14982c14b8",
+  "output": "evidence/ui-acceptance/2026-09-22/v3/event-output/mapping-08-open.json",
+  "output_sha256": "8433b26206c8a61ff51d9f5a5e2806c1a30c93f75834bb2f77511ca068b306f8",
+  "observed_at": "2026-09-22T21:35:58.052Z"
+}

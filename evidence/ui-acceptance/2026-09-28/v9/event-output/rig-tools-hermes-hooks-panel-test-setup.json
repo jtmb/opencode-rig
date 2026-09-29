@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "capture_id": "rig-tools-hermes-hooks-panel",
+  "phase": "test-setup",
+  "event_id": "rig-tools-hermes-hooks-panel-test-setup-001",
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "dispatch_id": "rig-tools-hermes-hooks-panel-test-setup-dispatch-001",
+    "transition_id": "rig-tools-hermes-hooks-panel-test-setup-transition-001",
+    "dispatch_monotonic_ns": "11838462006680",
+    "transition_monotonic_ns": "11838579537709"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-hermes-hooks-panel-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-hermes-hooks-panel-open-after",
+    "frame_sha256": "656f85b0b803c518e275ced1168c2e8574601bd6d3f9b2ec2f88f280deeaa7a7",
+    "spans_sha256": "1f849e8bc4146c3f81c12cf56103cb0c1e869da5173c038958c685734104fe2c",
+    "state_sha256": "b5e45806d92ece7986729d9fd85e850d5d2de96f7c371b7c4350b23e5778dbd0"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "e68c88281c4d77605a166bc76ed6df298a2adb9a9085eff944b1c14e6720141f",
+  "native_event_sha256": "af45193b95660b86746aa98989b6cbacc034cb4eb1eb949c812def2a738323f2"
+}

@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts",
+  "test_sha256": "f59201b57d717a22b6b59a1ba2de1d7cab1cec38d0212e7247b8243741cd16ec",
+  "source_sha256": "96b5ff09d6564fc5d3797fc35559fc9532f1c7ad55d56d67a7ee567c759ffe71",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-ffi\",\"--experimental-strip-types\",\"--test\",\"test/visible-command.test.ts\"]",
+  "observed_at": "2026-09-27T07:16:58.091Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-27/v3/execution-output/rig-tools-goal-handoff-behavioral.txt",
+  "output_sha256": "4a3125844eda55491377fecd595c88eb24c0ec700c3d8e269889a1cd9957bbd0",
+  "invocation": {
+    "run_id": "af054e4c-7a01-4956-96ce-f3e6fc134887",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/visible-command.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-27T07:16:57.945Z",
+    "finished_at": "2026-09-27T07:16:58.091Z",
+    "started_monotonic_ns": "4622079625642",
+    "finished_monotonic_ns": "4622225402662",
+    "exit_code": 0,
+    "source_sha256_before": "96b5ff09d6564fc5d3797fc35559fc9532f1c7ad55d56d67a7ee567c759ffe71",
+    "source_sha256_after": "96b5ff09d6564fc5d3797fc35559fc9532f1c7ad55d56d67a7ee567c759ffe71",
+    "test_sha256_before": "f59201b57d717a22b6b59a1ba2de1d7cab1cec38d0212e7247b8243741cd16ec",
+    "test_sha256_after": "f59201b57d717a22b6b59a1ba2de1d7cab1cec38d0212e7247b8243741cd16ec"
+  }
+}

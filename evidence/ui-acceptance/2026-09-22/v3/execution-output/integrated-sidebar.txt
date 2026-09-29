@@ -1,0 +1,41 @@
+bounded-command: available=7940MiB budget=3176MiB swap=794MiB node_heap=2064MiB
+Running as unit: run-r69a4e571f519444ca3475cb2fde1a74c.scope; invocation ID: df06a854450a4aeca2737b089c382c10
+(node:2680013) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+RIG_CODEX_USAGE_RENDER_ASSERTIONS_EXECUTED
+✔ rendered ProviderRow keeps right-aligned status separate from wrapped subdued detail (447.218907ms)
+(node:2680025) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+RIG_FILE_MANAGER_HOSTILE_RENDER_ASSERTIONS_EXECUTED
+✔ rendered tree keeps hostile names inside one-line bordered rows (178.239524ms)
+RIG_FILE_MANAGER_MOUSE_RENDER_ASSERTIONS_EXECUTED
+✔ mockMouse bubbles a row click once and tabs activate once (141.479396ms)
+RIG_FILE_MANAGER_SCROLL_RENDER_ASSERTIONS_EXECUTED
+✔ rendered tree scrolls the selected row into view at narrow and normal widths (125.634177ms)
+RIG_FILE_MANAGER_SIDEBAR_RENDER_ASSERTIONS_EXECUTED
+✔ rendered navigator uses repository basename and copies the full session ID (261.589018ms)
+RIG_FILE_MANAGER_FALLBACK_RENDER_ASSERTIONS_EXECUTED
+✔ rendered navigator uses the sole session ID without directory identity and reports copy failure (51.463603ms)
+RIG_FILE_MANAGER_PANEL_RENDER_ASSERTIONS_EXECUTED
+✔ rendered Explorer panel tolerates a minimal theme through open, navigation, diff, toggle, and close (441.270627ms)
+(node:2680037) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+RIG_COMPOSED_SIDEBAR_RENDER_ASSERTIONS_EXECUTED
+✔ composed production plugin sections fit a narrow sidebar before the footer sentinel (796.065585ms)
+(node:2680060) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+"FFI is an experimental feature and might change at any time"
+RIG_TOOLS_ACTIVE_SUBAGENT_RENDER_ASSERTIONS_EXECUTED
+✔ renders focused and unfocused rows as one cohesive hierarchy (38.863529ms)
+(node:2680067) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+RIG_SOURCE_CONTROL_RENDER_ASSERTIONS_EXECUTED
+✔ rendered SourceControlPanel bounds previews to one-line rows and keeps diff activation (335.371718ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6377.634114

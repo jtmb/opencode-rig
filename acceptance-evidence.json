@@ -1,0 +1,528 @@
+{
+  "version": 3,
+  "claims": [
+    {
+      "id": "acceptance-evidence-validator",
+      "status": "complete",
+      "user_visible": false,
+      "runtime": false,
+      "evidence": {
+        "automated": [
+          "platforms/linux/ubuntu/computer-use/scripts/check-acceptance-evidence-self-test.py"
+        ]
+      }
+    },
+    {
+      "id": "mandatory-delegation-policy",
+      "status": "complete",
+      "user_visible": false,
+      "runtime": false,
+      "evidence": {
+        "automated": [
+          "platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/test/policy.test.ts"
+        ]
+      }
+    },
+    {
+      "id": "visible-commands",
+      "status": "planned",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {}
+    },
+    {
+      "id": "fullscreen-panels",
+      "status": "planned",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {}
+    },
+    {
+      "id": "provider-usage",
+      "status": "planned",
+      "user_visible": true,
+      "runtime": false,
+      "evidence": {}
+    },
+    {
+      "id": "cross-platform-bootstrap",
+      "status": "limited",
+      "user_visible": false,
+      "runtime": false,
+      "evidence": {
+        "automated": [
+          "platforms/linux/ubuntu/computer-use/scripts/bootstrap_behavior_test.py"
+        ]
+      }
+    },
+    {
+      "id": "todo-legibility",
+      "status": "planned",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {}
+    },
+    {
+      "id": "working-tree-diff",
+      "status": "planned",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {}
+    },
+    {
+      "id": "repository-explorer",
+      "status": "planned",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {}
+    },
+    {
+      "id": "integrated-browser",
+      "status": "planned",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {}
+    },
+    {
+      "id": "active-subagent-sidebar",
+      "status": "planned",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {}
+    },
+    {
+      "id": "sidebar-coexistence",
+      "status": "limited",
+      "user_visible": true,
+      "runtime": true,
+      "evidence": {
+        "rendered_visual": [
+          "evidence/ui-acceptance/2026-09-27/v3/host/managed-screen-stop-before.json"
+        ],
+        "interaction": [
+          "evidence/ui-acceptance/2026-09-27/v3/host/managed-screen-stop-after.json"
+        ]
+      }
+    },
+    {
+      "id": "independent-wsl2-backend",
+      "status": "limited",
+      "user_visible": false,
+      "runtime": true,
+      "evidence": {
+        "automated": [
+          "platforms/windows/wsl2/ubuntu/computer-use/scripts/self-test.py",
+          "platforms/windows/wsl2/ubuntu/computer-use/plugins-v2/wsl-interop/test/windows-ui.test.ts",
+          "platforms/windows/wsl2/ubuntu/computer-use/plugins-v2/wsl-interop/test/powershell-host.test.ts",
+          "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/vision.test.ts"
+        ]
+      }
+    }
+  ],
+  "ui_acceptance": {
+    "version": 3,
+    "status": "ready",
+    "source_roots": [
+      "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src"
+    ],
+    "source_extensions": [
+      ".tsx"
+    ],
+    "source_files": [
+      "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+      "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx"
+    ],
+    "supported_runtimes": [
+      {
+        "id": "node-26.4.0-npm-11.17.0",
+        "name": "node",
+        "version": "26.4.0",
+        "identity": "node@26.4.0",
+        "provisioning": "project",
+        "executable": "toolchains/node/bin/node",
+        "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+        "package_manager": "npm",
+        "package_manager_version": "11.17.0",
+        "package_manager_identity": "npm@11.17.0",
+        "package_manager_executable": "toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+        "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+      }
+    ],
+    "supported_renderers": [
+      {
+        "id": "opentui-0.5.11",
+        "name": "OpenTUI",
+        "version": "0.5.11",
+        "identity": "OpenTUI@0.5.11"
+      }
+    ],
+    "mappings": [
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+        "source_sha256": "3c6c507594a5c7d1f38db901230a86274830e7cf20507cbf6679623fdc706c84",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-state.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/codex-providers-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/codex-providers-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/mapping-02.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+        "source_sha256": "2171a8d467d738360424cb9952526dc37d33a6b500bfa4775078e7ce139ac2ef",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-visibility.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/codex-state-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/codex-state-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/mapping-03.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+        "source_sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-visibility.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/codex-tui-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/codex-tui-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/mapping-01.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+        "source_sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/presentation.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/file-manager-presentation-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/file-manager-presentation-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/mapping-05.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+        "source_sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/theme.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/file-manager-theme-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/file-manager-theme-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/mapping-06.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+        "source_sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/viewer-contract.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/file-manager-tui-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/file-manager-tui-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/mapping-04.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+        "source_sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/store.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-todo-store-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-todo-store-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/rig-todo-store.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+        "source_sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-todo-tasks-panel-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-todo-tasks-panel-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/rig-todo-tasks-panel.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+        "source_sha256": "27369397979248d96d861e6c7a5f0b26f521551284fae430ada81f71a807a8ec",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tui.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-todo-tui-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-todo-tui-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/rig-todo-tui.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+        "source_sha256": "5b596b304fc1cef3060baf3dc0f5151d2006a61eaf34b26565c006bbb4fd7e49",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/active-subagent-row.behavior.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/active-subagent-row-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/active-subagent-row-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/active-subagent-row-exemplar.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts",
+        "source_sha256": "a801b44c2cc19b92fd52d17b05db3b99a63b3e9626b59553f3cbc9a48fc7baa6",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/goal-slot.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-tools-goal-handoff-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-tools-goal-handoff-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/rig-tools-goal-handoff.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+        "source_sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-tools-hermes-hooks-panel-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-tools-hermes-hooks-panel-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/rig-tools-hermes-hooks-panel.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+        "source_sha256": "9e923ad7044eb9374121ee8c79ea82abc7da3040d8fdb04453483c2f3ad80ea0",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/subagents.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-tools-subagents-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-tools-subagents-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/rig-tools-subagents.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+        "source_sha256": "8e264491f59c1f4dc41e547ad9be73e557f398450ca3a000dbf13a9b8338542f",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-tools-tui-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/rig-tools-tui-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/rig-tools-tui.json"
+      },
+      {
+        "source": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+        "source_sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+        "focused_tests": {
+          "behavioral": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/tui.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/source-control-tui-behavioral.json"
+            }
+          ],
+          "render": [
+            {
+              "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+              "execution_evidence": "evidence/ui-acceptance/2026-09-28/v9/execution/source-control-tui-render.json"
+            }
+          ]
+        },
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/mapping-12.json"
+      }
+    ],
+    "integrated_scenarios": [
+      {
+        "id": "integrated-multi-panel-sidebar",
+        "sources": [
+          "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+          "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+          "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+          "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+          "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+          "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+          "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx"
+        ],
+        "capture_artifact": "evidence/ui-acceptance/2026-09-28/v9/captures/integrated-sidebar.json"
+      }
+    ],
+    "host_evidence": [
+      {
+        "rendered_visual": {
+          "path": "evidence/ui-acceptance/2026-09-27/v3/host/managed-screen-stop-before.json",
+          "sha256": "53cb8f2e8617b44e9bbf1d66ba3a837b4772099a7fbd4e63e410cc8186dc8f4f"
+        },
+        "interaction": {
+          "path": "evidence/ui-acceptance/2026-09-27/v3/host/managed-screen-stop-after.json",
+          "sha256": "df4d96dc91cab555ee2bc4e60400e0506ba3e56b9c08112107ba5ff5b7c25713"
+        }
+      }
+    ]
+  },
+  "subagent_policy": {
+    "allowed_agents": [
+      "explore",
+      "general"
+    ],
+    "allowed_models": [
+      "openai/gpt-5.6-luna#max",
+      "openai/gpt-5.6-sol#xhigh",
+      "openai/gpt-6-astra#max"
+    ],
+    "max_concurrency": 10
+  },
+  "subagent_evidence": [
+    {
+      "id": "sidebar-fixture-one",
+      "agent": "general",
+      "model": "openai/gpt-5.6-luna#max",
+      "background": true,
+      "evidence": [
+        "docs/acceptance-evidence-2026-09-19.md"
+      ]
+    },
+    {
+      "id": "sidebar-fixture-two",
+      "agent": "general",
+      "model": "openai/gpt-5.6-luna#max",
+      "background": true,
+      "evidence": [
+        "docs/acceptance-evidence-2026-09-19.md"
+      ]
+    },
+    {
+      "id": "sidebar-fixture-three",
+      "agent": "general",
+      "model": "openai/gpt-5.6-luna#max",
+      "background": true,
+      "evidence": [
+        "docs/acceptance-evidence-2026-09-19.md"
+      ]
+    }
+  ]
+}

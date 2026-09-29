@@ -1,0 +1,89 @@
+
+> opencode-codex-usage-v2-local@0.1.0 check
+> npm run typecheck && npm test
+
+
+> opencode-codex-usage-v2-local@0.1.0 typecheck
+> bash ../../scripts/run-bounded-command.sh -- ../node_modules/.bin/tsc --noEmit
+
+bounded-command: another check is running; waiting up to 30s
+bounded-command: available=5501MiB budget=2200MiB swap=550MiB node_heap=1430MiB
+Running as unit: run-rba22de17061f463ab528bb41d0173099.scope; invocation ID: fc1f7dadf86a4541a95d29b2b7be586b
+
+> opencode-codex-usage-v2-local@0.1.0 test
+> bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts
+
+bounded-command: another check is running; waiting up to 30s
+bounded-command: available=5797MiB budget=2318MiB swap=579MiB node_heap=1507MiB
+Running as unit: run-r75803b09df0642aa8079d9fe1500f3b4.scope; invocation ID: 67884c2bf4f3480c8a299eea1be4eb27
+✔ the server pipeline derives ambient readiness from Provider.Info and hides disconnected integration providers (2.227161ms)
+✔ normalized activity survives a simulated restart at and inside the two-hour boundary (18.501888ms)
+✔ activity state rejects corrupt, symlinked, oversized, and over-capacity files (8.624573ms)
+✔ persisted activity is normalized, bounded, atomic, and restrictive (4.458885ms)
+✔ V2 credential connection makes Codex READY without consulting auth.json (5.869181ms)
+✔ disabled providers are absent and hidden auto providers are not represented as OFFLINE (0.75129ms)
+✔ auto providers require a working connection or recent authoritative activity (0.280101ms)
+✔ enabled providers without a connection are hidden until recent use qualifies OFFLINE (0.15394ms)
+✔ credential and environment connections establish READY (0.19849ms)
+✔ probe outcomes have explicit precedence and retain transient usage (1.01183ms)
+✔ verified normalized remaining ratios cross the provider state boundary (0.25953ms)
+✔ canonical aliases deduplicate under the first configured display name (0.21989ms)
+✔ empty visible state produces no provider rows, no client rows, and a hidden panel (2.787977ms)
+✔ collapsed summary counts only visible server rows (0.84704ms)
+✔ serialized snapshots and client rows never leak credential canaries (0.368224ms)
+✔ provider adapter renders exactly the server rows and never synthesizes catalog rows (0.30764ms)
+✔ server RPC and stale refresh retain rows with sanitized diagnostics (1.632656ms)
+✔ refresh polling stays throttled while authoritative events may force and concurrent work coalesces (4.316861ms)
+✔ client snapshot integration is explicit rather than a legacy catalog fallback (1.24803ms)
+✔ native MCP-style provider rows remain single-line at 140, 80, and 60 columns (0.743986ms)
+✔ provider sidebar keeps status rows separate from indented wrapped detail (0.98421ms)
+✔ enabled provider without an integration is ambient READY without a quota adapter (1.148771ms)
+✔ a working OpenAI connection is visible without session history (0.37952ms)
+✔ offline providers qualify only inside the inclusive two-hour window (0.34758ms)
+✔ disabled and absent providers never render historical activity (0.22614ms)
+✔ an online provider remains visible with no activity history (0.20027ms)
+✔ runtime readiness is bounded and a later failure supersedes it (0.274313ms)
+✔ canonical aliases deduplicate and map exact activity without cross-qualifying providers (0.31748ms)
+✔ optional probe failure does not turn an authoritative working provider OFFLINE (0.94425ms)
+✔ a retained usage value cannot keep an offline provider visible after recency expires (0.28331ms)
+✔ activity extraction is metadata-only and never forwards session IDs or message text (0.35751ms)
+✔ bounded newest-first activity scanning stops below the recency boundary (0.16427ms)
+✔ rendered Provider Usage checks run in an isolated OpenTUI subprocess (1270.312551ms)
+✔ fake server context does not treat unresolved or expired credentials as working (7.580441ms)
+✔ fake activity events are coalesced and throttled while recent use qualifies an offline row (13.167679ms)
+✔ Provider Usage resolves health colors from active semantic theme roles (0.86087ms)
+✔ semantic sidebar sources contain no fixed palette literals (5.157432ms)
+✔ uses deterministic remaining-ratio health boundaries (0.873031ms)
+✔ emphasizes only the measurement token and leaves labels and prose plain (1.56406ms)
+✔ uses a provider-derived ratio for raw allowance units and preserves localized formatting (0.32661ms)
+✔ retained stale/offline values remain neutral rather than implying current health (0.18892ms)
+✔ provider usage stays before the native footer so working directory remains last (7.574896ms)
+✔ parses overall and model-specific usage windows (12.630473ms)
+✔ derives Codex exhaustion and usage labels from the overall bucket only (1.328821ms)
+✔ clamps unexpected usage percentages (0.23928ms)
+✔ parses and formats the Luna Reserve weekly window (0.42819ms)
+✔ opts into Luna Reserve data only when requested (3.268461ms)
+✔ rejects responses without usage windows (0.44464ms)
+✔ derives optional OpenAI account metadata without reading auth.json (0.2093ms)
+✔ formats reset countdowns (0.36558ms)
+✔ formats compact, stable provider panel labels (0.40617ms)
+✔ deduplicates repeated balance measurements while retaining distinct usage (0.33393ms)
+✔ assigns semantic tones to every provider state (0.271845ms)
+✔ formats one-line provider summaries without inventing unavailable measurements (0.33652ms)
+✔ summarizes collapsed provider state in a stable native-sized header (0.21881ms)
+✔ reports only provider rows supplied by the usage snapshot (0.23202ms)
+✔ keeps empty snapshots empty instead of synthesizing offline rows (0.09713ms)
+✔ retains the last provider snapshot as STALE when a refresh fails (1.597672ms)
+✔ does not retain an offline row as visible STALE data after a failed refresh (0.66073ms)
+✔ parses and fetches the documented DeepSeek balance response (1.152119ms)
+✔ reads bounded fallback cooldowns for tracked providers (13.701993ms)
+✔ formats both OpenCode rows with stable status text and no unverified measurements (0.37107ms)
+✔ recognizes the active subscription model from either message shape (0.20242ms)
+ℹ tests 63
+ℹ suites 0
+ℹ pass 63
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2991.851225

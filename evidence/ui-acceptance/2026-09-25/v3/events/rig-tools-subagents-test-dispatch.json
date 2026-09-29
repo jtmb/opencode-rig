@@ -1,0 +1,91 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "rig-tools-subagents-test-dispatch-001",
+  "capture_id": "rig-tools-subagents",
+  "source_sha256": "38f50adc2fe85e321622435e3e935217712318b40091148d8064d29731ef7a0d",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "8c9142e96754c586b7bfb5c5c75d090ed873417a0895eaec6af6d785888d78b6",
+  "native_capture_test_sha256": "de58be33306f711228030ce294948d570bc57232cf2bef9ec954bb0d0a539b15",
+  "native_capture_output_sha256": "05d55fe4362cc00382137df1b677941de2af5a22b5f75159c007d4dfccedc7e6",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "input",
+    "target": "active-subagents-header",
+    "input": {
+      "mouse": {
+        "method": "click",
+        "x": 1,
+        "y": 1
+      },
+      "lifecycle": {
+        "type": "session.created",
+        "parentID": "ses_native_parent",
+        "sessionID": "ses_native_second"
+      },
+      "keyboard": {
+        "method": "pressEnter"
+      }
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click+session.created+pressEnter",
+    "target": "active-subagents-header",
+    "input": {
+      "mouse": {
+        "method": "click",
+        "x": 1,
+        "y": 1
+      },
+      "lifecycle": {
+        "type": "session.created",
+        "parentID": "ses_native_parent",
+        "sessionID": "ses_native_second"
+      },
+      "keyboard": {
+        "method": "pressEnter"
+      }
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "e07a772e-df53-4310-adfa-b72eff3d55ee",
+    "dispatch_id": "rig-tools-subagents-test-dispatch-dispatch-001",
+    "transition_id": "rig-tools-subagents-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "27027392335095",
+    "transition_monotonic_ns": "27027489179888"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-subagents-interact-before",
+    "frame_sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+    "spans_sha256": "439723459432bb545470d85d5583baa3806e0aa5450797bcabb7886bf02c833b",
+    "state_sha256": "6a4e3fefc2ba5d89cb70e728e514af36c66d0654762d1d9837ea2491cc4013af"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-subagents-interact-after",
+    "frame_sha256": "9c228ad7dab9aee5749899a9a9dc20c55a9b3dc88dc435b1bf50ce6919099722",
+    "spans_sha256": "3e76da1ff193b2f93d78c87d86d80a7b64e6f25efbcc6ce3a6b624d1d928dfa7",
+    "state_sha256": "45fbed7fb2aef1b239edd3b05a94f6fb5cfd9de759075b15027156cfca662815"
+  },
+  "result": {
+    "status": "passed",
+    "target": "active-subagents-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "59006e9b14d6e55b35cbfbe1ae59d4ac38f2ca16eed33cfe64f55c247684ed26",
+  "output": "evidence/ui-acceptance/2026-09-25/v3/event-output/rig-tools-subagents-test-dispatch.json",
+  "output_sha256": "04fbda3df02c2125bd8ade3590a637a79f7b8cde97f2222d6f353dd5b61bd9a8",
+  "observed_at": "2026-09-25T08:12:33.892Z"
+}

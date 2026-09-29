@@ -1,8 +1,10 @@
 # `setup-git-hooks.sh`
 
-Installs or verifies this repository's versioned Git hooks. The only hook is
-`pre-push`, which runs the [documentation coverage gate](check-doc-coverage.md)
-so a source change cannot be pushed without its documentation.
+Installs or verifies this repository's versioned Git hooks. The `pre-push` hook
+runs the resource guard validator and the
+[documentation coverage gate](check-doc-coverage.md), so plugin checks cannot
+silently become unbounded and source changes cannot be pushed without their
+documentation.
 
 ```bash
 ./platforms/linux/ubuntu/computer-use/scripts/setup-git-hooks.sh --verify-only
@@ -40,25 +42,36 @@ per-clone setup routine after cloning.
 
 ## Enforcement layers
 
-The repository has two enforcement layers for the documentation gate:
+The repository has local and CI enforcement for both resource-safe plugin
+checks and documentation coverage:
 
-- **Local pre-push hook** (this script). It blocks the push on this machine,
-  works offline, and gives the full violation report before anything leaves the
-  machine.
-- **GitHub Actions** (`.github/workflows/verify.yml`). It runs the same gate
-  plus shell/Python lint and the other documentation self-tests on every push
-  and pull request. Because the repository is public, Actions is free and
-  branch protection can require the `verify` check before `main` accepts
-  changes.
+- **Adaptive command wrapper.** Plugin typechecks and tests run in a transient
+  memory-limited user service, with a budget recalculated from current memory.
+- **Local pre-push hook** (this script). It blocks a push on this machine when
+  a plugin package drops the wrapper, a required checker is missing, or when
+  documentation is incomplete. Missing checkers fail closed.
+- **GitHub Actions** (`.github/workflows/verify.yml`). It repeats the resource
+  metadata check, bounded plugin checks, shell/Python lint, and documentation
+  self-tests on every push and pull request. Because the repository is public,
+  Actions is free and branch protection can require the `verify` check before
+  `main` accepts changes.
 
 The hook catches mistakes earliest; the required check is the server-side
 backstop that also covers other machines and clones that skipped the hook.
+
+The hook is not an approval mechanism. Agent workflows must follow the
+[separate commit and push gates](git-safety-gates.md): the user approves the
+reviewed staged scope before a commit, then separately approves the verified
+remote destination/ref and commit range before a push. Commit approval never
+implies push approval.
 
 ## Bypass
 
 - `git push --no-verify` skips the hook entirely.
 - A `Doc-Gate: exempt` line in a commit message bypasses only the change-aware
   check for that push; completeness still runs.
+- A missing documentation checker is never an allow condition; it blocks the
+  push until the checker is restored.
 
 Both are deliberate and visible; prefer them over weakening the gate.
 

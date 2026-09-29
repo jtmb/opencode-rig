@@ -21,8 +21,14 @@ Appropriate requests include:
 - Diagnosing whether an application exposes a usable accessibility control.
 - Verifying a GUI result before and after a bounded action.
 
-Do not use it for interactive browser pages when the Playwright browser
-skills are available.
+Do not use it for browser pages. For visible authenticated browser work from
+WSL, use the `browser-assistant` skill's `wsl_browser_*` UIA tools against the
+user's configured Windows default browser. Supply an explicit window ID for
+each operation and a fresh preview token for each supported mutation. If the
+connector or required action/evidence is unavailable, stop and report a blocker;
+do not use Chrome/Chromium, project Playwright, GNOME desktop-control, or
+coordinate clicking as a browser fallback. Isolated headless Firefox is
+available only when the user explicitly requests it.
 
 ## Prerequisites and setup verification
 
@@ -139,9 +145,11 @@ Known accessibility limitations include:
 - Screenshot pixels cannot be treated as click coordinates under fractional
   scaling.
 
-When accessibility data are insufficient, use documented keyboard navigation
-through the existing private `ydotool` service and visually verify the result.
-Coordinate input is a last resort.
+When accessibility data are insufficient for a non-browser desktop app, use
+documented keyboard navigation through the existing private `ydotool` service
+and visually verify the result. Coordinate input is a last resort for
+non-browser applications only. Browser pages must follow the Browser boundary
+above and fail closed when required UIA capabilities are unavailable.
 
 ## Troubleshooting
 

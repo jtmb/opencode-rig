@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["enabled", "refreshMs", "powershell", "raw"],
+  "properties": {
+    "enabled": { "type": "boolean" },
+    "refreshMs": { "type": "integer", "minimum": 1000, "maximum": 60000 },
+    "powershell": {
+      "type": "object",
+      "required": ["preferred", "timeoutMs", "maxOutputBytes"],
+      "properties": {
+        "preferred": { "enum": ["auto", "pwsh.exe", "powershell.exe"] },
+        "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 30000 },
+        "maxOutputBytes": { "type": "integer", "minimum": 4096, "maximum": 1048576 }
+      },
+      "additionalProperties": false
+    },
+    "raw": {
+      "type": "object",
+      "required": ["enabled", "tokenTtlMs", "maxScriptBytes", "maxTokens"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "tokenTtlMs": { "type": "integer", "minimum": 10000, "maximum": 300000 },
+        "maxScriptBytes": { "type": "integer", "minimum": 1, "maximum": 65536 },
+        "maxTokens": { "type": "integer", "minimum": 1, "maximum": 1024 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

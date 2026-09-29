@@ -1,0 +1,11 @@
+bounded-command: available=5365MiB budget=2146MiB swap=536MiB node_heap=1395MiB
+Running as unit: run-r36e472eef0ec443eb8503a32a68d3728.scope; invocation ID: b9c2b7601fd44f7990b0bf090f780bd5
+✔ rendered Provider Usage checks run in an isolated OpenTUI subprocess (1264.982639ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1367.302868

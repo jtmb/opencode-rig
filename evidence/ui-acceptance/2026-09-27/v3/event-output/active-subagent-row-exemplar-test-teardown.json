@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "capture_id": "active-subagent-row-exemplar",
+  "phase": "test-teardown",
+  "event_id": "active-subagent-row-exemplar-test-teardown-001",
+  "action": {
+    "type": "teardown",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "9f99ef6f-8a3b-44b3-bc93-0dab33d9edc4",
+    "dispatch_id": "active-subagent-row-exemplar-test-teardown-dispatch-001",
+    "transition_id": "active-subagent-row-exemplar-test-teardown-transition-001",
+    "dispatch_monotonic_ns": "4700467968881",
+    "transition_monotonic_ns": "4700484073858"
+  },
+  "before": {
+    "snapshot_id": "active-subagent-row-exemplar-interact-after",
+    "frame_sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+    "spans_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+    "state_sha256": "c029c7b861f700e54fd120317ed947db494ce725d303af1d88774518b234a4ef"
+  },
+  "after": {
+    "snapshot_id": "active-subagent-row-exemplar-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "b51c4bbc96f23fe521b69c3f7d9e5c5f36f46da6c80b6cdda37a62de6db6a73c",
+  "native_event_sha256": "f5fe53aa3b5ce4364b52881e026507a4aafe4b604d209c5be3c4ebccda663c39"
+}

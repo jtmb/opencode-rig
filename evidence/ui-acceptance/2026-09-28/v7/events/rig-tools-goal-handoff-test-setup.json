@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-setup",
+  "event_id": "rig-tools-goal-handoff-test-setup-001",
+  "capture_id": "rig-tools-goal-handoff",
+  "source_sha256": "cceba416df4017a5cb7ee8ab87be2e14d2e24959de4e219dacb78d9b880463b2",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "e7c31a9641431f70e2e068e9333ee8fc243378936f557b59b6db7a3865ce993f",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "ca670d89-f3c3-437b-bd7b-91ccfa8cc01d",
+    "dispatch_id": "rig-tools-goal-handoff-test-setup-dispatch-001",
+    "transition_id": "rig-tools-goal-handoff-test-setup-transition-001",
+    "dispatch_monotonic_ns": "68489606231159",
+    "transition_monotonic_ns": "68489686671357"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-goal-handoff-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-goal-handoff-open-after",
+    "frame_sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+    "spans_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+    "state_sha256": "c368cc67b47dba478f561dbe99eec93e240fec97f23444f0863eeab45fe5e5b1"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "d48ed3e09f11ed355eed495605d76c69124183d59f68f7077fb398ff12a60b40",
+  "output": "evidence/ui-acceptance/2026-09-28/v7/event-output/rig-tools-goal-handoff-test-setup.json",
+  "output_sha256": "9749786ed356375da746cf57e15d8b08bc2d40bed1c3986619a1c79cb34a678e",
+  "observed_at": "2026-09-28T19:19:35.459Z"
+}

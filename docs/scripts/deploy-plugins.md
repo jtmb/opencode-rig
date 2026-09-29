@@ -1,136 +1,191 @@
 # `deploy-plugins.sh`
 
-Deploys the local OpenCode plugins to an OpenCode installation, and optionally
-copies the bootstrap scripts into the target. It is the engine behind the
-[`/deploy` command](../plugins/README.md) and is also directly runnable.
-
-Registration **references this checkout** with `file://` URLs; it does not copy
-the plugin sources. Existing plugin entries and their options are preserved.
+Registers the repository's OpenCode v2 packages in an isolated config directory.
+Verification is the default; `--apply` writes atomically and preserves existing
+entries and options.
 
 ```bash
-./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --verify-only
-./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --apply
-./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope project --project ~/repos/example --apply
-./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope project --project . --bootstrap --apply
-./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --scope global --plugins codex-fallback --chain a/b,c/d --apply
+./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --plugins all --verify-only
+./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --config-dir ~/.opencode-v2-pilot/config --plugins all --apply
+./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh --config-dir ~/.opencode-wsl2-pilot/config --cli-config ~/.opencode-wsl2-pilot/xdg/opencode/cli.json --plugins all --apply
 ```
 
 ## Options
 
 | Option | Default | Meaning |
-|--------|---------|---------|
-| `--scope global\|project` | required | Deploy to the user's global config or one repository |
-| `--project DIR` | required for `project` | Target repository; `.opencode/` is created inside it |
-| `--plugins both\|codex-usage\|codex-fallback` | `both` | Which plugins to register |
-| `--bootstrap` | off | Also copy `computer-use/scripts/` into the target |
-| `--chain a/b,c/d` | — | `defaultChain` written when adding `codex-fallback` |
-| `--apply` | — | Write changes |
-| `--verify-only` | yes | Check only (default) |
-| `-h`, `--help` | — | Show help |
+|---|---|---|
+| `--config-dir DIR` | `$OPENCODE_V2_CONFIG_DIR`, then `$OPENCODE_V2_PILOT_DIR/config`, then `~/.opencode-v2-pilot/config` | v2 config directory |
+| `--cli-config FILE` | `DIR/cli.json` | Explicit CLI config path for an isolated profile with a separate XDG root |
+| `--plugins LIST` | `both` | `both`, `all`, `server`, `cli`, or one catalog package |
+| `--chain a/b,c/d` | — | `defaultChain` for `codex-fallback` |
+| `--apply` | — | Write changes, then verify |
+| `--verify-only` | yes | Read-only verification |
 
-`--apply` and `--verify-only` are mutually exclusive. Missing `--scope`, a
-missing or non-directory `--project`, or an unknown `--plugins` value exits `2`.
+The script reads `config/v2-plugin-roles.json`, validates every selected package,
+and writes server roles to `opencode.jsonc` and CLI roles to `cli.json`. The
+catalog contains thirteen packages; `ponytail-adapter` is the server-only role
+for the pinned official Ponytail workspace dependency, and `chatgpt-connector`
+is the server role for the local ChatGPT OAuth MCP. Run
+`setup-plugin-dependencies.sh --verify-only` (or let setup/bootstrap apply it)
+before loading the Ponytail runtime. Package
+paths are canonical absolute paths. Existing entries are deduplicated and left
+unchanged; malformed, duplicate, or non-canonical config is reported without
+rewriting it. JSONC comments and trailing commas are accepted safely. A missing
+config is created with its schema.
 
-## Targets
+`both` selects the Codex usage/fallback pair. `all` selects every catalog package;
+`server` and `cli` select roles. A fallback without `defaultChain` is reported as
+inactive. Run the disposable regression suite with:
 
-| Scope | Plugin | Config file | Key |
-|-------|--------|-------------|-----|
-| global | `codex-usage` (TUI) | `~/.config/opencode/tui.json` (or `.jsonc` if present) | `plugin` |
-| global | `codex-fallback` (server) | `~/.config/opencode/opencode.jsonc`, else `opencode.json` | `plugin` |
-| project | `codex-usage` (TUI) | `<repo>/.opencode/tui.json` (or `tui.jsonc` if present) | `plugin` |
-| project | `codex-fallback` (server) | `<repo>/.opencode/opencode.json` | `plugin` |
-
-Entries written:
-
-```json
-"file:///home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins/codex-usage/src/tui.tsx"
+```bash
+platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh -- \
+  python3 platforms/linux/ubuntu/computer-use/scripts/deploy-plugins-self-test.py
 ```
 
-```json
-[
-  "file:///home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins/codex-fallback/src/index.ts",
-  { "defaultChain": ["provider/model"] }
-]
+When `rig-tools` is selected, the CLI config must have
+`session.permissions: "prompt"` and `attention.sound: false`. The prompt setting
+keeps rig-tools approval gates interactive. Disabling attention sounds avoids
+the OpenTUI native ALSA path tracked upstream as OpenCode issue `#41763`, whose
+fd-2 diagnostics can overwrite a TUI on hosts without a usable sound device.
+System notifications remain independently configurable. The script preserves
+other CLI settings and writes only the selected isolated config directory.
+Verify-only never writes. When apply adds an entry or normalizes these settings it atomically writes
+canonical pretty-printed JSON, intentionally removing comments and normalizing
+whitespace; comment markers inside strings remain data. Malformed or duplicate
+keys fail closed. The retirement procedure below covers its separate two-config operation.
+
+## Retire `integrated-browser`
+
+For the selected default profile, both configs are under `~/.config/opencode`.
+Run verify-only first: it is read-only and exits 1 while registrations remain.
+It refuses symlinked config paths/ancestors. Compare the digest-only output to
+the approved preimages; stop if either target or hash differs:
+
+```bash
+set -euo pipefail
+sha256sum -- "$HOME/.config/opencode/opencode.jsonc" "$HOME/.config/opencode/cli.json"
+config="$HOME/.config/opencode"
+deploy=./platforms/linux/ubuntu/computer-use/scripts/deploy-plugins.sh
+if report="$("$deploy" --config-dir "$config" --cli-config "$config/cli.json" --retire-integrated-browser --verify-only 2>&1)"; then
+  printf '%s\n' "$report"
+  retirement_ready=0
+else
+  verify_status=$?
+  printf '%s\n' "$report"
+  expected="$(printf 'MISSING/STALE: 1 canonical integrated-browser registration(s) remain in %s/opencode.jsonc (rerun with --apply to retire)\nMISSING/STALE: 1 canonical integrated-browser registration(s) remain in %s/cli.json (rerun with --apply to retire)' "$config" "$config")"
+  [[ "$verify_status" -eq 1 && "$report" == "$expected" ]] || exit "$verify_status"
+  retirement_ready=1
+fi
 ```
 
-The `codex-fallback` entry is written as a plain string unless `--chain` is
-given (or an entry already exists). A bare entry means an empty chain, so the
-router is **inactive** until `defaultChain` is configured. The script prints a
-notice when that is the case.
+Only the exact expected exit-1 report (one entry in each file) sets
+`retirement_ready=1`; a clean result prevents apply, and other nonzero reports
+are rejected. Diagnostics are printed before the decision.
 
-## How registration works
+Review the expected canonical entries, then save owner-only preimages. Run this
+preflight, backup, and guarded apply block in the same Bash shell; the backup
+block fails closed unless the exact expected drift was verified:
 
-- **Deduplication.** Before adding, the script scans the existing `plugin`
-  array. Each entry (string, or `[spec, options]` tuple) is resolved to a real
-  path — `file://` prefix stripped, relative specs resolved against the config
-  file's directory — and compared with the canonical plugin module. A match is
-  left untouched, so the script is idempotent and never clobbers user options.
-- **Non-destructive merge.** Only the entry is added; the rest of the file is
-  left as-is. The file is written through a temp file in the same directory and
-  `os.replace`, preserving the existing file mode. A file is only rewritten when
-  something actually changes.
-- **Creation.** A missing config is created with the correct `$schema`
-  (`https://opencode.ai/tui.json` or `https://opencode.ai/config.json`).
-- **Comment safety.** The script parses targets as plain JSON. A config that
-  contains JSONC comments cannot be parsed, so the script refuses to touch it
-  and reports `MISSING/STALE` with a "(comments?)" hint rather than rewriting a
-  user's file and losing comments. Consolidate or remove comments to let the
-  script manage that file, or add the entry by hand.
+```bash
+set -euo pipefail
+: "${retirement_ready:?Run the checked preflight in this Bash shell first}"
+[[ "$retirement_ready" == "1" ]] || exit 1
+config="$HOME/.config/opencode"
+uid="$(id -u)"
+for dir in "$HOME" "$HOME/.config" "$config"; do
+  [[ -d "$dir" && ! -L "$dir" && "$(stat -c '%u' "$dir")" == "$uid" ]] || exit 1
+  mode="$(stat -c '%a' "$dir")"
+  (( (8#$mode & 0022) == 0 )) || exit 1
+done
+for file in opencode.jsonc cli.json; do
+  [[ -f "$config/$file" && ! -L "$config/$file" && "$(stat -c '%u' "$config/$file")" == "$uid" ]] || exit 1
+done
+unset backup server_mode cli_mode
+server_mode="$(stat -c '%a' "$config/opencode.jsonc")"
+cli_mode="$(stat -c '%a' "$config/cli.json")"
+umask 077
+backup="$(mktemp -d "$config/retirement.XXXXXX")"
+[[ -d "$backup" && ! -L "$backup" && "$(stat -c '%u:%a' "$backup")" == "$uid:700" ]] || exit 1
+(cd "$config" && sha256sum -- opencode.jsonc cli.json) | tee "$backup/SHA256SUMS"
+install -m 600 -- "$config/opencode.jsonc" "$backup/opencode.jsonc"
+install -m 600 -- "$config/cli.json" "$backup/cli.json"
+for file in opencode.jsonc cli.json SHA256SUMS; do
+  [[ -f "$backup/$file" && ! -L "$backup/$file" && "$(stat -c '%u:%a' "$backup/$file")" == "$uid:600" ]] || exit 1
+done
+(cd "$backup" && sha256sum --check SHA256SUMS)
+```
 
-## Bootstrap script copy (`--bootstrap`)
+The manifest contains digests and filenames only. Review them against the
+approved preimages. The apply block fails closed unless the owner-only backup
+and live files pass the path, ownership, mode, and preimage checks:
 
-Copies every regular file under `computer-use/scripts/` into:
+```bash
+set -euo pipefail
+: "${retirement_ready:?Run the checked preflight in this Bash shell first}"
+[[ "$retirement_ready" == "1" ]] || exit 1
+: "${deploy:?Run the checked preflight in this Bash shell first}"
+: "${config:?Run the backup block in this Bash shell first}"
+: "${backup:?Run the backup block successfully in this Bash shell first}"
+: "${server_mode:?Run the backup block successfully in this Bash shell first}"
+: "${cli_mode:?Run the backup block successfully in this Bash shell first}"
+uid="$(id -u)"
+for dir in "$HOME" "$HOME/.config" "$config"; do
+  [[ -d "$dir" && ! -L "$dir" && "$(stat -c '%u' "$dir")" == "$uid" ]] || exit 1
+  mode="$(stat -c '%a' "$dir")"
+  (( (8#$mode & 0022) == 0 )) || exit 1
+done
+[[ "$backup" == "$config"/retirement.* && -d "$backup" && ! -L "$backup" && "$(stat -c '%u:%a' "$backup")" == "$uid:700" ]] || exit 1
+for file in opencode.jsonc cli.json; do
+  [[ -f "$config/$file" && ! -L "$config/$file" && "$(stat -c '%u' "$config/$file")" == "$uid" ]] || exit 1
+done
+[[ "$(stat -c '%a' "$config/opencode.jsonc")" == "$server_mode" && "$(stat -c '%a' "$config/cli.json")" == "$cli_mode" ]] || exit 1
+for file in opencode.jsonc cli.json SHA256SUMS; do
+  [[ -f "$backup/$file" && ! -L "$backup/$file" && "$(stat -c '%u:%a' "$backup/$file")" == "$uid:600" ]] || exit 1
+done
+(cd "$backup" && sha256sum --check SHA256SUMS) || exit 1
+(cd "$config" && sha256sum --check "$backup/SHA256SUMS") || exit 1
+"$deploy" \
+  --config-dir "$config" \
+  --cli-config "$config/cli.json" \
+  --retire-integrated-browser --apply
+```
 
-- project: `<repo>/.opencode/scripts/`
-- global: `~/.config/opencode/scripts/`
+Run the verify-only command again; it should report both files clean. Each file
+is replaced atomically, but the pair is not a transaction: interruption can
+leave only one updated. Apply serializes JSON and drops JSONC comments. Rollback
+restores contents and modes, not timestamps or ACLs, and is sequential and
+non-atomic too. Restore only after checking there are no later edits to preserve;
+if interrupted, finish both restores and reverify:
 
-The copy is verbatim and content-aware: a file whose bytes already match is
-skipped, copies preserve mode with `cp -p`, symbolic-link sources are refused,
-and `__pycache__` is excluded. The copy includes `deploy-plugins.sh` itself.
+```bash
+set -euo pipefail
+: "${backup:?Use the verified preimage backup}"
+: "${config:?Use the same Bash shell as the backup block}"
+: "${server_mode:?Use the recorded preimage mode}"
+: "${cli_mode:?Use the recorded preimage mode}"
+uid="$(id -u)"
+for dir in "$HOME" "$HOME/.config" "$config"; do
+  [[ -d "$dir" && ! -L "$dir" && "$(stat -c '%u' "$dir")" == "$uid" ]] || exit 1
+  mode="$(stat -c '%a' "$dir")"
+  (( (8#$mode & 0022) == 0 )) || exit 1
+done
+[[ "$backup" == "$config"/retirement.* && -d "$backup" && ! -L "$backup" && "$(stat -c '%u:%a' "$backup")" == "$uid:700" ]] || exit 1
+for file in opencode.jsonc cli.json SHA256SUMS; do
+  [[ -f "$backup/$file" && ! -L "$backup/$file" && "$(stat -c '%u:%a' "$backup/$file")" == "$uid:600" ]] || exit 1
+done
+for file in opencode.jsonc cli.json; do
+  [[ -f "$config/$file" && ! -L "$config/$file" && "$(stat -c '%u' "$config/$file")" == "$uid" ]] || exit 1
+done
+(cd "$backup" && sha256sum --check SHA256SUMS) || exit 1
+install -m "$server_mode" -- "$backup/opencode.jsonc" "$config/opencode.jsonc"
+install -m "$cli_mode" -- "$backup/cli.json" "$config/cli.json"
+(cd "$config" && sha256sum --check "$backup/SHA256SUMS")
+stat -c '%a %n' "$config/opencode.jsonc" "$config/cli.json"
+```
 
-> **Limitation.** The scripts resolve paths relative to their own location
-> (`setup-computer-assistant.sh` walks up to the `platforms/linux/ubuntu`
-> component tree; `setup-opencode.sh` expects sibling `skills/` and `commands/`).
-> A copied `scripts/` directory is therefore a working reference copy, but
-> end-to-end provisioning still runs from the canonical checkout. The script
-> prints this caveat whenever `--bootstrap` is used.
-
-## Verification
-
-`--verify-only` (and the post-`--apply` verification pass) reports one line per
-item:
-
-- `OK: <plugin> plugin registered in <path>` — the module is present.
-- `MISSING/STALE: <plugin> plugin not registered in <path>` — absent.
-- `MISSING/STALE: <plugin> config is not editable JSON (comments?)` — present
-  but not safely editable.
-- `OK: bootstrap scripts current in <dest>` — every source file is present and
-  byte-identical.
-
-`--apply` writes, then runs the same verification. The script exits non-zero if
-any requested item is still missing, so it is usable as a gate.
-
-## Exit codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | Verification passed, or apply plus verification passed |
-| `1` | A plugin is missing, a config is not editable, or the bootstrap copy is incomplete; also used for a missing plugin entrypoint |
-| `2` | Invalid usage (missing `--scope`, bad `--project`, unknown `--plugins`, conflicting mode flags) |
-
-## Side effects to expect
-
-- Registration changes take effect only after OpenCode restarts.
-- When a project `.opencode/` directory contains `plugin` entries, OpenCode
-  itself installs `@opencode-ai/plugin` into that directory on startup, creating
-  `package.json`, a lockfile, `node_modules/`, and a `.gitignore`. The deploy
-  script does not create these; OpenCode does. Add them to the target repo's
-  `.gitignore` if they should not be committed.
-- Deployment is not reversible by this script. Remove the `file://` entry (and
-  copied scripts, if any) by hand to undeploy.
-
-## Related
-
-- [`docs/plugins/README.md`](../plugins/README.md#deploying-the-plugins) — the
-  `/deploy` command and the plugin registration model.
-- [`setup-opencode.md`](setup-opencode.md) — deploys skills and global commands.
+Script success verifies config files only, not the loaded service. Do not restart
+while child work remains active. Once connector and policy source are integrated,
+combine retirement with any required `wsl_browser_*` registration before one
+restart of the service identified by the selected profile's registry—not the
+separate pilot launcher. Verify service identity and loaded plugin status after;
+deploy-script success never proves loaded plugin state.

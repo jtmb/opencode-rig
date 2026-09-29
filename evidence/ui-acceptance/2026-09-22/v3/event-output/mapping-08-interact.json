@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "capture_id": "mapping-08",
+  "phase": "interact",
+  "event_id": "mapping-08-interact-001",
+  "action": {
+    "type": "click",
+    "target": "todo-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "todo-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "before": {
+    "snapshot_id": "mapping-08-interact-before",
+    "frame_sha256": "ce876e5e5f35cedcef3f101f99a383ed63858b2a9c9284e9be56c73f1f2f812b",
+    "spans_sha256": "a3c70f10ef2d700c0d9cf001b8cbdce521d9108179a55fdb38e6434aaad59063",
+    "state_sha256": "6107d88460bba248f3f7a360e1e792352769d538b419ce5cce9a601ff3c03b30"
+  },
+  "after": {
+    "snapshot_id": "mapping-08-interact-after",
+    "frame_sha256": "631175a54856de941b31694a9b715ddc5c0258802fb551e54bcfd96fd7c47f18",
+    "spans_sha256": "abf87dc3080191573cc808183dbd29a1558ca88489a46c50d9e5e7e5baecca40",
+    "state_sha256": "3cb191def2928a9e5ce2be825bda706b78c72b0b4abcef431e138cc9c6658852"
+  },
+  "result": {
+    "status": "passed",
+    "target": "todo-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "21d67bf9237820c104183915b30710957b6b68dafc528c97cf4fd7f5ff2bb497",
+  "native_event_sha256": "e05625c432ea55b547b5856ad7f2513fec4a887a097f97d4e301b53633ceb02b"
+}

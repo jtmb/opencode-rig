@@ -1,0 +1,11 @@
+bounded-command: available=7872MiB budget=3148MiB swap=787MiB node_heap=2046MiB
+Running as unit: run-r2e19427684dd4433938c550fbb92990c.scope; invocation ID: bf37609422c2473981b053c94fb80b9e
+✔ rendered active-subagent checks run in an isolated OpenTUI subprocess (696.817039ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 809.026843

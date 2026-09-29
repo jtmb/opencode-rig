@@ -1,0 +1,85 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "mapping-12-test-dispatch-001",
+  "capture_id": "mapping-12",
+  "source_sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "ed48aa1bcef7ce1faf570d152837ef4bfd12e8acc1ed68fc1135d4553d708471",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "input",
+    "target": "source-control-pagination",
+    "input": {
+      "mouse": {
+        "method": "click",
+        "target": "+7 more files",
+        "x": 3,
+        "y": 6
+      },
+      "keyboard": {
+        "method": "pressEnter",
+        "target": "next >"
+      }
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click+pressEnter",
+    "target": "source-control-pagination",
+    "input": {
+      "mouse": {
+        "method": "click",
+        "target": "+7 more files",
+        "x": 3,
+        "y": 6
+      },
+      "keyboard": {
+        "method": "pressEnter",
+        "target": "next >"
+      }
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "caa81767-d422-4bf6-a1c4-0448742b6725",
+    "dispatch_id": "mapping-12-test-dispatch-dispatch-001",
+    "transition_id": "mapping-12-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "67463838217638",
+    "transition_monotonic_ns": "67463912411009"
+  },
+  "before": {
+    "snapshot_id": "mapping-12-interact-before",
+    "frame_sha256": "d97477039ec091df0bdffbad1ad1fddd1bee0abfa33a15aa18c2022f18fa374f",
+    "spans_sha256": "c8ab0a7bf2eabd7a5485baf0a465f219dfd2401b289ed3fbdd496eb2d43a16bc",
+    "state_sha256": "c364ac4372674673b62cda5e229614a3dfe258654e905f234589cdb44e4811ac"
+  },
+  "after": {
+    "snapshot_id": "mapping-12-interact-after",
+    "frame_sha256": "a953a38399b441cc5de9c3c61b2c4f358b4c33d90ada24587bbb38d84516098b",
+    "spans_sha256": "b46a0a454060628056be4f8eb69fb9653035c44d9ac5b24e3c2d531c1bf892e0",
+    "state_sha256": "0adfda3471f5baa2b994dfb196af5273582093d15f10e607c27a7df053b1f965"
+  },
+  "result": {
+    "status": "passed",
+    "target": "source-control-pagination",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "bbc9a819d0342d9c8997846690022969c9f83fe083b2a72260cd20cf37ab98ef",
+  "output": "evidence/ui-acceptance/2026-09-28/v6/event-output/mapping-12-test-dispatch.json",
+  "output_sha256": "5bfa07de43fdb2aa78767be178948dfb4aee8993af4b23e10e16d1b94531dfaa",
+  "observed_at": "2026-09-28T19:02:42.533Z"
+}

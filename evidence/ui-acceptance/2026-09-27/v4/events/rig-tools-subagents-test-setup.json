@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-setup",
+  "event_id": "rig-tools-subagents-test-setup-001",
+  "capture_id": "rig-tools-subagents",
+  "source_sha256": "38f50adc2fe85e321622435e3e935217712318b40091148d8064d29731ef7a0d",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "276fcfdd95ca684b7cc01aa1c49c1852f61bf7a462b9f19ab8a8ef6ccdf2c23c",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "951bccfc-0faa-41e0-adb7-a263261a4bef",
+    "dispatch_id": "rig-tools-subagents-test-setup-dispatch-001",
+    "transition_id": "rig-tools-subagents-test-setup-transition-001",
+    "dispatch_monotonic_ns": "2712809268363",
+    "transition_monotonic_ns": "2712889711537"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-subagents-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-subagents-open-after",
+    "frame_sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+    "spans_sha256": "439723459432bb545470d85d5583baa3806e0aa5450797bcabb7886bf02c833b",
+    "state_sha256": "6a4e3fefc2ba5d89cb70e728e514af36c66d0654762d1d9837ea2491cc4013af"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "22bc5760274d26578a5558f7a65adf5bfe763d53be4933c42e740f368999480f",
+  "output": "evidence/ui-acceptance/2026-09-27/v4/event-output/rig-tools-subagents-test-setup.json",
+  "output_sha256": "9752000adcd48bab21ec2653d21e026aa33e19f13f7b731829b34f26febe361a",
+  "observed_at": "2026-09-27T10:03:57.625Z"
+}

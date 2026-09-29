@@ -1,0 +1,80 @@
+{
+  "version": 3,
+  "capture_id": "mapping-04",
+  "phase": "test-dispatch",
+  "event_id": "mapping-04-test-dispatch-001",
+  "action": {
+    "type": "input",
+    "target": "repository-session-header:ses_native_parent",
+    "input": {
+      "steps": [
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 1
+        }
+      ]
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "moveTo+moveTo+moveTo",
+    "target": "repository-session-header:ses_native_parent",
+    "input": {
+      "steps": [
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 1
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "9f99ef6f-8a3b-44b3-bc93-0dab33d9edc4",
+    "dispatch_id": "mapping-04-test-dispatch-dispatch-001",
+    "transition_id": "mapping-04-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "4699739258293",
+    "transition_monotonic_ns": "4699824568163"
+  },
+  "before": {
+    "snapshot_id": "mapping-04-interact-before",
+    "frame_sha256": "021e26f863a6774b4d1e1097ea6d70b252d8d5e1cdead674397bacd0054215de",
+    "spans_sha256": "27a74f7915a7d7ba1fa425251fff2155312df6ba0561c2ee8189522e95a16eb5",
+    "state_sha256": "ca8e2ac24ae3ed6e33085d5cdbca9cd8fb7f8c45ae10845303312bd490547a1b"
+  },
+  "after": {
+    "snapshot_id": "mapping-04-interact-after",
+    "frame_sha256": "021e26f863a6774b4d1e1097ea6d70b252d8d5e1cdead674397bacd0054215de",
+    "spans_sha256": "dd72814522e485f22095832f93d6e58aa6415c92882a9149ff5dd7e05a8492ca",
+    "state_sha256": "0345f5d0890ddf80f0682b55cd435416f59456b08b529760101c8e32a5e7795c"
+  },
+  "result": {
+    "status": "passed",
+    "target": "repository-session-header:ses_native_parent",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "f0156a16f2a6a4a76fe83f163271fdb835897da4402749e6d32691a3ec5852de",
+  "native_event_sha256": "34eb79c00a7f04115df5d3a4c6f7fa54b3590d9d68e39607a475ba3b61376263"
+}

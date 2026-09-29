@@ -1,0 +1,25 @@
+bounded-command: available=7812MiB budget=3125MiB swap=781MiB node_heap=2031MiB
+Running as unit: run-r360ab9b3eac34a2eabb1eb403f338c18.scope; invocation ID: 9eee69c36a13489ebdf8e0fc63e91859
+✔ V2 credential connection makes Codex READY without consulting auth.json (6.058722ms)
+✔ disabled providers are absent and hidden auto providers are not represented as OFFLINE (0.882348ms)
+✔ auto providers require a working connection or recent authoritative activity (0.31587ms)
+✔ enabled providers without a connection are hidden until recent use qualifies OFFLINE (0.164089ms)
+✔ credential and environment connections establish READY (0.21187ms)
+✔ probe outcomes have explicit precedence and retain transient usage (1.062468ms)
+✔ canonical aliases deduplicate under the first configured display name (0.38606ms)
+✔ empty visible state produces no provider rows, no client rows, and a hidden panel (2.966246ms)
+✔ collapsed summary counts only visible server rows (0.65776ms)
+✔ serialized snapshots and client rows never leak credential canaries (0.41178ms)
+✔ provider adapter renders exactly the server rows and never synthesizes catalog rows (0.25149ms)
+✔ server RPC and stale refresh retain rows with sanitized diagnostics (1.727177ms)
+✔ refresh polling stays throttled while authoritative events may force and concurrent work coalesces (3.855225ms)
+✔ client snapshot integration is explicit rather than a legacy catalog fallback (2.499177ms)
+✔ native MCP-style provider rows remain single-line at 140, 80, and 60 columns (1.004529ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 140.903393

@@ -1,8 +1,8 @@
 ---
 name: web-3d-asset-pipeline
-description: Prepare and verify runtime-ready 3D assets for browser projects, including pivots, units, transforms, hierarchy, naming, materials, textures, GLB export, clean reimport, optional approved compression, and Firefox load checks. Use when the user asks to clean, optimize, export, or validate a web 3D asset.
+description: Prepare and verify runtime-ready 3D assets for browser projects, including pivots, units, transforms, hierarchy, naming, materials, textures, GLB export, clean reimport, optional approved compression, and browser load checks. Use when the user asks to clean, optimize, export, or validate a web 3D asset.
 license: MIT
-compatibility: Ubuntu and OpenCode; uses existing DCC, project, and Firefox tooling without requiring a Blender MCP server.
+compatibility: Ubuntu and OpenCode; visible browser validation from WSL requires the Windows-default-browser UIA tools, and isolated headless Firefox requires an explicit request. No Blender MCP server is required.
 metadata:
   schema-version: "1"
   category: "files"
@@ -76,13 +76,19 @@ file or running `bpy`.
    transforms, dimensions, mesh/material/texture counts, armatures, animations,
    collisions, LODs, and warnings against the contract. A successful exporter
    exit and non-empty file are not enough.
-8. Load the exact shipping artifact with the project's existing loader in
-   Firefox. For an interactive check use visible `playwright_browser_*` tools:
-   take an accessibility snapshot first, inspect console and network failures,
-   then take a screenshot because canvas/WebGL output is not represented by
-   DOM structure. Do not claim the DOM proves mesh appearance. Use
-   `playwright_headless_browser_*` only when the user explicitly requested
-   headless/background testing.
+8. Load the exact shipping artifact through the project's existing loader. For
+   visible work from WSL, use the `browser-assistant` skill's `wsl_browser_*`
+   UIA tools against the user's Windows default browser, with an explicit window
+   ID for each operation and a fresh preview token for each supported mutation.
+   Take an accessibility snapshot first and a screenshot because canvas/WebGL
+   output is not represented by DOM structure. Inspect console and network
+   failures only when an approved tool exposes them; UIA does not guarantee
+   browser-diagnostics access, so missing console evidence blocks a complete
+   validation. Do not claim the DOM proves mesh appearance. Load
+   `browser-headless` and use isolated Firefox only when the user explicitly
+   requests headless/background testing. If the connector or required evidence
+   is unavailable, stop and report the validation as blocked or incomplete; do
+   not use Chrome/Chromium, project Playwright, or desktop-control as a fallback.
 9. Compare the new artifact with the prior version: byte size, transfer size,
    decode/load behavior, texture memory assumptions, draw-relevant material or
    primitive counts, visual output, animation, and interaction. Report the
@@ -95,7 +101,10 @@ file or running `bpy`.
 - Bind a temporary development server to loopback unless the user explicitly
   requested network exposure.
 - Confirm the asset request and all external texture requests succeed without
-  console errors, CORS failures, decode errors, or silent fallback materials.
+  console errors, CORS failures, decode errors, or silent fallback materials
+  when approved browser diagnostics expose those results. UIA may not expose the
+  browser console/network panel; if it does not, record that as a blocker rather
+  than claiming a clean load.
 - Inspect at least one view that reveals scale, orientation, pivot, materials,
   transparency, and animation relevant to the request.
 - If interaction is part of acceptance, read the sibling
@@ -112,7 +121,7 @@ If an approved tool already exists, preserve the uncompressed baseline and
 write a versioned candidate. Apply pruning, deduplication, mesh simplification,
 Meshopt or Draco geometry compression, and KTX2/Basis texture compression only
 when each operation is compatible with the loader and quality contract. Record
-the exact command and settings, revalidate structure, and repeat the Firefox
+the exact command and settings, revalidate structure, and repeat the browser
 load and visual checks. Smaller bytes do not justify broken shading, animation,
 decode compatibility, or excessive startup cost.
 

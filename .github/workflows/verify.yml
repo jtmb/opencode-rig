@@ -17,23 +17,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Shell lint
+      - name: Provision pinned checkout-local Node QA runtime
         run: |
           set -euo pipefail
-          bash -n platforms/linux/ubuntu/computer-use/scripts/*.sh .githooks/pre-push
-          shellcheck platforms/linux/ubuntu/computer-use/scripts/*.sh .githooks/pre-push
+          python3 platforms/linux/ubuntu/computer-use/scripts/setup-qa-runtime.py --apply
+          python3 platforms/linux/ubuntu/computer-use/scripts/setup-qa-runtime.py --verify-only
 
-      - name: Python compile
-        run: python3 -m py_compile platforms/linux/ubuntu/computer-use/scripts/*.py
-
-      - name: Skill documentation
+      - name: Install locked test dependencies
         run: |
           set -euo pipefail
-          python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs.py
-          python3 platforms/linux/ubuntu/computer-use/scripts/check-skill-docs-self-test.py
+          workspace=platforms/linux/ubuntu/computer-use/plugins-v2
+          browser_tools=platforms/linux/ubuntu/browser-tools
+          wrapper=platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh
+          export PATH="$GITHUB_WORKSPACE/toolchains/node/bin:$PATH"
+          bash "$wrapper" -- npm --prefix "$workspace" ci --ignore-scripts
+          bash "$wrapper" -- npm --prefix "$browser_tools" ci --ignore-scripts
 
-      - name: Documentation gate self-test
-        run: python3 platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage-self-test.py
+      - name: Focused repository QA self-test
+        run: python3 platforms/linux/ubuntu/computer-use/scripts/check-repository-qa-self-test.py
+
+      - name: Install shellcheck for canonical QA
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Canonical repository QA
+        run: python3 platforms/linux/ubuntu/computer-use/scripts/check-repository-qa.py
 
       - name: Documentation gate
         env:

@@ -1,0 +1,1 @@
+OK: acceptance-evidence self-test covers legacy migration, source mappings, digests, execution-bound behavioral/render tests, fresh ephemeral live phases, empty/vacuous manifests, visible evidence, allowlists, background mode, bounds, regular files, absolute/traversal paths, symlink ancestors, and no-subprocess validation

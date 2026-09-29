@@ -1,21 +1,18 @@
-# GitHub Tools
+# Retired Repository-Owned GitHub Runtime
 
-Pinned native GitHub MCP Server runtime for OpenCode on Ubuntu amd64.
+This directory no longer owns a generated GitHub MCP binary. The canonical
+Ubuntu MCP policy installs the official server below each selected OpenCode
+profile and registers
+`platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh` for both the generic
+`github` MCP and the optional Source Control child client.
 
-The generated executable is installed at `bin/github-mcp-server` by
-`../computer-use/scripts/setup-computer-assistant.sh --apply` and is excluded
-from Git. The current pin is the official GitHub release `v1.12.1`:
+The retained release identity documents the migration source:
 
+- Version: `1.12.1`
 - Archive: `github-mcp-server_Linux_x86_64.tar.gz`
 - SHA-256: `e45c73a26a3c4cd643b40360db06f442de1e73a60d4eaf9e8639204ec3b95d3b`
 - Release: <https://github.com/github/github-mcp-server/releases/tag/v1.12.1>
 
-The computer-use wrapper starts the server with only the `context`, `repos`,
-`issues`, and `pull_requests` toolsets, plus read-only and lockdown modes. It
-authenticates from `GITHUB_PERSONAL_ACCESS_TOKEN` (or `GH_TOKEN`) in OpenCode's
-launch environment, falling back to the logged-in `gh` CLI, and never stores the
-credential in this repository or OpenCode configuration.
-
-Update the version, archive URL, and published checksum together in
-`../computer-use/scripts/setup-computer-assistant.sh`, then reinstall and rerun
-the verification checks. Do not replace the pin with `latest`.
+Do not restore `bin/` or place a credential in this directory. Provision and
+verify the profile-owned runtime through
+`computer-use/scripts/setup-mcps.sh`.

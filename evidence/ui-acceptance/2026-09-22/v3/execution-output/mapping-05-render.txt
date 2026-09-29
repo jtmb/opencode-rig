@@ -1,0 +1,11 @@
+bounded-command: available=7801MiB budget=3120MiB swap=780MiB node_heap=2028MiB
+Running as unit: run-r379cdc918512489ea6b215391f510c64.scope; invocation ID: a9de4be4825046ddb0e5c4fe2a1f7676
+✔ rendered OpenTUI checks contain native stderr in a subprocess (2047.536781ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2157.45817

@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "capture_id": "integrated-sidebar",
+  "phase": "test-setup",
+  "event_id": "integrated-sidebar-test-setup-001",
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "8369984e-25b6-40d2-8f4c-5b3877b9da97",
+    "dispatch_id": "integrated-sidebar-test-setup-dispatch-001",
+    "transition_id": "integrated-sidebar-test-setup-transition-001",
+    "dispatch_monotonic_ns": "55427570802140",
+    "transition_monotonic_ns": "55427657175870"
+  },
+  "before": {
+    "snapshot_id": "integrated-sidebar-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "integrated-sidebar-open-after",
+    "frame_sha256": "599e6076372d0238fde00d3f7c553b474404752e700fc9c4e64bbdaa379b7f8f",
+    "spans_sha256": "b56c1e9f260bb395979f428b77e86127903c19307cdcf695deec9b4c9bea9a69",
+    "state_sha256": "ccb2632d22ac9fa2252e50efc046a8f918dca05c4a0404ebdda70977ffca0d68"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "d0ea011050d63934257a5a8ff566f0fbb1506cabf530d5bca455a266cf675190",
+  "native_event_sha256": "48b424260f536b9989f1ce5e6bc7707a9ded45ef91c92d6e61853b11b1ffc580"
+}

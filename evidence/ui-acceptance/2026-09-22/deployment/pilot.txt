@@ -1,0 +1,18 @@
+OK: CLI prompt permissions and silent attention are enabled
+OK: orchestration-policy (server) plugin registered in /home/brajam/.opencode-v2-pilot/config/opencode.jsonc
+OK: git-tool (server) plugin registered in /home/brajam/.opencode-v2-pilot/config/opencode.jsonc
+OK: integrated-browser (server) plugin registered in /home/brajam/.opencode-v2-pilot/config/opencode.jsonc
+OK: integrated-browser (cli) plugin registered in /home/brajam/.opencode-v2-pilot/config/cli.json
+OK: repo-learning (server) plugin registered in /home/brajam/.opencode-v2-pilot/config/opencode.jsonc
+OK: repo-learning (cli) plugin registered in /home/brajam/.opencode-v2-pilot/config/cli.json
+OK: rig-tools (server) plugin registered in /home/brajam/.opencode-v2-pilot/config/opencode.jsonc
+OK: rig-tools (cli) plugin registered in /home/brajam/.opencode-v2-pilot/config/cli.json
+OK: rig-todo (server) plugin registered in /home/brajam/.opencode-v2-pilot/config/opencode.jsonc
+OK: rig-todo (cli) plugin registered in /home/brajam/.opencode-v2-pilot/config/cli.json
+OK: codex-fallback (server) plugin registered in /home/brajam/.opencode-v2-pilot/config/opencode.jsonc
+OK: source-control (cli) plugin registered in /home/brajam/.opencode-v2-pilot/config/cli.json
+OK: codex-usage (server) plugin registered in /home/brajam/.opencode-v2-pilot/config/opencode.jsonc
+OK: codex-usage (cli) plugin registered in /home/brajam/.opencode-v2-pilot/config/cli.json
+OK: file-manager (cli) plugin registered in /home/brajam/.opencode-v2-pilot/config/cli.json
+OK: resource-monitor (cli) plugin registered in /home/brajam/.opencode-v2-pilot/config/cli.json
+NOTICE: codex-fallback has no defaultChain configured and stays inactive (see plugins-v2/codex-fallback/README.md).

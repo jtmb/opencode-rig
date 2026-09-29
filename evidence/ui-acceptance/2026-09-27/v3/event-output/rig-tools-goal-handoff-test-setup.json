@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "capture_id": "rig-tools-goal-handoff",
+  "phase": "test-setup",
+  "event_id": "rig-tools-goal-handoff-test-setup-001",
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "9f99ef6f-8a3b-44b3-bc93-0dab33d9edc4",
+    "dispatch_id": "rig-tools-goal-handoff-test-setup-dispatch-001",
+    "transition_id": "rig-tools-goal-handoff-test-setup-transition-001",
+    "dispatch_monotonic_ns": "4701217490560",
+    "transition_monotonic_ns": "4701298671972"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-goal-handoff-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-goal-handoff-open-after",
+    "frame_sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+    "spans_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+    "state_sha256": "c368cc67b47dba478f561dbe99eec93e240fec97f23444f0863eeab45fe5e5b1"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "741b7be25769ebcc873a984989ed79327948c5cdd97095b9e88ff61482aba410",
+  "native_event_sha256": "699befd52a955f086be5856565b7ad292003427cab164faddc953b536a90741a"
+}

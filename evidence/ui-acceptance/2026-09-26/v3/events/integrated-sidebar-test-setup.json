@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-setup",
+  "event_id": "integrated-sidebar-test-setup-001",
+  "capture_id": "integrated-sidebar",
+  "source_sha256": "ec064f2dac7a1bf22a03cb36639d421f568156dc413e002c0dfea343b2d27cc8",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "3de96e2c1d893195ea7a60c6f0e9c4b0d4c9ea2ac639e27404f985ba471abbb0",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "96323af5-5507-4734-8d63-c2dd441823de",
+    "dispatch_id": "integrated-sidebar-test-setup-dispatch-001",
+    "transition_id": "integrated-sidebar-test-setup-transition-001",
+    "dispatch_monotonic_ns": "71812909660082",
+    "transition_monotonic_ns": "71813012803971"
+  },
+  "before": {
+    "snapshot_id": "integrated-sidebar-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "integrated-sidebar-open-after",
+    "frame_sha256": "462f28fb86601e3a367167e91481e936b05e899aaa52005e682e19487f35c019",
+    "spans_sha256": "e402d7cb1644d1b05424f62f83596230f92e7c98cb152f14d8c8191c3af22f35",
+    "state_sha256": "ccb2632d22ac9fa2252e50efc046a8f918dca05c4a0404ebdda70977ffca0d68"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "4b25dd533f3a2b3dcea03829a05dc0a649b56a4c4cfed53e893a2984939411f6",
+  "output": "evidence/ui-acceptance/2026-09-26/v3/event-output/integrated-sidebar-test-setup.json",
+  "output_sha256": "0f207b42a2eb78cde3731a164b20df05ca93d2025d32932fbf599212be9b7bdd",
+  "observed_at": "2026-09-26T17:38:10.730Z"
+}

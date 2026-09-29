@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 248 40" role="img" aria-labelledby="title desc">
+  <title id="title">Open Rig</title>
+  <desc id="desc">Open Rig docked frame mark and wordmark.</desc>
+  <g transform="translate(4 4)" color="#17212B">
+    <path fill="currentColor" d="M28 10H24V8H8V24H24V22H28V28H4V4H28Z"/>
+    <path fill="currentColor" d="M14 14H24V12H30V20H24V18H14Z"/>
+  </g>
+  <text x="48" y="28" fill="#17212B" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="600" letter-spacing="-.4">Open Rig</text>
+</svg>

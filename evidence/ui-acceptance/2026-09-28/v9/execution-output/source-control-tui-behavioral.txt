@@ -1,0 +1,11 @@
+✔ source control stays before the native footer so working directory remains last (0.785228ms)
+✔ change rows are compact one-line previews with fixed semantic counts (0.439919ms)
+✔ source-control uses a cohesive heading and visibly muted secondary text (0.190309ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.034278

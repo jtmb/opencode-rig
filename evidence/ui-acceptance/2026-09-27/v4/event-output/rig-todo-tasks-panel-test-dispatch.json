@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "capture_id": "rig-todo-tasks-panel",
+  "phase": "test-dispatch",
+  "event_id": "rig-todo-tasks-panel-test-dispatch-001",
+  "action": {
+    "type": "key",
+    "target": "todo-kanban-next-column",
+    "input": "right"
+  },
+  "dispatch": {
+    "device": "keyboard",
+    "method": "pressArrow",
+    "target": "todo-kanban-next-column",
+    "input": "right"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "951bccfc-0faa-41e0-adb7-a263261a4bef",
+    "dispatch_id": "rig-todo-tasks-panel-test-dispatch-dispatch-001",
+    "transition_id": "rig-todo-tasks-panel-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "2712436962918",
+    "transition_monotonic_ns": "2712466506344"
+  },
+  "before": {
+    "snapshot_id": "rig-todo-tasks-panel-interact-before",
+    "frame_sha256": "86da6ca22b7b844009306a94ca61365d4c01b7494fa05fbacf72c21c2822c3ce",
+    "spans_sha256": "98e542787ddc2fe95700189399f74bb997b2130b06d1ae44f2100cb8c4e297cd",
+    "state_sha256": "1cd40fe339ef8931b30ccdf81a7f593a866dabf452f178fa1e26710525e89dfa"
+  },
+  "after": {
+    "snapshot_id": "rig-todo-tasks-panel-interact-after",
+    "frame_sha256": "1eeb36a2a0f1dca8f381fb5d4fcf53d984b09e27c3f54cdcc474525c40ff6751",
+    "spans_sha256": "7cd7e9b6bffdf463acbc00962f551bdc39de8a1da00ca1f48e548c496a93bc02",
+    "state_sha256": "ea4886a9e1ed9c2ac42e1899705d6b64f1d0cbd8fe54b6e28f6c802882fa78c9"
+  },
+  "result": {
+    "status": "passed",
+    "target": "todo-kanban-next-column",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "378142d4ebd30b04cbf0ceb75718130383d3937e1f80520c9360c9507057ce7e",
+  "native_event_sha256": "08abffbb55b045e626c28af735ac4824bf12e37359830a48402d5caecdb73baf"
+}

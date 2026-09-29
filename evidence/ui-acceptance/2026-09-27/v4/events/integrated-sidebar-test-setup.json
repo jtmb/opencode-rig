@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-setup",
+  "event_id": "integrated-sidebar-test-setup-001",
+  "capture_id": "integrated-sidebar",
+  "source_sha256": "ec064f2dac7a1bf22a03cb36639d421f568156dc413e002c0dfea343b2d27cc8",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "7760af7005fbb6e44f5e67e4426906bdf6141d1591e58e5b4a028c5e6a23724f",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "951bccfc-0faa-41e0-adb7-a263261a4bef",
+    "dispatch_id": "integrated-sidebar-test-setup-dispatch-001",
+    "transition_id": "integrated-sidebar-test-setup-transition-001",
+    "dispatch_monotonic_ns": "2711775345999",
+    "transition_monotonic_ns": "2711873406591"
+  },
+  "before": {
+    "snapshot_id": "integrated-sidebar-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "integrated-sidebar-open-after",
+    "frame_sha256": "ec06f8b74cd8f59d0c240ceac24ba527fc15d8eb90669dda13e4a462c65953e5",
+    "spans_sha256": "d9b733d91efaccbe4a6554191fcaee8132f8d391250b39a364841ac6fbfdca4a",
+    "state_sha256": "ccb2632d22ac9fa2252e50efc046a8f918dca05c4a0404ebdda70977ffca0d68"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "0a9c519e42c05a4a4a86935f2cc577da91d714f9720d254fd8cfe1f22672e5bc",
+  "output": "evidence/ui-acceptance/2026-09-27/v4/event-output/integrated-sidebar-test-setup.json",
+  "output_sha256": "b7ccba43e0bc8c47b1cfe0655d70fb8f65dbdea19cd6c3bfd9e28cd14a7fe7ba",
+  "observed_at": "2026-09-27T10:03:57.625Z"
+}

@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/goal-slot.test.ts",
+  "test_sha256": "ec7893d2945c526b207d38ad5f37df572be46859a6a0a3d26a1d7a6620a1e899",
+  "source_sha256": "cceba416df4017a5cb7ee8ab87be2e14d2e24959de4e219dacb78d9b880463b2",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-ffi\",\"--experimental-strip-types\",\"--test\",\"test/goal-slot.test.ts\"]",
+  "observed_at": "2026-09-28T19:03:16.761Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-28/v6/execution-output/rig-tools-goal-handoff-behavioral.txt",
+  "output_sha256": "e49dd1503e3df17de2ee2598c70af046e16ef2b06f1e1c29108c612f18909b27",
+  "invocation": {
+    "run_id": "b3c599c1-2f6f-4c22-827c-a1fc1315ddfe",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/goal-slot.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-28T19:03:15.395Z",
+    "finished_at": "2026-09-28T19:03:16.761Z",
+    "started_monotonic_ns": "67457442478505",
+    "finished_monotonic_ns": "67458808453144",
+    "exit_code": 0,
+    "source_sha256_before": "cceba416df4017a5cb7ee8ab87be2e14d2e24959de4e219dacb78d9b880463b2",
+    "source_sha256_after": "cceba416df4017a5cb7ee8ab87be2e14d2e24959de4e219dacb78d9b880463b2",
+    "test_sha256_before": "ec7893d2945c526b207d38ad5f37df572be46859a6a0a3d26a1d7a6620a1e899",
+    "test_sha256_after": "ec7893d2945c526b207d38ad5f37df572be46859a6a0a3d26a1d7a6620a1e899"
+  }
+}

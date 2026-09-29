@@ -1,6 +1,6 @@
 ---
 name: browser-headless
-description: Run isolated browser tasks through headless Playwright Firefox with no visible window. Use ONLY when the user explicitly asks for headless browsing, background browser automation, or a non-interactive Playwright task. Use the live browser instead when the user needs to see, steer, authenticate, or take over the page.
+description: Run isolated browser tasks through headless Playwright Firefox with no visible window. Use ONLY when the user explicitly asks for headless browsing, background browser automation, or a non-interactive Playwright task. Use the Windows-default browser skill for visible work from WSL; fail closed if its bridge is unavailable.
 metadata:
   schema-version: "1"
   category: "browser"
@@ -9,17 +9,22 @@ metadata:
 
 # Headless Browser
 
-Use the `playwright_headless_browser_*` tools. This MCP server launches an
-isolated Firefox context without a visible window and does not share state with
-the live Playwright window or the user's normal browser.
+This direct, exact-pinned Playwright package is only for explicitly requested
+headless Firefox work; it is not a visible-browser MCP. Use a bounded `node`
+script that imports `playwright` from
+`platforms/linux/ubuntu/browser-tools/node_modules`, invoked through
+`platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh`. The
+script must launch an isolated headless Firefox context, share no state with
+any visible browser or the user's normal browser, and close the context when
+finished. Do not install or select Chrome/Chromium for this runtime.
 
 ## Workflow
 
 1. Use `websearch` or `webfetch` instead when the request is read-only and does
    not need browser execution.
 2. Confirm that the task is suitable for an invisible, unauthenticated session.
-3. List tabs, preserve unrelated task tabs, navigate to the exact URL, and
-   inspect a fresh accessibility snapshot.
+3. Create an isolated page, navigate to the exact URL, and inspect a fresh
+   accessibility snapshot.
 4. Target stable accessible names or references from current state, perform one
    bounded action, and inspect the resulting URL and page state. Refresh the
    snapshot after navigation, resize, dialog, tab switch, or DOM mutation.
@@ -30,12 +35,16 @@ the live Playwright window or the user's normal browser.
 
 ## Use The Live Browser Instead
 
-Switch to `browser-assistant` and the `playwright` MCP server when:
+Switch to `browser-assistant` and the WSL Windows-default-browser tools when:
 
 - The user wants to watch, steer, or take over the interaction.
 - Login, MFA, payment details, or a CAPTCHA requires user participation.
 - Visual appearance or a canvas cannot be verified from structured state.
 - The workflow depends on state in the live browser window.
+
+That visible workflow requires the WSL interop bridge. If its tools are missing
+or unavailable, stop and report the bridge error; do not fall back to headless
+Firefox, desktop clicking, or another browser.
 
 ## Safety
 
@@ -50,8 +59,9 @@ Switch to `browser-assistant` and the `playwright` MCP server when:
 - Preserve reversible draft state while diagnosing failures; do not refresh,
   navigate away, close, or resubmit solely to force a clearer result.
 
-If the server is unavailable, run `opencode mcp list` and inspect the
-`playwright_headless` entry. Do not silently substitute the live browser.
+If the pinned package or an existing Firefox executable is unavailable, stop
+and report which prerequisite is missing. Do not install another browser,
+register a Playwright MCP, or silently substitute a visible browser.
 
 ## Usage guide
 

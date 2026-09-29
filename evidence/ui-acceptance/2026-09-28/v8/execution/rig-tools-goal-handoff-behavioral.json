@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/goal-slot.test.ts",
+  "test_sha256": "ec7893d2945c526b207d38ad5f37df572be46859a6a0a3d26a1d7a6620a1e899",
+  "source_sha256": "3f04d071e4659b343c8f5d09e1ac1b87db1ddbfc6e4374688b78b417c29cc15d",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-ffi\",\"--import\",\"./test/solid-resolve-hook.mjs\",\"--experimental-strip-types\",\"--test\",\"test/goal-slot.test.ts\"]",
+  "observed_at": "2026-09-28T20:18:11.077Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-28/v8/execution-output/rig-tools-goal-handoff-behavioral.txt",
+  "output_sha256": "8bd5d00e19d9860643857903c9562c4348c9eb862e8f996dd42ea320f5e0ad0c",
+  "invocation": {
+    "run_id": "0b1905e6-cc43-4245-8d02-43f5f5f0be18",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--import",
+      "./test/solid-resolve-hook.mjs",
+      "--experimental-strip-types",
+      "--test",
+      "test/goal-slot.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-28T20:18:09.861Z",
+    "finished_at": "2026-09-28T20:18:11.077Z",
+    "started_monotonic_ns": "1262437352074",
+    "finished_monotonic_ns": "1263653580098",
+    "exit_code": 0,
+    "source_sha256_before": "3f04d071e4659b343c8f5d09e1ac1b87db1ddbfc6e4374688b78b417c29cc15d",
+    "source_sha256_after": "3f04d071e4659b343c8f5d09e1ac1b87db1ddbfc6e4374688b78b417c29cc15d",
+    "test_sha256_before": "ec7893d2945c526b207d38ad5f37df572be46859a6a0a3d26a1d7a6620a1e899",
+    "test_sha256_after": "ec7893d2945c526b207d38ad5f37df572be46859a6a0a3d26a1d7a6620a1e899"
+  }
+}

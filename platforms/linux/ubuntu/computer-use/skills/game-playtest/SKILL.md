@@ -1,8 +1,8 @@
 ---
 name: game-playtest
-description: Playtest browser games in Playwright Firefox with accessibility-first inspection, bounded input, mandatory canvas or WebGL screenshots, representative state coverage, console review, responsive checks, and severity-ordered findings. Use when the user asks for a browser-game smoke test, gameplay QA, visual verification, HUD review, or reproducible bug report.
+description: Playtest browser games with accessibility-first inspection, bounded input, mandatory canvas or WebGL screenshots, representative state coverage, console review, responsive checks, and severity-ordered findings. Use when the user asks for a browser-game smoke test, gameplay QA, visual verification, HUD review, or reproducible bug report.
 license: MIT
-compatibility: Ubuntu and OpenCode with the repository's visible or explicitly requested headless Playwright Firefox tools.
+compatibility: Ubuntu and OpenCode; visible browser testing from WSL requires the Windows-default-browser UIA tools, while isolated headless Firefox is available only on explicit request.
 metadata:
   schema-version: "1"
   category: "browser"
@@ -22,14 +22,18 @@ redistributing the adaptation. The applicable license text is in
 
 ## Browser mode
 
-- Use visible `playwright_browser_*` tools for normal interactive playtests.
-  The user and agent share that isolated Firefox window.
-- Use `playwright_headless_browser_*` only when the user explicitly requests a
-  headless/background test. Headless visual output and input timing may differ,
-  so identify that mode in the report.
-- Do not fall back to desktop coordinate clicking for a browser page. If the
-  Playwright MCP is unavailable, inspect `opencode mcp list` and report the
-  actual startup error.
+- For visible authenticated browser work from WSL, use the `browser-assistant`
+  skill's `wsl_browser_*` UIA tools against the user's configured Windows
+  default browser. Specify the explicit window ID for each operation and use
+  the fresh preview token for every supported mutation.
+- Use only browser actions and evidence actually exposed by those tools. If the
+  connector, a required action, or a required evidence surface is unavailable,
+  stop and report the test as blocked or incomplete. Do not use Chrome/Chromium,
+  the retired project Playwright MCP, Linux desktop-control, or
+  coordinate clicking as a fallback for browser work.
+- Load `browser-headless` and use its isolated Firefox runtime only when the
+  user explicitly requests a headless/background test. Headless visual output
+  and input timing may differ, so identify that mode in the report.
 
 ## Evidence model
 
@@ -37,17 +41,23 @@ Use independent evidence layers instead of overclaiming from one surface:
 
 - Accessibility/DOM: menus, buttons, labels, focus, HUD text, overlays, and
   semantic state.
-- Framebuffer screenshot: canvas/WebGL scene, sprites, camera, lighting,
+- Browser-window screenshot: canvas/WebGL scene, sprites, camera, lighting,
   animation pose, occlusion, layout, and visual state.
 - Browser diagnostics: console exceptions/warnings and failed asset, texture,
   shader, audio, or API requests.
 - Bounded player action: an input followed by an observable post-state.
 
 An accessibility snapshot cannot see pixels inside a canvas. DOM access cannot
-drive or prove the internal game scene. Use a stable canvas element only to
-focus or click it, send bounded Playwright keyboard/pointer input, then inspect
-the post-state and a new screenshot. Never report an inferred scene transition
-as observed evidence.
+prove the internal game scene. Use only a stable canvas target and bounded
+keyboard/pointer actions supported by `wsl_browser_*`, then inspect the
+post-state and a new screenshot. If the UIA tools cannot expose the required
+canvas input or screenshot, stop and report the limitation instead of switching
+to desktop input. Never report an inferred scene transition as observed evidence.
+
+UIA does not guarantee browser-console or network-diagnostic access. Do not
+claim that `wsl_browser_*` exposes console errors. Console and relevant network
+checks remain required for a complete playtest; if no approved tool exposes
+them, report that evidence as unavailable and the playtest as incomplete.
 
 ## Playtest workflow
 
@@ -60,8 +70,9 @@ as observed evidence.
 3. Inspect the current page with an accessibility snapshot before any action.
    Confirm URL, title or first actionable screen, controls, loading indicators,
    overlays, and focus target.
-4. Check browser console messages and relevant failed network requests at boot.
-   Distinguish a pending load from a crashed or blank game.
+4. Check browser console messages and relevant failed network requests at boot
+   when an approved tool exposes them. If not exposed, record a blocker; do not
+   claim a clean console. Distinguish a pending load from a crashed or blank game.
 5. Capture a screenshot of the initial rendered state. A screenshot is
    mandatory whenever canvas/WebGL is present, even when DOM assertions pass.
 6. Exercise each main verb once with one bounded action at a time, such as
@@ -78,10 +89,12 @@ as observed evidence.
    layout independently from the canvas scene, then inspect their composition
    for overlap, obstruction, readability, stale state, pointer capture, and
    pause synchronization.
-9. Run desktop and mobile viewport sanity checks with explicit viewport sizes.
-   Reinspect the snapshot and screenshot after each resize. A narrow viewport
-   is not proof of real-device touch, safe-area, GPU, memory, or network
-   behavior; report those as untested unless actually exercised.
+9. Run desktop and mobile viewport sanity checks with explicit viewport sizes
+   when supported by the approved browser UIA tools. Reinspect the snapshot and
+   screenshot after each resize. If the viewport cannot be set or observed,
+   report it as untested. A narrow viewport is not proof of real-device touch,
+   safe-area, GPU, memory, or network behavior; report those as untested unless
+   actually exercised.
 10. Recheck console errors after the exercised states. Separate pre-existing
     warnings from new errors tied to a reproduction.
 11. Delete every playtest screenshot immediately after inspecting it. Retain a
@@ -92,8 +105,9 @@ as observed evidence.
 
 - Target accessible names or current element references. Refresh the snapshot
   before using a reference after navigation, resize, or user interaction.
-- For canvas focus, click the identified canvas once, send one documented key
-  or bounded pointer action, release it, and inspect the result. Avoid
+- For canvas focus, use only a supported UIA browser action to target the
+  identified canvas, send one documented key or bounded pointer action, release
+  it, and inspect the result. Avoid
   uncontrolled key repeats, long macros, arbitrary coordinates, and
   open-ended loops.
 - Pointer lock, drag-look, touch gestures, gamepads, and timing-sensitive combos
@@ -129,8 +143,9 @@ Report findings first, ordered by severity. For each finding include severity,
 what the player sees, minimal reproduction, expected and actual result,
 evidence surface, frequency, and likely owning subsystem. Label ownership as a
 hypothesis unless code or diagnostics prove it. Include the tested URL/build,
-Firefox mode, viewport sizes, states and verbs covered, console/network summary,
-and explicit gaps.
+browser identity and mode (Windows default visible, or explicitly requested
+isolated headless Firefox), viewport sizes, states and verbs covered,
+console/network summary, and explicit gaps.
 
 If no findings are discovered, state that directly and list residual risks such
 as untested touch, gamepad, long-session performance, real mobile hardware,

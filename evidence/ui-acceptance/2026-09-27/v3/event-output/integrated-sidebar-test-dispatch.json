@@ -1,0 +1,146 @@
+{
+  "version": 3,
+  "capture_id": "integrated-sidebar",
+  "phase": "test-dispatch",
+  "event_id": "integrated-sidebar-test-dispatch-001",
+  "action": {
+    "type": "input",
+    "target": "integrated-sidebar:repository-session-subagents-source-provider",
+    "input": {
+      "pointer": [
+        {
+          "method": "moveTo",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "method": "moveTo",
+          "x": 0,
+          "y": 3
+        },
+        {
+          "method": "moveTo",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "method": "click",
+          "x": 1,
+          "y": 3
+        },
+        {
+          "method": "click",
+          "x": 3,
+          "y": 21
+        },
+        {
+          "method": "click",
+          "x": 1,
+          "y": 25
+        }
+      ],
+      "lifecycle": {
+        "type": "session.created",
+        "parentID": "ses_native_parent",
+        "sessionID": "ses_native_second"
+      },
+      "keyboard": [
+        {
+          "method": "pressEnter",
+          "target": "active-subagents-header"
+        },
+        {
+          "method": "pressEnter",
+          "target": "source-control-next"
+        }
+      ]
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "moveTo+click+session.created+pressEnter+click+pressEnter+click",
+    "target": "integrated-sidebar:repository-session-subagents-source-provider",
+    "input": {
+      "pointer": [
+        {
+          "method": "moveTo",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "method": "moveTo",
+          "x": 0,
+          "y": 3
+        },
+        {
+          "method": "moveTo",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "method": "click",
+          "x": 1,
+          "y": 3
+        },
+        {
+          "method": "click",
+          "x": 3,
+          "y": 21
+        },
+        {
+          "method": "click",
+          "x": 1,
+          "y": 25
+        }
+      ],
+      "lifecycle": {
+        "type": "session.created",
+        "parentID": "ses_native_parent",
+        "sessionID": "ses_native_second"
+      },
+      "keyboard": [
+        {
+          "method": "pressEnter",
+          "target": "active-subagents-header"
+        },
+        {
+          "method": "pressEnter",
+          "target": "source-control-next"
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "9f99ef6f-8a3b-44b3-bc93-0dab33d9edc4",
+    "dispatch_id": "integrated-sidebar-test-dispatch-dispatch-001",
+    "transition_id": "integrated-sidebar-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "4701482054734",
+    "transition_monotonic_ns": "4701722141642"
+  },
+  "before": {
+    "snapshot_id": "integrated-sidebar-interact-before",
+    "frame_sha256": "daead726a8cddff1bb65b4bc90d1ba90a95a2249d67cbf32e03ecf68d2e67a80",
+    "spans_sha256": "95b0094db5daecf439901ae1d4210c138246d94b31036707b216a20b5628a28c",
+    "state_sha256": "ccb2632d22ac9fa2252e50efc046a8f918dca05c4a0404ebdda70977ffca0d68"
+  },
+  "after": {
+    "snapshot_id": "integrated-sidebar-interact-after",
+    "frame_sha256": "6ce6670b7d9923d359632d2044d4b4256c53bc3e3a08b59eae2bcedacfb1fa08",
+    "spans_sha256": "0ea758cdc62834e657be7a36b22266d152beef2ba79f439c38c2c2ed6efe53e7",
+    "state_sha256": "2a5ee7fafed309452d3e585c8e3642a310226d88887eaecfaeb15d65071fdec3"
+  },
+  "result": {
+    "status": "passed",
+    "target": "integrated-sidebar:repository-session-subagents-source-provider",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "a8f709b5340a938ee3165d65ae12ab3bc587436001ee3ad57a1d4be741528c45",
+  "native_event_sha256": "e164203a4993497a442410c73620ced5b6282d6be88efcf7586f69065d21dce5"
+}

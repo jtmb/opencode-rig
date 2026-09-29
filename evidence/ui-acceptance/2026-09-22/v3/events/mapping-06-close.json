@@ -1,0 +1,53 @@
+{
+  "version": 2,
+  "phase": "close",
+  "event_id": "mapping-06-close-001",
+  "capture_id": "mapping-06",
+  "source_sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72",
+  "capture_generator_sha256": "de004ad8bd55316daaf82cd9460758bbb7060b487d37db7afe132677d2a46781",
+  "render_test_sha256": "45f7f39a9130c3fffacdaca3e26ae7dcfd2897703bc071687b63ddf18f458c81",
+  "native_capture_test_sha256": "94cd514fa1d6b4fe500b66736aa7dd244b692a8b0db53baaba97ed0e93e941eb",
+  "native_capture_output_sha256": "fb866d99a446a230f0066a65a8003c1181500fd25c380340994fd122439ddf68",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "close",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "before": {
+    "snapshot_id": "mapping-06-interact-after",
+    "frame_sha256": "b806649f1196c9c11fccc5bc37798e58688fb115277b3cb122705933ffd76643",
+    "spans_sha256": "56cda9ab5e47831550ddff8094e90d4e01701341f9e4d56901494f9bfefadfbc",
+    "state_sha256": "4b29c397c9ec0d29939eff4a69b6fbc67ecbae2269f62e3882463b430435ec82"
+  },
+  "after": {
+    "snapshot_id": "mapping-06-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "a5ed6602d954e8018d0d607573f441711e71c6ec621b7dfd33e01df223118335",
+  "output": "evidence/ui-acceptance/2026-09-22/v3/event-output/mapping-06-close.json",
+  "output_sha256": "6672e90abed5bbf10641062163d38fa32f6e8a5edee4ae607994cbe378b7d429",
+  "observed_at": "2026-09-22T21:35:58.052Z"
+}

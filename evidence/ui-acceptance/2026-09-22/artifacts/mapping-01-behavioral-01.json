@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/provider-state.test.ts",
+  "test_sha256": "a681be03373c55ce60aecc41f3ca41b62a540180bb94fb84f197f15fd3e3cd97",
+  "source_sha256": "f16d8e5adeb2e37aa88cc5d601aeaf25747acb495a93e9dd7cec237e95fffb8c",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh with repository default Node",
+  "command": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test provider-state.test.ts",
+  "observed_at": "2026-09-22T14:19:46Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/focused-output/codex-usage__test__provider-state.txt",
+  "output_sha256": "836d84ef250adb002b1638f2cb8519eefe315002cf2eeaf5173ce5caa111aba7"
+}

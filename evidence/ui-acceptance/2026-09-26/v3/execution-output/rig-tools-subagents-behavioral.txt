@@ -1,0 +1,17 @@
+(node:783325) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ renders the resolved model and variant before the child title (1.241408ms)
+✔ filters other repositories and keeps narrow rows within the panel width (0.770258ms)
+✔ keeps only bounded running sidebar rows and wraps keyboard selection (0.32177ms)
+✔ live active count includes a subsequent running child even while the body is collapsed (0.216349ms)
+✔ keeps focused rows on the shared sidebar surface with muted supporting text (0.48234ms)
+✔ active row styles never introduce black or an undefined background fallback (0.342089ms)
+✔ falls back to session lifecycle fields when the active snapshot omits a running child (0.21774ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 531.049396

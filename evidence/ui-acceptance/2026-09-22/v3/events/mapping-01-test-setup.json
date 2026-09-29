@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-setup",
+  "event_id": "mapping-01-test-setup-001",
+  "capture_id": "mapping-01",
+  "source_sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25",
+  "capture_generator_sha256": "73d0c9d7b0768e2c4a4821d9090057dd77602e8ffe471c3a1f99cb75067d05dd",
+  "render_test_sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd",
+  "native_capture_test_sha256": "de58be33306f711228030ce294948d570bc57232cf2bef9ec954bb0d0a539b15",
+  "native_capture_output_sha256": "1de2a29ee3fcd11dcfcf2b2b964932faaaee4963aab0220fc550b50608fd60e5",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "05268418-c4e3-472c-bfff-ebe8cda9e9b6",
+    "dispatch_id": "mapping-01-test-setup-dispatch-001",
+    "transition_id": "mapping-01-test-setup-transition-001",
+    "dispatch_monotonic_ns": "25387831958606",
+    "transition_monotonic_ns": "25387918529820"
+  },
+  "before": {
+    "snapshot_id": "mapping-01-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "mapping-01-open-after",
+    "frame_sha256": "322897bad5c52d20a01d05bebd776efd4576b9bde9bbbbceff7a41bbac45f96a",
+    "spans_sha256": "dabab9b4b3c33f8173d0e6a43852e9e241a948af6e2f508f00090cd74e0552a1",
+    "state_sha256": "3cb191def2928a9e5ce2be825bda706b78c72b0b4abcef431e138cc9c6658852"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "4dfcebfb2771a1c43eb90f156e582ffe63d6ae86bad25a21c0e1f5c865bbce96",
+  "output": "evidence/ui-acceptance/2026-09-22/v3/event-output/mapping-01-test-setup.json",
+  "output_sha256": "1c9596004491848a91b46abc683f9a46212a353f9ab9fe518177845c3d118d15",
+  "observed_at": "2026-09-25T07:45:16.228Z"
+}

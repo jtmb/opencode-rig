@@ -2,9 +2,9 @@
   "name": "opencode-browser-tools",
   "version": "1.0.0",
   "private": true,
-  "description": "Pinned Playwright MCP runtime for OpenCode on Linux Ubuntu",
+  "description": "Pinned Playwright runtime for explicitly requested headless Firefox tasks on Linux Ubuntu",
   "license": "UNLICENSED",
   "dependencies": {
-    "@playwright/mcp": "0.0.80"
+    "playwright": "1.63.0-alpha-2026-08-31"
   }
 }

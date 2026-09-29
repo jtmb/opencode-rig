@@ -1,0 +1,75 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "rig-tools-goal-handoff-test-dispatch-001",
+  "capture_id": "rig-tools-goal-handoff",
+  "source_sha256": "3f04d071e4659b343c8f5d09e1ac1b87db1ddbfc6e4374688b78b417c29cc15d",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "566e98fc5a8379641c66c8f09a1e303ebe55d15596f02eb0c9fc6d29d0da3814",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "c7b421f41f0df1185a39cfba4a659645cd3f2dd85bec27aecf4e18d502be22ef",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "input",
+    "target": "goal-handoff",
+    "input": {
+      "mouse": {
+        "x": 8,
+        "y": 0
+      },
+      "keyboard": "Enter"
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click+pressEnter",
+    "target": "goal-handoff",
+    "input": {
+      "mouse": {
+        "x": 8,
+        "y": 0
+      },
+      "keyboard": "Enter"
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "6f8d7b42-6376-4e80-9377-668cff8933f1",
+    "dispatch_id": "rig-tools-goal-handoff-test-dispatch-dispatch-001",
+    "transition_id": "rig-tools-goal-handoff-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "1270066639750",
+    "transition_monotonic_ns": "1270141192603"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-goal-handoff-interact-before",
+    "frame_sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+    "spans_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+    "state_sha256": "c368cc67b47dba478f561dbe99eec93e240fec97f23444f0863eeab45fe5e5b1"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-goal-handoff-interact-after",
+    "frame_sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+    "spans_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+    "state_sha256": "97609c12296ec94abafa5f84328de380b1853297c262851bdea1f981d62c5f1b"
+  },
+  "result": {
+    "status": "passed",
+    "target": "goal-handoff",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": false,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "c5e256379cf29ae8605e71039e0768fe7100bbe91ab27b1ee9d3c17710677235",
+  "output": "evidence/ui-acceptance/2026-09-28/v8/event-output/rig-tools-goal-handoff-test-dispatch.json",
+  "output_sha256": "747fadff351508db106a4578fef2e9ee06074340430bd57fa88e8ec8170dc5ee",
+  "observed_at": "2026-09-28T20:17:39.983Z"
+}

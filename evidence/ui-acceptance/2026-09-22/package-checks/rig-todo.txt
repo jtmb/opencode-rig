@@ -1,0 +1,45 @@
+
+> opencode-rig-todo-v2-local@0.1.0 check
+> npm run typecheck && npm test
+
+
+> opencode-rig-todo-v2-local@0.1.0 typecheck
+> bash ../../scripts/run-bounded-command.sh -- ../node_modules/.bin/tsc --noEmit
+
+bounded-command: available=5813MiB budget=2325MiB swap=581MiB node_heap=1511MiB
+Running as unit: run-re5c2474d6cdb4453af59a6b1e9061e79.scope; invocation ID: 33782d0747954ba3a4e7bb23aa4212d7
+
+> opencode-rig-todo-v2-local@0.1.0 test
+> bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test test/*.test.ts
+
+bounded-command: available=5829MiB budget=2331MiB swap=582MiB node_heap=1515MiB
+Running as unit: run-r3d84e643e5f2430b89ff60760d78c49b.scope; invocation ID: 0641ba5e43d243d0ae24e60c46a98630
+✔ rendered TodoPanel checks run in an isolated OpenTUI subprocess (988.956431ms)
+✔ composed sidebar density checks run in an isolated OpenTUI subprocess (1615.102753ms)
+✔ todoStatePath honours XDG_DATA_HOME (0.71897ms)
+✔ todoStatePath falls back under the home directory (0.27743ms)
+✔ parseTodoState accepts the object and bare-array forms (0.706971ms)
+✔ parseTodoState drops invalid items and survives corrupt input (0.25036ms)
+✔ serialize and parse round-trip (0.51272ms)
+✔ normalizes valid todos and drops malformed entries (1.3354ms)
+✔ keeps only the first in-progress item and demotes the rest (0.37265ms)
+✔ overlays every matching pending child task while leaving storage-shaped values untouched (0.25295ms)
+✔ orders current work before stable completed history (0.17878ms)
+✔ keeps only actionable work visible when completed history overflows (0.27594ms)
+✔ aggregates all completed history without dropping current or pending work (0.17211ms)
+✔ never exposes completed or cancelled body content in sidebar display (0.93834ms)
+✔ history summary is truthful for hidden rows (0.15224ms)
+✔ summarizes counts and markers (0.41113ms)
+✔ empty list summarizes cleanly (0.19985ms)
+✔ every displayed status keeps its complete content in the same row data (1.27855ms)
+✔ all statuses use one auto-height word-wrapped TodoRow path (0.373481ms)
+✔ Todo heading spans the panel and separates its accent count with flexible space (0.18083ms)
+✔ history summary reports exactly the omitted history rows (0.14419ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3009.836724

@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/tui.test.ts",
+  "test_sha256": "ce9efff741157ab23feeac631fe27d32202ea6fd15dcbccaab4db6fe6968b180",
+  "source_sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-ffi\",\"--experimental-strip-types\",\"--test\",\"test/tui.test.ts\"]",
+  "observed_at": "2026-09-25T08:12:48.170Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-25/v3/execution-output/source-control-tui-behavioral.txt",
+  "output_sha256": "d1fc892ee414b19c8a12307ebbc2e701273ad1a01cc66a20fd98ee692ea73a63",
+  "invocation": {
+    "run_id": "f9a1a401-d15f-415b-8f84-b2540c56f014",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/tui.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control",
+    "started_at": "2026-09-25T08:12:48.036Z",
+    "finished_at": "2026-09-25T08:12:48.170Z",
+    "started_monotonic_ns": "27010165118276",
+    "finished_monotonic_ns": "27010298876790",
+    "exit_code": 0,
+    "source_sha256_before": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+    "source_sha256_after": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+    "test_sha256_before": "ce9efff741157ab23feeac631fe27d32202ea6fd15dcbccaab4db6fe6968b180",
+    "test_sha256_after": "ce9efff741157ab23feeac631fe27d32202ea6fd15dcbccaab4db6fe6968b180"
+  }
+}

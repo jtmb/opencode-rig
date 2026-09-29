@@ -1,0 +1,138 @@
+bounded-command: available=7868MiB budget=3147MiB swap=786MiB node_heap=2045MiB
+Running as unit: run-rbb387cd5d8094bbaaaa7c0e9dd168d5c.scope; invocation ID: c13e0b46b72741f9b91ba876572f83f1
+TAP version 13
+# Subtest: provider usage stays before the native footer so working directory remains last
+ok 1 - provider usage stays before the native footer so working directory remains last
+  ---
+  duration_ms: 7.173409
+  type: 'test'
+  ...
+# Subtest: parses overall and model-specific usage windows
+ok 2 - parses overall and model-specific usage windows
+  ---
+  duration_ms: 11.696431
+  type: 'test'
+  ...
+# Subtest: derives Codex exhaustion and usage labels from the overall bucket only
+ok 3 - derives Codex exhaustion and usage labels from the overall bucket only
+  ---
+  duration_ms: 1.449327
+  type: 'test'
+  ...
+# Subtest: clamps unexpected usage percentages
+ok 4 - clamps unexpected usage percentages
+  ---
+  duration_ms: 0.24168
+  type: 'test'
+  ...
+# Subtest: parses and formats the Luna Reserve weekly window
+ok 5 - parses and formats the Luna Reserve weekly window
+  ---
+  duration_ms: 3.209945
+  type: 'test'
+  ...
+# Subtest: opts into Luna Reserve data only when requested
+ok 6 - opts into Luna Reserve data only when requested
+  ---
+  duration_ms: 3.023674
+  type: 'test'
+  ...
+# Subtest: rejects responses without usage windows
+ok 7 - rejects responses without usage windows
+  ---
+  duration_ms: 0.31355
+  type: 'test'
+  ...
+# Subtest: derives optional OpenAI account metadata without reading auth.json
+ok 8 - derives optional OpenAI account metadata without reading auth.json
+  ---
+  duration_ms: 0.13462
+  type: 'test'
+  ...
+# Subtest: formats reset countdowns
+ok 9 - formats reset countdowns
+  ---
+  duration_ms: 0.333449
+  type: 'test'
+  ...
+# Subtest: formats compact, stable provider panel labels
+ok 10 - formats compact, stable provider panel labels
+  ---
+  duration_ms: 0.41445
+  type: 'test'
+  ...
+# Subtest: assigns semantic tones to every provider state
+ok 11 - assigns semantic tones to every provider state
+  ---
+  duration_ms: 0.157339
+  type: 'test'
+  ...
+# Subtest: formats one-line provider summaries without inventing unavailable measurements
+ok 12 - formats one-line provider summaries without inventing unavailable measurements
+  ---
+  duration_ms: 0.22116
+  type: 'test'
+  ...
+# Subtest: summarizes collapsed provider state in a stable native-sized header
+ok 13 - summarizes collapsed provider state in a stable native-sized header
+  ---
+  duration_ms: 0.14765
+  type: 'test'
+  ...
+# Subtest: reports only provider rows supplied by the usage snapshot
+ok 14 - reports only provider rows supplied by the usage snapshot
+  ---
+  duration_ms: 0.16338
+  type: 'test'
+  ...
+# Subtest: keeps empty snapshots empty instead of synthesizing offline rows
+ok 15 - keeps empty snapshots empty instead of synthesizing offline rows
+  ---
+  duration_ms: 0.081509
+  type: 'test'
+  ...
+# Subtest: retains the last provider snapshot as STALE when a refresh fails
+ok 16 - retains the last provider snapshot as STALE when a refresh fails
+  ---
+  duration_ms: 1.547778
+  type: 'test'
+  ...
+# Subtest: does not retain an offline row as visible STALE data after a failed refresh
+ok 17 - does not retain an offline row as visible STALE data after a failed refresh
+  ---
+  duration_ms: 0.34809
+  type: 'test'
+  ...
+# Subtest: parses and fetches the documented DeepSeek balance response
+ok 18 - parses and fetches the documented DeepSeek balance response
+  ---
+  duration_ms: 0.824188
+  type: 'test'
+  ...
+# Subtest: reads bounded fallback cooldowns for tracked providers
+ok 19 - reads bounded fallback cooldowns for tracked providers
+  ---
+  duration_ms: 7.942787
+  type: 'test'
+  ...
+# Subtest: formats both OpenCode rows with stable status text and no unverified measurements
+ok 20 - formats both OpenCode rows with stable status text and no unverified measurements
+  ---
+  duration_ms: 0.19259
+  type: 'test'
+  ...
+# Subtest: recognizes the active subscription model from either message shape
+ok 21 - recognizes the active subscription model from either message shape
+  ---
+  duration_ms: 0.15798
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 430.047914

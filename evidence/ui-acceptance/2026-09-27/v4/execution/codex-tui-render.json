@@ -1,0 +1,34 @@
+{
+  "version": 2,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+  "test_sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd",
+  "source_sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-strip-types\",\"--test\",\"test/rendered.test.ts\"]",
+  "observed_at": "2026-09-27T10:04:04.951Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/codex-tui-render.txt",
+  "output_sha256": "2e32ef31c051ff1673e8ef195fffcefac31e04a7b5f377ecc1af7a6220052e35",
+  "invocation": {
+    "run_id": "8d459778-8913-4a64-bfb3-fec444ccbe67",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-strip-types",
+      "--test",
+      "test/rendered.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage",
+    "started_at": "2026-09-27T10:04:03.582Z",
+    "finished_at": "2026-09-27T10:04:04.951Z",
+    "started_monotonic_ns": "2681797770048",
+    "finished_monotonic_ns": "2683167577018",
+    "exit_code": 0,
+    "source_sha256_before": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25",
+    "source_sha256_after": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25",
+    "test_sha256_before": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd",
+    "test_sha256_after": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd"
+  }
+}

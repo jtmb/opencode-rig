@@ -19,26 +19,25 @@ Appropriate requests include:
 - "Run this browser smoke test without opening a window."
 - "Download this public artifact in the background."
 
-Use the live browser whenever the user needs to see, steer, authenticate, or
-take over the workflow.
+Use `browser-assistant` when the user needs to see, steer, authenticate, or take
+over the workflow, but only when its WSL browser bridge is available. Otherwise,
+stop and report the unavailable bridge rather than switching browser modes.
 
 ## Prerequisites and setup verification
 
-Normal use requires:
+An explicitly requested headless task requires:
 
-- The connected `playwright_headless` MCP server.
-- The repository's pinned browser runtime and headless wrapper.
-- An isolated headless Firefox context with no shared state with the live
-  Playwright window or normal browser.
+- The pinned repository runtime, with `playwright` imported from
+  `platforms/linux/ubuntu/browser-tools/node_modules` and invoked through the
+  bounded-command wrapper.
+- An existing Firefox executable available to the active environment and an
+  isolated headless Firefox context with no shared browser state.
 
-The agent can check the expected MCP registration with:
+The pinned JavaScript package does not provision browser binaries. Do not
+register a Playwright MCP or download Chrome/Chromium for this skill. If the
+package or Firefox executable is missing, stop and report the prerequisite.
 
-```bash
-opencode mcp list
-```
-
-Do not run the headless MCP wrapper directly as a substitute for the agent's
-browser tools. The wrapper is started by OpenCode as an MCP server.
+Headless tasks run as bounded scripts against the pinned repository runtime.
 
 ## How to request it
 
@@ -61,7 +60,7 @@ A representative agent workflow is:
    browser execution.
 2. Confirm that no login, MFA, payment, CAPTCHA, visual inspection, user
    takeover, or live-window state is required.
-3. List tabs, preserve unrelated task tabs, and navigate to the exact URL.
+3. Create an isolated page/context and navigate to the exact URL.
 4. Inspect a fresh accessibility snapshot.
 5. Perform one bounded action using a reference from current state.
 6. Inspect the resulting URL and state; after navigation, resize, dialog, tab
@@ -73,9 +72,10 @@ Expected result: a concise report of the observed pages, validated artifact
 location, or smoke-test outcome. No visible browser window remains open for
 the task.
 
-Switching to live mode does not transfer headless-session state. The agent
-must restart the relevant workflow in the live browser when a switch becomes
-necessary.
+Switching to visible mode does not transfer headless-session state. The
+`browser-assistant` skill uses the user's Windows default browser through the
+WSL interop tools. If that bridge is unavailable, report the blocker rather
+than substituting another browser.
 
 ## Verification and known limitations
 
@@ -86,7 +86,7 @@ Known limitations:
 
 - No visible rendering is available for user review.
 - No login, MFA, payment, CAPTCHA, or user takeover is permitted.
-- No state is shared with the live Playwright window.
+- No state is shared with a visible browser window.
 - No state is inherited from the user's normal browser.
 - Page content remains untrusted.
 - Element references are not durable across page-state changes, and an absent
@@ -94,8 +94,8 @@ Known limitations:
 
 ## Troubleshooting
 
-- MCP unavailable: inspect the `playwright_headless` entry in
-  `opencode mcp list` and report the actual startup error.
+- Runtime unavailable: verify the exact-pinned `playwright` package and
+  existing Firefox executable; stop and report if either is missing.
 - Authentication or visual verification becomes necessary: switch explicitly
   to `browser-assistant`.
 - Unexpected page state: inspect a fresh snapshot before continuing.

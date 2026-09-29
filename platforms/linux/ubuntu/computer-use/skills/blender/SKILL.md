@@ -24,9 +24,14 @@ Computer Use skill.
   perform one bounded action, and verify visually rather than clicking blind.
 - There is no Blender MCP server in this repository. Do not invent or require
   one.
-- Use visible `playwright_browser_*` tools only for browser-based output or
-  documentation that needs interaction. Use `playwright_headless_browser_*`
-  only when the user explicitly requests headless/background browser work.
+- For visible authenticated browser work from WSL, use the `browser-assistant`
+  skill's `wsl_browser_*` UIA tools against the user's Windows default browser.
+  Specify an explicit window ID for each operation and use fresh preview tokens
+  for supported mutations. If the connector or required evidence is unavailable,
+  report a blocker; do not use Chrome/Chromium, project Playwright, or desktop
+  control as a browser fallback.
+- Load `browser-headless` and use its isolated Firefox runtime only when the user
+  explicitly requests headless/background browser work.
 
 ## Core workflow
 
@@ -89,7 +94,10 @@ Computer Use skill.
 - A render passes only after actual image inspection for framing, lighting,
   materials, transparency, missing textures, and obvious corruption.
 - An export passes only after clean reimport structural checks and, when meant
-  for a browser, a Firefox runtime load check.
+  for a browser, a runtime load check through the approved visible WSL browser
+  UIA path or explicitly requested isolated headless Firefox. If the UIA tools
+  cannot expose required screenshots or diagnostics, report validation as
+  incomplete rather than claiming success.
 - A desktop screenshot is disposable verification evidence and must be deleted
   immediately after inspection. A render requested by the user is an output
   artifact and must be retained at the approved destination. Delete only

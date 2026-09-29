@@ -1,0 +1,25 @@
+{
+  "qaCommand": [
+    "python3",
+    "platforms/linux/ubuntu/computer-use/scripts/check-repository-qa.py"
+  ],
+  "qaRuntime": {
+    "name": "node",
+    "version": "26.4.0",
+    "executable": "toolchains/node/bin/node",
+    "sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "packageManager": {
+      "name": "npm",
+      "executable": "toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+      "sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+    }
+  },
+  "documentationCommand": [
+    "python3",
+    "platforms/linux/ubuntu/computer-use/scripts/check-doc-coverage.py",
+    "--staged"
+  ],
+  "timeoutMs": 600000,
+  "tokenTtlMs": 300000,
+  "requiredPaths": ["HANDOFF.md", "ROADMAP.md"]
+}

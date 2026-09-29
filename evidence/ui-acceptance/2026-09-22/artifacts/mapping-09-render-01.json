@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts",
+  "test_sha256": "5103f5f721bebf50848721535f977ac64c0b1b20bef2ec70243665315a89a86e",
+  "source_sha256": "471ea5ab02705b364d2e95e54ec379dfb8b9215efc20fcb2632df116f0c05dfe",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh with Node v26.4.0 via PATH",
+  "command": "PATH=/tmp/opencode/node-v26.4.0-linux-x64/bin:$PATH bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test visible-command.test.ts",
+  "observed_at": "2026-09-22T14:19:46Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/focused-output/rig-tools__test__visible-command.txt",
+  "output_sha256": "5bb0abb79aa5eef16d250a5872ef676df396e9c21f3798990a9a40591f2ae0ce"
+}

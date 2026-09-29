@@ -1,0 +1,12 @@
+(node:1519717) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+RIG_TODO_TASKS_RENDER_ASSERTIONS_EXECUTED
+✔ full-screen Todo board responds to theme changes, history paging, and keyboard close (618.422558ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1300.936177

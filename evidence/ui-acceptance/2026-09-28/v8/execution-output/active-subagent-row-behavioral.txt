@@ -1,0 +1,12 @@
+(node:216561) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+"FFI is an experimental feature and might change at any time"
+✔ active row keyboard navigation, Enter, and mouse dispatch reach their callbacks (70.084011ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 847.041574

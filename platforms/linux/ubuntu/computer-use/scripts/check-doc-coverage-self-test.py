@@ -32,9 +32,9 @@ FIXTURE_MAP = {
             "onAdd": ["docs/scripts/README.md"],
         },
         {
-            "name": "plugins",
-            "match": [f"{BR}/plugins/*/**"],
-            "docs": [f"docs/plugins/{{plugin}}.md", f"{BR}/plugins/{{plugin}}/README.md"],
+            "name": "plugins-v2",
+            "match": [f"{BR}/plugins-v2/**"],
+            "docs": [f"{BR}/plugins-v2/README.md"],
             "onAdd": ["docs/plugins/README.md"],
         },
         {
@@ -58,9 +58,9 @@ FILES = [
     "docs/scripts/alpha.md",
     "docs/scripts/alpha-shared.md",
     "docs/scripts/README.md",
-    f"{BR}/plugins/widget/src/index.ts",
-    f"{BR}/plugins/widget/README.md",
-    "docs/plugins/widget.md",
+    f"{BR}/plugins-v2/widget/src/index.ts",
+    f"{BR}/plugins-v2/widget/README.md",
+    f"{BR}/plugins-v2/README.md",
     "docs/plugins/README.md",
     f"{BR}/skills/demo/SKILL.md",
     f"{BR}/skills/demo/README.md",
@@ -151,14 +151,14 @@ def main() -> int:
         expect(result.returncode == 0, "skill change with its README change must pass")
         cases += 1
 
-        result = run(root, map_path, "--changed-file", f"{BR}/plugins/widget/src/index.ts")
+        result = run(root, map_path, "--changed-file", f"{BR}/plugins-v2/widget/src/index.ts")
         expect(result.returncode == 1, "plugin source change without a doc change must fail")
         cases += 1
 
         result = run(
             root, map_path,
-            "--changed-file", f"{BR}/plugins/widget/src/index.ts",
-            "--changed-file", "docs/plugins/widget.md",
+            "--changed-file", f"{BR}/plugins-v2/widget/src/index.ts",
+            "--changed-file", f"{BR}/plugins-v2/README.md",
         )
         expect(result.returncode == 0, "plugin change with its doc change must pass")
         cases += 1

@@ -1,0 +1,51 @@
+import assert from "node:assert/strict"
+import { spawnSync } from "node:child_process"
+import test from "node:test"
+
+
+const MAX_OUTPUT_BYTES = 1024 * 1024
+const TIMEOUT_MS = 120_000
+const ISOLATED_NODE_ARGS = process.versions.node.startsWith("26.4.") ? ["--experimental-ffi"] : []
+
+function runIsolated(args: readonly string[]) {
+  const environment = { ...process.env }
+  delete environment.NODE_TEST_CONTEXT
+  return spawnSync(process.execPath, [...ISOLATED_NODE_ARGS, ...args], {
+    cwd: new URL("..", import.meta.url),
+    encoding: "utf8",
+    env: environment,
+    input: "",
+    maxBuffer: MAX_OUTPUT_BYTES,
+    stdio: ["pipe", "pipe", "pipe"],
+    timeout: TIMEOUT_MS,
+  })
+}
+
+test("rendered OpenTUI checks contain native stderr in a subprocess", () => {
+  const marker = "opentui-native-stderr-containment-probe"
+  const probe = runIsolated(["-e", `process.stderr.write(${JSON.stringify(marker)})`])
+  assert.equal(probe.error, undefined)
+  assert.equal(probe.status, 0)
+  assert.equal(probe.stderr, marker)
+
+  const rendered = runIsolated([
+    "--experimental-strip-types",
+    "--test",
+    "test/rendered-fixture.ts",
+  ])
+  assert.equal(rendered.error, undefined)
+  assert.equal(
+    rendered.status,
+    0,
+    `isolated OpenTUI renderer failed\nstdout:\n${rendered.stdout}\nstderr:\n${rendered.stderr}`,
+  )
+  assert.doesNotMatch(rendered.stdout, /# SKIP\b/)
+  assert.match(rendered.stdout, /RIG_FILE_MANAGER_HOSTILE_RENDER_ASSERTIONS_EXECUTED/)
+  assert.match(rendered.stdout, /RIG_FILE_MANAGER_MOUSE_RENDER_ASSERTIONS_EXECUTED/)
+  assert.match(rendered.stdout, /RIG_FILE_MANAGER_SCROLL_RENDER_ASSERTIONS_EXECUTED/)
+  assert.match(rendered.stdout, /RIG_FILE_MANAGER_SIDEBAR_RENDER_ASSERTIONS_EXECUTED/)
+  assert.match(rendered.stdout, /RIG_FILE_MANAGER_FALLBACK_RENDER_ASSERTIONS_EXECUTED/)
+  assert.match(rendered.stdout, /RIG_FILE_MANAGER_PANEL_RENDER_ASSERTIONS_EXECUTED/)
+  assert.match(rendered.stdout, /RIG_FILE_MANAGER_THEME_SWITCH_RENDER_ASSERTIONS_EXECUTED/)
+  process.stdout.write("RIG_FILE_MANAGER_THEME_SWITCH_RENDER_ASSERTIONS_EXECUTED\n")
+})

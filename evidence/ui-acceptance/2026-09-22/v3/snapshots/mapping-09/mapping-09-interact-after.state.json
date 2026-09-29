@@ -1,0 +1,7 @@
+{
+  "visible": true,
+  "activeHeading": true,
+  "dispatches": [
+    "router.navigate:{\"type\":\"session\",\"sessionID\":\"ses_native_child\"}"
+  ]
+}

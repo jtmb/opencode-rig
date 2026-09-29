@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+  "test_sha256": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb",
+  "source_sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-ffi\",\"--experimental-strip-types\",\"--test\",\"test/hermes-hooks-panel-rendered.test.ts\"]",
+  "observed_at": "2026-09-25T08:12:58.298Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-25/v3/execution-output/rig-tools-hermes-hooks-panel-render.txt",
+  "output_sha256": "29e9f4f6b0e914fdecb20b2851c2a7817e04f6dcb6d364cabdfbdf7970955ae5",
+  "invocation": {
+    "run_id": "464c2b57-78bd-421e-8160-4cd478dfae98",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/hermes-hooks-panel-rendered.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-25T08:12:57.098Z",
+    "finished_at": "2026-09-25T08:12:58.298Z",
+    "started_monotonic_ns": "27019226833551",
+    "finished_monotonic_ns": "27020427522885",
+    "exit_code": 0,
+    "source_sha256_before": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f",
+    "source_sha256_after": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f",
+    "test_sha256_before": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb",
+    "test_sha256_after": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb"
+  }
+}

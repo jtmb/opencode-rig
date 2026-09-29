@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/usage.test.ts",
+  "test_sha256": "4ee2359ee2e112b16ceb0b7fdca21ddcd1edeeca68b611dc35543a182512b263",
+  "source_sha256": "f16d8e5adeb2e37aa88cc5d601aeaf25747acb495a93e9dd7cec237e95fffb8c",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh with repository default Node",
+  "command": "bash ../../scripts/run-bounded-command.sh -- node --experimental-strip-types --test usage.test.ts",
+  "observed_at": "2026-09-22T14:19:46Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-22/focused-output/codex-usage__test__usage.txt",
+  "output_sha256": "4740fdb9717b77d711db015d7c7c3319d5da2a90d1fdc9ae891a7c537f90ccd2"
+}

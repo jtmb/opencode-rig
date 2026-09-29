@@ -1,0 +1,183 @@
+// OpenCode v2 (2.0.x) server/project example. Copy only the relevant parts to
+// <repo>/opencode.json or the isolated Open Rig global opencode.jsonc.
+//
+// Configuration notes:
+// - Local packages use `plugins` object entries with an options object.
+// - MCP server names live under `mcp.servers`; timeout values are objects.
+// - The portable project and global profiles use Basic Memory, GitHub, and
+//   ChatGPT. WSL browser actions use the Windows-default-browser connector with
+//   Playwright-like tools instead of a separate Playwright MCP; browser
+//   capability remains unverified until bounded live probes pass.
+// - Basic Memory runs through the bounded wrapper and hides 12 rarely used
+//   tools with `permissions` deny entries, leaving nine core note tools. V2
+//   applies agent rules after global rules and Build's `allow */*` is a later
+//   match, so Build repeats these denies after that wildcard to stay effective.
+// - Cross-project Basic Memory routing is closed by default. Set
+//   OPENCODE_MEMORY_CROSS_PROJECT to `true` in the server environment to opt in;
+//   remove only the `basic-memory_list_memory_projects` deny when project
+//   discovery is needed. Workspace and project-management tools stay denied.
+// - ChatGPT reuses the active OpenCode OpenAI OAuth connection; it has no
+//   API-key fallback. Image, search, and chat capabilities need live probes.
+// - Build, Explore, and General use Luna for implementation/exploration; Plan
+//   and the read-only Architect subagent use Sol for planning/design. Both
+//   verified models support #max.
+// - Build retains access to every configured subagent. Plan is restricted to
+//   read-only Explore subagents.
+// - Commit and push require separate primary-agent approvals. General and
+//   Explore subagents cannot perform either operation.
+// - Configure `codex-fallback.defaultChain` only with provider/model IDs that
+//   exist in the target installation; an empty options object leaves it inactive.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agents": {
+    "build": {
+      "model": "openai/gpt-6-luna#max",
+      "permissions": [
+        { "action": "*", "resource": "*", "effect": "allow" },
+        { "action": "github_*", "resource": "*", "effect": "ask" },
+        { "action": "repo_commit", "resource": "*", "effect": "ask" },
+        { "action": "repo_push", "resource": "*", "effect": "ask" },
+        { "action": "shell", "resource": "git commit *", "effect": "deny" },
+        { "action": "shell", "resource": "git push *", "effect": "deny" },
+        { "action": "shell", "resource": "git -C * commit *", "effect": "deny" },
+        { "action": "shell", "resource": "git -C * push *", "effect": "deny" },
+        { "action": "basic-memory_read_content", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_view_note", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_move_note", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_create_memory_project", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_delete_project", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_list_memory_projects", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_list_workspaces", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_schema_validate", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_schema_infer", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_schema_diff", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_search", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_fetch", "resource": "*", "effect": "deny" }
+      ]
+    },
+    "plan": {
+      "model": "openai/gpt-6-sol#max",
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+        { "action": "subagent", "resource": "explore", "effect": "allow" },
+         { "action": "shell", "resource": "git commit *", "effect": "deny" },
+         { "action": "shell", "resource": "git push *", "effect": "deny" },
+         { "action": "repo_commit", "resource": "*", "effect": "deny" },
+         { "action": "repo_push", "resource": "*", "effect": "deny" }
+      ]
+    },
+    "architect": {
+      "description": "Plan architecture and design changes without modifying repository files",
+      "mode": "subagent",
+      "model": "openai/gpt-6-sol#max",
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "*", "effect": "deny" },
+        { "action": "repo_commit", "resource": "*", "effect": "deny" },
+        { "action": "repo_push", "resource": "*", "effect": "deny" }
+      ]
+    },
+    "explore": {
+      "mode": "subagent",
+      "model": "openai/gpt-6-luna#max",
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+         { "action": "shell", "resource": "git commit *", "effect": "deny" },
+         { "action": "shell", "resource": "git push *", "effect": "deny" },
+         { "action": "repo_commit", "resource": "*", "effect": "deny" },
+         { "action": "repo_push", "resource": "*", "effect": "deny" }
+      ]
+    },
+    "general": {
+      "mode": "subagent",
+      "model": "openai/gpt-6-luna#max",
+      "permissions": [
+        { "action": "subagent", "resource": "*", "effect": "deny" },
+         { "action": "shell", "resource": "git commit *", "effect": "deny" },
+         { "action": "shell", "resource": "git push *", "effect": "deny" },
+         { "action": "repo_commit", "resource": "*", "effect": "deny" },
+         { "action": "repo_push", "resource": "*", "effect": "deny" }
+      ]
+    }
+  },
+  "mcp": {
+    "timeout": { "startup": 30000 },
+    "servers": {
+      "github": {
+        "type": "local",
+        "command": ["./platforms/linux/ubuntu/computer-use/scripts/github-mcp.sh"]
+      },
+      "basic-memory": {
+        "type": "local",
+        "command": ["./platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh"],
+        "environment": { "OPENCODE_MEMORY_CROSS_PROJECT": "false" }
+      },
+      "chatgpt": {
+        "type": "local",
+        "command": ["./platforms/linux/ubuntu/computer-use/scripts/chatgpt-mcp.sh"],
+        "codemode": false,
+        "disabled": false,
+        "timeout": { "startup": 30000 }
+      }
+    }
+  },
+  "permissions": [
+    { "action": "github_*", "resource": "*", "effect": "ask" },
+    { "action": "repo_commit", "resource": "*", "effect": "ask" },
+    { "action": "repo_push", "resource": "*", "effect": "ask" },
+    { "action": "shell", "resource": "git commit *", "effect": "deny" },
+    { "action": "shell", "resource": "git push *", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * commit *", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push *", "effect": "deny" },
+    { "action": "basic-memory_read_content", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_view_note", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_move_note", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_create_memory_project", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_delete_project", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_list_memory_projects", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_list_workspaces", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_schema_validate", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_schema_infer", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_schema_diff", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_search", "resource": "*", "effect": "deny" },
+    { "action": "basic-memory_fetch", "resource": "*", "effect": "deny" }
+  ],
+  "plugins": [
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy",
+      "options": {
+        "backgroundOnly": true,
+        "maxConcurrent": 10,
+        "enforceAgentIndex": true,
+        "reconciliationIntervalTurns": 10,
+        "memoryProject": "computer-assistant",
+        "memoryDirectory": "{env:HOME}/Documents/computer-assistant/basic-memory",
+        "memoryBindings": ["open-rig", "opencode-rig"],
+        "memoryReserveMiB": 512,
+        "memoryPerAgentMiB": 256,
+        "parentImplementationOptOutEnv": "OPENCODE_RIG_PARENT_IMPLEMENTATION"
+      }
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/ponytail-adapter",
+      "options": {}
+    },
+    { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/git-tool", "options": {} },
+    { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/repo-learning", "options": { "enabled": true } },
+    { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools", "options": { "requiredPaths": ["HANDOFF.md", "ROADMAP.md"] } },
+    { "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo", "options": {} },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback",
+      "options": {
+        "defaultChain": ["deepseek/deepseek-flash", "opencode/mimo-v2.6-flash-free", "anthropic/claude-sonnet-5"],
+        "proactive": true,
+        "triggerOn": "quota"
+      }
+    },
+    {
+      "package": "/home/james/repos/opencode-rig/platforms/linux/ubuntu/computer-use/plugins-v2/chatgpt-connector",
+      "options": {}
+    }
+  ]
+}
