@@ -471,7 +471,7 @@ def main() -> int:
             "import os\n"
             "import sys\n"
             "from pathlib import Path\n"
-            "mapping = mmap.mmap(-1, 2 * 1024**3, flags=mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS | mmap.MAP_NORESERVE, prot=mmap.PROT_READ | mmap.PROT_WRITE)\n"
+            "mapping = mmap.mmap(-1, 2 * 1024**3, flags=mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS | getattr(mmap, 'MAP_NORESERVE', 0), prot=mmap.PROT_READ | mmap.PROT_WRITE)\n"
             "mapping.close()\n"
             "arguments = sys.argv[1:]\n"
             "if 'project' in arguments and 'add' in arguments:\n"

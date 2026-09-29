@@ -266,6 +266,9 @@ runner. It now declares `provisioning: project` with repository-relative
 `toolchains/node/...` executables, and the validator accepts a recorded runtime
 whose executable path is the absolute equivalent (identity/digests/path-suffix
 match; `provisioning` is not compared). Manifest and self-test pass locally.
+The `verify-wsl2-source` job also failed in the bounded-command RSS fallback:
+the generated probe used `mmap.MAP_NORESERVE`, absent on the runner's Python; it
+now uses `getattr(mmap, "MAP_NORESERVE", 0)`.
 
 ## 2026-09-29 active Build continuation
 
