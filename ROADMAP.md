@@ -473,7 +473,8 @@ CI additionally failed on a hard-coded absolute QA-runtime path in
 tolerates the absolute path recorded in existing artifacts by matching the
 path suffix and digests.
 The WSL source job also needed a portable `mmap.MAP_NORESERVE`
-(`getattr(..., 0)`) in the bounded-command RSS fallback probe.
+(`getattr(..., 0)`) in the bounded-command RSS fallback probe, plus `uv`/`uvx`
+installed for the MCP-runtime checks.
 
 ## Implemented
 
