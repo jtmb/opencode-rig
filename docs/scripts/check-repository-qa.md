@@ -124,6 +124,7 @@ After runtime selection, the command runs in this order:
    `check-git-safety-policy-self-test.py`,
    `check-plugin-resource-guards-self-test.py`,
    `check-doc-coverage-self-test.py`, `deploy-plugins-self-test.py`,
+   `deploy-hermes-plugin-self-test.py`,
    `check-run-bounded-command-self-test.py`, `mcp-runtime-self-test.py`,
    `chatgpt-private-self-test.py`, `setup-opencode-self-test.py`,
    `setup-plugin-dependencies-self-test.py`,

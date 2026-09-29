@@ -38,8 +38,51 @@ hydrates from the persisted snapshot before receiving subsequent updates.
 
 ## Enable the Hermes observer
 
-From the repository root, install the two plugin files into the selected Hermes
-profile and explicitly enable the plugin:
+The opt-in observer is not deployed by any automatic step. Verify or install its
+two files into the selected Hermes profile with the checked-in deployment
+script; verification is the default and `--apply` copies atomically, then
+re-verifies:
+
+```bash
+# Verify the selected profile (default: $HERMES_HOME or ~/.hermes)
+python3 platforms/linux/ubuntu/computer-use/scripts/deploy-hermes-plugin.py
+
+# Install or repair, then re-verify
+python3 platforms/linux/ubuntu/computer-use/scripts/deploy-hermes-plugin.py --apply
+```
+
+The script installs only `plugin.yaml` and `__init__.py`, refuses symlinked
+roots/files and any target inside a git checkout, and never runs
+Hermes. Then explicitly enable the plugin and start Hermes:
+
+```bash
+hermes plugins enable open-rig-hermes-hooks
+```
+
+The observer starts on the next Hermes CLI or gateway process that loads
+plugins. The OpenCode server and CLI sides use the existing `rig-tools` role
+registrations; load the updated source and configuration through the normal
+Open Rig deployment procedure before opening `/hooks`.
+
+### Set the shared telemetry path
+
+The Python writer and the TypeScript `/hooks` reader each resolve
+`logs/open-rig-hooks.snapshot.json` under their own profile default, so they can
+read different roots when Hermes runs in a Windows profile and the OpenCode
+server runs in WSL. `deploy-hermes-plugin.py` always prints the one absolute path
+both processes must set:
+
+```bash
+export OPEN_RIG_HERMES_TELEMETRY_FILE="$HERMES_HOME/logs/open-rig-hooks.snapshot.json"
+```
+
+Set that **same** value in the Hermes profile environment and in the OpenCode
+server/CLI environment. Setting it on only one side leaves the reader on the
+other root and the panel stays empty. The `--telemetry-file` option prints a
+different absolute override when a shared location outside `$HERMES_HOME` is
+preferred.
+
+Manual install remains possible for reference:
 
 ```bash
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
@@ -50,11 +93,9 @@ install -D -m 0644 "$SOURCE/__init__.py" "$TARGET/__init__.py"
 hermes plugins enable open-rig-hermes-hooks
 ```
 
-The observer starts on the next Hermes CLI or gateway process that loads
-plugins. It does not edit Hermes configuration or run during this repository
-change. The OpenCode server and CLI sides use the existing `rig-tools` role
-registrations; load the updated source and configuration through the normal
-Open Rig deployment procedure before opening `/hooks`.
+The script does not edit Hermes configuration or run during this repository
+change; a live provider-backed observer event and rendered `/hooks` panel remain
+separate acceptance work.
 
 ## Snapshot RPC
 
@@ -75,11 +116,14 @@ and `toolRef`. Additional stored fields are discarded.
 ```bash
 npm --prefix platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools run check
 python3 -m pytest -q platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/hermes-plugin/tests
+python3 platforms/linux/ubuntu/computer-use/scripts/deploy-hermes-plugin-self-test.py
 ```
 
 These checks cover bounded file reads, symlink refusal, privacy projection,
 canonical request/turn outcomes, ring-buffer retention, concurrent observer
-writes, snapshot hydration, graph state transitions, and command/panel wiring.
+writes, snapshot hydration, graph state transitions, command/panel wiring, and
+the deployment script's read-only verify, idempotent install, stale repair,
+symlink/repository refusal, and shared telemetry-path printing.
 They are source/package evidence only. Rendered and live `/hooks` UI acceptance
 remains **pending** until fresh host rendering, theme switching, and panel
 interaction evidence is collected.

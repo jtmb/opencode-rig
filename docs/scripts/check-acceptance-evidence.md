@@ -121,6 +121,54 @@ time. These fields are declared provenance, not proof of capture origin or
 window identity; the validator binds those declarations to retained PNG bytes
 and dimensions only.
 
+### Optional exact-window binding and causal action receipt
+
+A host pair may additionally declare, atomically on both records, an
+exact-window rendered-visual binding and a digest-bound causal action receipt.
+Omitting both keeps every existing pair and claim valid. The rendered-visual
+record may add `exact_window`; the interaction record's `action` may add
+`receipt`:
+
+```json
+{
+  "exact_window": {
+    "window_sha256": "<canonical digest of the fields below>",
+    "pid": 4242,
+    "hwnd": "0x0000000000012ab4",
+    "title": "OpenCode operator console",
+    "wm_class": "CASCADIA_HOSTING_WINDOW_CLASS",
+    "bounds": {"x": 100, "y": 50, "width": 2560, "height": 1440}
+  },
+  "action": {
+    "tool_id": "screen_terminal",
+    "event": "escape",
+    "receipt": {
+      "version": 1,
+      "action_tool_id": "screen_terminal",
+      "target_window_sha256": "<the exact_window.window_sha256>",
+      "target_selector": "operator-console:goal-settings",
+      "action_monotonic_ns": "150",
+      "receipt_sha256": "<canonical digest of the fields above>"
+    }
+  }
+}
+```
+
+`window_sha256` is the sorted-JSON SHA-256 of `pid`, `hwnd`, `title`,
+`wm_class`, and `bounds`; `receipt_sha256` is the sorted-JSON SHA-256 of
+`version`, `action_tool_id`, `target_window_sha256`, `target_selector`, and
+`action_monotonic_ns`. The validator rejects a missing or mismatched target
+(the receipt target must equal the rendered-visual `window_sha256`), a receipt
+whose tool differs from the declared `action.tool_id` or falls outside the five
+allowlisted action IDs, a receipt not strictly ordered between the
+rendered-visual and interaction `monotonic_ns`, an `exact_window.bounds` that
+diverges from the declared host `window.bounds`, and any `window_sha256` or
+`receipt_sha256` that does not match its own fields. Declaring only one of
+`exact_window` and `receipt` fails closed. These fields remain declared
+provenance: they are not proof of capture origin, window ownership, or that the
+declared action caused the visible change, and the action allowlist is
+unchanged.
+
 A visible `complete` or `limited` claim must cite the parsed record paths from
 one matching pair in `rendered_visual` and `interaction`. Without that pair, it
 must remain `planned`. Pending UI inventory mode remains structural and does
@@ -165,12 +213,17 @@ render/interaction records validate. This supports only `sidebar-coexistence`
 as `limited`. Eight other user-visible claims remain `planned` with empty
 evidence. The validator binds declared provenance and image bytes, not capture
 origin; native span PNGs alone cannot establish foreground host acceptance.
+The optional exact-window/causal-action-receipt extension is representable but
+unused by the canonical manifest, so it promotes no claim; a genuine retained
+pair is still required.
 
 The copied-consumer self-test uses a disposable repository outside the Open Rig
 source tree. It exercises pending structural validation, valid execution and
 native test-render artifacts, missing/wrong invocation receipts, source/test
 hash mismatches, test-only evidence promotion attempts, null renders, missing
-dispatch provenance, stale or contradictory artifacts, path/symlink attacks,
+dispatch provenance, exact-window and causal-action-receipt bindings with
+fabricated, mismatched, missing, unordered, and unallowlisted-target
+rejections, stale or contradictory artifacts, path/symlink attacks,
 and the validator's no-subprocess boundary. Run it with:
 
 ```bash

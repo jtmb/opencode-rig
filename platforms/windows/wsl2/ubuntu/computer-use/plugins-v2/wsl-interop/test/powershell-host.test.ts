@@ -88,6 +88,6 @@ test("occlusion rejection names a bounded occluder without any window title", as
   assert.match(unoccluded, /Substring\(0, 64\)/u)
   assert.match(unoccluded, /Substring\(0, 256\)/u)
   assert.match(unoccluded, /bounds=\(\$\(\$rectangle\.Left\)/u)
+  assert.match(unoccluded, /Shell_SecondaryTrayWnd/u)
   assert.doesNotMatch(unoccluded, /::Title\(/u)
-  assert.doesNotMatch(unoccluded, /Shell_TrayWnd|taskbar/iu)
 })

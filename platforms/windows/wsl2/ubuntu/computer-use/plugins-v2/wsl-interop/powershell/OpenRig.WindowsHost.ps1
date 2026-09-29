@@ -589,6 +589,13 @@ function Assert-BrowserWindowUnoccluded {
         $visited += 1
         if ($visited -gt 512) { throw "could not verify Windows window z-order within the safety bound" }
         if ([OpenRig.BrowserNative]::IsWindowVisible($handle) -and -not [OpenRig.BrowserNative]::IsIconic($handle)) {
+            # The always-on-top shell taskbar is system chrome and does not occlude
+            # the captured window's own PrintWindow (DC) content, so it is skipped.
+            $zClass = [string][OpenRig.BrowserNative]::ClassName($handle)
+            if ($zClass -eq "Shell_TrayWnd" -or $zClass -eq "Shell_SecondaryTrayWnd") {
+                $handle = [OpenRig.BrowserNative]::GetWindow($handle, [uint32]3)
+                continue
+            }
             $cloaked = [uint32]0
             if ([OpenRig.BrowserNative]::DwmGetWindowAttribute($handle, [uint32]14, [ref]$cloaked, [uint32]4) -ne 0) {
                 throw "could not verify whether another Windows window occludes the selected window"

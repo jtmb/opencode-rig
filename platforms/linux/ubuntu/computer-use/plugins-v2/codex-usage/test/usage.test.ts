@@ -523,3 +523,13 @@ test("recognizes the active subscription model from either message shape", () =>
   assert.equal(isCodexSubscriptionModel(messageModel(user)), true)
   assert.equal(isCodexSubscriptionModel(latestSessionModel([user, assistant])), false)
 })
+
+test("preserves the selected model variant and omits it when the message has none", () => {
+  const nested = { model: { providerID: "openai", modelID: "gpt-5.6-sol", variant: "high" } }
+  const flat = { providerID: "openai", modelID: "gpt-5.6-sol", variant: "low" }
+  const absent = { model: { providerID: "openai", modelID: "gpt-5.6-sol" } }
+  assert.deepEqual(messageModel(nested), { providerID: "openai", modelID: "gpt-5.6-sol", variant: "high" })
+  assert.deepEqual(messageModel(flat), { providerID: "openai", modelID: "gpt-5.6-sol", variant: "low" })
+  assert.deepEqual(messageModel(absent), { providerID: "openai", modelID: "gpt-5.6-sol" })
+  assert.equal("variant" in (messageModel(absent) as object), false)
+})

@@ -28,7 +28,8 @@ general rule.
 
 Current shared-parent exceptions include `bootstrap_behavior_test.py` with
 `docs/scripts/bootstrap.md`, `deploy-plugins-self-test.py` with
-`docs/scripts/deploy-plugins.md`, and
+`docs/scripts/deploy-plugins.md`, `deploy-hermes-plugin-self-test.py` with
+`docs/scripts/deploy-hermes-plugin.md`, and
 `recover-orchestration-lockout-self-test.py` with
 `docs/scripts/orchestration-lockout-recovery.md`; these tests do not require
 duplicate stem-named pages.

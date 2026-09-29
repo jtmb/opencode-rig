@@ -21,6 +21,8 @@ from canonical paths in this checkout.
 
 The bounded GNU Screen acceptance tool exposed by `rig-tools` has a separate
 usage and safety guide at [`screen-terminal.md`](screen-terminal.md).
+The opt-in Hermes observer shipped with `rig-tools` is deployed and verified
+with [`deploy-hermes-plugin.py`](../scripts/deploy-hermes-plugin.md).
 The agent-free Basic Memory recovery CLI and the plugin's preview/apply tool are
 documented in [`opencode-recovery.md`](../scripts/opencode-recovery.md).
 

@@ -1,6 +1,8 @@
 export type SessionModel = {
   providerID: string
   modelID: string
+  /** Selected model variant when the message carries one. */
+  variant?: string
 }
 
 export type ProviderActivity = {
@@ -14,18 +16,27 @@ function isRecord(value: unknown): value is JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
+function selectedVariant(value: unknown) {
+  return typeof value === "string" && value.length > 0 ? value : undefined
+}
+
 export function messageModel(message: unknown): SessionModel | undefined {
   if (!isRecord(message)) return undefined
 
   if (isRecord(message.model)) {
     const providerID = message.model.providerID
     const modelID = message.model.modelID ?? message.model.id
-    if (typeof providerID === "string" && typeof modelID === "string") return { providerID, modelID }
+    if (typeof providerID === "string" && typeof modelID === "string") {
+      const variant = selectedVariant(message.model.variant)
+      return variant === undefined ? { providerID, modelID } : { providerID, modelID, variant }
+    }
   }
 
   const providerID = message.providerID
   const modelID = message.modelID ?? message.id
-  return typeof providerID === "string" && typeof modelID === "string" ? { providerID, modelID } : undefined
+  if (typeof providerID !== "string" || typeof modelID !== "string") return undefined
+  const variant = selectedVariant(message.variant)
+  return variant === undefined ? { providerID, modelID } : { providerID, modelID, variant }
 }
 
 export function latestSessionModel(messages: readonly unknown[]) {

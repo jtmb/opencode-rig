@@ -1284,3 +1284,83 @@ test("restart inbox race fails closed while the scan and wait are still pending 
     await cleanup?.()
   }
 })
+
+test("the loaded lifecycle scans on server.connected, bounds eligible-only waits, fails a persisted Auto Plan closed, and hands off a current-runtime Plan exactly once", async () => {
+  // Ineligible records sort before the eligible Auto Plans so the one scan must
+  // visit and reject them before it can open any wait.
+  const manual = "ses_awaremanual"
+  const blocked = "ses_awareblocked"
+  const complete = "ses_awarecomplete"
+  const handed = "ses_awarehanded"
+  const eligible = ["ses_zwork0", "ses_zwork1", "ses_zwork2", "ses_zwork3"]
+  const live = "ses_zworklive"
+  const harness = restartRecoveryHarness(
+    [
+      readyAutoPlan(manual, { handoff: "manual" }),
+      readyAutoPlan(blocked, { status: "blocked", blockedReason: "Operator paused." }),
+      readyAutoPlan(complete, { status: "complete", completionEvidence: ["done"] }),
+      readyAutoPlan(handed, { firstBuildPromptSent: true }),
+      ...eligible.map((id) => readyAutoPlan(id)),
+    ],
+    new Map<string, Record<string, unknown>>([
+      [manual, planSession(manual)],
+      [blocked, planSession(blocked)],
+      [complete, planSession(complete)],
+      [handed, planSession(handed)],
+      ...eligible.map((id): [string, Record<string, unknown>] => [id, planSession(id)]),
+      [live, planSession(live)],
+    ]),
+  )
+  const cleanup = await orchestrationPolicy.setup(harness.context)
+  try {
+    harness.push({ type: "server.connected", id: "evt-wire-connected", data: {} })
+    await until(() => harness.pendingWaits() >= 4, "the bounded eligible wait set")
+    await new Promise<void>((resolve) => { setTimeout(resolve, 50) })
+
+    // Bounded and eligible-only: the eight persisted records are all visited,
+    // the four ineligible ones open no wait, and exactly four eligible waits
+    // are held — the fifth eligible Goal is left for a later idle event.
+    assert.equal(harness.counts.scanned, 8)
+    assert.equal(harness.counts.waits, 4)
+    assert.equal(harness.pendingWaits(), 4)
+    assert.equal(harness.prompts.length, 0)
+    for (const id of [manual, blocked, complete, handed, ...eligible]) assert.equal(harness.session(id).agent, "plan")
+
+    // A single authoritative idle fails the first persisted Auto Plan closed:
+    // it must not switch to Build or queue a prompt and must point at /goal build.
+    harness.resolveWait()
+    await until(() => eligible.some((id) => harness.goalState(id).status === "blocked"), "the fail-closed persisted Auto Plan")
+    const failedID = eligible.find((id) => harness.goalState(id).status === "blocked")!
+    assert.equal(harness.prompts.length, 0)
+    assert.equal(harness.session(failedID).agent, "plan")
+    assert.equal(harness.goalState(failedID).firstBuildPromptSent, false)
+    assert.match(harness.goalState(failedID).blockedReason!, /queued user input/)
+    for (const id of eligible) if (id !== failedID) assert.equal(harness.goalState(id).status, "awaiting-build")
+
+    // The one-shot scan is spent: a repeated connection and a late idle status
+    // neither open another wait nor undo the fail-closed block.
+    harness.push({ type: "server.connected", id: "evt-wire-connected-2", data: {} })
+    harness.push({ type: "session.status", id: "evt-wire-late-idle", data: { sessionID: failedID, status: { type: "idle" } } })
+    await new Promise<void>((resolve) => { setTimeout(resolve, 50) })
+    assert.equal(harness.counts.waits, 4)
+    assert.equal(harness.prompts.length, 0)
+    assert.equal(harness.goalState(failedID).status, "blocked")
+
+    // A Plan whose execution this runtime observed still earns its one handoff,
+    // including a persisted Plan seeded after the one-shot startup scan.
+    harness.seed(readyAutoPlan(live, { planExecutionID: "wire-live-exec" }))
+    harness.push({ type: "session.execution.started", id: "wire-live-exec", data: { sessionID: live } })
+    harness.push({ type: "session.execution.succeeded", id: "wire-live-exec", data: { sessionID: live } })
+    harness.push({ type: "session.status", id: "evt-wire-live-idle", data: { sessionID: live, status: { type: "idle" } } })
+    await until(() => harness.prompts.some((prompt) => prompt.sessionID === live), "the current-runtime Plan handoff")
+    assert.equal(harness.session(live).agent, "build")
+    assert.equal(harness.goalState(live).firstBuildPromptSent, true)
+
+    // Exactly once: a repeated idle or agent selection cannot queue a second.
+    harness.push({ type: "session.status", id: "evt-wire-live-idle-2", data: { sessionID: live, status: { type: "idle" } } })
+    await new Promise<void>((resolve) => { setTimeout(resolve, 50) })
+    assert.equal(harness.prompts.filter((prompt) => prompt.sessionID === live).length, 1)
+  } finally {
+    await cleanup?.()
+  }
+})

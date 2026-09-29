@@ -842,18 +842,32 @@ def save_capture(root: Path, capture: dict[str, object]) -> None:
 
 
 def ready_host_fixture(
-    root: Path, manifest: dict[str, object], action_tool_id: str = "screen_terminal"
+    root: Path,
+    manifest: dict[str, object],
+    action_tool_id: str = "screen_terminal",
+    exact_window: bool = False,
 ) -> dict[str, object]:
     """Build an isolated ready manifest with distinct declared host PNG captures."""
     candidate = json.loads(json.dumps(manifest))
     write_manifest(root, candidate)
     run_id = str(uuid.uuid4())
     captured = dt.datetime.now(dt.timezone.utc)
+    bounds = {"x": 100, "y": 50, "width": 2, "height": 2}
     window = {
         "identity_sha256": "a" * 64,
         "process": "opencode",
-        "bounds": {"x": 100, "y": 50, "width": 2, "height": 2},
+        "bounds": bounds,
     }
+    exact_window_binding: dict[str, object] | None = None
+    if exact_window:
+        core = {
+            "pid": 4242,
+            "hwnd": "0x0000000000012ab4",
+            "title": "OpenCode operator console",
+            "wm_class": "CASCADIA_HOSTING_WINDOW_CLASS",
+            "bounds": dict(bounds),
+        }
+        exact_window_binding = {**core, "window_sha256": canonical_digest(core)}
     references: dict[str, dict[str, str]] = {}
     for kind, name, image_bytes, monotonic_ns, timestamp in (
         ("rendered_visual", "host-rendered", png_bytes(2, 2, 64), 100, captured - dt.timedelta(seconds=1)),
@@ -880,8 +894,22 @@ def ready_host_fixture(
         }
         if kind == "rendered_visual":
             record["image"] = image
+            if exact_window_binding is not None:
+                record["exact_window"] = exact_window_binding
         else:
             record["action"] = {"tool_id": action_tool_id, "event": "escape"}
+            if exact_window_binding is not None:
+                receipt_core = {
+                    "version": 1,
+                    "action_tool_id": action_tool_id,
+                    "target_window_sha256": exact_window_binding["window_sha256"],
+                    "target_selector": "operator-console:goal-settings",
+                    "action_monotonic_ns": "150",
+                }
+                record["action"]["receipt"] = {
+                    **receipt_core,
+                    "receipt_sha256": canonical_digest(receipt_core),
+                }
             record["result"] = {
                 "image": image,
                 "rendered_visual_sha256": references["rendered_visual"]["sha256"],
@@ -957,6 +985,46 @@ def host_image(record: dict[str, object], kind: str) -> dict[str, object]:
         image = result.get("image")
     assert isinstance(image, dict)
     return image
+
+
+def reseal_receipt(receipt: dict[str, object]) -> None:
+    """Recompute a fixture action receipt digest after an intentional mutation."""
+    core = {
+        key: receipt[key]
+        for key in (
+            "version",
+            "action_tool_id",
+            "target_window_sha256",
+            "target_selector",
+            "action_monotonic_ns",
+        )
+    }
+    receipt["receipt_sha256"] = canonical_digest(core)
+
+
+def reseal_exact_window(exact_window: dict[str, object]) -> None:
+    """Recompute a fixture exact-window digest after an intentional mutation."""
+    core = {
+        key: exact_window[key]
+        for key in ("pid", "hwnd", "title", "wm_class", "bounds")
+    }
+    exact_window["window_sha256"] = canonical_digest(core)
+
+
+def action_receipt(record: dict[str, object]) -> dict[str, object]:
+    """Return the mutable action receipt from an interaction record."""
+    action = record.get("action")
+    assert isinstance(action, dict)
+    receipt = action.get("receipt")
+    assert isinstance(receipt, dict)
+    return receipt
+
+
+def exact_window_binding(record: dict[str, object]) -> dict[str, object]:
+    """Return the mutable exact-window binding from a rendered-visual record."""
+    binding = record.get("exact_window")
+    assert isinstance(binding, dict)
+    return binding
 
 
 def main() -> int:
@@ -1103,6 +1171,151 @@ def main() -> int:
         )["sha256"]
         save_host_record(consumer, powershell_capture, "interaction", record)
         assert checker.validate_manifest(consumer) == (2, 1)
+
+        # Exact-window rendered-visual binding plus a digest-bound causal action
+        # receipt. The old validator rejected exact_window/receipt as unsupported
+        # fields, so this positive case failed before the schema extension.
+        ready_host_fixture(consumer, manifest, exact_window=True)
+        assert checker.validate_manifest(consumer) == (2, 1)
+
+        for action_tool_id in (
+            "screen_terminal",
+            "subagent",
+            "subagent_cancel",
+            "task_declare",
+            "todowrite",
+        ):
+            ready_host_fixture(consumer, manifest, action_tool_id, exact_window=True)
+            assert checker.validate_manifest(consumer) == (2, 1)
+
+        mismatched_receipt_target = ready_host_fixture(
+            consumer, manifest, exact_window=True
+        )
+        record = read_host_record(consumer, mismatched_receipt_target, "interaction")
+        receipt = action_receipt(record)
+        receipt["target_window_sha256"] = "b" * 64
+        reseal_receipt(receipt)
+        save_host_record(consumer, mismatched_receipt_target, "interaction", record)
+        expect_failure(
+            checker,
+            consumer,
+            "mismatched action receipt target",
+            "target does not match the rendered_visual exact window",
+        )
+
+        missing_receipt = ready_host_fixture(consumer, manifest, exact_window=True)
+        record = read_host_record(consumer, missing_receipt, "interaction")
+        action = record["action"]
+        assert isinstance(action, dict)
+        del action["receipt"]
+        save_host_record(consumer, missing_receipt, "interaction", record)
+        expect_failure(
+            checker,
+            consumer,
+            "missing action receipt",
+            "must be declared together",
+        )
+
+        missing_exact_window = ready_host_fixture(consumer, manifest, exact_window=True)
+        record = read_host_record(consumer, missing_exact_window, "rendered_visual")
+        del record["exact_window"]
+        save_host_record(consumer, missing_exact_window, "rendered_visual", record)
+        rebound_visual_digest = host_record_reference(
+            missing_exact_window, "rendered_visual"
+        )["sha256"]
+        interaction_record = read_host_record(
+            consumer, missing_exact_window, "interaction"
+        )
+        rebound_result = interaction_record["result"]
+        assert isinstance(rebound_result, dict)
+        rebound_result["rendered_visual_sha256"] = rebound_visual_digest
+        save_host_record(
+            consumer, missing_exact_window, "interaction", interaction_record
+        )
+        expect_failure(
+            checker,
+            consumer,
+            "missing exact window binding",
+            "must be declared together",
+        )
+
+        fabricated_receipt = ready_host_fixture(consumer, manifest, exact_window=True)
+        record = read_host_record(consumer, fabricated_receipt, "interaction")
+        receipt = action_receipt(record)
+        receipt["target_selector"] = "operator-console:forged"
+        save_host_record(consumer, fabricated_receipt, "interaction", record)
+        expect_failure(
+            checker,
+            consumer,
+            "fabricated receipt selector",
+            "receipt_sha256 does not match its causal action receipt",
+        )
+
+        fabricated_window = ready_host_fixture(consumer, manifest, exact_window=True)
+        record = read_host_record(consumer, fabricated_window, "rendered_visual")
+        exact_window_binding(record)["pid"] = 9999
+        save_host_record(consumer, fabricated_window, "rendered_visual", record)
+        expect_failure(
+            checker,
+            consumer,
+            "fabricated exact window identity",
+            "does not match its exact window identity",
+        )
+
+        unordered_receipt = ready_host_fixture(consumer, manifest, exact_window=True)
+        record = read_host_record(consumer, unordered_receipt, "interaction")
+        receipt = action_receipt(record)
+        receipt["action_monotonic_ns"] = "250"
+        reseal_receipt(receipt)
+        save_host_record(consumer, unordered_receipt, "interaction", record)
+        expect_failure(
+            checker,
+            consumer,
+            "action receipt outside render/interaction order",
+            "not ordered between render and interaction",
+        )
+
+        mismatched_receipt_tool = ready_host_fixture(
+            consumer, manifest, "screen_terminal", exact_window=True
+        )
+        record = read_host_record(consumer, mismatched_receipt_tool, "interaction")
+        receipt = action_receipt(record)
+        receipt["action_tool_id"] = "subagent"
+        reseal_receipt(receipt)
+        save_host_record(consumer, mismatched_receipt_tool, "interaction", record)
+        expect_failure(
+            checker,
+            consumer,
+            "action receipt tool mismatch",
+            "tool does not match the declared interaction action",
+        )
+
+        unknown_receipt_tool = ready_host_fixture(consumer, manifest, exact_window=True)
+        record = read_host_record(consumer, unknown_receipt_tool, "interaction")
+        receipt = action_receipt(record)
+        receipt["action_tool_id"] = "windows_capture"
+        reseal_receipt(receipt)
+        save_host_record(consumer, unknown_receipt_tool, "interaction", record)
+        expect_failure(
+            checker,
+            consumer,
+            "unallowlisted receipt action tool",
+            "action_tool_id is unsupported",
+        )
+
+        missing_receipt_target = ready_host_fixture(
+            consumer, manifest, exact_window=True
+        )
+        record = read_host_record(consumer, missing_receipt_target, "interaction")
+        receipt = action_receipt(record)
+        del receipt["target_window_sha256"]
+        save_host_record(consumer, missing_receipt_target, "interaction", record)
+        expect_failure(
+            checker,
+            consumer,
+            "missing receipt target identity",
+            "must be a non-empty string",
+        )
 
         float_host_version = ready_host_fixture(consumer, manifest)
         record = read_host_record(consumer, float_host_version, "interaction")
@@ -1814,7 +2027,9 @@ def main() -> int:
             "bindings, concrete transitions, source/test/capture/runtime digests, checksum-bound "
             "external Node/npm, structured actions/results, measured layout including tabs, retained "
             "PNG/WebP dimensions, bounded PNG expansion and malformed-stream rejection, multi-source "
-            "integration, declared host TUI captures and allowlisted action tools, same-day future "
+            "integration, declared host TUI captures and allowlisted action tools, "
+            "exact-window/causal-action-receipt bindings and their fabrication/ordering rejections, "
+            "same-day future "
             "rejection, float versions, "
             "missing/oversized/non-PNG/duplicate-key/traversal/symlink/stale-digest evidence, "
             "unknown fields, missing interaction-result bindings, skipped render execution, "

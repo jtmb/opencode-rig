@@ -55,6 +55,43 @@ platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only
 | `OPENCODE_MCP_NATIVE_ROOT` | Native private runtime/config root |
 | `BASIC_MEMORY_HOME` | Native notes root |
 
+## Setting the opt-in on the selected service
+
+The wrapper reads `OPENCODE_MEMORY_CROSS_PROJECT` from its own process
+environment, so the machine-local opt-in is set in the environment the OpenCode
+service gives the `basic-memory` server. The supported selected-service
+mechanism is the service environment setting:
+
+```bash
+opencode service set env OPENCODE_MEMORY_CROSS_PROJECT true
+opencode service get env OPENCODE_MEMORY_CROSS_PROJECT
+```
+
+`opencode service set` takes `<key> <value> [<env-value>]`. Installed OpenCode
+`2.0.11` describes `key` as a service setting or `env`, `value` as the setting
+value or environment variable name, and `env-value` as the environment variable
+value, so `env` + name + value is the supported setting form. `env` is a
+recognized service key: a bogus key fails with `Unknown service config key`,
+while `opencode service get env <NAME>` is accepted and prints the stored value
+(empty when unset). Remove it with
+`opencode service unset env OPENCODE_MEMORY_CROSS_PROJECT`.
+
+Setting or unsetting service configuration stops the shared background service;
+its next start picks up the new environment, so start it explicitly with
+`opencode service start` when it does not start automatically. The value is
+machine-local and persists in the private service configuration
+(`~/.config/opencode/service.json`), not in `opencode.json`. The checked-in
+repository `opencode.json` sets no `environment` for `basic-memory`, and the
+example config sets the opt-in to `false`; both stay closed.
+
+Not verified here: no `opencode service set env` write was applied during this
+audit, so the write path and the resulting cross-project routing are unproven
+end-to-end. The selected regular service currently stores no service
+environment (`opencode service get` prints `{}`) and
+`opencode service get env OPENCODE_MEMORY_CROSS_PROJECT` is empty. Confirm
+routing to a distinct existing project after a supported reload; a connected
+MCP server is not cross-project proof.
+
 ## Verification
 
 `--verify-only` prints one `key=value` line per item:

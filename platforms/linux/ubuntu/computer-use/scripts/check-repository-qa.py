@@ -63,6 +63,7 @@ SELF_TEST_NAMES = (
     "check-plugin-resource-guards-self-test.py",
     "check-doc-coverage-self-test.py",
     "deploy-plugins-self-test.py",
+    "deploy-hermes-plugin-self-test.py",
     "check-run-bounded-command-self-test.py",
     "mcp-runtime-self-test.py",
     "chatgpt-private-self-test.py",

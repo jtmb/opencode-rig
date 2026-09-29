@@ -25,6 +25,7 @@ EXECUTION_EVIDENCE_VERSION = 2
 CAPTURE_ARTIFACT_VERSION = 3
 CAPTURE_EVENT_VERSION = 3
 HOST_EVIDENCE_VERSION = 1
+HOST_RECEIPT_VERSION = 1
 HOST_ACTION_TOOL_IDS = {
     "screen_terminal",
     "subagent",
@@ -32,6 +33,10 @@ HOST_ACTION_TOOL_IDS = {
     "task_declare",
     "todowrite",
 }
+MAX_HOST_ACTION_EVENT = 256
+MAX_HOST_ACTION_SELECTOR = 256
+MAX_HOST_WINDOW_TITLE = 256
+MAX_HOST_WINDOW_CLASS = 256
 MAX_MANIFEST_BYTES = 1024 * 1024
 MAX_CLAIMS = 256
 MAX_EVIDENCE_PATHS = 256
@@ -63,6 +68,7 @@ HOST_TIMESTAMP_PATTERN = re.compile(
     r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
     r"(?:\.[0-9]{1,6})?(?:Z|\+00:00)"
 )
+HOST_HWND_PATTERN = re.compile(r"0x[0-9a-f]{1,16}")
 SEMVER_PATTERN = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?")
 TEST_DECLARATION_PATTERN = re.compile(r"\b(?:test|it|describe)\s*\(")
 SKIPPED_TEST_PATTERN = re.compile(
@@ -1934,16 +1940,20 @@ def _host_timestamp(
     return timestamp
 
 
-def _validate_host_window(value: object, label: str) -> dict[str, object]:
-    """Validate declared host window identity and bounded screen coordinates."""
-    data = _object(value, label)
-    _reject_unknown(data, {"identity_sha256", "process", "bounds"}, label)
-    identity = _validate_digest(data.get("identity_sha256"), f"{label}.identity_sha256")
-    process = _string(data.get("process"), f"{label}.process")
-    if len(process) > 256 or any(unicodedata.category(char) == "Cc" for char in process):
-        raise EvidenceError(f"{label}.process must be at most 256 printable characters")
-    bounds = _object(data.get("bounds"), f"{label}.bounds")
-    _reject_unknown(bounds, {"x", "y", "width", "height"}, f"{label}.bounds")
+def _printable_string(value: object, label: str, max_length: int) -> str:
+    """Return a non-empty printable string within a bounded length."""
+    text = _string(value, label)
+    if len(text) > max_length or any(unicodedata.category(char) == "Cc" for char in text):
+        raise EvidenceError(
+            f"{label} must be at most {max_length} printable characters"
+        )
+    return text
+
+
+def _validate_host_bounds(value: object, label: str) -> dict[str, int]:
+    """Validate bounded host window screen coordinates."""
+    bounds = _object(value, label)
+    _reject_unknown(bounds, {"x", "y", "width", "height"}, label)
     coordinates: dict[str, int] = {}
     for field in ("x", "y"):
         coordinate = bounds.get(field)
@@ -1952,7 +1962,7 @@ def _validate_host_window(value: object, label: str) -> dict[str, object]:
             or not isinstance(coordinate, int)
             or abs(coordinate) > MAX_HOST_IMAGE_DIMENSION
         ):
-            raise EvidenceError(f"{label}.bounds.{field} is outside the screen-coordinate limit")
+            raise EvidenceError(f"{label}.{field} is outside the screen-coordinate limit")
         coordinates[field] = coordinate
     for field in ("width", "height"):
         dimension = bounds.get(field)
@@ -1962,11 +1972,100 @@ def _validate_host_window(value: object, label: str) -> dict[str, object]:
             or dimension < 1
             or dimension > MAX_HOST_IMAGE_DIMENSION
         ):
-            raise EvidenceError(f"{label}.bounds.{field} is outside the positive dimension limit")
+            raise EvidenceError(f"{label}.{field} is outside the positive dimension limit")
         coordinates[field] = dimension
     if coordinates["width"] * coordinates["height"] > MAX_HOST_IMAGE_PIXELS:
-        raise EvidenceError(f"{label}.bounds exceeds the host pixel limit")
-    return {"identity_sha256": identity, "process": process, "bounds": coordinates}
+        raise EvidenceError(f"{label} exceeds the host pixel limit")
+    return coordinates
+
+
+def _validate_host_window(value: object, label: str) -> dict[str, object]:
+    """Validate declared host window identity and bounded screen coordinates."""
+    data = _object(value, label)
+    _reject_unknown(data, {"identity_sha256", "process", "bounds"}, label)
+    identity = _validate_digest(data.get("identity_sha256"), f"{label}.identity_sha256")
+    process = _printable_string(data.get("process"), f"{label}.process", 256)
+    bounds = _validate_host_bounds(data.get("bounds"), f"{label}.bounds")
+    return {"identity_sha256": identity, "process": process, "bounds": bounds}
+
+
+def _validate_host_exact_window(value: object, label: str) -> dict[str, object]:
+    """Validate an exact host window identity bound to its own canonical digest."""
+    data = _object(value, label)
+    _reject_unknown(
+        data,
+        {"window_sha256", "pid", "hwnd", "title", "wm_class", "bounds"},
+        label,
+    )
+    pid = data.get("pid")
+    if isinstance(pid, bool) or not isinstance(pid, int) or pid < 1 or pid > 2**31 - 1:
+        raise EvidenceError(f"{label}.pid must be a positive process id")
+    hwnd = _string(data.get("hwnd"), f"{label}.hwnd")
+    if HOST_HWND_PATTERN.fullmatch(hwnd) is None:
+        raise EvidenceError(f"{label}.hwnd must be a lowercase 0x-prefixed window handle")
+    title = _printable_string(data.get("title"), f"{label}.title", MAX_HOST_WINDOW_TITLE)
+    wm_class = _printable_string(
+        data.get("wm_class"), f"{label}.wm_class", MAX_HOST_WINDOW_CLASS
+    )
+    bounds = _validate_host_bounds(data.get("bounds"), f"{label}.bounds")
+    core = {
+        "pid": pid,
+        "hwnd": hwnd,
+        "title": title,
+        "wm_class": wm_class,
+        "bounds": bounds,
+    }
+    digest = _validate_digest(data.get("window_sha256"), f"{label}.window_sha256")
+    if digest != _canonical_digest(core):
+        raise EvidenceError(f"{label}.window_sha256 does not match its exact window identity")
+    return {**core, "window_sha256": digest}
+
+
+def _validate_host_action_receipt(value: object, label: str) -> dict[str, object]:
+    """Validate a digest-bound causal action receipt for one allowlisted host action."""
+    data = _object(value, label)
+    _reject_unknown(
+        data,
+        {
+            "version",
+            "action_tool_id",
+            "target_window_sha256",
+            "target_selector",
+            "action_monotonic_ns",
+            "receipt_sha256",
+        },
+        label,
+    )
+    version = data.get("version")
+    if (
+        isinstance(version, bool)
+        or not isinstance(version, int)
+        or version != HOST_RECEIPT_VERSION
+    ):
+        raise EvidenceError(f"{label}.version must be the integer {HOST_RECEIPT_VERSION}")
+    action_tool_id = _string(data.get("action_tool_id"), f"{label}.action_tool_id")
+    if action_tool_id not in HOST_ACTION_TOOL_IDS:
+        raise EvidenceError(f"{label}.action_tool_id is unsupported")
+    target = _validate_digest(
+        data.get("target_window_sha256"), f"{label}.target_window_sha256"
+    )
+    selector = _printable_string(
+        data.get("target_selector"), f"{label}.target_selector", MAX_HOST_ACTION_SELECTOR
+    )
+    action_ns = _monotonic_ns(
+        data.get("action_monotonic_ns"), f"{label}.action_monotonic_ns"
+    )
+    core = {
+        "version": HOST_RECEIPT_VERSION,
+        "action_tool_id": action_tool_id,
+        "target_window_sha256": target,
+        "target_selector": selector,
+        "action_monotonic_ns": str(action_ns),
+    }
+    digest = _validate_digest(data.get("receipt_sha256"), f"{label}.receipt_sha256")
+    if digest != _canonical_digest(core):
+        raise EvidenceError(f"{label}.receipt_sha256 does not match its causal action receipt")
+    return {**core, "action_monotonic_ns": action_ns, "receipt_sha256": digest}
 
 
 def _validate_host_png(raw: bytes, label: str) -> tuple[int, int]:
@@ -2145,7 +2244,7 @@ def _validate_host_evidence_record(
         "monotonic_ns",
         "window",
     }
-    allowed.update({"image"} if kind == "rendered_visual" else {"action", "result"})
+    allowed.update({"image", "exact_window"} if kind == "rendered_visual" else {"action", "result"})
     _reject_unknown(record, allowed, f"{label}.record")
     version = record.get("version")
     if isinstance(version, bool) or not isinstance(version, int) or version != HOST_EVIDENCE_VERSION:
@@ -2174,15 +2273,21 @@ def _validate_host_evidence_record(
     if kind == "rendered_visual":
         image_value = record.get("image")
         result_visual_digest = None
+        action_tool_id = None
+        action_receipt = None
     else:
         action = _object(record.get("action"), f"{label}.record.action")
-        _reject_unknown(action, {"tool_id", "event"}, f"{label}.record.action")
+        _reject_unknown(action, {"tool_id", "event", "receipt"}, f"{label}.record.action")
         action_tool_id = _string(action.get("tool_id"), f"{label}.record.action.tool_id")
         if action_tool_id not in HOST_ACTION_TOOL_IDS:
             raise EvidenceError(f"{label}.record.action.tool_id is unsupported")
-        event = _string(action.get("event"), f"{label}.record.action.event")
-        if len(event) > 256 or any(unicodedata.category(char) == "Cc" for char in event):
-            raise EvidenceError(f"{label}.record.action.event must be at most 256 printable characters")
+        _printable_string(action.get("event"), f"{label}.record.action.event", MAX_HOST_ACTION_EVENT)
+        receipt_value = action.get("receipt")
+        action_receipt = (
+            _validate_host_action_receipt(receipt_value, f"{label}.record.action.receipt")
+            if receipt_value is not None
+            else None
+        )
         result = _object(record.get("result"), f"{label}.record.result")
         _reject_unknown(
             result,
@@ -2194,6 +2299,13 @@ def _validate_host_evidence_record(
             f"{label}.record.result.rendered_visual_sha256",
         )
         image_value = result.get("image")
+
+    exact_window_value = record.get("exact_window")
+    exact_window = (
+        _validate_host_exact_window(exact_window_value, f"{label}.record.exact_window")
+        if exact_window_value is not None
+        else None
+    )
 
     image = _object(image_value, f"{label}.record.image")
     _reject_unknown(image, {"path", "sha256", "width", "height"}, f"{label}.record.image")
@@ -2232,6 +2344,9 @@ def _validate_host_evidence_record(
         "monotonic_ns": monotonic_ns,
         "window": window,
         "result_visual_sha256": result_visual_digest,
+        "exact_window": exact_window,
+        "action_tool_id": action_tool_id,
+        "action_receipt": action_receipt,
     }
 
 
@@ -2295,6 +2410,33 @@ def _validate_host_evidence(
             raise EvidenceError(f"{label} records must use one host capture tool")
         if visual["window"] != interaction["window"]:
             raise EvidenceError(f"{label} records must identify the same host window")
+        visual_exact_window = visual["exact_window"]
+        interaction_receipt = interaction["action_receipt"]
+        if (visual_exact_window is None) != (interaction_receipt is None):
+            raise EvidenceError(
+                f"{label} exact_window and action receipt must be declared together"
+            )
+        if visual_exact_window is not None and interaction_receipt is not None:
+            if visual_exact_window["bounds"] != visual["window"]["bounds"]:
+                raise EvidenceError(
+                    f"{label} exact_window bounds contradict the declared host window"
+                )
+            if interaction_receipt["target_window_sha256"] != visual_exact_window["window_sha256"]:
+                raise EvidenceError(
+                    f"{label} action receipt target does not match the rendered_visual exact window"
+                )
+            if interaction_receipt["action_tool_id"] != interaction["action_tool_id"]:
+                raise EvidenceError(
+                    f"{label} action receipt tool does not match the declared interaction action"
+                )
+            if not (
+                visual["monotonic_ns"]
+                < interaction_receipt["action_monotonic_ns"]
+                < interaction["monotonic_ns"]
+            ):
+                raise EvidenceError(
+                    f"{label} action receipt is not ordered between render and interaction"
+                )
         if interaction["monotonic_ns"] <= visual["monotonic_ns"]:
             raise EvidenceError(f"{label} monotonic_ns values must be strictly increasing")
         if interaction["captured_at"] < visual["captured_at"]:

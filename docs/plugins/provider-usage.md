@@ -123,8 +123,10 @@ later optional probe fails.
 The server plugin context does not expose a global session-list/message-list
 API. The implementation therefore records only bounded, metadata-only activity
 from the supported session model hooks and event stream; it does not scan all
-history or inspect message text. The newest 512 normalized provider IDs and
-timestamps are persisted in the profile-owned
+history or inspect message text. The message-model reader retains only provider
+and model identity plus the selected model `variant` when the message supplies
+one; assistant-message `cost` and token counts are not read. The newest 512
+normalized provider IDs and timestamps are persisted in the profile-owned
 `$XDG_STATE_HOME/opencode/codex-usage/activity.json` file, falling back to
 `$XDG_DATA_HOME` and then `~/.local/share`; entries older than two hours are
 pruned. The file is limited to 64 KiB and 512 entries, must be a regular

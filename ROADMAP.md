@@ -415,6 +415,50 @@ to move or minimize that game or reposition the console — an operator action,
 since the guard cannot distinguish genuinely-occluded pixels from PrintWindow
 content without weakening the fail-closed check.
 
+**2026-09-29 operator toggle and schema-migration hardening:** Added an
+operator-only `requireTodoDispatch` enforcement (default ON) so async
+background-agent admission can be decoupled from per-Todo binding and follow
+only `maxConcurrent`; with it OFF, launches are admitted up to capacity and
+create no Todo binding, while binding-consistency, follow-up, task, capacity,
+and commit/push gates still apply. `settings.ts` now also accepts a legacy
+settings file that predates a later-added enforcement, defaulting the missing
+field fail-closed, so a schema addition can no longer brick a live settings
+file into the invalid lockout state. Verified: orchestration typecheck +
+141/141, rig-tools typecheck + 200/200.
+**2026-09-29 occluder update:** the exact-console capture is now refused by a
+different overlapping window — a Chrome window (`Chrome_WidgetWin_1`,
+pid 10896, bounds −2568,−2..8,1406) — replacing the earlier `UnityWndClass`
+occluder. Rows 141/142/144/154 remain blocked on the operator moving the
+overlapping window; the guard correctly fails closed and no PNG/input occurred.
+**2026-09-29 occluder sequence (proves the guard, not a bug):** successive
+exact-console captures were refused by, in order, `UnityWndClass`, then
+`Chrome_WidgetWin_1`, then the always-on-top shell taskbar
+`Shell_SecondaryTrayWnd`, and finally `RiotWindowClass` (pid 18020, bounds
+0,0,2560,1440). The shell-taskbar case was a genuine over-strictness (PrintWindow
+renders the window DC, so system chrome does not occlude it) and was fixed by
+skipping `Shell_TrayWnd`/`Shell_SecondaryTrayWnd` in
+`Assert-BrowserWindowUnoccluded` (wsl-interop 67/67). The remaining refusals are
+real overlapping application windows, so the guard is working: the operator must
+move/close the covering game/Chrome window before a retained console host pair
+is possible. Rows 141/142/144/154 and the deferred push depend only on that.
+**2026-09-29 read-only roadmap audit batch (rows 146/152/159/160/161):** five
+bounded read-only audits were dispatched and independently spot-checked. New
+facts worth keeping: (152) the machine-local opt-in command
+`opencode service set env` is asserted in earlier notes but **not documented
+anywhere in-repo** — only `opencode service get env` is recorded, so that path
+stays unverified; the wrapper's opt-in is exactly lowercase `true`/`false` and
+fails closed otherwise. (159) No reachable reader surfaces an assistant
+message's `agent`/`model`/`variant`/cost — `session-context` projects a subset
+and `codex-usage` drops `variant` — so a consumer selected-turn proof needs a
+raw `message.list` read; consumer repos are `~/repos/ingenium` and
+`~/repos/blackjack`. (160) Connector preflight is source-confirmed; the live
+`/api/model` result is not retained anywhere. (161) Tool-error state is keyed
+`tool-error/state`, IDs are `terr_<sha256>`, and `rig-tools` has no tool-error
+code and cannot reload server plugins; unit restoration tests are same-process,
+not a real `ctx.storage` round-trip. (146) No shared Hermes telemetry path
+exists in config (the override appears only in docs/tests/source). All five stay
+blocked on operator prerequisites/approvals.
+
 ## Implemented
 
 The full implementation chronology and detailed evidence remain in the

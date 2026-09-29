@@ -529,6 +529,46 @@ test("bare remote matrix proves exact new/existing ranges and isolated push appr
   }
 })
 
+test("push computes outgoing commits when an advertised ref object is absent locally", async () => {
+  const root = await mkdtemp(join(tmpdir(), "rig-tools-absent-"))
+  const bare = await mkdtemp(join(tmpdir(), "rig-tools-absent-bare-"))
+  const other = await mkdtemp(join(tmpdir(), "rig-tools-absent-other-"))
+  const command = [process.execPath, "-e", "process.stdout.write('gate-ok')"]
+  const git = (cwd: string, args: string[]) => execFileSync("git", args, { cwd, encoding: "utf8" }).trim()
+  try {
+    git(root, ["init", "-q"])
+    git(root, ["config", "user.email", "test@example.invalid"])
+    git(root, ["config", "user.name", "Gate Test"])
+    await mkdir(join(root, ".opencode"))
+    await writeFile(join(root, ".opencode/rig-gates.json"), JSON.stringify({ qaCommand: command, documentationCommand: command }))
+    await writeFile(join(root, "HANDOFF.md"), "h\n")
+    await writeFile(join(root, "ROADMAP.md"), "r\n")
+    await writeFile(join(root, "file.txt"), "base\n")
+    git(root, ["add", "."]); git(root, ["commit", "-q", "-m", "base"])
+    git(bare, ["init", "--bare", "-q"]); git(root, ["remote", "add", "origin", bare])
+    git(root, ["push", "-q", "origin", "HEAD:refs/heads/main"])
+    git(bare, ["symbolic-ref", "HEAD", "refs/heads/main"])
+
+    // Create a remote ref from a separate clone so its commit object never
+    // exists in `root`; ls-remote still advertises it.
+    git(other, ["clone", "-q", bare, "."]); git(other, ["config", "user.email", "other@example.invalid"]); git(other, ["config", "user.name", "Other"])
+    await writeFile(join(other, "remote-only.txt"), "remote only\n"); git(other, ["add", "remote-only.txt"]); git(other, ["commit", "-q", "-m", "remote-only"]); git(other, ["push", "-q", "origin", "HEAD:refs/heads/other"])
+    const absentSha = git(bare, ["rev-parse", "refs/heads/other"])
+    assert.throws(() => git(root, ["rev-parse", "--verify", "--quiet", `${absentSha}^{commit}`]), /Command failed/)
+
+    await writeFile(join(root, "file.txt"), "local-one\n"); git(root, ["add", "file.txt"]); git(root, ["commit", "-q", "-m", "local-one"])
+    const manager = createGitGateManager({ qaCommand: command, documentationCommand: command })
+    const preview = JSON.parse(await manager.push(root, "origin", "refs/heads/main", "preview", undefined, false, "s1", "a1"))
+    assert.equal(preview.outgoing.length, 1)
+    assert.equal(preview.outgoing[0], git(root, ["rev-parse", "HEAD"]))
+    const applied = JSON.parse(await manager.push(root, "origin", "refs/heads/main", "apply", preview.token, true, "s1", "a1"))
+    assert.equal(applied.result, "pushed")
+    assert.equal(git(bare, ["rev-parse", "refs/heads/main"]), preview.head)
+  } finally {
+    await Promise.all([rm(root, { recursive: true, force: true }), rm(bare, { recursive: true, force: true }), rm(other, { recursive: true, force: true })])
+  }
+})
+
 test("push refuses ambiguous advertised destination matches without mutating a bare remote", async () => {
   const root = await mkdtemp(join(tmpdir(), "rig-tools-ambiguous-"))
   const bare = await mkdtemp(join(tmpdir(), "rig-tools-ambiguous-bare-"))

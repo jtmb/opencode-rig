@@ -109,6 +109,10 @@ The server plugin exposes:
   it and fail closed on changed identity, occlusion, or blank/unpainted pixels.
   An occlusion rejection names the blocking window by process ID, HWND, class
   name, and bounds in at most 256 characters; it never includes a window title.
+  The always-on-top shell taskbar (`Shell_TrayWnd`/`Shell_SecondaryTrayWnd`) is
+  skipped because `PrintWindow` renders the captured window's own DC content and
+  system chrome does not occlude it; any other overlapping visible window still
+  rejects the capture.
 - The shared `vision_capture` tool delegates to the fixed
   `windows.screenshot` host method when it detects WSL2 and the native
   GNOME/ydotool backend is unavailable. The capture stays in memory, is bounded

@@ -69,6 +69,33 @@ local Basic Memory configuration and its credentials; the switch neither
 creates projects nor changes the automatic `computer-assistant`
 rule-reconciliation binding below.
 
+### Setting the machine-local opt-in
+
+The server reads `OPENCODE_MEMORY_CROSS_PROJECT` from its process environment,
+so the opt-in is set on the selected OpenCode service, not in `opencode.json`:
+
+```bash
+opencode service set env OPENCODE_MEMORY_CROSS_PROJECT true
+opencode service get env OPENCODE_MEMORY_CROSS_PROJECT
+```
+
+`opencode service set` takes `<key> <value> [<env-value>]`: with `key=env`,
+`value` is the variable name and `env-value` is its value. `env` is a
+recognized service key — `opencode service get env <NAME>` is accepted while a
+bogus key fails with `Unknown service config key`. Unset it with
+`opencode service unset env OPENCODE_MEMORY_CROSS_PROJECT`. Setting or
+unsetting service configuration stops the shared background service, and its
+next start applies the environment; start it explicitly with
+`opencode service start` when needed. The value is machine-local and persists
+in the private service configuration (`~/.config/opencode/service.json`).
+
+Not verified here: no write was applied on the running regular service, which
+stores no service environment (`opencode service get` prints `{}`) and reports
+the variable unset. The checked-in `opencode.json` sets no environment for
+`basic-memory`, and the example config sets the opt-in to `false`. Confirm
+routing to a distinct existing project only after a supported reload; do not
+treat an MCP connection as proof.
+
 ## Using it
 
 - Load the `task-memory` skill for request handling and the safety rules.

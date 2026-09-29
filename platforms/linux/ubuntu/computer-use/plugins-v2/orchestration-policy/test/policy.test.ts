@@ -5,7 +5,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import test from "node:test"
 
-import {
+import orchestrationPolicy, {
   agentPolicyIndexErrors,
   cancelDirectChild,
   createSerialWriteQueue,
@@ -1958,6 +1958,130 @@ test("restores tool-error obligations and lets read-only work continue through c
   assert.equal((await corrupt.completeTask("ses_parent", { verification: "Recovered and verified the task state." })).kind, "change")
 })
 
+const TOOL_ERROR_KEY = "tool-error/state"
+
+type ToolErrorStateValue = {
+  version: number
+  sessions: { parentID: string; obligations: { id: string; tool: string; message: string }[]; acknowledged?: string[] }[]
+}
+
+type PluginHarness = {
+  storage: Map<string, unknown>
+  hooks: Map<string, (event: any) => Promise<void>>
+  tools: Map<string, { execute: (input: unknown, context: unknown) => Promise<unknown> }>
+  restore: () => Promise<void>
+}
+
+// Real plugin-entry harness: ctx.storage is the sole persistence path, so a
+// seeded entry is what `src/index.ts` reads with ctx.storage.get at setup.
+async function pluginHarness(
+  root: string,
+  options: { seed?: Readonly<Record<string, unknown>> } = {},
+): Promise<PluginHarness> {
+  const oldData = process.env.XDG_DATA_HOME
+  const oldConfig = process.env.XDG_CONFIG_HOME
+  process.env.XDG_DATA_HOME = join(root, "data")
+  process.env.XDG_CONFIG_HOME = join(root, "config")
+  const storage = new Map<string, unknown>()
+  const hooks = new Map<string, (event: any) => Promise<void>>()
+  const tools = new Map<string, { execute: (input: unknown, context: unknown) => Promise<unknown> }>()
+  const projectID = "tool-error-restore-test"
+  const ctx = {
+    options: { maxConcurrent: 3, enforceAgentIndex: false },
+    location: { project: { canonical: join(root, "project"), id: projectID } },
+    storage: {
+      get: async (key: string) => structuredClone(storage.get(key)),
+      set: async (key: string, value: unknown) => { storage.set(key, structuredClone(value)) },
+      remove: async (key: string) => { storage.delete(key) },
+    },
+    agent: { get: async () => ({ data: { model: { providerID: "fixture", id: "model" } } }) },
+    session: {
+      get: async ({ sessionID }: { sessionID: string }) => ({ id: sessionID, projectID }),
+      wait: async () => undefined,
+      switchAgent: async () => undefined,
+      switchModel: async () => undefined,
+      prompt: async () => ({ id: "goal-prompt" }),
+      interrupt: async () => ({ interrupted: false }),
+      hook: async () => undefined,
+    },
+    tool: {
+      hook: async (name: string, handler: (event: any) => Promise<void>) => { hooks.set(name, handler) },
+      transform: async (register: (editor: { add: (tool: any) => void }) => void) => {
+        register({ add: (tool) => { tools.set(tool.name, tool) } })
+      },
+    },
+    permission: { hook: async () => {} },
+    rpc: Object.assign(() => ({ checkTaskCompletion: async () => ({ enabled: true, ready: true, required: 0, receipted: 0, missingObligationIDs: [], conflictObligationIDs: [], unresolvedConflictIDs: [] }) }), {
+      register: async () => ({ dispose: async () => undefined }),
+    }),
+    event: { subscribe: () => ({ async *[Symbol.asyncIterator]() {} }) },
+  } as unknown as Parameters<typeof orchestrationPolicy.setup>[0]
+  // Seed before setup: restoreToolErrors must observe these entries through ctx.storage.get.
+  for (const [key, value] of Object.entries(options.seed ?? {})) storage.set(key, structuredClone(value))
+  const cleanup = await orchestrationPolicy.setup(ctx)
+  const restore = async () => {
+    await cleanup?.()
+    if (oldData === undefined) delete process.env.XDG_DATA_HOME
+    else process.env.XDG_DATA_HOME = oldData
+    if (oldConfig === undefined) delete process.env.XDG_CONFIG_HOME
+    else process.env.XDG_CONFIG_HOME = oldConfig
+  }
+  return { storage, hooks, tools, restore }
+}
+
+test("restores tool-error obligations through a real ctx.storage round-trip and coalesces duplicate deliveries", async (context) => {
+  await mkdir("/tmp/opencode", { recursive: true })
+  const root = await mkdtemp("/tmp/opencode/orchestration-tool-error-")
+  context.after(() => rm(root, { recursive: true, force: true }))
+
+  const failedCall = {
+    tool: "shell",
+    id: "persisted-error-call",
+    sessionID: "ses_parent",
+    status: "error" as const,
+    error: { message: "persisted failure before restart at /home/alice/private.txt" },
+  }
+
+  const source = await pluginHarness(join(root, "source"))
+  context.after(source.restore)
+  await source.tools.get("task_declare")!.execute({ kind: "change" }, { sessionID: "ses_parent" })
+  await source.hooks.get("execute.after")!(failedCall)
+
+  const persisted = source.storage.get(TOOL_ERROR_KEY) as ToolErrorStateValue
+  const persistedObligation = persisted.sessions.find((session) => session.parentID === "ses_parent")?.obligations[0]
+  assert.ok(persistedObligation, "a failed top-level call must persist one obligation through ctx.storage")
+  assert.match(persistedObligation.id, /^terr_[a-f0-9]{64}$/)
+
+  const restarted = await pluginHarness(join(root, "restarted"), { seed: { [TOOL_ERROR_KEY]: persisted } })
+  context.after(restarted.restore)
+  await restarted.tools.get("task_declare")!.execute({ kind: "change" }, { sessionID: "ses_parent" })
+
+  // setup() read the seeded value with ctx.storage.get, so restoreToolErrors ran.
+  await assert.rejects(
+    restarted.tools.get("task_complete")!.execute({ verification: "Completion must wait for the restored obligation." }, { sessionID: "ses_parent" }),
+    /unresolved top-level tool-error obligations/,
+  )
+  await assert.rejects(
+    restarted.hooks.get("execute.before")!({ tool: "repo_commit", id: "commit-call", sessionID: "ses_parent", input: {} }),
+    /unresolved top-level tool-error obligations/,
+  )
+
+  const acknowledgement = await restarted.tools.get("tool_error_ack")!.execute(
+    { obligationID: persistedObligation.id, evidence: "Reviewed the restored failure and recorded the recovery." },
+    { sessionID: "ses_parent" },
+  ) as { content: string }
+  assert.match(acknowledgement.content, /remaining=0; stateCorrupt=false/)
+
+  const afterAcknowledgement = restarted.storage.get(TOOL_ERROR_KEY) as ToolErrorStateValue
+  const acknowledgedSession = afterAcknowledgement.sessions.find((session) => session.parentID === "ses_parent")
+  assert.deepEqual(acknowledgedSession?.obligations, [])
+  assert.deepEqual(acknowledgedSession?.acknowledged, [persistedObligation.id])
+
+  // A re-delivered duplicate of the same call digest must be coalesced, not re-opened.
+  await restarted.hooks.get("execute.after")!({ ...failedCall, error: { message: "late duplicate" } })
+  assert.deepEqual(restarted.storage.get(TOOL_ERROR_KEY), afterAcknowledgement)
+})
+
 test("rule reconciliation is idempotent when no longer due", () => {
   const withoutMemory = policy()
   const first = withoutMemory.completeReconciliation("ses_parent", {
@@ -3420,4 +3544,56 @@ test("blocks a launch before the bounded task-child history can overflow", async
   }])
   await assert.rejects(controller.before(event("over-history-limit")), /task child history limit reached/)
   assert.deepEqual(controller.state(), { pending: 0, active: 0, known: 256 })
+})
+
+test("admissionState reports bounded admission counters without mutating them", async () => {
+  const controller = declaredPolicy(10, "change", 10)
+  assert.deepEqual(controller.admissionState(), {
+    configured: 10,
+    effective: 10,
+    mode: "parallel",
+    active: 0,
+    pending: 0,
+    reserving: 0,
+  })
+  controller.setEnforcementSettings({
+    status: "valid",
+    enforcements: { ...DEFAULT_ENFORCEMENTS },
+    orchestrationMode: "single-subagent",
+  })
+  assert.equal(controller.admissionState().effective, 1)
+  assert.equal(controller.admissionState().mode, "single-subagent")
+
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => { release = resolve })
+  const gated = createOrchestrationPolicy({ maxConcurrent: 10 }, {
+    capacityDiagnostic: async () => ({ approvedCount: 10 }),
+    resolveAgentModel: async () => "fixture/model",
+    repoLearningPreflight: readyRepoLearningPreflight,
+    readTodoState: async () => {
+      await gate
+      return JSON.stringify({ items: [{ content: DEFAULT_DESCRIPTION, status: "pending" }], updatedAt: "now" })
+    },
+  })
+  gated.declareTask("ses_parent", { kind: "change" })
+  const launch = gated.before(event("reserving"))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.deepEqual(gated.admissionState(), {
+    configured: 10,
+    effective: 10,
+    mode: "parallel",
+    active: 0,
+    pending: 0,
+    reserving: 1,
+  })
+  release()
+  await launch
+  assert.deepEqual(gated.admissionState(), {
+    configured: 10,
+    effective: 10,
+    mode: "parallel",
+    active: 0,
+    pending: 1,
+    reserving: 0,
+  })
 })

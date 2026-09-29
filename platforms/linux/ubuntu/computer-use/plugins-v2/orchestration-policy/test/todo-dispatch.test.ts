@@ -13,6 +13,7 @@ import {
 } from "../../rig-todo/src/dispatch.ts"
 import { todoDataRoot, todoStatePath } from "../../rig-todo/src/state.ts"
 import type { TodoItem } from "../../rig-todo/src/store.ts"
+import { DEFAULT_ENFORCEMENTS, writeEnforcementSettings } from "../src/settings.ts"
 
 const PARENT = "ses_todoplugin"
 const DESCRIPTION = "Implement authoritative Todo binding"
@@ -91,6 +92,30 @@ function launchEvent(id: string, description = DESCRIPTION) {
     input: { agent: "fixture/worker", model: "fixture/model", background: true, description },
   }
 }
+
+test("requireTodoDispatch OFF admits parent progress and unbound launches up to maxConcurrent", async (context) => {
+  await mkdir("/tmp/opencode", { recursive: true })
+  const root = await mkdtemp("/tmp/opencode/orchestration-todo-toggle-")
+  context.after(() => rm(root, { recursive: true, force: true }))
+  const plugin = await setup(root)
+  context.after(plugin.restore)
+  const before = plugin.hooks.get("execute.before")!
+  const progress = { tool: "goal_report", id: "progress", sessionID: PARENT, input: { status: "progress" } }
+
+  // Default ON: an unbound actionable Todo blocks parent progress.
+  await assert.rejects(before(progress), /Todo dispatch required/)
+
+  // Operator turns the Todo-dispatch coupling OFF; capacity alone now gates.
+  await writeEnforcementSettings(
+    { ...DEFAULT_ENFORCEMENTS, requireTodoDispatch: false, parentDelegationOnly: false },
+    undefined,
+  )
+  await before(progress)
+  // A launch whose description matches no Todo is admitted, not rejected per-Todo,
+  // and creates no Todo binding while the coupling is off.
+  await before(launchEvent("call_unbound", "Description that matches no actionable Todo"))
+  assert.deepEqual((await readTodoDispatchSnapshot(PARENT, plugin.dataRoot))?.bindings, [])
+})
 
 test("plugin release waits for the durable Todo snapshot before another dispatch can reserve it", async (context) => {
   await mkdir("/tmp/opencode", { recursive: true })

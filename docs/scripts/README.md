@@ -11,6 +11,8 @@
 | `setup-qa-runtime.py` | [`setup-qa-runtime.md`](setup-qa-runtime.md) | Verify or install the checksum-pinned checkout-local Node/npm QA runtime |
 | `setup-qa-runtime-self-test.py` | [`setup-qa-runtime.md`](setup-qa-runtime.md) | Exercise archive safety, runtime isolation, and atomic no-replace install |
 | `deploy-plugins.sh` | [`deploy-plugins.md`](deploy-plugins.md) | Register v2 packages in an isolated config |
+| `deploy-hermes-plugin.py` | [`deploy-hermes-plugin.md`](deploy-hermes-plugin.md) | Verify or install the opt-in Hermes observer plugin into a profile |
+| `deploy-hermes-plugin-self-test.py` | [`deploy-hermes-plugin.md`](deploy-hermes-plugin.md) | Exercise install, stale repair, symlink/repo refusal, and telemetry printing |
 | `verify-opencode-v2.sh` | [`verify-opencode-v2.md`](verify-opencode-v2.md) | Read-only v2 health check |
 | `setup-computer-assistant.sh` | [`setup-computer-assistant.md`](setup-computer-assistant.md) | Verify or configure Ubuntu computer-use dependencies |
 | `mcp_runtime.py` | [`mcp_runtime.md`](mcp_runtime.md) | Own the canonical MCP policy, profile state, and runtime checks |

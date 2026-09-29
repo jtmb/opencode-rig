@@ -124,7 +124,7 @@ server plugin reloads or restarts.
 ## Operator workflow settings
 
 The operator-only **Open Rig workflow settings** command in the CLI palette
-controls six workflow enforcements without editing `opencode.json`:
+controls seven workflow enforcements without editing `opencode.json`:
 
 | Setting | Default | OFF behavior |
 |---|---:|---|
@@ -134,6 +134,7 @@ controls six workflow enforcements without editing `opencode.json`:
 | `backgroundChildrenOnly` | ON | Child sessions may be launched in the configured foreground or background mode. |
 | `correctionLedgers` | ON | Correction-task mutations do not require roadmap, Todo, and project-memory ledger acknowledgements. |
 | `memoryReconciliation` | ON | Due-memory mutation blocking and automatic memory snapshot injection are both disabled. |
+| `requireTodoDispatch` | ON | Parent progress no longer waits for unbound actionable Todos to be dispatched, and a background subagent launch no longer needs to match exactly one actionable Todo; admission follows the configured `maxConcurrent` and creates no Todo binding. Binding-consistency, follow-up, task, and capacity gates still apply. |
 
 Press `Ctrl+P` and select **Open Rig workflow settings** to view persisted
 values. Select **Orchestration mode** for **Parallel (default)** or
@@ -311,6 +312,10 @@ substitute for any of them:
   acceptance-evidence claim IDs for this task only.
 - `task_status` returns bounded task, child lifecycle/review, and correction-ledger
   state; it does not expose ownership-scope fields.
+- `admission_status` returns the project policy runtime's child-admission counters
+  as numbers only: configured `maxConcurrent`, the effective limit, the
+  orchestration mode, and the active, pending, and reserving child counts. It is
+  read-only and never exposes child content or session IDs.
 - `subagent` must be the direct tool call. Children run in the background; the
   policy admits up to configured `maxConcurrent` (1–10) concurrently, regardless
   of the host/cgroup estimate.

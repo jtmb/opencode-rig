@@ -610,12 +610,14 @@ export default Plugin.define({
       if (event.tool === "subagent") {
         const input = event.input as { description?: unknown } | undefined
         const description = typeof input?.description === "string" ? input.description.trim() : ""
-        try {
-          await reserveTodoBinding(event.sessionID, event.id, description)
-          todoLaunches.set(todoLaunchKey(event.sessionID, event.id), { parentID: event.sessionID })
-        } catch (error) {
-          policy.rejectDirectLaunch(event)
-          throw error
+        if (policy.enforcementState().enforcements.requireTodoDispatch) {
+          try {
+            await reserveTodoBinding(event.sessionID, event.id, description)
+            todoLaunches.set(todoLaunchKey(event.sessionID, event.id), { parentID: event.sessionID })
+          } catch (error) {
+            policy.rejectDirectLaunch(event)
+            throw error
+          }
         }
       }
     })
@@ -708,6 +710,15 @@ export default Plugin.define({
           await refreshTasks()
           const task = policy.taskState(String(context.sessionID))
           return { content: JSON.stringify(task ?? { active: false }, null, 2) }
+        },
+      })
+      editor.add({
+        name: "admission_status",
+        description:
+          "Read this project policy runtime's current child-admission counters: configured maxConcurrent, effective limit, orchestration mode, and the active, pending, and reserving child counts. Read-only; returns counts only, never child content or session IDs.",
+        input: { type: "object", properties: {}, additionalProperties: false },
+        async execute() {
+          return { content: JSON.stringify(policy.admissionState(), null, 2) }
         },
       })
       editor.add({

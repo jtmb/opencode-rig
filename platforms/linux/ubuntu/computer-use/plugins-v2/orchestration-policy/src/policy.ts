@@ -8,6 +8,7 @@ import {
   DEFAULT_ENFORCEMENTS,
   ENFORCEMENT_NAMES,
   ORCHESTRATION_MODES,
+  operatorEnforcementSettingsPath,
   type OrchestrationMode,
   type EnforcementSettings,
   type LoadedEnforcementSettings,
@@ -54,6 +55,7 @@ const POLICY_TOOLS = new Set([
   "task_complete",
   "task_declare",
   "task_status",
+  "admission_status",
   "tool_error_ack",
 ])
 
@@ -1285,6 +1287,17 @@ export function isPolicyRepair(tool: string, input: unknown) {
   })
 }
 
+export function isSettingsRepair(tool: string, input: unknown, settingsPath: string) {
+  if (tool !== "patch" && tool !== "apply_patch" && tool !== "edit" && tool !== "write") return false
+  const value = record(input)
+  if (!value) return false
+  const targets = typeof value.patchText === "string"
+    ? [...value.patchText.matchAll(/^\*\*\* (?:Add|Update|Delete) File: (.+)$/gm)].map((match) => match[1] ?? "")
+    : [value.path, value.file, value.filePath].filter((item): item is string => typeof item === "string")
+  const expected = resolve(settingsPath).replaceAll("\\", "/")
+  return targets.length > 0 && targets.every((target) => resolve(target).replaceAll("\\", "/") === expected)
+}
+
 export function isRoadmapOnly(tool: string, input: unknown) {
   if (tool !== "patch" && tool !== "apply_patch" && tool !== "edit" && tool !== "write") return false
   const value = record(input)
@@ -1438,6 +1451,7 @@ function expectedToolError(event: ToolAfter) {
 export function createOrchestrationPolicy(rawOptions: unknown, dependencies: OrchestrationPolicyDependencies) {
   const options = parseOrchestrationPolicyOptions(rawOptions, dependencies.environment)
   const requireRepoLearningReady = async (sessionID: string) => {
+    if (!enforcementSettings.requireLearningReceipts) return
     let result: unknown
     try {
       result = await dependencies.repoLearningPreflight(sessionID)
@@ -1812,7 +1826,7 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Orc
     const unbound = snapshot.items.filter((item) =>
       (item.status === "pending" || item.status === "in_progress") && !snapshot.bindings.some((binding) => binding.todoID === item.id))
     const free = Math.max(0, effectiveLimit() - running)
-    if (unbound.length && free) {
+    if (enforcementSettings.requireTodoDispatch && unbound.length && free) {
       if (!current || current.task.completedAt) throw new Error("Todo dispatch required: call task_declare before dispatching unbound actionable Todos or reporting parent progress")
       throw new Error(`Todo dispatch required: ${unbound.length} unbound actionable Todo(s), ${free} free admission slot(s), mode=${orchestrationMode}, effective=${effectiveLimit()}, configured=${options.maxConcurrent}. Launch direct background subagents with each Todo's exact leading description before parent progress; use goal_report(blocked) for a genuine blocker.`)
     }
@@ -2485,6 +2499,7 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Orc
       const policyRepair = options.enforceAgentIndex && isPolicyRepair(event.tool, event.input)
       const roadmapBootstrap = options.enforceAgentIndex && indexErrors.length > 0 && isRoadmapOnly(event.tool, event.input)
       const externalIssueWrite = isExternalIssueWriteOnly(event.tool, event.input)
+      const settingsRepair = isSettingsRepair(event.tool, event.input, operatorEnforcementSettingsPath())
       const mayMutate = toolMayMutate(
         event.tool,
         event.input,
@@ -2499,7 +2514,7 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Orc
       }
       if (mayMutate) {
         if (!directLaunch && !taskCompletion && !isCommitOrPush(event.tool, event.input) &&
-          !policyRepair && !isRoadmapOnly(event.tool, event.input) && !externalIssueWrite) {
+          !policyRepair && !isRoadmapOnly(event.tool, event.input) && !externalIssueWrite && !settingsRepair) {
           await requireTodoDispatch(event.sessionID)
         }
         if (taskCompletion || isCommitOrPush(event.tool, event.input)) {
@@ -2552,7 +2567,7 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Orc
           if (externalIssueWrite) requireExternalIssueTask(event.sessionID)
           else if (taskCompletion) requireTask(event.sessionID, true, true, parentDelegationRequired())
           else requireTask(event.sessionID, false, enforcementSettings.requireTaskDeclare, parentDelegationRequired())
-          if (current && !current.worker && parentDelegationRequired() && !taskCompletion && !externalIssueWrite) {
+          if (current && !current.worker && parentDelegationRequired() && !taskCompletion && !externalIssueWrite && !settingsRepair) {
             throw new Error("parent implementation blocked: delegation-only policy requires parentImplementationOptOutEnv with its exact value set to true")
           }
         }
@@ -2562,7 +2577,7 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Orc
       if (!input) throw new Error("subagent input must be an object")
       const description = subagentDescription(input)
       try {
-        requireActionableTodo(await readTodoItems(dependencies, event.sessionID, description), description)
+        if (enforcementSettings.requireTodoDispatch) requireActionableTodo(await readTodoItems(dependencies, event.sessionID, description), description)
         if (enforcementSettings.backgroundChildrenOnly && input.background !== true) {
           throw new Error("agent orchestration policy requires background=true")
         }
@@ -2809,6 +2824,16 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Orc
     reconciliationState(sessionID: string) {
       const current = session(sessionID)
       return { turns: current.turns, due: current.due, hasSnapshot: current.snapshot !== undefined }
+    },
+    admissionState() {
+      return {
+        configured: options.maxConcurrent,
+        effective: effectiveLimit(),
+        mode: orchestrationMode,
+        active: activeChildren.size,
+        pending: pending.size,
+        reserving: reserving.size,
+      }
     },
     state() {
       return { pending: pending.size, active: activeChildren.size, known: knownChildren.size }

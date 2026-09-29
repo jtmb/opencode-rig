@@ -206,6 +206,19 @@
       ]
     },
     {
+      "name": "deploy-hermes-plugin",
+      "match": [
+        "platforms/linux/ubuntu/computer-use/scripts/deploy-hermes-plugin.py",
+        "platforms/linux/ubuntu/computer-use/scripts/deploy-hermes-plugin-self-test.py"
+      ],
+      "docs": [
+        "docs/scripts/deploy-hermes-plugin.md"
+      ],
+      "onAdd": [
+        "docs/scripts/README.md"
+      ]
+    },
+    {
       "name": "orchestration-lockout-recovery",
       "match": [
         "platforms/linux/ubuntu/computer-use/scripts/recover-orchestration-lockout.py",

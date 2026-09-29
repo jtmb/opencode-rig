@@ -11,6 +11,8 @@ export const ENFORCEMENT_NAMES = [
   "backgroundChildrenOnly",
   "correctionLedgers",
   "memoryReconciliation",
+  "requireTodoDispatch",
+  "requireLearningReceipts",
 ] as const
 
 export type EnforcementName = typeof ENFORCEMENT_NAMES[number]
@@ -25,6 +27,8 @@ export const DEFAULT_ENFORCEMENTS: EnforcementSettings = Object.freeze({
   backgroundChildrenOnly: true,
   correctionLedgers: true,
   memoryReconciliation: true,
+  requireTodoDispatch: true,
+  requireLearningReceipts: true,
 })
 
 export type LoadedEnforcementSettings = {
@@ -84,21 +88,49 @@ function parseSettings(text: string) {
   const value: unknown = JSON.parse(text)
   const root = record(value)
   const enforcements = record(root?.enforcements)
+  const presentNames = enforcements ? ENFORCEMENT_NAMES.filter((name) => name in enforcements) : []
+  const missingNames = ENFORCEMENT_NAMES.filter((name) => !(enforcements && name in enforcements))
+  const shapeValid = enforcements !== undefined &&
+    Object.keys(enforcements).every((key) => (ENFORCEMENT_NAMES as readonly string[]).includes(key)) &&
+    Object.keys(enforcements).every((key) => typeof enforcements[key] === "boolean") &&
+    missingNames.every((name) => name in OPTIONAL_ENFORCEMENTS)
   if (
     !root || root.schemaVersion !== 1 ||
     Object.keys(root).some((key) => !["schemaVersion", "enforcements", "orchestrationMode"].includes(key)) ||
     (root.orchestrationMode !== undefined && !ORCHESTRATION_MODES.includes(root.orchestrationMode as OrchestrationMode)) ||
-    !enforcements || Object.keys(enforcements).length !== ENFORCEMENT_NAMES.length ||
-    ENFORCEMENT_NAMES.some((name) => typeof enforcements[name] !== "boolean")
+    !shapeValid
   ) throw new Error("settings schema is invalid")
 
-  const settings = Object.fromEntries(ENFORCEMENT_NAMES.map((name) => [name, enforcements[name]])) as EnforcementSettings
+  const rawEnforcements = enforcements as Record<string, unknown>
+  const settings = Object.fromEntries(ENFORCEMENT_NAMES.map((name) => [
+    name,
+    typeof rawEnforcements[name] === "boolean" ? rawEnforcements[name] : OPTIONAL_ENFORCEMENTS[name],
+  ])) as EnforcementSettings
   // Canonical form rejects ambiguous duplicate JSON keys as well as unsupported formatting.
+  // A legacy file that predates an optional enforcement is accepted in its own canonical shape.
   const orchestrationMode = root.orchestrationMode as OrchestrationMode | undefined
-  if (serializeEnforcementSettings(settings, orchestrationMode) !== text) {
+  if (
+    canonicalSettingsText(settings, orchestrationMode, ENFORCEMENT_NAMES) !== text &&
+    canonicalSettingsText(settings, orchestrationMode, presentNames) !== text
+  ) {
     throw new Error("settings are not canonical JSON")
   }
   return { enforcements: settings, orchestrationMode: orchestrationMode ?? "parallel" as const }
+}
+
+// A later-added enforcement may be missing from a settings file written before
+// it existed. Such a file is accepted with the missing field defaulted
+// (fail-closed) instead of failing validation, so shipping a new enforcement
+// cannot brick an existing operator settings file into the invalid lockout state.
+const OPTIONAL_ENFORCEMENTS: Partial<EnforcementSettings> = { requireTodoDispatch: true, requireLearningReceipts: true }
+
+function canonicalSettingsText(
+  enforcements: EnforcementSettings,
+  orchestrationMode: OrchestrationMode | undefined,
+  names: readonly EnforcementName[],
+) {
+  const ordered = Object.fromEntries(names.map((name) => [name, enforcements[name]]))
+  return `${JSON.stringify({ schemaVersion: 1, enforcements: ordered, ...(orchestrationMode ? { orchestrationMode } : {}) }, null, 2)}\n`
 }
 
 export function serializeEnforcementSettings(enforcements: EnforcementSettings, orchestrationMode?: OrchestrationMode) {
@@ -107,8 +139,7 @@ export function serializeEnforcementSettings(enforcements: EnforcementSettings, 
     !enforcements || Object.keys(enforcements).length !== ENFORCEMENT_NAMES.length ||
     ENFORCEMENT_NAMES.some((name) => typeof enforcements[name] !== "boolean")
   ) throw new Error("enforcement settings must contain exactly the supported boolean fields")
-  const ordered = Object.fromEntries(ENFORCEMENT_NAMES.map((name) => [name, enforcements[name]])) as EnforcementSettings
-  return `${JSON.stringify({ schemaVersion: 1, enforcements: ordered, ...(orchestrationMode ? { orchestrationMode } : {}) }, null, 2)}\n`
+  return canonicalSettingsText(enforcements, orchestrationMode, ENFORCEMENT_NAMES)
 }
 
 async function checkDirectoryChain(directory: string, create: boolean, configHome: string) {

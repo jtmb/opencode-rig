@@ -772,7 +772,16 @@ export function createGitGateManager(rawOptions: GateOptions = {}, runner: GitRu
       await git(root, ["merge-base", "--is-ancestor", remoteSha, head]).catch(() => fail("push would be non-fast-forward"))
     }
     const advertisedShas = lines.map((line) => line.split("\t", 1)[0]).filter((sha) => /^[0-9a-f]{40,64}$/.test(sha))
-    const range = await git(root, ["rev-list", "--reverse", head, "--not", ...advertisedShas]).catch(() => fail("cannot compute exact outgoing commit set from advertised remote refs"))
+    // An advertised ref can point at an object this clone never fetched (for
+    // example a branch or tag created elsewhere). `rev-list --not <sha>` would
+    // then abort with "bad object". Such a ref cannot exclude anything locally,
+    // so only locally resolvable advertised commits are used as exclusions.
+    const exclusions: string[] = []
+    for (const sha of advertisedShas) {
+      const resolved = await git(root, ["rev-parse", "--verify", "--quiet", `${sha}^{commit}`]).catch(() => "")
+      if (resolved) exclusions.push(sha)
+    }
+    const range = await git(root, ["rev-list", "--reverse", head, "--not", ...(exclusions.length ? exclusions : ["--remotes"])]).catch(() => fail("cannot compute exact outgoing commit set from advertised remote refs"))
     const outgoing = range.split("\n").filter(Boolean)
     if (!outgoing.length) fail("push has no outgoing commits")
     return { url, advertised, remoteSha, outgoing, head }
