@@ -319,8 +319,18 @@ proc_stat_info() {
   PROC_STARTTIME=''
   PROC_STAT_PPID=''
   PROC_PGRP=''
-  [ -r "$PROC_ROOT/$pid/stat" ] || return 1
-  line="$(<"$PROC_ROOT/$pid/stat")" || return 1
+  # A process can exit between any two /proc reads. A vanished stat file is
+  # the "gone" code the callers already handle; a present-but-unreadable or
+  # malformed file stays a fail-closed error. The read builtin (with stderr
+  # suppressed before the redirection) emits no noise for the exit race.
+  if [ ! -r "$PROC_ROOT/$pid/stat" ]; then
+    [ -e "$PROC_ROOT/$pid/stat" ] && return 1
+    return 2
+  fi
+  read -r line 2>/dev/null < "$PROC_ROOT/$pid/stat" || {
+    [ -e "$PROC_ROOT/$pid/stat" ] && return 1
+    return 2
+  }
   # Everything through the final ") " is the comm field. This avoids the
   # usual whitespace parser bug when a process name contains spaces or ')'.
   tail="${line##*') '}"
@@ -361,7 +371,7 @@ proc_info() {
       RssShmem) PROC_RSS_SHMEM="$value" ;;
       State) PROC_STATE="$value" ;;
     esac
-  done < "$PROC_ROOT/$pid/status"
+  done 2>/dev/null < "$PROC_ROOT/$pid/status"
   [ ! -e "$PROC_ROOT/$pid/status" ] && return 2
   if [[ ! "$PROC_RSS_KIB" =~ ^[0-9]+$ ]] \
     && [[ "$PROC_RSS_ANON" =~ ^[0-9]+$ && "$PROC_RSS_FILE" =~ ^[0-9]+$ \
@@ -370,14 +380,14 @@ proc_info() {
   fi
   if [[ ! "$PROC_RSS_KIB" =~ ^[0-9]+$ ]] && [ -r "$PROC_ROOT/$pid/statm" ]; then
     local _statm_size _statm_resident
-    read -r _statm_size _statm_resident < "$PROC_ROOT/$pid/statm" || true
+    read -r _statm_size _statm_resident 2>/dev/null < "$PROC_ROOT/$pid/statm" || true
     if [[ "${_statm_resident:-}" =~ ^[0-9]+$ ]]; then
       # Linux pages are 4096 bytes on supported Ubuntu targets. The fallback
       # must not depend on another PATH utility while PATH is being tested.
       PROC_RSS_KIB=$((_statm_resident * 4096 / 1024))
     fi
   fi
-  proc_stat_info "$pid" || return 1
+  proc_stat_info "$pid" || return $?
   [ "$PROC_PARENT" = "$PROC_STAT_PPID" ] || PROC_PARENT="$PROC_STAT_PPID"
   if [[ "$PROC_PARENT" =~ ^[0-9]+$ && "$PROC_RSS_KIB" =~ ^[0-9]+$ \
     && "$PROC_STARTTIME" =~ ^[0-9]+$ ]]; then
@@ -444,7 +454,7 @@ tree_rss_bytes() {
       return 1
     fi
     CHILDREN=()
-    if ! read -r -a CHILDREN < "$child_file"; then
+    if ! read -r -a CHILDREN 2>/dev/null < "$child_file"; then
       [ ! -s "$child_file" ] || return 1
     fi
     child_count="${#CHILDREN[@]}"
@@ -459,8 +469,15 @@ tree_rss_bytes() {
       if [ ! -e "$PROC_ROOT/$child/status" ]; then
         continue
       fi
-      if ! proc_info "$child"; then
-        [ ! -e "$PROC_ROOT/$child/status" ] && continue
+      if proc_info "$child"; then
+        :
+      else
+        proc_status=$?
+        # A descendant that has exited (zombie) or whose /proc entry is
+        # disappearing mid-sample is a normal race; only a live, readable but
+        # malformed entry is unsafe. Code 2 is the existing "gone" signal.
+        [ "$proc_status" -eq 2 ] && continue
+        { [ ! -e "$PROC_ROOT/$child/status" ] || [ ! -e "$PROC_ROOT/$child/stat" ]; } && continue
         for ((retry=0; retry<5; retry++)); do
           sleep 0.01
           proc_info "$child" && break
@@ -469,7 +486,7 @@ tree_rss_bytes() {
           && "$PROC_STARTTIME" =~ ^[0-9]+$ ]]; then
           :
         else
-          [ ! -e "$PROC_ROOT/$child/status" ] && continue
+          { [ ! -e "$PROC_ROOT/$child/status" ] || [ ! -e "$PROC_ROOT/$child/stat" ]; } && continue
           return 1
         fi
       fi

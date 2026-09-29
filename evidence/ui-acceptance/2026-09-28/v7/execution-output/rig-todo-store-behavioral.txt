@@ -1,0 +1,18 @@
+✔ normalizes valid todos and drops malformed entries (1.576624ms)
+✔ keeps only the first in-progress item and demotes the rest (0.255589ms)
+✔ overlays every matching pending child task while leaving storage-shaped values untouched (0.323889ms)
+✔ orders current work before stable completed history (0.191099ms)
+✔ keeps only actionable work visible when completed history overflows (0.450498ms)
+✔ aggregates all completed history without dropping current or pending work (0.201309ms)
+✔ never exposes completed or cancelled body content in sidebar display (0.17462ms)
+✔ history summary is truthful for hidden rows (0.145139ms)
+✔ summarizes counts and markers (0.426698ms)
+✔ empty list summarizes cleanly (0.210419ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 110.878098

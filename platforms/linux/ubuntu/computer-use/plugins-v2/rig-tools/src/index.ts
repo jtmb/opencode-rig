@@ -158,7 +158,10 @@ export default Plugin.define({
       reloadMcp: () => ctx.mcp.reload(),
     })
     const selfUsage = createSelfUsageAnalyzer(String(ctx.location.directory))
-    const screenTerminal = createScreenManager(createSystemScreenBackend())
+    const screenTerminal = createScreenManager(createSystemScreenBackend(), Date.now, {
+      read: () => ctx.storage.get("managed-screen-owners-v1"),
+      write: (value) => ctx.storage.set("managed-screen-owners-v1", value as Parameters<typeof ctx.storage.set>[1]),
+    })
     const pythonSandbox = createPythonSandbox(String(ctx.location.directory))
     const binaryReplace = createBinaryReplaceManager()
     const docker = createDockerTools(String(ctx.location.directory))
@@ -178,6 +181,7 @@ export default Plugin.define({
           sessionContextCommandInput((input as RigToolsSessionContextInput).command),
         ),
       }),
+      managedScreens: async () => ({ sessions: await screenTerminal.managedSessions() }),
     })
     await ctx.shell.hook("create.before", ({ command }) => {
       if (isDeniedShellGitMutation(command)) {
@@ -775,12 +779,13 @@ export default Plugin.define({
           additionalProperties: false,
         },
         async execute(raw, toolContext) {
+          const input = raw as ScreenInput
+          const result = await screenTerminal.invoke(input, String(toolContext.sessionID), String(toolContext.agent))
+          if (input.apply === true && (input.action === "start" || input.action === "stop")) {
+            await rpc.events.emit("managedScreensChanged", {})
+          }
           return {
-            content: JSON.stringify(
-              await screenTerminal.invoke(raw as ScreenInput, String(toolContext.sessionID), String(toolContext.agent)),
-              null,
-              2,
-            ),
+            content: JSON.stringify(result, null, 2),
           }
         },
       })

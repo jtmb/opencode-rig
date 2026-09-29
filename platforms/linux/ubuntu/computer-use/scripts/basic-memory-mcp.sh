@@ -25,7 +25,7 @@ usage() {
 Usage: basic-memory-mcp.sh [--verify-only|--provision]
 
 Options:
-  --verify-only   Print the resolved binary, project, limiter, and budget
+  --verify-only   Print the resolved binary, project scope, limiter, and budget
   --provision     Populate the selected profile's pinned Basic Memory runtime
   -h, --help      Show this help
 
@@ -33,6 +33,7 @@ Environment:
   OPENCODE_MCP_PROFILE       native (default) or wsl2
   OPENCODE_MCP_PROFILE_ROOT  private WSL/profile state root
   BASIC_MEMORY_PROJECT       Basic Memory project (default: computer-assistant)
+  OPENCODE_MEMORY_CROSS_PROJECT  exact true enables other projects; default false
   BASIC_MEMORY_HOME          native notes/index root (default: ~/Documents/computer-assistant/basic-memory)
   OPENCODE_MCP_NATIVE_ROOT  native private runtime state root
   OPENCODE_MCP_UVX_BIN       trusted uvx override
@@ -53,6 +54,20 @@ done
 case "$PROFILE" in
   native|wsl2) ;;
   *) fail "unsupported MCP profile: $PROFILE" ;;
+esac
+CROSS_PROJECT_VALUE="${OPENCODE_MEMORY_CROSS_PROJECT:-false}"
+case "$CROSS_PROJECT_VALUE" in
+  true)
+    CROSS_PROJECT_STATUS=enabled
+    MCP_PROJECT_ARGS=()
+    ;;
+  false)
+    CROSS_PROJECT_STATUS=disabled
+    MCP_PROJECT_ARGS=(--project "$PROJECT")
+    ;;
+  *)
+    fail "OPENCODE_MEMORY_CROSS_PROJECT must be exactly true or false"
+    ;;
 esac
 
 read_meminfo_kib() {
@@ -196,13 +211,14 @@ if [ "$PROFILE" = "wsl2" ]; then
   if [ "$VERIFY_ONLY" -eq 1 ]; then
     printf 'binary=%s\n' "$UVX"
     printf 'project=%s\n' "$PROJECT"
+    printf 'cross_project_access=%s\n' "$CROSS_PROJECT_STATUS"
     printf 'limiter=%s\n' "$LIMITER"
     printf 'available_bytes=%s\n' "$AVAILABLE_BYTES"
     printf 'memory_budget_bytes=%s\n' "$BUDGET_BYTES"
     printf 'swap_budget_bytes=%s\n' "$SWAP_BUDGET_BYTES"
     exit 0
   fi
-  run_persistent "$UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" basic-memory mcp --project "$PROJECT"
+  run_persistent "$UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" basic-memory mcp "${MCP_PROJECT_ARGS[@]}"
   exit $?
 fi
 
@@ -248,16 +264,17 @@ PRLIMIT="$(command -v prlimit || true)"
 user_systemd_available() { [ -n "$SYSTEMD_RUN" ] && [ -n "$SYSTEMCTL" ] && "$SYSTEMCTL" --user show-environment >/dev/null 2>&1; }
 if user_systemd_available; then
   LIMITER="systemd-run"
-  LIMITER_COMMAND=("$SYSTEMD_RUN" --user --pipe --wait --collect --service-type=exec "--working-directory=$PWD" "--property=MemoryMax=$BUDGET_BYTES" "--property=MemorySwapMax=$SWAP_BUDGET_BYTES" -- /usr/bin/env -i "${environment[@]}" "$NATIVE_UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" basic-memory mcp --project "$PROJECT")
+  LIMITER_COMMAND=("$SYSTEMD_RUN" --user --pipe --wait --collect --service-type=exec "--working-directory=$PWD" "--property=MemoryMax=$BUDGET_BYTES" "--property=MemorySwapMax=$SWAP_BUDGET_BYTES" -- /usr/bin/env -i "${environment[@]}" "$NATIVE_UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" basic-memory mcp "${MCP_PROJECT_ARGS[@]}")
 elif [ -n "$PRLIMIT" ]; then
   LIMITER="prlimit"
-  LIMITER_COMMAND=(/usr/bin/env -i "${environment[@]}" "$PRLIMIT" "--as=$BUDGET_BYTES" -- "$NATIVE_UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" basic-memory mcp --project "$PROJECT")
+  LIMITER_COMMAND=(/usr/bin/env -i "${environment[@]}" "$PRLIMIT" "--as=$BUDGET_BYTES" -- "$NATIVE_UVX" --offline --prerelease=allow --from "basic-memory==$VERSION" basic-memory mcp "${MCP_PROJECT_ARGS[@]}")
 else
   fail "no memory limiter available (needs systemd-run --user with systemctl --user, or prlimit)"
 fi
 if [ "$VERIFY_ONLY" -eq 1 ]; then
   printf 'binary=%s\n' "$NATIVE_UVX"
   printf 'project=%s\n' "$PROJECT"
+  printf 'cross_project_access=%s\n' "$CROSS_PROJECT_STATUS"
   printf 'version=%s\n' "$VERSION"
   printf 'notes=%s\n' "$NATIVE_NOTES"
   printf 'limiter=%s\n' "$LIMITER"

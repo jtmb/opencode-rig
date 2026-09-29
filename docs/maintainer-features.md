@@ -62,7 +62,7 @@ runtime lacks support.
 
 ## Skills and user workflows
 
-The source catalog contains 19 skills, recursively deployed by
+The source catalog contains 20 skills, recursively deployed by
 `scripts/setup-opencode.sh`:
 
 | Skill | User surface |
@@ -85,6 +85,7 @@ The source catalog contains 19 skills, recursively deployed by
 | `development-conventions` | Focused source, test, documentation, API, language, UI, and Open Rig operating conventions |
 | `skill-maintenance` | Skill lifecycle, catalog, deployment, and documentation maintenance |
 | `agent-orchestration` | Bounded delegated work with ownership and verification rules |
+| `repo-onboarding` | Downstream consumer-repository OpenCode v2 setup, global integration reuse, MCP, memory, and evidence workflow |
 | `vscode-management` | VS Code package, settings, extensions, workspaces, integrated-terminal, and built-in Browser workflows |
 
 The skills are instructions and workflows, not proof that every optional
@@ -126,7 +127,10 @@ enforces explicit tool and session-lifecycle boundaries.
   default browser. They use bounded Windows UI Automation, not a private
   headed-Chromium process or browser DOM/CDP access. Source/package coverage is
   present, but live browser acceptance remains pending bounded probes on WSL
-  with the Windows default browser.
+  with the Windows default browser. The WSL plugin also exposes read-only
+  `windows_capture` for an explicitly selected exact-HWND window; an optional
+  PNG is retained beneath the invoking project directory. This is raw host
+  capture, not a validator-accepted action/render pair or live console proof.
 - `scripts/desktop-control.py` supplies bounded AT-SPI inspection/mutation
   semantics used by the desktop tools.
 - `scripts/run-bounded-command.sh` contains resource-sensitive subprocesses.
@@ -141,7 +145,7 @@ enforces explicit tool and session-lifecycle boundaries.
 | Path | Responsibility |
 |---|---|
 | `setup-computer-assistant.sh` | Ubuntu dependencies, runtimes, skills, commands, and initial config |
-| `setup-opencode.sh` | 19 skills, four repository commands, v2 config, and parser cache |
+| `setup-opencode.sh` | 20 skills, four repository commands, v2 config, and parser cache |
 | `deploy-plugins.sh` | Atomic registration of selected server/CLI packages from the role catalog |
 | `verify-opencode-v2.sh` | v2 environment, role, config, and deployment verification |
 | `v2-plugin-catalog.py` | Catalog/role/package validation |

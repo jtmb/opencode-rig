@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "mapping-06-test-dispatch-001",
+  "capture_id": "mapping-06",
+  "source_sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "e37b8655638715754e8f6b1ec7d16f418b718bd9d8226399982a5804b7f12074",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "click",
+    "target": "explorer-tree-row:theme-preview-file-1.tsx",
+    "input": {
+      "x": 6,
+      "y": 1
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "explorer-tree-row:theme-preview-file-1.tsx",
+    "input": {
+      "x": 6,
+      "y": 1
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "dispatch_id": "mapping-06-test-dispatch-dispatch-001",
+    "transition_id": "mapping-06-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "11837071161666",
+    "transition_monotonic_ns": "11837149946473"
+  },
+  "before": {
+    "snapshot_id": "mapping-06-interact-before",
+    "frame_sha256": "6888ae92fb4f426df6f38aefa3f12b5dbbcf7903fb385ce8be526e738a795525",
+    "spans_sha256": "bb4a5e1ebdde87b854f8922a9218c3a4ca2b7e201cbee3eac599c24c57021738",
+    "state_sha256": "d0278d09b5708180591bd1d0c4a08becce8419631289b7044b73ff9ebc265b21"
+  },
+  "after": {
+    "snapshot_id": "mapping-06-interact-after",
+    "frame_sha256": "b806649f1196c9c11fccc5bc37798e58688fb115277b3cb122705933ffd76643",
+    "spans_sha256": "520fd27580a9b7e49fb4f0b6c268b85a83602f1829d1822eb40484f50c20aeda",
+    "state_sha256": "43068640faad2439d60cd1446ecfe405b48d96e307657c1c0d5fe46039fef211"
+  },
+  "result": {
+    "status": "passed",
+    "target": "explorer-tree-row:theme-preview-file-1.tsx",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "b5f68fe199aff364e740352a72143c292a6b0f8951243afe3782e290d1b9149a",
+  "output": "evidence/ui-acceptance/2026-09-28/v9/event-output/mapping-06-test-dispatch.json",
+  "output_sha256": "87df10c0694a6c51e28b26e50f4c078b32eee3a41fe57743c3a02d7b41aa7f4d",
+  "observed_at": "2026-09-28T23:13:46.959Z"
+}

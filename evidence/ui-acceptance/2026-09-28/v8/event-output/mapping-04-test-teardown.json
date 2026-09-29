@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "capture_id": "mapping-04",
+  "phase": "test-teardown",
+  "event_id": "mapping-04-test-teardown-001",
+  "action": {
+    "type": "teardown",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "6f8d7b42-6376-4e80-9377-668cff8933f1",
+    "dispatch_id": "mapping-04-test-teardown-dispatch-001",
+    "transition_id": "mapping-04-test-teardown-transition-001",
+    "dispatch_monotonic_ns": "1268363330990",
+    "transition_monotonic_ns": "1268373521148"
+  },
+  "before": {
+    "snapshot_id": "mapping-04-interact-after",
+    "frame_sha256": "55179f7cd2fc96495383432d0b6b52da57c61b00b4e45221823e3d4add739dfc",
+    "spans_sha256": "7f82ce5db13f31a73f6e53e7587ca4de2c89eb91cdf73d47c0aa57c8461ad3b4",
+    "state_sha256": "0345f5d0890ddf80f0682b55cd435416f59456b08b529760101c8e32a5e7795c"
+  },
+  "after": {
+    "snapshot_id": "mapping-04-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "76127f936fcf320ab15a1a0f17da03ce684680a16bdd75bac0d82597c8e27d21",
+  "native_event_sha256": "8c6dc1588b16f4301ca5f899041c0dc92516d46f967338b0a26409c2f2b9c318"
+}

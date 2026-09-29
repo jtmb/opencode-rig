@@ -2,8 +2,8 @@
 
 This server plugin enforces generic orchestration safeguards at supported
 OpenCode v2 hook and tool boundaries. It rejects foreground subagents and
-launches over the configured concurrency ceiling. `maxConcurrent` is the only
-child-concurrency admission gate and is bounded at ten; host/cgroup
+launches over the effective concurrency ceiling. `maxConcurrent` is the hard
+ceiling, bounded at ten; the operator can select single-subagent admission. Host/cgroup
 `agent_memory_capacity` estimates are diagnostic only. The consuming project
 remains responsible for choosing its agent and model identities.
 
@@ -27,7 +27,12 @@ parent's obligation. Pending parent/child pairs and completed audit records live
 in plugin storage. Later snapshots from the same task generation merge newly
 recorded children; follow-up audit snapshots are computed inside the serialized
 storage-write queue. Unknown child status after a service reload is resolved
-through the supported session API before the obligation is created.
+through the supported session API before the obligation is created. Restored
+active children are checked by exact session, parent, and project identity;
+up to four concurrent `session.wait` checks share a 30-second per-child
+get-and-wait deadline. Only confirmed idle frees admission and creates a
+follow-up; a failed lookup, expired deadline, mismatched identity, or failed
+durable lifecycle write leaves capacity reserved.
 The parent can use `subagent_cancel` for an active direct child. Capacity remains
 reserved until an idle, deletion, or terminal lifecycle event is observed and
 the follow-up state is persisted; a fixed 30-second timeout leaves the child
@@ -78,7 +83,7 @@ resolution; it cannot be marked aligned.
 ## Parent implementation delegation
 
 Parent implementation delegation is enabled by default, independently of the
-`backgroundOnly` child-launch setting. After `task_declare`, parent implementation
+background-child setting. After `task_declare`, parent implementation
 mutations remain blocked even after an accepted child follow-up; children may
 implement the delegated work under the existing task, correction-ledger,
 installed-binary, and nested-agent limits. Parent coordination remains available
@@ -90,7 +95,7 @@ checks only to let the enforced policy repair its own fail-closed bootstrap.
 The `ROADMAP.md` bootstrap write is available only while the enforced index is
 invalid, requires a declared task, and still requires rule reconciliation.
 
-The only opt-out is to declare an environment variable name in this plugin's
+The environment opt-out is to declare an environment variable name in this plugin's
 project-local `options` and set that variable in the OpenCode server process
 environment:
 
@@ -112,8 +117,83 @@ including an empty string or case/whitespace variant, is malformed: the plugin
 logs a configuration-verification error, reports it in model context, keeps
 parent mutations blocked, and leaves the other safety hooks loaded. The
 `delegationOnly` option is not supported and cannot override this contract.
-The plugin reads the environment once during setup, so configuration or
-environment changes take effect after the server plugin reloads or restarts.
+Malformed values keep parent delegation enforced. The environment and plugin
+options are read once during setup, so their changes take effect after the
+server plugin reloads or restarts.
+
+## Operator workflow settings
+
+The operator-only **Open Rig workflow settings** command in the CLI palette
+controls six workflow enforcements without editing `opencode.json`:
+
+| Setting | Default | OFF behavior |
+|---|---:|---|
+| `requireTaskDeclare` | ON | Repository mutations do not require an active `task_declare`; child launch and task-completion lifecycle operations still require their task state. |
+| `strictShellClassification` | ON | A bounded allowlist of simple read-only commands (`df`, `du`, `file`, `id`, `ls`, `pwd`, `readlink`, `realpath`, `stat`, `uname`, `whoami`, `wc`) is allowed through as read-only. Unknown commands, shell operators, dynamic argv, and compound commands remain mutation surfaces. |
+| `parentDelegationOnly` | ON | A declared parent task does not need an accepted child follow-up before parent implementation mutations. The existing exact `parentImplementationOptOutEnv=true` contract remains respected; malformed environment values keep delegation enforced. |
+| `backgroundChildrenOnly` | ON | Child sessions may be launched in the configured foreground or background mode. |
+| `correctionLedgers` | ON | Correction-task mutations do not require roadmap, Todo, and project-memory ledger acknowledgements. |
+| `memoryReconciliation` | ON | Due-memory mutation blocking and automatic memory snapshot injection are both disabled. |
+
+Press `Ctrl+P` and select **Open Rig workflow settings** to view persisted
+values. Select **Orchestration mode** for **Parallel (default)** or
+**Single-subagent**. Parallel fills configured capacity; single-subagent admits
+one child at a time. Changing mode never cancels running or already admitted
+children: a reduced limit drains naturally before the next launch. This explicit
+operator choice supersedes the standing all-parallel-only directive for admission
+concurrency; it changes none of the other enforcement settings or fixed gates.
+These are the two dispatch topologies this Open Rig policy can enforce. Common
+agent-workflow patterns also include ordered sequential pipelines, agent
+handoffs, group chat and manager-led coordination ([Microsoft Agent Framework
+overview](https://learn.microsoft.com/en-us/agent-framework/workflows/orchestrations/));
+single-subagent limits admission to one child but does not claim to implement
+pipeline ordering or those other workflow protocols.
+The workflow-enforcement prompt accepts `<setting> on|off` or
+`mode parallel|single-subagent`; the command
+has no slash alias. OpenCode v2.0.7 exposes no native Open settings dialog
+extension point, so this is the sole Rig workflow-settings surface. State is
+stored outside the repository at
+`${XDG_CONFIG_HOME:-~/.config}/opencode/orchestration-policy-settings.json`.
+The version-1 schema accepts exactly the six boolean values and an optional
+`orchestrationMode` enum (`parallel` or `single-subagent`). Older files default
+to parallel. Writes use a
+private mode-0600 temporary file and atomic rename. Missing state defaults every
+workflow setting to ON; malformed, oversized, symlinked, unreadable, or
+repository-local state is rejected and every workflow setting fails closed to
+ON, and invalid settings block new child admissions and parent progress until
+repaired through the operator palette. Settings never accept credentials or arbitrary
+fields.
+
+The server plugin re-reads and validates this file before each tool enforcement
+hook and each prompt/context hook, so valid palette changes take effect on
+the next hook without a restart. The environment-variable override above and
+ordinary `opencode.json` plugin options remain setup-time values and require a
+server-plugin reload or restart. If any workflow setting is OFF, the palette
+prompt shows a reduced-posture banner and model context names every OFF setting.
+
+The fixed safety core is not represented by writable settings and is displayed
+as always ON: installed OpenCode binaries and distribution files, protected
+paths, policy-index validation when configured, separate commit and push
+approval gates with exact staged-scope checks, secret handling, and
+fail-closed settings behavior. Attempts to toggle a fixed safety entry are
+refused by the workflow-settings command with the reason.
+
+### Dispatch before progress
+
+An active parent task must dispatch every unbound actionable Todo while effective
+capacity is free before recognized implementation mutations, `goal_report(progress)`
+or automatic Goal continuation. The shared preflight reads the bounded authoritative
+Todo snapshot, validates child/reservation bindings, counts active, pending and
+reserving children, and reports the unbound count, free slots, mode and configured
+ceiling. It rechecks at Goal continuation time so a newly eligible Todo cannot be
+skipped by an earlier progress report. Invalid Todo/settings state fails closed.
+Pending follow-up and correction-ledger obligations retain priority. Full capacity
+allows progress without demanding an impossible launch. Existing exact Todo ownership
+and parent-follow-up rules still apply. Reads, Todo coordination, direct launches,
+policy/roadmap repair and genuine `goal_report(blocked)` remain available.
+
+V2 has no final-answer hook or semantic intent classifier. These tool and explicit
+Goal-continuation checks cannot veto plain final prose or arbitrary external programs.
 
 The delegation gate covers the plugin's recognized direct mutation tools and
 recognized Code Mode `execute` calls, including shell, npm, repository commit
@@ -166,7 +246,6 @@ classifier, so natural-language intent and plain final prose cannot be blocked.
     {
       "package": "/absolute/path/to/plugins-v2/orchestration-policy",
       "options": {
-        "backgroundOnly": true,
         "maxConcurrent": 10,
         "enforceAgentIndex": false,
         "reconciliationIntervalTurns": 10,
@@ -184,8 +263,11 @@ classifier, so natural-language intent and plain final prose cannot be blocked.
 Legacy `allowedAgents` and `allowedModels` options are ignored for backward
 compatibility and should be removed from consuming configurations; identity
 selection belongs to the consuming project's OpenCode configuration.
-`enabled` defaults to `true`; `backgroundOnly` defaults to `true`;
-`maxConcurrent` defaults to `10` and accepts `1` through `10`. Set it in
+`enabled` cannot disable safety hooks; `enabled: false` is reported as a
+configuration error while enforcement remains active. `backgroundOnly: false`
+is ignored with a configuration warning; use the Ctrl+P **Open Rig workflow
+settings** entry to change `backgroundChildrenOnly` instead. `maxConcurrent`
+defaults to `10` and accepts `1` through `10`. Set it in
 the orchestration-policy `options` object in the active project `opencode.json`;
 it is the only child-concurrency admission gate. `memoryReserveMiB` and
 `memoryPerAgentMiB` tune host/cgroup diagnostic estimates only; estimates never
@@ -253,6 +335,62 @@ substitute for any of them:
   lookup and any required question-tool escalation; repeated calls after the
   gate is already clear are idempotent no-ops.
 
+## Durable Goal and Plan→Build handoff
+
+`plan_ready` is available only to a top-level Plan session. It records the
+completed Plan's objective, concrete acceptance criteria, and implementation
+plan; prose alone does not arm the handoff. Goal state is durable and scoped to
+the session. `/goal <objective>` starts one, `/goal` views it, and `/goal pause`,
+`/goal resume`, and `/goal clear` control it. The original objective remains
+fixed until the Goal is cleared.
+
+Handoff defaults to Manual per session. After a ready Plan succeeds, run
+`/goal build` to request the server-side Build handoff; selecting Build only in
+the local composer does not change the server session. Auto requests the
+handoff after a successful Plan and server-observed idle state. Both paths
+check for observed queued user input. The selected model and variant are
+restored when OpenCode accepts them; otherwise Build's configured model remains
+selected. Server execution and status events drive Auto handoff and continuation
+without a connected TUI. Manual agent-selection events do not enqueue a Plan.
+After a plugin restart, an older ready Auto Plan cannot prove its durable inbox
+is empty: the startup check blocks it when idle and requires an explicit
+`/goal build` when safe. A current-runtime execution still uses Auto normally;
+an early idle event cannot automatically dispatch the older persisted Plan.
+
+For a same-project Build session, Auto handoff removes `question` from the model
+context, rejects direct calls in `execute.before`, and denies the `question`
+action through per-session permission evaluation. V2 permission checks also
+apply to nested Code Mode calls, including aliased or computed access. Invalid
+or unreadable Goal state fails closed; Manual and Plan retain access. If a
+durable-rule conflict or memory lookup fails, Auto Build stays blocked until
+the operator switches the session to Manual before asking. No settings bypass
+enables Build questions under Auto.
+
+`goal_report` records model-reported progress, blockers, and completion evidence;
+it does not independently verify that criteria are true. Completion requires
+reported evidence for every Plan criterion and a successful `task_complete`
+whenever a repository task is active. Automatic continuation requires explicit
+progress evidence and a successful Build turn, with no queued user input. No
+continuation is scheduled after a failed, interrupted, or no-progress turn.
+Pausing or clearing invalidates the Goal marker and cancels a queued prompt when
+the TUI can reach the inbox.
+
+With Auto handoff, a Goal the plugin itself blocks on a transient, retryable
+failure — a dispatch-preflight failure or a failed handoff queue — is re-driven
+from the next observed idle for a bounded number of attempts. Each attempt
+increments a persisted per-Goal budget that a repeated idle event cannot reset;
+when the budget is exhausted the Goal stays blocked with a distinct reason that
+names `/goal resume`. Model-reported blockers, missing approvals or credentials,
+unsupported runtimes, Manual handoff, and restart fail-closed recovery never
+auto-resume.
+
+The driver uses `ctx.session.wait`, status and inbox events, and a fresh
+`ctx.session.get`; it cannot see inbox items queued before event subscription.
+V2 has no documented atomic “switch/enqueue only if idle and inbox-empty”
+operation, so a user input can race the final server check. An isolated Manual
+run also produced a Build turn before its queued Goal prompt and another after;
+exactly-once handoff remains unverified until that initiating event is traced.
+
 ## Checkout isolation and roadmap continuity
 
 Concurrent writers isolate work in separate checkouts or worktrees and
@@ -269,6 +407,19 @@ operations. A genuinely absent Todo state is allowed, while malformed or
 unreadable state fails closed. The parent still needs accepted child follow-up
 and correction-ledger acknowledgements, and the separate commit/push approval
 gates remain in force.
+
+Before a direct background launch, policy durably reserves exactly one
+actionable Todo with a matching description and stable id. The per-session
+writer lease serializes `todowrite`, dispatch, and release. Successful launches
+bind their child id; failures release only after the durable snapshot is
+written and read back. Ambiguous duplicates or failed release keep the launch
+guard active.
+
+Before task completion, commit, or push, policy calls
+`RepoLearning.checkTaskCompletion({ sessionID })`. Missing reflection receipts,
+unresolved proposal conflicts, unavailable RPC, and malformed replies block
+the operation. Recognized Code Mode calls are gated too; GitHub Code Mode
+commit/push remains denied in favor of separate approval gates.
 
 The parent state is `waiting` after declaration, `ready` after any child is
 idle/deleted and its follow-up is `accepted`, and `completed` only after every

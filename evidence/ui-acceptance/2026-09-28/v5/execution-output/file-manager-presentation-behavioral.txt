@@ -1,0 +1,14 @@
+(node:928984) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ tree labels are safe, single-line, and bounded by terminal cells (1.133495ms)
+✔ tree row structure includes a bounded explicit selected marker (0.355879ms)
+✔ tab structure contributes visible bounded padding to every hitbox (0.18888ms)
+✔ filetype matrix covers the editor's approved extensions (0.276439ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 537.562063

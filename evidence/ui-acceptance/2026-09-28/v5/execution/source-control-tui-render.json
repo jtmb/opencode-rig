@@ -1,0 +1,34 @@
+{
+  "version": 2,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+  "test_sha256": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5",
+  "source_sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-strip-types\",\"--test\",\"test/rendered.test.ts\"]",
+  "observed_at": "2026-09-28T15:42:26.893Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-28/v5/execution-output/source-control-tui-render.txt",
+  "output_sha256": "5d59dbb48a032849e74ba8edb529989524f4b16a51bcec0b8f4c474d40bca0dd",
+  "invocation": {
+    "run_id": "99dc0047-f0d3-48f0-847f-2b4581bcc1eb",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-strip-types",
+      "--test",
+      "test/rendered.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control",
+    "started_at": "2026-09-28T15:42:25.358Z",
+    "finished_at": "2026-09-28T15:42:26.893Z",
+    "started_monotonic_ns": "55407405854637",
+    "finished_monotonic_ns": "55408940242484",
+    "exit_code": 0,
+    "source_sha256_before": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+    "source_sha256_after": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996",
+    "test_sha256_before": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5",
+    "test_sha256_after": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5"
+  }
+}

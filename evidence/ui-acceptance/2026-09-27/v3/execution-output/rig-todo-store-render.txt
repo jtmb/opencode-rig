@@ -1,0 +1,10 @@
+✔ rendered TodoPanel checks run in an isolated OpenTUI subprocess (1123.162123ms)
+✔ composed sidebar density checks run in an isolated OpenTUI subprocess (1575.185321ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2798.135198

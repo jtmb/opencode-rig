@@ -31,12 +31,26 @@ The outside-slot placement keeps Todo visible when the content slot is replaced.
 Clicking the header collapses or expands it. The panel hides itself when the
 list is empty.
 
-The server plugin mirrors the authoritative `ctx.storage` entry into a small
-JSON file at
+The server plugin mirrors the session state into a versioned JSON file at
 `${XDG_DATA_HOME:-~/.local/share}/opencode/rig-todo/<sessionID>.json`
-(atomically written; removed with the session). Both processes share the launch
-environment, so the CLI panel can read it without an RPC channel. Corrupt or
-missing files render as an empty list.
+(atomically written and read back before acceptance; removed with the session).
+Each item carries its stable archive id and identity map. A `todoread` upgrades
+legacy mirrors; orchestration refuses to dispatch from a mirror without stable
+identity. Both processes share the launch environment, so the CLI panel can read
+the list without an RPC channel. Corrupt or missing files render as an empty list
+in the panel and fail closed for dispatch.
+
+### Direct subagent dispatch
+
+`orchestration-policy` reserves exactly one actionable Todo by the child's
+readable leading description before allowing the direct launch. The durable
+snapshot binds the tool call to the stable Todo id, then records the child
+session id when available. Duplicate or ambiguous descriptions are refused;
+edit duplicate task text to make the intended item unique. `todowrite`, dispatch,
+and release share a per-session writer lease. Failed launches release a binding
+only after the updated snapshot is atomically written and read back; a failed
+release keeps the in-memory reservation and parent launch guard. A Todo binding
+remains until that Todo is marked completed or cancelled.
 
 ### Durable archive
 
@@ -51,11 +65,14 @@ missing files render as an empty list.
   is a `content_changed` event, a status change is `status_changed`, a
   priority-only change (including removal) is `priority_changed`, and a dropped
   item is `removed`. History is never pruned or overwritten.
-- A replacement is **accepted only after its transitions are durably appended**.
+- A replacement is **accepted only after its transitions are durably appended**
+  and its versioned snapshot is atomically written and read back.
   If the archive write fails, `todowrite` refuses the replacement, reports the
   failure, and leaves the previous list unchanged. Per-session writes are
-  serialized so a concurrent call cannot read a stale list and drop a
-  transition.
+  serialized under the shared writer lease so dispatch, release, and a
+  concurrent `todowrite` cannot race over stale identity or binding state.
+  Failed storage or mirror writes attempt to restore the previous list and
+  identity; an unconfirmed restore remains fail-closed.
 - The log rotates into bounded segment files; a single batch is split by
   serialized UTF-8 byte size (`ARCHIVE_SEGMENT_BYTES`) and event count
   (`ARCHIVE_SEGMENT_EVENTS`), so a segment file never exceeds what readers scan.
@@ -75,11 +92,11 @@ missing files render as an empty list.
   archive survives, so a deleted or compacted session keeps its full history.
 
 **Partial-write limit:** the archive and `ctx.storage` cannot be committed
-atomically. Because the archive is written first, an accepted transition is
-never silently lost; a crash between the archive append and the list/identity
-write can instead over-record a transition for a list that was not accepted,
-and a stale identity map can reassign ids on the next write. Those cases are
-documented, not hidden.
+atomically. Because the archive is written first, a process crash between the
+archive append and the list/identity/mirror writes can over-record a transition
+for a list that was not accepted. Within a live server process, writers are
+serialized and a snapshot is not accepted until its durable mirror readback
+matches; there is no cross-store transaction across a process crash.
 
 The panel's `history` control (shown when completed history exists) opens an
 opt-in, paged archive view. Every archived row wraps its complete task text —

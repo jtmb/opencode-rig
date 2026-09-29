@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-teardown",
+  "event_id": "rig-tools-subagents-test-teardown-001",
+  "capture_id": "rig-tools-subagents",
+  "source_sha256": "38f50adc2fe85e321622435e3e935217712318b40091148d8064d29731ef7a0d",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "de9484bcfd4eee7c2a4a6e3f8b1d90d475c6f79f93b2453a52741f1c602822e5",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "e60fb4e5fd1613a69d7a8c58ee06ddf3cdb4f98d8a37b1b884706d49ec21825a",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "teardown",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "96323af5-5507-4734-8d63-c2dd441823de",
+    "dispatch_id": "rig-tools-subagents-test-teardown-dispatch-001",
+    "transition_id": "rig-tools-subagents-test-teardown-transition-001",
+    "dispatch_monotonic_ns": "71814136916487",
+    "transition_monotonic_ns": "71814151394077"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-subagents-interact-after",
+    "frame_sha256": "9c228ad7dab9aee5749899a9a9dc20c55a9b3dc88dc435b1bf50ce6919099722",
+    "spans_sha256": "3e76da1ff193b2f93d78c87d86d80a7b64e6f25efbcc6ce3a6b624d1d928dfa7",
+    "state_sha256": "45fbed7fb2aef1b239edd3b05a94f6fb5cfd9de759075b15027156cfca662815"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-subagents-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "c3ae0496e27a807ea1bd7bed68463437c450d46cd015d0a49dd451b642c24cdf",
+  "output": "evidence/ui-acceptance/2026-09-26/v3/event-output/rig-tools-subagents-test-teardown.json",
+  "output_sha256": "8ed3cf57c327889b1d80994d890d33537cac91e4e0cbc5a5d90227de4f30bbdc",
+  "observed_at": "2026-09-26T17:38:10.730Z"
+}

@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/visible-command.test.ts",
+  "test_sha256": "f59201b57d717a22b6b59a1ba2de1d7cab1cec38d0212e7247b8243741cd16ec",
+  "source_sha256": "177a3a513635f80a7a85a1bc6b6faf8b3a1160f3536291ac542cdd97998b8ea0",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-ffi\",\"--experimental-strip-types\",\"--test\",\"test/visible-command.test.ts\"]",
+  "observed_at": "2026-09-27T10:04:25.600Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/rig-tools-tui-behavioral.txt",
+  "output_sha256": "d80e158bb1697874bc9591b070f21c1a06f846831b00e01a68734302cddd234b",
+  "invocation": {
+    "run_id": "02e1f34f-fc63-4621-b8c2-0230d8d27b50",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/visible-command.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-27T10:04:25.460Z",
+    "finished_at": "2026-09-27T10:04:25.600Z",
+    "started_monotonic_ns": "2703676230078",
+    "finished_monotonic_ns": "2703815856066",
+    "exit_code": 0,
+    "source_sha256_before": "177a3a513635f80a7a85a1bc6b6faf8b3a1160f3536291ac542cdd97998b8ea0",
+    "source_sha256_after": "177a3a513635f80a7a85a1bc6b6faf8b3a1160f3536291ac542cdd97998b8ea0",
+    "test_sha256_before": "f59201b57d717a22b6b59a1ba2de1d7cab1cec38d0212e7247b8243741cd16ec",
+    "test_sha256_after": "f59201b57d717a22b6b59a1ba2de1d7cab1cec38d0212e7247b8243741cd16ec"
+  }
+}

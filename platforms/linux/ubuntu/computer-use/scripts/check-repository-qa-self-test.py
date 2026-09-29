@@ -463,7 +463,13 @@ def test_staged_diff_check(qa, root: Path) -> None:
     (root / "wsl-session.md").write_text(
         "historical terminal export with trailing whitespace  \n", encoding="utf-8"
     )
-    subprocess.run(["git", "add", "staged.txt", "wsl-session.md"], cwd=root, check=True)
+    frame = root / "evidence/ui-acceptance/2026-09-25/v3/characters/frame.txt"
+    frame.parent.mkdir(parents=True)
+    frame.write_text("native rendered row with padding  \n", encoding="utf-8")
+    snapshot = root / "evidence/ui-acceptance/2026-09-25/v3/snapshots/goal/after-click.txt"
+    snapshot.parent.mkdir(parents=True)
+    snapshot.write_text("native click frame with padding  \n", encoding="utf-8")
+    subprocess.run(["git", "add", "staged.txt", "wsl-session.md", str(frame.relative_to(root)), str(snapshot.relative_to(root))], cwd=root, check=True)
     subprocess.run(
         [
             "git",
@@ -479,6 +485,12 @@ def test_staged_diff_check(qa, root: Path) -> None:
         cwd=root,
         check=True,
     )
+    qa.check_git_diff(root)
+
+    frame.write_text("updated native rendered row with padding  \n", encoding="utf-8")
+    snapshot.write_text("updated native click frame with padding  \n", encoding="utf-8")
+    qa.check_git_diff(root)
+    subprocess.run(["git", "add", str(frame.relative_to(root)), str(snapshot.relative_to(root))], cwd=root, check=True)
     qa.check_git_diff(root)
 
     path.write_text("trailing whitespace  \n", encoding="utf-8")

@@ -6,10 +6,10 @@ from canonical paths in this checkout.
 
 | Package | Role | Provides |
 |---|---|---|
-| [`orchestration-policy`](../../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md) | server | Configured-limit subagents, policy-index validation, installed-binary protection, project-memory reconciliation, and task-scoped external GitHub issue writes |
+| [`orchestration-policy`](../../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md) | server | Durable session Goals, evidence-gated Plan→Build handoff, configured-limit subagents, policy-index and installed-binary protection, project-memory reconciliation, and task-scoped external GitHub issue writes |
 | [`git-tool`](../../platforms/linux/ubuntu/computer-use/plugins-v2/git-tool/README.md) | server | Bounded read-only unified diffs through OpenCode's native VCS API |
 | [`repo-learning`](../../platforms/linux/ubuntu/computer-use/plugins-v2/repo-learning/README.md) | server + CLI | Explicitly enabled structured observation and a read-only review panel |
-| [`rig-tools`](../../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md) | server | Desktop/vision tools, repository gates, capacity checks, OpenCode API/runtime/recovery/TTY management, `/tools`, and bounded cross-session context with `/session-context` |
+| [`rig-tools`](../../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md) | server + CLI | Durable `/goal` controls, Auto/Manual prompt-footer handoff, desktop/vision tools, repository gates, OpenCode runtime/recovery/TTY management, and bounded `/session-context` |
 | [`rig-todo`](../../platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/README.md) | server + CLI | Todo tools, retained sidebar history, and the fullscreen `/tasks` Kanban |
 | [`codex-fallback`](../../platforms/linux/ubuntu/computer-use/plugins-v2/codex-fallback/README.md) | server | Quota-aware provider fallback routing |
 | [`chatgpt-connector`](../../platforms/linux/ubuntu/computer-use/plugins-v2/chatgpt-connector/README.md) | server | Active-OpenAI-OAuth image generation, web search, and session-private chat tools |
@@ -28,8 +28,10 @@ The Ponytail bridge has a separate compatibility and dependency guide at
 [`ponytail.md`](ponytail.md), including its V1-only upstream boundary and
 canonical lockfile/bootstrap path.
 
-OpenCode's built-in `/settings` supplies host settings; no separate settings
-package is required. The canonical role catalog is
+OpenCode's native **Open settings** controls host preferences. The plugin's
+single **Open Rig workflow settings** entry in Ctrl+P controls Rig display,
+session handoff, and workflow enforcements; no `/settings` slash alias or
+separate settings package is required. The canonical role catalog is
 [`config/v2-plugin-roles.json`](../../platforms/linux/ubuntu/computer-use/config/v2-plugin-roles.json).
 `ponytail-adapter` is included in the general server role catalog. Its official
 package is installed only through the canonical plugins-v2 workspace; the

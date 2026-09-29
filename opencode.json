@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "skills": ["./platforms/linux/ubuntu/computer-use/skills"],
   "permissions": [
     {
       "action": "github_*",
@@ -45,6 +46,61 @@
       "action": "wsl_browser_act",
       "resource": "*",
       "effect": "ask"
+    },
+    {
+      "action": "basic-memory_read_content",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_view_note",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_move_note",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_create_memory_project",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_delete_project",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_list_workspaces",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_schema_validate",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_schema_infer",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_schema_diff",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_search",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "basic-memory_fetch",
+      "resource": "*",
+      "effect": "deny"
     }
   ],
   "agents": {
@@ -60,7 +116,18 @@
         { "action": "shell", "resource": "git commit *", "effect": "deny" },
         { "action": "shell", "resource": "git push *", "effect": "deny" },
         { "action": "shell", "resource": "git -C * commit *", "effect": "deny" },
-        { "action": "shell", "resource": "git -C * push *", "effect": "deny" }
+        { "action": "shell", "resource": "git -C * push *", "effect": "deny" },
+        { "action": "basic-memory_read_content", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_view_note", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_move_note", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_create_memory_project", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_delete_project", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_list_workspaces", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_schema_validate", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_schema_infer", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_schema_diff", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_search", "resource": "*", "effect": "deny" },
+        { "action": "basic-memory_fetch", "resource": "*", "effect": "deny" }
       ]
     },
     "plan": {

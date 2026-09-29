@@ -1,0 +1,34 @@
+{
+  "version": 2,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+  "test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+  "source_sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-strip-types\",\"--test\",\"test/rendered.test.ts\"]",
+  "observed_at": "2026-09-26T17:38:24.993Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-26/v3/execution-output/file-manager-tui-render.txt",
+  "output_sha256": "6ba2f3592ee3df6b0b28c8dc7cd0b831f6ff494fc0cb4acffe07301bad2229d7",
+  "invocation": {
+    "run_id": "a306877f-5dcc-4d7d-989e-e578a43d1a46",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-strip-types",
+      "--test",
+      "test/rendered.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+    "started_at": "2026-09-26T17:38:22.868Z",
+    "finished_at": "2026-09-26T17:38:24.993Z",
+    "started_monotonic_ns": "71793004956677",
+    "finished_monotonic_ns": "71795130351900",
+    "exit_code": 0,
+    "source_sha256_before": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e",
+    "source_sha256_after": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e",
+    "test_sha256_before": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+    "test_sha256_after": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213"
+  }
+}

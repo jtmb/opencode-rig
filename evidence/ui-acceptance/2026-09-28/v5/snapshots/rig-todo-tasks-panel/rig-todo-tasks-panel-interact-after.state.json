@@ -1,0 +1,36 @@
+{
+  "visible": true,
+  "columnLabels": [
+    {
+      "text": "In Progress 1",
+      "fg": [
+        156,
+        174,
+        194,
+        255
+      ],
+      "attributes": 2
+    },
+    {
+      "text": "To Do 1",
+      "fg": [
+        140,
+        200,
+        255,
+        255
+      ],
+      "attributes": 1
+    },
+    {
+      "text": "To Do",
+      "fg": [
+        140,
+        200,
+        255,
+        255
+      ],
+      "attributes": 1
+    }
+  ],
+  "dispatches": []
+}

@@ -1,0 +1,20 @@
+✔ provider sidebar keeps status rows separate from indented wrapped detail (0.996118ms)
+✔ enabled provider without an integration is ambient READY without a quota adapter (1.161008ms)
+✔ a working OpenAI connection is visible without session history (0.19471ms)
+✔ offline providers qualify only inside the inclusive two-hour window (0.30884ms)
+✔ disabled and absent providers never render historical activity (0.199869ms)
+✔ an online provider remains visible with no activity history (0.13117ms)
+✔ runtime readiness is bounded and a later failure supersedes it (0.218389ms)
+✔ canonical aliases deduplicate and map exact activity without cross-qualifying providers (0.24908ms)
+✔ optional probe failure does not turn an authoritative working provider OFFLINE (0.933268ms)
+✔ a retained usage value cannot keep an offline provider visible after recency expires (0.260129ms)
+✔ activity extraction is metadata-only and never forwards session IDs or message text (0.356519ms)
+✔ bounded newest-first activity scanning stops below the recency boundary (0.15119ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 118.520162

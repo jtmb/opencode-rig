@@ -4,6 +4,17 @@ import { lstat, open, realpath } from "node:fs/promises"
 import { homedir } from "node:os"
 import { isAbsolute, join, relative, resolve, sep } from "node:path"
 
+import {
+  DEFAULT_ENFORCEMENTS,
+  ENFORCEMENT_NAMES,
+  ORCHESTRATION_MODES,
+  type OrchestrationMode,
+  type EnforcementSettings,
+  type LoadedEnforcementSettings,
+} from "./settings.ts"
+import { parseTodoDispatchSnapshotText } from "../../rig-todo/src/dispatch.ts"
+import type { RepoLearningCompletionOutput } from "../../repo-learning/src/rpc.ts"
+
 const HARD_MAX_CONCURRENT = 10
 const MAX_LIST_ITEMS = 32
 const MAX_RECONCILIATION_TURNS = 100
@@ -222,6 +233,7 @@ export type ToolErrorAcknowledgementInput = {
 }
 
 export type TodoStateReader = (parentSessionID: string, description?: string) => Promise<string | undefined>
+export type RepoLearningPreflight = (sessionID: string) => Promise<RepoLearningCompletionOutput>
 
 export type OrchestrationPolicyDependencies = {
   capacityDiagnostic: CapacityDiagnostic
@@ -231,6 +243,8 @@ export type OrchestrationPolicyDependencies = {
   todoRoot?: string
   todoStatePath?: (parentSessionID: string, root: string) => string
   readTodoState?: TodoStateReader
+  autoBuildQuestion?: (sessionID: string) => Promise<boolean>
+  repoLearningPreflight: RepoLearningPreflight
 }
 
 export type CorrectionLedgerRecord = CorrectionLedgerInput & { acknowledgedAt: string }
@@ -270,6 +284,43 @@ function record(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? value as Record<string, unknown>
     : undefined
+}
+
+function isRepoLearningPreflight(value: unknown): value is RepoLearningCompletionOutput {
+  const result = record(value)
+  const expected = [
+    "enabled",
+    "ready",
+    "required",
+    "receipted",
+    "missingObligationIDs",
+    "conflictObligationIDs",
+    "unresolvedConflictIDs",
+  ]
+  const isIdentifierList = (candidate: unknown): candidate is string[] =>
+    Array.isArray(candidate) && candidate.length <= 200 && new Set(candidate).size === candidate.length &&
+    candidate.every((entry) => typeof entry === "string" && /^[A-Za-z0-9_.:@/-]{1,80}$/.test(entry))
+  if (
+    !result || Object.keys(result).length !== expected.length || expected.some((key) => !Object.hasOwn(result, key)) ||
+    typeof result["enabled"] !== "boolean" || typeof result["ready"] !== "boolean" ||
+    !Number.isSafeInteger(result["required"]) || Number(result["required"]) < 0 || Number(result["required"]) > 200 ||
+    !Number.isSafeInteger(result["receipted"]) || Number(result["receipted"]) < 0 || Number(result["receipted"]) > Number(result["required"]) ||
+    !isIdentifierList(result["missingObligationIDs"]) || !isIdentifierList(result["conflictObligationIDs"]) ||
+    !isIdentifierList(result["unresolvedConflictIDs"]) || result["missingObligationIDs"].length > Number(result["required"]) ||
+    Number(result["required"]) - Number(result["receipted"]) !== result["missingObligationIDs"].length ||
+    result["conflictObligationIDs"].length > Number(result["required"]) ||
+    (result["conflictObligationIDs"].length > 0 && result["unresolvedConflictIDs"].length === 0) ||
+    (result["ready"] && (
+      Number(result["receipted"]) !== Number(result["required"]) ||
+      result["missingObligationIDs"].length > 0 || result["conflictObligationIDs"].length > 0 ||
+      result["unresolvedConflictIDs"].length > 0
+    )) ||
+    (!result["enabled"] && (
+      !result["ready"] || Number(result["required"]) !== 0 || Number(result["receipted"]) !== 0 ||
+      result["missingObligationIDs"].length > 0 || result["conflictObligationIDs"].length > 0 || result["unresolvedConflictIDs"].length > 0
+    ))
+  ) return false
+  return true
 }
 
 function bool(value: unknown, fallback: boolean, label: string) {
@@ -406,37 +457,11 @@ type TodoPriority = typeof TODO_PRIORITIES[number]
 type TodoMirrorItem = { content: string; status: TodoStatus; priority?: TodoPriority }
 
 function parseTodoMirror(text: string): TodoMirrorItem[] {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(text) as unknown
-  } catch {
-    throw new Error("todo state is not valid JSON")
-  }
-
-  const object = record(parsed)
-  const rawItems = Array.isArray(parsed)
-    ? parsed
-    : object && typeof object.updatedAt === "string" && object.updatedAt.trim() && Array.isArray(object.items)
-      ? object.items
-      : undefined
-  if (!rawItems || rawItems.length > MAX_TODO_ITEMS) throw new Error("todo state has an invalid item list")
-
-  return rawItems.map((raw) => {
-    const item = record(raw)
-    const content = item?.content
-    const status = item?.status
-    const priority = item?.priority
-    if (
-      typeof content !== "string" || !content.trim() ||
-      typeof status !== "string" || !(TODO_STATUSES as readonly string[]).includes(status) ||
-      (priority !== undefined && (typeof priority !== "string" || !(TODO_PRIORITIES as readonly string[]).includes(priority)))
-    ) {
-      throw new Error("todo state contains a malformed item")
-    }
-    return priority === undefined
-      ? { content: content.trim(), status: status as TodoStatus }
-      : { content: content.trim(), status: status as TodoStatus, priority: priority as TodoPriority }
-  })
+  const snapshot = parseTodoDispatchSnapshotText(text)
+  if (snapshot.items.length > MAX_TODO_ITEMS) throw new Error("todo state has an invalid item list")
+  return snapshot.items.map((item) => item.priority === undefined
+    ? { content: item.content, status: item.status }
+    : { content: item.content, status: item.status, priority: item.priority })
 }
 
 async function readTodoItems(
@@ -1068,10 +1093,21 @@ function readOnlyOpenCodeCommand(command: string, protectedPaths: readonly strin
     args[1] === "api" && args[2] === "get" && args[3] === "/api/info"
 }
 
-function readOnlyOpenCodeShellInCode(code: string, protectedPaths: readonly string[]) {
+const RELAXED_READ_ONLY_COMMANDS = new Set([
+  "df", "du", "file", "id", "ls", "pwd", "readlink", "realpath", "stat", "uname", "whoami", "wc",
+])
+
+function readOnlyRelaxedShellCommand(command: string) {
+  if (Buffer.byteLength(command, "utf8") > 4_096) return false
+  const args = fixedShellArguments(command)
+  return Boolean(args && args.length <= 64 && RELAXED_READ_ONLY_COMMANDS.has(args[0]!.split("/").at(-1)!))
+}
+
+function readOnlyOpenCodeShellInCode(code: string, protectedPaths: readonly string[], strict = true) {
   const match = /^\s*(?:return\s+)?tools(?:\s*\.\s*shell|\s*\[\s*["']shell["']\s*\])\s*\(\s*\{\s*command\s*:\s*(["'])([^"'\\]*)\1\s*\}\s*\)\s*;?\s*$/.exec(code)
   return match !== null && (
-    readOnlyGitCommand(match[2]!) || readOnlyOpenCodeCommand(match[2]!, protectedPaths)
+    readOnlyGitCommand(match[2]!) || readOnlyOpenCodeCommand(match[2]!, protectedPaths) ||
+    (!strict && readOnlyRelaxedShellCommand(match[2]!))
   )
 }
 
@@ -1144,11 +1180,17 @@ function codeModeNpmIsMutating(source: string, code = source) {
   return false
 }
 
-export function toolMayMutate(tool: string, input: unknown, protectedPaths: readonly string[] = []) {
+export function toolMayMutate(
+  tool: string,
+  input: unknown,
+  protectedPaths: readonly string[] = [],
+  strictShellClassification = true,
+) {
   if (tool === "npm") return record(input)?.action !== "scripts"
   if (tool === "shell") {
     const command = record(input)?.command
-    return typeof command !== "string" || !(readOnlyGitCommand(command) || readOnlyOpenCodeCommand(command, protectedPaths))
+    return typeof command !== "string" || !(readOnlyGitCommand(command) || readOnlyOpenCodeCommand(command, protectedPaths) ||
+      (!strictShellClassification && readOnlyRelaxedShellCommand(command)))
   }
   if (MUTATION_TOOLS.has(tool)) return true
   if (tool.startsWith("github.") && (GITHUB_MUTATION_TOOLS as readonly string[]).includes(tool.slice("github.".length))) return true
@@ -1156,7 +1198,7 @@ export function toolMayMutate(tool: string, input: unknown, protectedPaths: read
   const value = record(input)
   if (typeof value?.code !== "string") return false
   const code = maskJavaScriptNonCode(value.code)
-  if (EXECUTE_SHELL.test(code) && !readOnlyOpenCodeShellInCode(value.code, protectedPaths)) return true
+  if (EXECUTE_SHELL.test(code) && !readOnlyOpenCodeShellInCode(value.code, protectedPaths, strictShellClassification)) return true
   return EXECUTE_MUTATION.test(code) || EXECUTE_GITHUB_MUTATION.test(code) || codeModeNpmIsMutating(value.code, code)
 }
 
@@ -1262,6 +1304,10 @@ export function parseOrchestrationPolicyOptions(
 ): OrchestrationPolicyOptions {
   const options = record(value) ?? {}
   const configurationErrors: string[] = []
+  const configuredEnabled = bool(options.enabled, true, "enabled")
+  if (!configuredEnabled) configurationErrors.push("enabled=false cannot disable orchestration safety hooks; fixed safety enforcement remains enabled")
+  const backgroundOnly = bool(options.backgroundOnly, true, "backgroundOnly")
+  if (!backgroundOnly) configurationErrors.push("backgroundOnly=false is ignored; use the operator-only Ctrl+P Open Rig workflow settings entry")
   let delegationOnly = true
   let parentImplementationOptOutEnv: string | undefined
   if (options.delegationOnly !== undefined) {
@@ -1291,8 +1337,8 @@ export function parseOrchestrationPolicyOptions(
     throw new Error("memoryProject and memoryDirectory must be configured together")
   }
   return {
-    enabled: bool(options.enabled, true, "enabled"),
-    backgroundOnly: bool(options.backgroundOnly, true, "backgroundOnly"),
+    enabled: true,
+    backgroundOnly,
     delegationOnly,
     ...(parentImplementationOptOutEnv ? { parentImplementationOptOutEnv } : {}),
     configurationErrors,
@@ -1335,6 +1381,10 @@ function extractSessionIDs(value: unknown) {
   }
   const ids = [...new Set(serialized.slice(0, 16_384).match(/\bses_[A-Za-z0-9]+\b/g) ?? [])]
   return ids.length === 1 ? ids : []
+}
+
+export function subagentSessionIDFromResult(value: unknown) {
+  return extractSessionIDs(value)[0]
 }
 
 function toolErrorKey(sessionID: string, tool: string, callID: string) {
@@ -1387,6 +1437,32 @@ function expectedToolError(event: ToolAfter) {
 
 export function createOrchestrationPolicy(rawOptions: unknown, dependencies: OrchestrationPolicyDependencies) {
   const options = parseOrchestrationPolicyOptions(rawOptions, dependencies.environment)
+  const requireRepoLearningReady = async (sessionID: string) => {
+    let result: unknown
+    try {
+      result = await dependencies.repoLearningPreflight(sessionID)
+    } catch {
+      throw new Error("repo-learning preflight unavailable; task completion, commit, and push are blocked")
+    }
+    if (!isRepoLearningPreflight(result)) {
+      throw new Error("repo-learning preflight returned invalid state; task completion, commit, and push are blocked")
+    }
+    if (!result.ready) {
+      const missing = result.missingObligationIDs.length
+      const conflicts = result.unresolvedConflictIDs.length
+      const detail = missing || conflicts
+        ? `${missing} missing reflection receipt(s), ${conflicts} unresolved proposal conflict(s)`
+        : "reflection storage is unhealthy"
+      throw new Error(`repo-learning preflight blocked: ${detail}`)
+    }
+  }
+  const delegationConfigurationInvalid = options.configurationErrors.some((error) =>
+    /delegationOnly|parentImplementationOptOutEnv/.test(error),
+  )
+  let enforcementSettings: EnforcementSettings = { ...DEFAULT_ENFORCEMENTS }
+  let orchestrationMode: OrchestrationMode = "parallel"
+  let enforcementSettingsStatus: LoadedEnforcementSettings["status"] = "missing"
+  let enforcementSettingsMessage: string | undefined
   const pending = new Map<string, string>()
   const pendingChildren = new Map<string, string>()
   const reserving = new Map<string, string>()
@@ -1412,6 +1488,13 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Orc
   const rejectedToolCalls = new Set<string>()
   let toolErrorStateCorrupt = false
   let indexErrors: readonly string[] = []
+
+  const parentDelegationRequired = () => enforcementSettingsStatus === "invalid" || delegationConfigurationInvalid ||
+    (enforcementSettings.parentDelegationOnly && options.delegationOnly)
+  const correctionLedgerError = (task: TaskStateRecord) =>
+    enforcementSettings.correctionLedgers && task.kind === "correction" && !ledgerComplete(task)
+      ? "repository mutation blocked: correction ledger acknowledgement is incomplete"
+      : undefined
 
   type ReconciliationAudit = {
     sessionID: string
@@ -1484,7 +1567,11 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Orc
   const session = (sessionID: string) => {
     let current = sessions.get(sessionID)
     if (!current) {
-      current = { turns: 0, due: options.memoryProject !== undefined, questionObserved: false }
+      current = {
+        turns: 0,
+        due: enforcementSettings.memoryReconciliation && options.memoryProject !== undefined,
+        questionObserved: false,
+      }
       sessions.set(sessionID, current)
     }
     return current
@@ -1574,53 +1661,74 @@ export function createOrchestrationPolicy(rawOptions: unknown, dependencies: Orc
   const ledgerComplete = (task: TaskStateRecord) =>
     LEDGERS.every((ledger) => task.ledgers[ledger] !== undefined)
 
-  const taskReadyError = (task: TaskStateRecord | undefined) => {
-    if (!task) return "repository mutation blocked: call task_declare before repository work"
-    if (task.completedAt) return "repository mutation blocked: task is complete; declare a new task"
-    if (!task.children.length) return "repository mutation blocked: a direct background child is required"
+  const taskReadyError = (
+    task: TaskStateRecord | undefined,
+    requireDeclaration = enforcementSettings.requireTaskDeclare,
+    requireParentDelegation = parentDelegationRequired(),
+  ) => {
+    if (!task) {
+      if (requireDeclaration) return "repository mutation blocked: call task_declare before repository work"
+      return undefined
+    }
+    if (task.completedAt) return requireDeclaration ? "repository mutation blocked: task is complete; declare a new task" : undefined
     const lastAccepted = task.children.findLastIndex(
       (child) => child.status === "reviewed" && child.outcome === "accepted",
     )
-    if (lastAccepted < 0) {
+    if (requireParentDelegation && !task.children.length) return "repository mutation blocked: a direct background child is required"
+    if (requireParentDelegation && lastAccepted < 0) {
       return "repository mutation blocked: an accepted subagent_followup is required"
     }
-    if (task.children.some((child, index) =>
+    if (requireParentDelegation && task.children.some((child, index) =>
       index > lastAccepted && child.status === "reviewed" && child.outcome !== "accepted")) {
       return "repository mutation blocked: a later changes-required or failed child needs an accepted replacement"
     }
-    if (task.kind === "correction" && !ledgerComplete(task)) {
-      return "repository mutation blocked: correction ledger acknowledgement is incomplete"
-    }
-    return undefined
+    return correctionLedgerError(task)
   }
 
-  const requireTask = (sessionID: string, bootstrap = false) => {
+  const requireTask = (
+    sessionID: string,
+    bootstrap = false,
+    requireDeclaration = enforcementSettings.requireTaskDeclare,
+    requireParentDelegation = parentDelegationRequired(),
+  ) => {
     const current = taskFor(sessionID)
     const task = current?.task
-    if (!task) throw new Error(taskReadyError(undefined))
-    if (task.completedAt) throw new Error(taskReadyError(task))
+    if (!task) {
+      const error = taskReadyError(undefined, requireDeclaration, requireParentDelegation)
+      if (error) throw new Error(error)
+      return undefined
+    }
+    if (task.completedAt) {
+      const error = taskReadyError(task, requireDeclaration, requireParentDelegation)
+      if (error) throw new Error(error)
+      return undefined
+    }
     if (bootstrap) return task
     if (current.worker) {
-      if (task.kind === "correction" && !ledgerComplete(task)) {
-        throw new Error("repository mutation blocked: correction ledger acknowledgement is incomplete")
-      }
+      const error = correctionLedgerError(task)
+      if (error) throw new Error(error)
       return task
     }
-  const error = taskReadyError(task)
+  const error = taskReadyError(task, requireDeclaration, requireParentDelegation)
   if (error) throw new Error(error)
   return task
 }
 
-const requireExternalIssueTask = (sessionID: string) => {
-  const current = taskFor(sessionID)
-  const task = current?.task
-  if (!task) throw new Error("external issue write blocked: call task_declare before writing to GitHub")
-  if (task.completedAt) throw new Error("external issue write blocked: task is complete; declare a new task")
-  if (task.kind === "correction" && !ledgerComplete(task)) {
-    throw new Error("external issue write blocked: correction ledger acknowledgement is incomplete")
+  const requireExternalIssueTask = (sessionID: string) => {
+    const current = taskFor(sessionID)
+    const task = current?.task
+    if (!task) {
+      if (enforcementSettings.requireTaskDeclare) throw new Error("external issue write blocked: call task_declare before writing to GitHub")
+      return undefined
+    }
+    if (task.completedAt) {
+      if (enforcementSettings.requireTaskDeclare) throw new Error("external issue write blocked: task is complete; declare a new task")
+      return undefined
+    }
+    const error = correctionLedgerError(task)
+    if (error) throw new Error(error.replace("repository mutation", "external issue write"))
+    return task
   }
-  return task
-}
 
   const markTaskChild = (parentID: string, childID: string) => {
     const task = tasks.get(parentID)
@@ -1677,8 +1785,77 @@ const requireExternalIssueTask = (sessionID: string) => {
     reserving.delete(callID)
   }
 
+  const effectiveLimit = () => orchestrationMode === "single-subagent" ? 1 : options.maxConcurrent
+  const requireTodoDispatch = async (sessionID: string) => {
+    const current = taskFor(sessionID)
+    if (current?.worker || childParents.has(sessionID)) return
+    if (enforcementSettingsStatus === "invalid") throw new Error("dispatch blocked: repair invalid operator workflow settings in Ctrl+P Open Rig workflow settings")
+    const ledgerError = current && correctionLedgerError(current.task)
+    if (ledgerError) throw new Error(ledgerError)
+    if (followups(sessionID).size) throw new Error("background agent follow-up required before parent progress or Goal continuation; accepted subagent_followup is required after independent verification")
+    const running = activeChildren.size + pending.size + reserving.size
+    let snapshot
+    try {
+      const text = await readTodoStateText(dependencies, sessionID, undefined, true)
+      if (text === undefined) return
+      snapshot = parseTodoDispatchSnapshotText(text)
+    } catch {
+      throw new Error("dispatch blocked: Todo state is unavailable or invalid; repair it with todoread/todowrite before parent progress")
+    }
+    for (const binding of snapshot.bindings) {
+      if (binding.childSessionID
+        ? !current?.task.children.some((child) => child.sessionID === binding.childSessionID)
+        : pending.get(binding.callID) !== sessionID && reserving.get(binding.callID) !== sessionID) {
+        throw new Error("dispatch blocked: Todo binding has no tracked child or admitted launch; reconcile the Todo binding before parent progress")
+      }
+    }
+    const unbound = snapshot.items.filter((item) =>
+      (item.status === "pending" || item.status === "in_progress") && !snapshot.bindings.some((binding) => binding.todoID === item.id))
+    const free = Math.max(0, effectiveLimit() - running)
+    if (unbound.length && free) {
+      if (!current || current.task.completedAt) throw new Error("Todo dispatch required: call task_declare before dispatching unbound actionable Todos or reporting parent progress")
+      throw new Error(`Todo dispatch required: ${unbound.length} unbound actionable Todo(s), ${free} free admission slot(s), mode=${orchestrationMode}, effective=${effectiveLimit()}, configured=${options.maxConcurrent}. Launch direct background subagents with each Todo's exact leading description before parent progress; use goal_report(blocked) for a genuine blocker.`)
+    }
+  }
+
   return {
     options,
+    requireTodoDispatch,
+    setEnforcementSettings(value: LoadedEnforcementSettings) {
+      const parsed = record(value?.enforcements)
+      const valid = parsed && Object.keys(parsed).length === ENFORCEMENT_NAMES.length &&
+        ENFORCEMENT_NAMES.every((name) => typeof parsed[name] === "boolean") &&
+        (value.orchestrationMode === undefined || ORCHESTRATION_MODES.includes(value.orchestrationMode))
+      const status: LoadedEnforcementSettings["status"] = valid && (value?.status === "missing" || value?.status === "valid" || value?.status === "invalid")
+        ? value.status
+        : "invalid"
+      const next = valid && status === "valid"
+        ? Object.fromEntries(ENFORCEMENT_NAMES.map((name) => [name, parsed[name]])) as EnforcementSettings
+        : { ...DEFAULT_ENFORCEMENTS }
+      const memoryChanged = next.memoryReconciliation !== enforcementSettings.memoryReconciliation
+      enforcementSettings = next
+      enforcementSettingsStatus = status
+      orchestrationMode = status === "valid" ? value.orchestrationMode ?? "parallel" : "parallel"
+      enforcementSettingsMessage = enforcementSettingsStatus === "invalid"
+        ? "settings are malformed or unreadable; all workflow enforcements remain ON"
+        : value.message
+      if (memoryChanged) {
+        for (const current of sessions.values()) {
+          current.turns = 0
+          current.due = next.memoryReconciliation && options.memoryProject !== undefined
+          current.questionObserved = false
+          current.snapshot = undefined
+        }
+      }
+    },
+    enforcementState() {
+      return {
+        enforcements: { ...enforcementSettings },
+        orchestrationMode,
+        status: enforcementSettingsStatus,
+        ...(enforcementSettingsMessage ? { message: enforcementSettingsMessage } : {}),
+      }
+    },
     setIndexErrors(errors: readonly string[]) {
       indexErrors = [...errors]
     },
@@ -2033,7 +2210,8 @@ const requireExternalIssueTask = (sessionID: string) => {
         const toolError = toolErrorBlockingReason(parentID)
         if (toolError) throw new Error(toolError)
       }
-      const task = requireTask(parentID)
+      const task = requireTask(parentID, false, true, parentDelegationRequired())
+      if (!task) throw new Error("task completion blocked: no active declared task")
       if (task.children.some((child) => child.status !== "reviewed")) {
         throw new Error("task completion blocked: every background child must complete and receive parent follow-up")
       }
@@ -2042,6 +2220,7 @@ const requireExternalIssueTask = (sessionID: string) => {
         throw new Error(`task completion blocked: ${actionableTodos} actionable todo item(s) remain; verify the work and mark each completed or cancelled`)
       }
       await requireAcceptanceClaims(dependencies, task)
+      await requireRepoLearningReady(parentID)
       task.completedAt = new Date().toISOString()
       return { ...taskCopy(task), verification }
     },
@@ -2104,7 +2283,7 @@ const requireExternalIssueTask = (sessionID: string) => {
     },
     userPrompt(sessionID: string) {
       const current = session(sessionID)
-      if (current.due || options.memoryProject === undefined) return false
+      if (!enforcementSettings.memoryReconciliation || current.due || options.memoryProject === undefined) return false
       current.turns += 1
       if (current.turns >= options.reconciliationIntervalTurns) {
         current.due = true
@@ -2115,11 +2294,11 @@ const requireExternalIssueTask = (sessionID: string) => {
     },
     needsMemorySnapshot(sessionID: string) {
       const current = session(sessionID)
-      return current.due && current.snapshot === undefined
+      return enforcementSettings.memoryReconciliation && current.due && current.snapshot === undefined
     },
     setMemorySnapshot(sessionID: string, snapshot: MemorySnapshot) {
       const current = session(sessionID)
-      if (current.due) current.snapshot = snapshot
+      if (enforcementSettings.memoryReconciliation && current.due) current.snapshot = snapshot
     },
     async todoReminderCount(sessionID: string) {
       const current = taskFor(sessionID)
@@ -2132,37 +2311,59 @@ const requireExternalIssueTask = (sessionID: string) => {
       }
     },
     instructions(sessionID?: string, todoReminderCount?: number) {
-      if (!options.enabled) return ""
+      const effectiveSettings = {
+        ...enforcementSettings,
+        parentDelegationOnly: parentDelegationRequired(),
+      }
+      const disabledSettings = ENFORCEMENT_NAMES.filter((name) => !effectiveSettings[name])
       const lines = [
         "AGENT ORCHESTRATION POLICY (enforced by plugin hooks)",
-        `- Launch child sessions${options.backgroundOnly ? " only with background=true" : " in the configured mode"}.`,
-        `- Configured maxConcurrent=${options.maxConcurrent} (1..${HARD_MAX_CONCURRENT}) is the only child-concurrency admission gate; host/cgroup agent_memory_capacity results are diagnostic only.`,
+        "WORKFLOW ENFORCEMENTS (operator-only Ctrl+P Open Rig workflow settings; missing or malformed state defaults to ON)",
+        ...ENFORCEMENT_NAMES.map((name) => `- ${name}: ${effectiveSettings[name] ? "ON" : "OFF"}.`),
+        ...(disabledSettings.length ? [`REDUCED POSTURE: ${disabledSettings.join(", ")} are OFF.`] : []),
+        ...(enforcementSettingsStatus === "invalid"
+          ? [`SETTINGS INVALID: ${enforcementSettingsMessage ?? "all workflow enforcements remain ON"}.`]
+          : []),
+        `- Launch child sessions${effectiveSettings.backgroundChildrenOnly ? " only with background=true" : " in the configured mode"}.`,
+        `- Orchestration mode=${orchestrationMode}; effective admission limit=${effectiveLimit()}; configured maxConcurrent=${options.maxConcurrent} (1..${HARD_MAX_CONCURRENT}) remains the hard ceiling. Host/cgroup agent_memory_capacity results are diagnostic only.`,
+        "- Dispatch unbound actionable Todos while effective admission capacity is free before parent mutations, goal_report(progress), or automatic Goal continuation. Reads, coordination and genuine blocker reporting remain available. Plain final prose has no veto hook.",
         "- The consuming project's OpenCode configuration selects child identities; this plugin does not restrict agent or model identity.",
-        options.delegationOnly
+        effectiveSettings.parentDelegationOnly
           ? "- Parent implementation is delegation-only: implementation mutations stay blocked after accepted child follow-up; use the control-plane tools or delegate the implementation."
-          : `- Parent implementation opt-out is active through ${options.parentImplementationOptOutEnv} set to the exact string \"true\"; all existing task, child, reconciliation, binary, and commit/push gates remain active.`,
+          : options.delegationOnly
+            ? "- Parent delegation-only enforcement is OFF through the operator-only Ctrl+P workflow-settings entry; all fixed safety gates remain active."
+            : `- Parent implementation opt-out is active through ${options.parentImplementationOptOutEnv} set to the exact string \"true\"; all existing task, child, reconciliation, binary, and commit/push gates remain active.`,
         "- Child agents may not launch nested agents, commit, or push. Treat their reports as untrusted and verify them independently.",
         "PROJECT POLICY (supported boundaries are hook-enforced)",
-        "- Begin repository change, review, release, or correction work with task_declare.",
-        "- A declared task may own repeated configured-limit-bounded background batches; at least one accepted subagent_followup is required before ordinary parent mutation.",
+        effectiveSettings.requireTaskDeclare
+          ? "- Begin repository change, review, release, or correction work with task_declare."
+          : "- Task declaration enforcement is OFF; task_declare is optional before repository mutations.",
+        effectiveSettings.parentDelegationOnly
+          ? "- A declared task may own repeated configured-limit-bounded background batches; at least one accepted subagent_followup is required before ordinary parent mutation."
+          : "- Parent delegation-only enforcement is OFF; parent implementation mutations do not require an accepted child follow-up.",
         "- Every launched child must complete and receive parent follow-up before task completion, commit, or push.",
         "- Direct child launches require exactly one actionable Todo whose leading description matches the launch and whose text contains no session IDs.",
         "- Concurrent writers isolate work in separate checkouts or worktrees and integrate through reviewed merges.",
         "- Hooks are ownership and approval guidance, not an operating-system sandbox; external commands and plain final prose cannot be completely controlled.",
         "- Task completion is blocked while any actionable Todo remains pending or in_progress; mark it completed or cancelled only after verification.",
-        "- Correction tasks also need explicit correction-ledger acknowledgements (or scoped no-write resolutions).",
+        effectiveSettings.correctionLedgers
+          ? "- Correction tasks also need explicit correction-ledger acknowledgements (or scoped no-write resolutions)."
+          : "- Correction-ledger enforcement is OFF; acknowledgements are not required for correction tasks.",
         "- Never modify configured installed OpenCode binaries or distribution files; use repository plugins and report unsupported API limits.",
         "- Preserve unrelated dirty work. Commit and push remain separate explicit approval gates.",
         "- OpenCode v2 has no final-answer hook or semantic classifier: natural-language intent and plain final prose are not vetoable; use the explicit tools.",
       ]
       if (options.configurationErrors.length) {
         lines.push(
-          "PARENT DELEGATION CONFIGURATION INVALID: parent implementation remains delegation-only until the configured override is corrected.",
+          "ORCHESTRATION CONFIGURATION ERRORS: enforcement remains fail-closed until these options are corrected.",
           ...options.configurationErrors.map((error) => `- ${error}`),
         )
+        if (delegationConfigurationInvalid) {
+          lines.push("- Parent implementation remains delegation-only while its environment opt-out configuration is invalid.")
+        }
       }
       if (options.enforceAgentIndex) {
-        lines.splice(5, 0, "- The active project's policy index is validated before recognized repository mutation.")
+        lines.push("- The active project's policy index is validated before recognized repository mutation.")
       }
       if (indexErrors.length) {
         lines.push(
@@ -2170,7 +2371,7 @@ const requireExternalIssueTask = (sessionID: string) => {
           ...indexErrors.map((error) => `  - ${error}`),
         )
       }
-      if (sessionID && options.memoryProject) {
+      if (sessionID && options.memoryProject && effectiveSettings.memoryReconciliation) {
         const current = session(sessionID)
         if (current.due) {
           lines.push(
@@ -2244,10 +2445,22 @@ const requireExternalIssueTask = (sessionID: string) => {
       }
       return lines.join("\n")
     },
+    rejectDirectLaunch(event: ToolBefore) {
+      if (!isSubagentLaunch(event.tool, event.input)) return
+      pending.delete(event.id)
+      pendingChildren.delete(event.id)
+      reserving.delete(event.id)
+      rememberRejectedToolCall(event)
+    },
+    pendingChildForLaunch(callID: string) {
+      return pendingChildren.get(callID)
+    },
     async before(event: ToolBefore) {
-      if (!options.enabled) return
       let launchReserved = false
       try {
+      if (event.tool === "question" && await dependencies.autoBuildQuestion?.(event.sessionID)) {
+        throw new Error("question tool is unavailable while Goal handoff is Auto or invalid in Build; switch to Manual before asking")
+      }
       if (isWrappedSubagent(event.tool, event.input)) {
         throw new Error("subagent must be launched through the direct subagent tool; execute-wrapped launches are rejected")
       }
@@ -2255,6 +2468,7 @@ const requireExternalIssueTask = (sessionID: string) => {
         throw new Error("background agent follow-up required before another child launch, task completion, commit, or push")
       }
       const current = taskFor(event.sessionID)
+      if (event.tool === "goal_report" && record(event.input)?.status === "progress") await requireTodoDispatch(event.sessionID)
       if (current?.worker && isCommitOrPush(event.tool, event.input)) {
         throw new Error("child agents may not commit or push")
       }
@@ -2271,23 +2485,44 @@ const requireExternalIssueTask = (sessionID: string) => {
       const policyRepair = options.enforceAgentIndex && isPolicyRepair(event.tool, event.input)
       const roadmapBootstrap = options.enforceAgentIndex && indexErrors.length > 0 && isRoadmapOnly(event.tool, event.input)
       const externalIssueWrite = isExternalIssueWriteOnly(event.tool, event.input)
-      if (toolMayMutate(event.tool, event.input, options.protectedPaths)) {
+      const mayMutate = toolMayMutate(
+        event.tool,
+        event.input,
+        options.protectedPaths,
+        enforcementSettings.strictShellClassification,
+      )
+      const shellCommand = event.tool === "shell" || (event.tool === "execute" && typeof record(event.input)?.code === "string" &&
+        EXECUTE_SHELL.test(maskJavaScriptNonCode(record(event.input)!.code as string)))
+      if ((mayMutate || shellCommand) && !externalIssueWrite) {
+        const protectedPath = protectedPathInInput(event.input, options.protectedPaths)
+        if (protectedPath) throw new Error(`installed OpenCode path is immutable: ${protectedPath}`)
+      }
+      if (mayMutate) {
+        if (!directLaunch && !taskCompletion && !isCommitOrPush(event.tool, event.input) &&
+          !policyRepair && !isRoadmapOnly(event.tool, event.input) && !externalIssueWrite) {
+          await requireTodoDispatch(event.sessionID)
+        }
+        if (taskCompletion || isCommitOrPush(event.tool, event.input)) {
+          await requireRepoLearningReady(event.sessionID)
+        }
+        if (isUnapprovedGithubCommitOrPush(event.tool, event.input)) {
+          throw new Error("GitHub Code Mode commit/push calls must use the separate repo_commit or repo_push approval gates")
+        }
         if (!externalIssueWrite && indexErrors.length && !policyRepair && !roadmapBootstrap) {
           throw new Error("repository mutation blocked: AGENTS.md policy index is invalid")
         }
-        const protectedPath = externalIssueWrite ? undefined : protectedPathInInput(event.input, options.protectedPaths)
-        if (protectedPath) throw new Error(`installed OpenCode path is immutable: ${protectedPath}`)
         if (policyRepair) {
           if (current?.worker) requireTask(event.sessionID)
           else {
             const task = requireTask(event.sessionID, true)
-            if (task.kind === "correction" && !ledgerComplete(task)) {
-              throw new Error("repository mutation blocked: correction ledger acknowledgement is incomplete")
+            if (task) {
+              const error = correctionLedgerError(task)
+              if (error) throw new Error(error)
             }
           }
           return
         }
-        if (options.memoryProject && session(event.sessionID).due) {
+        if (enforcementSettings.memoryReconciliation && options.memoryProject && session(event.sessionID).due) {
           throw new Error("repository mutation blocked: rule reconciliation is due")
         }
         if (current && !current.worker && (isCommitOrPush(event.tool, event.input) || taskCompletion)) {
@@ -2299,9 +2534,13 @@ const requireExternalIssueTask = (sessionID: string) => {
           if (toolError) throw new Error(toolError)
         }
         if (directLaunch) {
+          if (enforcementSettingsStatus === "invalid") throw new Error("subagent admission blocked: repair invalid operator workflow settings")
           if (childParents.has(event.sessionID)) throw new Error("child agents may not launch nested agents")
           if (!SESSION_ID.test(event.sessionID)) throw new Error("subagent parent sessionID is invalid")
-          const task = requireTask(event.sessionID, true)
+          const task = requireTask(event.sessionID, true, true, parentDelegationRequired())
+          if (!task) throw new Error("subagent launch requires an active declared task")
+          const ledgerError = correctionLedgerError(task)
+          if (ledgerError) throw new Error(ledgerError)
           if (task.children.length + directLaunchInFlightCount(event.sessionID) >= MAX_TASK_CHILDREN) {
             throw new Error(`task child history limit reached (${MAX_TASK_CHILDREN})`)
           }
@@ -2311,12 +2550,10 @@ const requireExternalIssueTask = (sessionID: string) => {
           requireTask(event.sessionID, true)
         } else {
           if (externalIssueWrite) requireExternalIssueTask(event.sessionID)
-          else requireTask(event.sessionID)
-          if (current && !current.worker && options.delegationOnly && !taskCompletion && !externalIssueWrite) {
+          else if (taskCompletion) requireTask(event.sessionID, true, true, parentDelegationRequired())
+          else requireTask(event.sessionID, false, enforcementSettings.requireTaskDeclare, parentDelegationRequired())
+          if (current && !current.worker && parentDelegationRequired() && !taskCompletion && !externalIssueWrite) {
             throw new Error("parent implementation blocked: delegation-only policy requires parentImplementationOptOutEnv with its exact value set to true")
-          }
-          if (current && !current.worker && isUnapprovedGithubCommitOrPush(event.tool, event.input)) {
-            throw new Error("GitHub Code Mode commit/push calls must use the separate repo_commit or repo_push approval gates")
           }
         }
       }
@@ -2326,7 +2563,7 @@ const requireExternalIssueTask = (sessionID: string) => {
       const description = subagentDescription(input)
       try {
         requireActionableTodo(await readTodoItems(dependencies, event.sessionID, description), description)
-        if (options.backgroundOnly && input.background !== true) {
+        if (enforcementSettings.backgroundChildrenOnly && input.background !== true) {
           throw new Error("agent orchestration policy requires background=true")
         }
         if (typeof input.agent !== "string" || !input.agent.trim()) {
@@ -2340,8 +2577,8 @@ const requireExternalIssueTask = (sessionID: string) => {
         }
         if (typeof model !== "string" || !model.trim()) throw new Error("subagent model could not be resolved")
         const running = activeChildren.size + pending.size + reserving.size - 1
-        if (running >= options.maxConcurrent) {
-          throw new Error(`configured agent orchestration limit reached (${running}/${options.maxConcurrent})`)
+        if (running >= effectiveLimit()) {
+          throw new Error(`configured agent orchestration limit reached (${running}/${effectiveLimit()}); mode=${orchestrationMode}, configured ceiling=${options.maxConcurrent}. Existing children finish normally; wait for capacity and complete parent follow-up.`)
         }
         observeCapacity()
         pending.set(event.id, event.sessionID)
@@ -2354,7 +2591,6 @@ const requireExternalIssueTask = (sessionID: string) => {
       }
     },
     after(event: ToolAfter) {
-      if (!options.enabled) return false
       const rejected = rejectedToolCalls.delete(`${event.sessionID}\u0000${event.id}`)
       if (event.tool === "question" && event.status === "completed") {
         session(event.sessionID).questionObserved = true
@@ -2513,6 +2749,7 @@ const requireExternalIssueTask = (sessionID: string) => {
       return reconciliationCopy(audit)
     },
     restoreReconciliation(value: unknown, snapshot?: MemorySnapshot) {
+      if (!enforcementSettings.memoryReconciliation) return
       const stored = record(value)
       if (!stored || stored.version !== 1 || !Array.isArray(stored.sessions)) return
       const failClosed = (sessionIDs: Iterable<string | undefined>) => {

@@ -6,6 +6,8 @@ import { isAbsolute, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { MAX_MANAGED_SCREEN_ROWS } from "./rpc.ts"
+
 const execute = promisify(execFile)
 const RESIZE_HELPER = fileURLToPath(new URL("../scripts/screen-resize.py", import.meta.url))
 const NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/
@@ -16,6 +18,7 @@ const MAX_TOKENS = 64
 const TOKEN_TTL_MS = 60_000
 
 export type ScreenSession = { pid: number; name: string; state: string }
+export type ManagedScreenSession = { name: string; state: string }
 export type ScreenInput = {
   action: "list" | "capture" | "start" | "input" | "resize" | "stop"
   name?: string
@@ -57,6 +60,9 @@ type Token = {
   targetDigest: string
   expiresAt: number
 }
+
+type OwnedScreenSession = { name: string; pid: number }
+type OwnershipStore = { read(): Promise<unknown>; write(value: unknown): Promise<void> }
 
 function clean(value: string, maximum: number) {
   return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, " ").slice(0, maximum)
@@ -131,8 +137,77 @@ function targetState(sessions: ScreenSession[], name: string) {
   return sessions.find((session) => session.name === name) ?? null
 }
 
-export function createScreenManager(backend: ScreenBackend, now: () => number = Date.now) {
+function validScreenState(state: string) {
+  return state === "Attached" || state === "Detached"
+}
+
+function parseOwnedSessions(value: unknown): OwnedScreenSession[] {
+  if (!Array.isArray(value)) return []
+  const owners: OwnedScreenSession[] = []
+  for (const item of value.slice(0, MAX_SESSIONS)) {
+    if (!item || typeof item !== "object") continue
+    const record = item as Record<string, unknown>
+    if (typeof record.name !== "string" || !NAME.test(record.name)) continue
+    if (!Number.isSafeInteger(record.pid) || (record.pid as number) <= 0) continue
+    if (owners.some((owner) => owner.name === record.name)) continue
+    owners.push({ name: record.name, pid: record.pid as number })
+  }
+  return owners
+}
+
+export function createScreenManager(
+  backend: ScreenBackend,
+  now: () => number = Date.now,
+  ownershipStore?: OwnershipStore,
+) {
   const tokens = new Map<string, Token>()
+  let memoryOwners: unknown = []
+  const store = ownershipStore ?? {
+    read: async () => memoryOwners,
+    write: async (value: unknown) => { memoryOwners = value },
+  }
+  let ownershipQueue = Promise.resolve()
+
+  const withOwnedSessions = <T>(
+    update: (owners: OwnedScreenSession[]) => Promise<{ next?: OwnedScreenSession[]; result: T }>,
+  ): Promise<T> => {
+    const pending = ownershipQueue.then(async () => {
+      const owners = parseOwnedSessions(await store.read())
+      const { next, result } = await update(owners)
+      if (next !== undefined) await store.write(next)
+      return result
+    })
+    ownershipQueue = pending.then(() => undefined, () => undefined)
+    return pending
+  }
+
+  const rememberStarted = (name: string, session: ScreenSession | null) => withOwnedSessions(async (owners) => {
+    const next = owners.filter((owner) => owner.name !== name)
+    if (session && session.name === name && validScreenState(session.state)) {
+      next.push({ name: session.name, pid: session.pid })
+    }
+    return { next: next.slice(-MAX_SESSIONS), result: undefined }
+  })
+
+  const forget = (name: string) => withOwnedSessions(async (owners) => ({
+    next: owners.filter((owner) => owner.name !== name),
+    result: undefined,
+  }))
+
+  const managedSessions = () => withOwnedSessions(async (owners) => {
+    const live = await backend.list()
+    const matches = owners.flatMap((owner) => {
+      const session = live.find((item) => item.name === owner.name && item.pid === owner.pid)
+      return session && validScreenState(session.state)
+        ? [{ name: session.name, state: clean(session.state, 64) }]
+        : []
+    })
+    const next = owners.filter((owner) => matches.some((session) => session.name === owner.name))
+    return {
+      ...(next.length === owners.length ? {} : { next }),
+      result: matches.sort((left, right) => left.name.localeCompare(right.name)).slice(0, MAX_MANAGED_SCREEN_ROWS),
+    }
+  })
 
   const prune = () => {
     for (const [key, value] of tokens) if (value.expiresAt <= now()) tokens.delete(key)
@@ -184,14 +259,19 @@ export function createScreenManager(backend: ScreenBackend, now: () => number = 
     }
     const current = targetState(await backend.list(), intent.name)
     if (digest(current) !== token.targetDigest) throw new Error("screen target state changed after preview; preview again")
-    if (intent.action === "start") await backend.start(intent)
-    else if (intent.action === "input") await backend.input(intent)
+    if (intent.action === "start") {
+      await backend.start(intent)
+      await rememberStarted(intent.name, targetState(await backend.list(), intent.name))
+    } else if (intent.action === "input") await backend.input(intent)
     else if (intent.action === "resize") await backend.resize(intent)
-    else await backend.stop(intent.name)
+    else {
+      await backend.stop(intent.name)
+      await forget(intent.name)
+    }
     return { dryRun: false, intent, target: targetState(await backend.list(), intent.name) }
   }
 
-  return { invoke }
+  return { invoke, managedSessions }
 }
 
 async function command(args: string[], allowNoSessions = false) {

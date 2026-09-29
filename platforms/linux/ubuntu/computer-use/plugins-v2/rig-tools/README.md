@@ -244,11 +244,14 @@ header never opens a child session.
 
 ## Visible CLI commands
 
-The CLI export registers `/session-context` and `/tools` as keymap slash
-commands. Their bounded server-RPC results are rendered with the supported
-v2.0.7 `context.ui.dialog.alert` API, so they do not start a model turn, resume
-the session, write a synthetic inbox message, or modify the source session.
-There is no `commands/session-context.md` deployment.
+The CLI export registers `/session-context`, `/tools`, and `/goal` as slash
+commands. The read-only `/session-context` and `/tools` RPC results are rendered
+with the supported v2.0.7 `context.ui.dialog.alert` API, so they do not start a
+model turn, resume the session, write a synthetic inbox message, or modify the
+source session. The palette-only **Open Rig workflow settings** command is the
+single operator settings entry; it has no slash alias. OpenCode v2.0.7 exposes
+no native Open settings dialog extension point, so the plugin does not add a
+parallel settings menu. There is no `commands/session-context.md` deployment.
 
 - `/session-context` shows a bounded list of other sessions in the invoking
   project.
@@ -261,6 +264,58 @@ There is no `commands/session-context.md` deployment.
 - `/tools` shows every registered `rig-tools` tool with access mode, purpose,
   representative JSON input, and apply input when relevant. `/tools screen`
   filters by name, purpose, or access mode.
+- **Open Rig workflow settings** is the single Ctrl+P palette entry. Its native
+  settings selector toggles the footer Goal summary, sidebar Goal summary,
+  transient footer hover/focus preview, or the current session's Auto/Manual
+  handoff. **Orchestration mode** selects persisted **Parallel (default)** or
+  **Single-subagent** admission; configured `maxConcurrent` remains the hard
+  ceiling and existing running/admitted children finish normally. Mode selection
+  changes no other gate. The same entry opens the workflow-enforcement prompt; enter
+  `<setting> on|off` to change one of the six enforcements. There is no
+  `/settings` or `/goal-handoff` slash alias and no second settings command.
+  No server tool, RPC method, or Code Mode function can change enforcement
+  settings.
+- `/goal [objective|build|pause|resume|clear]` starts, views, explicitly hands a
+  ready Manual Plan to server-side Build, pauses, resumes, or clears the active
+  session's durable Goal through the orchestration-policy RPC. Pausing
+  or clearing also cancels its queued prompt when possible; stale prompt markers
+  are rejected by the server hook.
+- The current Goal state and a bounded objective appear in the prompt footer and
+  additive sidebar by default. Both use the same server-owned state query and
+  refresh on Goal changes and lifecycle events; plan, criteria, and evidence
+  details are not included in these summaries. Hovering or keyboard-focusing the
+  footer summary reveals a transient preview of the current objective, capped at
+  128 characters. A refresh keeps the last ready Goal visible for that session
+  until the new state arrives; a new session starts in loading state, and a
+  failed read shows unavailable. Footer and sidebar update from the same feed.
+- `Handoff: Manual/Auto` is shown in the prompt footer for the active session.
+  Click it or focus it and press Enter/Space to toggle. Each session defaults
+  to Manual. The same per-session toggle is available in the workflow-settings
+  selector.
+  Auto handoff and continuation are driven by server session events, so they
+  continue without this TUI connected. Manual handoff requires `/goal build`;
+  local composer agent selection does not switch the server session. The server
+  uses idle-status and inbox observations to prioritize queued user input.
+
+The three Goal display preferences default to visible and persist through the
+V2 CLI plugin's durable storage, independently of the enforcement file below
+and outside project settings.
+
+The settings file is
+`${XDG_CONFIG_HOME:-~/.config}/opencode/orchestration-policy-settings.json`,
+outside the repository, with `schemaVersion: 1` and an `enforcements` object
+containing exactly six boolean fields.
+Writes are atomic and mode `0600`. Missing, malformed, unreadable, oversized,
+symlinked, or repository-local state forces all six settings ON. The command
+lists every setting, reports invalid-state recovery, and shows a reduced-posture
+banner whenever a setting is OFF. Fixed safety entries are always displayed ON
+and attempts to toggle them are refused.
+
+The orchestration-policy server plugin re-reads settings before every policy
+tool hook and prompt/context hook; changing a valid setting takes effect on its
+next hook without a reload or restart. The `parentImplementationOptOutEnv`
+contract and ordinary plugin options remain process-setup values and still need
+a server-plugin reload or restart when changed.
 
 The catalog is defined in `src/tool-catalog.ts`; tests compare it to every tool
 registration in `src/index.ts`, validate each JSON example, and enforce a 32 KiB
@@ -271,8 +326,8 @@ command is unavailable rather than falling back to a model prompt.
 
 Open `/subagents` from the CLI command palette or prompt slash completion. This
 is a read-only, plugin-owned fullscreen `session.panel` view, bounded to 32
-direct children in the same project and directory. Each row displays the agent
-name and resolved model reference before the title, for example:
+direct children in the same project, including other worktrees. Each row
+displays the agent name and resolved model reference before the title, for example:
 
 ```text
 General · openai/gpt-5.6-luna#max: Repair visible commands
@@ -339,6 +394,13 @@ Explorer is anchored before the native boundary, while Active subagents and
 Todo are additive sections after it. This is not a modification of the native
 bottom Subagents panel. An empty active-subagent section says
 `No active subagents.`
+
+The separate **Managed Screens** subsection lists up to eight GNU Screen sessions
+started through an applied `screen_terminal` start. Persisted name/PID ownership
+is reconciled against live Screen state on refresh; foreign, stopped, dead, and
+replaced sessions are suppressed. Only `name` and `state` cross the RPC into
+the TUI. Applied start/stop emits a refresh event; external stops are pruned on
+the next fetch. Click or focus and press Enter/Space to collapse the heading.
 
 ## Runtime and Screen usage
 

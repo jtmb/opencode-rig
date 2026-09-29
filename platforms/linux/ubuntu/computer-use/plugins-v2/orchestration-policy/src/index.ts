@@ -7,6 +7,7 @@ import { join, relative } from "node:path"
 import { createMemoryCapacityEvaluator } from "../../rig-tools/src/memory-capacity.ts"
 import {
   createOrchestrationPolicy,
+  subagentSessionIDFromResult,
   validateAgentPolicyIndex,
   type CorrectionLedgerInput,
   type MemorySnapshot,
@@ -16,6 +17,11 @@ import {
   type TaskDeclarationInput,
   type ToolErrorAcknowledgementInput,
 } from "./policy.ts"
+import { bindTodoChild, releaseTodoBinding, reserveTodoBinding } from "../../rig-todo/src/dispatch.ts"
+import { readEnforcementSettings } from "./settings.ts"
+import { assertPlanParent, createGoalManager, goalDisplayState, goalSummary, GOAL_STORAGE_PREFIX, recoverableStoredGoal, type GoalReportInput, type PlanReadyInput } from "./goal.ts"
+import { GoalRpc, type GoalRpcCommandInput } from "./goal-rpc.ts"
+import { RepoLearning, type RepoLearningCompletionOutput } from "../../repo-learning/src/rpc.ts"
 
 const MAX_MEMORY_ENTRIES = 32
 const MAX_MEMORY_CONTENT = 4_000
@@ -27,6 +33,24 @@ const TOOL_ERROR_STATE_KEY = "tool-error/state"
 const RECONCILIATION_STATE_KEY = "reconciliation/state"
 // ponytail: fixed 30s ceiling; expose a setting only if real cancellations need longer.
 const CANCELLATION_WAIT_TIMEOUT_MS = 30_000
+export const RESTORED_CAPACITY_WAITS = 4
+export const RESTORED_CAPACITY_WAIT_TIMEOUT_MS = 30_000
+
+const awaitWithSignal = <T>(request: Promise<T>, signal: AbortSignal): Promise<T> => {
+  let abort: (() => void) | undefined
+  const aborted = new Promise<never>((_resolve, reject) => {
+    if (signal.aborted) {
+      reject(signal.reason)
+      return
+    }
+    abort = () => reject(signal.reason)
+    signal.addEventListener("abort", abort, { once: true })
+  })
+  return Promise.race([request, aborted]).finally(() => {
+    if (abort) signal.removeEventListener("abort", abort)
+  })
+}
+
 const OWNER_SOURCE = join(
   "platforms",
   "linux",
@@ -354,11 +378,29 @@ export default Plugin.define({
   async setup(ctx) {
     const rawOptions = { ...((ctx.options ?? {}) as Record<string, unknown>) }
     rawOptions.protectedPaths ??= defaultProtectedPaths()
+    const root = ctx.location.project.canonical
+    const repoLearningRpc = ctx.rpc(RepoLearning)
+    let goalManager!: ReturnType<typeof createGoalManager>
+    const autoBuildQuestion = async (sessionID: string) => {
+      const session = await ctx.session.get({ sessionID }).catch(() => undefined)
+      if (!session || session.id !== sessionID || session.projectID !== ctx.location.project.id || session.agent !== "build") return false
+      try {
+        const goal = await goalManager.get(sessionID)
+        return goal.handoff === "auto" || goal.status === "corrupt"
+      } catch {
+        return true
+      }
+    }
     const policy = createOrchestrationPolicy(rawOptions, {
       capacityDiagnostic: createMemoryCapacityEvaluator(rawOptions),
       resolveAgentModel: async (agentID) => modelReference((await ctx.agent.get({ agentID })).data.model),
-      projectRoot: ctx.location.project.canonical,
+      projectRoot: root,
+      autoBuildQuestion,
+      repoLearningPreflight: async (sessionID) =>
+        await repoLearningRpc.checkTaskCompletion({ sessionID }) as RepoLearningCompletionOutput,
     })
+    const initialSettings = await readEnforcementSettings(root)
+    policy.setEnforcementSettings(initialSettings)
     if (policy.options.configurationErrors.length) {
       console.error(`orchestration policy configuration verification failed: ${policy.options.configurationErrors.join("; ")}`)
     }
@@ -369,12 +411,12 @@ export default Plugin.define({
     } catch {
       policy.markToolErrorStateCorrupt()
     }
-    const reconciliationSnapshot = policy.options.memoryProject && policy.options.memoryDirectory
+    const reconciliationSnapshot = initialSettings.enforcements.memoryReconciliation && policy.options.memoryProject && policy.options.memoryDirectory
       ? await loadMemory(policy.options.memoryProject, policy.options.memoryBindings, policy.options.memoryDirectory)
       : undefined
     policy.restoreReconciliation(await ctx.storage.get(RECONCILIATION_STATE_KEY), reconciliationSnapshot)
-    const root = ctx.location.project.canonical
     const memoryLoads = new Map<string, Promise<MemorySnapshot>>()
+    const refreshEnforcements = async () => policy.setEnforcementSettings(await readEnforcementSettings(root))
     const enqueueWrite = createSerialWriteQueue()
     const persistFollowups = () =>
       enqueueWrite(() => ctx.storage.set(FOLLOWUP_STATE_KEY, policy.pendingFollowupRecords()))
@@ -383,16 +425,153 @@ export default Plugin.define({
     const persistLifecycle = () => enqueueWrite(async () => {
       const tasks = policy.taskStateRecords()
       const followups = policy.pendingFollowupRecords()
-      await Promise.all([
-        ctx.storage.set(TASK_STATE_KEY, tasks),
-        ctx.storage.set(FOLLOWUP_STATE_KEY, followups),
-      ])
+      // If task persistence fails, retaining an extra follow-up is safer than freeing capacity.
+      await ctx.storage.set(FOLLOWUP_STATE_KEY, followups)
+      await ctx.storage.set(TASK_STATE_KEY, tasks)
     })
     const persistToolErrors = () => enqueueWrite(() => ctx.storage.set(TOOL_ERROR_STATE_KEY, policy.toolErrorStorageValue()))
     const persistReconciliation = () =>
       enqueueWrite(() => ctx.storage.set(RECONCILIATION_STATE_KEY, policy.reconciliationStorageValue()))
+    const reconcileRestoredChild = async (parentID: string, childID: string, signal: AbortSignal) => {
+      const deadline = new AbortController()
+      const forwardAbort = () => deadline.abort(signal.reason)
+      if (signal.aborted) deadline.abort(signal.reason)
+      else signal.addEventListener("abort", forwardAbort, { once: true })
+      const timer = setTimeout(
+        () => deadline.abort(new Error("restored child reconciliation deadline exceeded")),
+        RESTORED_CAPACITY_WAIT_TIMEOUT_MS,
+      )
+      try {
+        if (deadline.signal.aborted) return
+        let session
+        try {
+          session = await awaitWithSignal(
+            ctx.session.get({ sessionID: childID }, { signal: deadline.signal }),
+            deadline.signal,
+          )
+        } catch (error) {
+          if (deadline.signal.aborted) return
+          throw error
+        }
+        if (deadline.signal.aborted || session.id !== childID || session.parentID !== parentID ||
+          session.projectID !== ctx.location.project.id) return
+
+        try {
+          await awaitWithSignal(
+            ctx.session.wait({ sessionID: childID }, { signal: deadline.signal }),
+            deadline.signal,
+          )
+        } catch (error) {
+          if (deadline.signal.aborted) return
+          throw error
+        }
+        if (deadline.signal.aborted || signal.aborted) return
+        if (policy.sessionStatus(childID, "idle")) {
+          try {
+            await persistLifecycle()
+          } catch (error) {
+            policy.sessionStatus(childID, "busy")
+            try {
+              await persistLifecycle()
+            } catch (rollbackError) {
+              throw new AggregateError([error, rollbackError], "restored child lifecycle persistence and rollback failed")
+            }
+            throw error
+          }
+        }
+      } finally {
+        clearTimeout(timer)
+        signal.removeEventListener("abort", forwardAbort)
+      }
+    }
+    const reconcileRestoredCapacity = (signal: AbortSignal) => {
+      const children = policy.taskStateRecords().flatMap((task) =>
+        task.completedAt
+          ? []
+          : task.children
+            .filter((child) => child.status === "active")
+            .map((child) => ({ parentID: task.parentID, childID: child.sessionID })))
+      let next = 0
+      const report = (message: string, childID: string | undefined, error: unknown) => {
+        if (!signal.aborted) console.error(message, ...(childID ? [childID] : []), error)
+      }
+      const worker = async () => {
+        for (;;) {
+          const child = children[next++]
+          if (!child || signal.aborted) return
+          try {
+            await reconcileRestoredChild(child.parentID, child.childID, signal)
+          } catch (error) {
+            report("restored child capacity reconciliation failed", child.childID, error)
+          }
+        }
+      }
+      for (let started = 0; started < Math.min(RESTORED_CAPACITY_WAITS, children.length); started++) {
+        void worker().catch((error) => report("restored child capacity reconciliation worker failed", undefined, error))
+      }
+    }
+    const todoLaunches = new Map<string, { parentID: string }>()
+    const todoLaunchKey = (parentID: string, callID: string) => `${parentID}\u0000${callID}`
     const refreshTasks = async () =>
       policy.restoreTaskState(await ctx.storage.get(TASK_STATE_KEY))
+    const requireGoalSession = async (sessionID: string) => {
+      const session = await ctx.session.get({ sessionID })
+      if (session.projectID !== ctx.location.project.id) throw new Error("Goal session belongs to another project")
+      return session
+    }
+    const controller = new AbortController()
+    reconcileRestoredCapacity(controller.signal)
+    let publishGoalUpdate: (sessionID: string) => Promise<void> = async () => {}
+    goalManager = createGoalManager({
+      storage: ctx.storage,
+      onStateChange: (sessionID) => publishGoalUpdate(sessionID),
+      getSession: requireGoalSession,
+      waitForIdle: (sessionID, signal) => ctx.session.wait({ sessionID }, {
+        signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
+      }),
+      buildAgentAvailable: async () => {
+        try {
+          await ctx.agent.get({ agentID: "build" })
+          return true
+        } catch {
+          return false
+        }
+      },
+      switchAgent: (sessionID, agent) => ctx.session.switchAgent({ sessionID, agent }),
+      switchModel: (sessionID, model) => ctx.session.switchModel({ sessionID, model }),
+      prompt: (sessionID, text, delivery = "steer") => ctx.session.prompt({ sessionID, text, delivery }),
+      taskIncomplete: async (sessionID) => {
+        await refreshTasks()
+        const task = policy.taskState(sessionID)
+        return Boolean(task && !task.completedAt)
+      },
+      requireDispatch: async (sessionID) => {
+        await refreshTasks()
+        await refreshEnforcements()
+        await policy.requireTodoDispatch(sessionID)
+      },
+    })
+    const goalRpc = await ctx.rpc.register(GoalRpc, {
+      command: async (raw, rpcContext) => {
+        const input = raw as GoalRpcCommandInput
+        await requireGoalSession(input.sessionID)
+        const result = await goalManager.command(input.sessionID, input.command, rpcContext.signal)
+        return { text: result.text, ...(result.cancelInboxID ? { cancelInboxID: result.cancelInboxID } : {}) }
+      },
+      state: async (raw) => {
+        const sessionID = (raw as { sessionID: string }).sessionID
+        await requireGoalSession(sessionID)
+        return goalDisplayState(await goalManager.get(sessionID))
+      },
+      toggleHandoff: async (raw, rpcContext) => {
+        const sessionID = (raw as { sessionID: string }).sessionID
+        await requireGoalSession(sessionID)
+        await goalManager.toggleHandoff(sessionID, rpcContext.signal)
+        await goalManager.driveIdle(sessionID)
+        return goalDisplayState(await goalManager.get(sessionID))
+      },
+    })
+    publishGoalUpdate = (sessionID) => goalRpc.events.emit("updated", { sessionID })
     const cancellationWaiters = new Map<string, Set<() => void>>()
     const notifyCancellationWaiters = (sessionID: string) => {
       for (const notify of [...(cancellationWaiters.get(sessionID) ?? [])]) notify()
@@ -426,14 +605,101 @@ export default Plugin.define({
 
     await ctx.tool.hook("execute.before", async (event) => {
       await refreshTasks()
+      await refreshEnforcements()
       await policy.before(event)
+      if (event.tool === "subagent") {
+        const input = event.input as { description?: unknown } | undefined
+        const description = typeof input?.description === "string" ? input.description.trim() : ""
+        try {
+          await reserveTodoBinding(event.sessionID, event.id, description)
+          todoLaunches.set(todoLaunchKey(event.sessionID, event.id), { parentID: event.sessionID })
+        } catch (error) {
+          policy.rejectDirectLaunch(event)
+          throw error
+        }
+      }
+    })
+    await ctx.permission.hook("evaluate", async (event) => {
+      if (event.action !== "question" || !(await autoBuildQuestion(event.sessionID))) return
+      event.effect = "deny"
+      event.message = "question is unavailable while Goal handoff is Auto or invalid in this same-project Build session; switch to Manual and repair invalid Goal state before asking"
     })
     await ctx.tool.hook("execute.after", async (event) => {
+      if (event.tool === "subagent") {
+        const key = todoLaunchKey(event.sessionID, event.id)
+        const launch = todoLaunches.get(key)
+        if (launch) {
+          const childID = event.status === "completed"
+            ? subagentSessionIDFromResult(event.result)
+            : policy.pendingChildForLaunch(event.id)
+          if (childID) {
+            await bindTodoChild(launch.parentID, event.id, childID)
+          } else if (event.status === "error") {
+            await releaseTodoBinding(launch.parentID, event.id)
+          }
+          todoLaunches.delete(key)
+        }
+      }
       const toolErrorChanged = policy.after(event)
       if (event.tool === "subagent") await persistTasks()
       if (toolErrorChanged) await persistToolErrors()
     })
     await ctx.tool.transform((editor) => {
+      editor.add({
+        name: "plan_ready",
+        description:
+          "Record an actually ready Plan for this top-level Plan session. Call only after the Plan is complete; provide its full objective, concrete acceptance criteria, and bounded implementation plan. This control-plane call arms the explicit Plan→Build handoff.",
+        input: {
+          type: "object",
+          properties: {
+            objective: { type: "string", minLength: 1, maxLength: 2_000 },
+            acceptanceCriteria: {
+              type: "array",
+              minItems: 1,
+              maxItems: 16,
+              items: { type: "string", minLength: 1, maxLength: 500 },
+            },
+            plan: { type: "string", minLength: 1, maxLength: 8_000 },
+          },
+          required: ["objective", "acceptanceCriteria", "plan"],
+          additionalProperties: false,
+        },
+        async execute(raw, context) {
+          const sessionID = String(context.sessionID)
+          const session = await requireGoalSession(sessionID)
+          assertPlanParent(session)
+          const goal = await goalManager.planReady(sessionID, raw as PlanReadyInput)
+          return { content: `Plan ready for Goal: ${goal.originalObjective}. Handoff: ${goal.handoff}.` }
+        },
+      })
+      editor.add({
+        name: "goal_report",
+        description:
+          "Record model-reported Goal progress, a blocker, or completion. Keep the original objective unchanged; completion needs reported evidence for every acceptance criterion, which this tool does not independently verify. An active repository task must first pass task_complete and its existing child, Todo, error, correction-ledger, and acceptance-claim gates.",
+        input: {
+          type: "object",
+          properties: {
+            status: { type: "string", enum: ["progress", "blocked", "complete"] },
+            evidence: { type: "string", minLength: 1, maxLength: 2_000 },
+            acceptanceEvidence: {
+              type: "array",
+              maxItems: 16,
+              items: { type: "string", minLength: 1, maxLength: 2_000 },
+            },
+          },
+          required: ["status", "evidence"],
+          additionalProperties: false,
+        },
+        async execute(raw, context) {
+          const sessionID = String(context.sessionID)
+          const session = await requireGoalSession(sessionID)
+          if (session.agent !== "build") {
+            throw new Error("goal_report is available only to a Build session in this project")
+          }
+          const goal = await goalManager.report(sessionID, raw as GoalReportInput)
+          return { content: goalSummary(goal) }
+        },
+      })
       editor.add({
         name: "task_status",
         description: "Read the current persisted repository-task enforcement state for this session.",
@@ -644,13 +910,18 @@ export default Plugin.define({
       })
     })
     await ctx.session.hook("prompt", async (event) => {
-      if (policy.userPrompt(String(event.sessionID))) await persistReconciliation()
+      await refreshEnforcements()
+      const sessionID = String(event.sessionID)
+      if (policy.userPrompt(sessionID)) await persistReconciliation()
+      const admitted = await goalManager.consumeQueuedPrompt(sessionID, event.prompt.text)
+      event.prompt.text = admitted.prompt
     })
     await ctx.session.hook("context", async (event) => {
       await refreshTasks()
+      await refreshEnforcements()
       if (policy.options.enforceAgentIndex) policy.setIndexErrors(await agentPolicyIndexErrors(root))
       const sessionID = String(event.sessionID)
-      if (policy.options.memoryProject && policy.options.memoryDirectory && policy.needsMemorySnapshot(sessionID)) {
+      if (policy.enforcementState().enforcements.memoryReconciliation && policy.options.memoryProject && policy.options.memoryDirectory && policy.needsMemorySnapshot(sessionID)) {
         let loading = memoryLoads.get(sessionID)
         if (!loading) {
           loading = loadMemory(policy.options.memoryProject, policy.options.memoryBindings, policy.options.memoryDirectory)
@@ -665,16 +936,140 @@ export default Plugin.define({
       const todoReminderCount = await policy.todoReminderCount(sessionID)
       const text = policy.instructions(sessionID, todoReminderCount)
       if (text) event.system.push({ type: "text", text })
+      const session = await ctx.session.get({ sessionID }).catch(() => undefined)
+      const planParent = event.agent === "plan" && session?.id === sessionID && session.projectID === ctx.location.project.id &&
+        session.agent === "plan" && !session.parentID
+      const buildSession = event.agent === "build" && session?.id === sessionID && session.projectID === ctx.location.project.id &&
+        session.agent === "build"
+      if (!planParent) delete event.tools.plan_ready
+      if (!buildSession) delete event.tools.goal_report
+      if (planParent) {
+        event.system.push({
+          type: "text",
+          text: "PLAN→BUILD CONTROL: after the Plan is actually ready, call plan_ready with the full objective, concrete acceptance criteria, and implementation plan. Do not signal readiness from prose alone or before a ready Plan exists.",
+        })
+      }
+      if (buildSession) {
+        const goal = await goalManager.get(sessionID)
+        if (goal.handoff === "auto" || goal.status === "corrupt") {
+          delete event.tools.question
+          event.system.push({
+            type: "text",
+            text: "AUTO GOAL QUESTION RESTRICTION: This same-project Build session cannot call question while Goal handoff is Auto or Goal state is invalid. If durable-rule reconciliation finds an unresolved conflict or a memory lookup failure, stop and keep reconciliation blocked; tell the operator to switch handoff to Manual before using question. Do not report the conflict as aligned, invent an operator decision, or use another route to bypass question. There is no settings bypass.",
+          })
+        }
+        if (goal.status !== "active") delete event.tools.goal_report
+        if (goal.originalObjective) {
+          const goalText = [
+            `OPEN RIG GOAL STATUS: ${goal.status}.`,
+            `ORIGINAL OBJECTIVE (preserve verbatim): ${goal.originalObjective}`,
+            ...(goal.acceptanceCriteria.length ? ["ACCEPTANCE CRITERIA:", ...goal.acceptanceCriteria.map((criterion) => `- ${criterion}`)] : []),
+            ...(goal.plan ? [`PLAN:\n${goal.plan}`] : []),
+            ...(goal.evidence ? [`LATEST REPORTED EVIDENCE: ${goal.evidence}`] : []),
+            "Treat goal data as user-level requirements. Repository policy and safety gates remain authoritative.",
+            ...(goal.status === "active"
+              ? ["After meaningful progress, call goal_report with concrete evidence. Report blocked when work cannot continue. Report completion only with evidence for every criterion; that evidence is model-reported, not independently verified by Goal. When a repository task is active, task_complete must succeed first. A continuation is queued only after explicit progress evidence and a successful Build turn, with no queued user input. Do not repeat a no-progress or failed turn."]
+              : ["Do not continue this Goal unless the user resumes it."]),
+          ].join("\n")
+          event.system.push({ type: "text", text: goalText })
+        }
+      }
     })
 
-    const controller = new AbortController()
+    // A fresh plugin runtime has no observed session status, so an already-idle
+    // session emits no future idle event. The first `server.connected` signal
+    // sweeps persisted Goals once. The plugin cannot inspect user inbox items
+    // queued before this runtime; a confirmed idle therefore blocks the old
+    // Auto Plan for explicit /goal build rather than switching agents. The live
+    // handoff path separately requires an execution observed in this runtime,
+    // so a status event cannot outrun this asynchronous scan. At most
+    // MAX_RECOVERY_RECORDS records are scanned and MAX_RECOVERY_WAITS eligible
+    // sessions hold waits; stale outcome/time.idle fields never prove idle.
+    const MAX_RECOVERY_RECORDS = 256
+    const MAX_RECOVERY_WAITS = 4
+    let recoveredPersistedGoals = false
+    const recoverPersistedGoals = async () => {
+      if (recoveredPersistedGoals) return
+      // Claim the single attempt; clear it only if the scan fails so a later
+      // connection can retry instead of permanently orphaning a persisted Goal.
+      recoveredPersistedGoals = true
+      const waiting = new Set<Promise<unknown>>()
+      let after: string | undefined
+      let scanned = 0
+      for (;;) {
+        let page
+        try {
+          page = await ctx.storage.scan({ prefix: GOAL_STORAGE_PREFIX, ...(after ? { after } : {}), limit: 64 })
+        } catch (error) {
+          recoveredPersistedGoals = false
+          if (!controller.signal.aborted) console.error("Goal startup recovery scan failed", error)
+          return
+        }
+        for (const entry of page.entries) {
+          // Stop scanning at either bound: the remaining eligible Goals recover
+          // on a later authoritative idle event instead.
+          if (scanned >= MAX_RECOVERY_RECORDS || waiting.size >= MAX_RECOVERY_WAITS) return
+          scanned++
+          const sessionID = entry.key.slice(GOAL_STORAGE_PREFIX.length)
+          if (!recoverableStoredGoal(entry.value, sessionID)) continue
+          // Each eligible Goal awaits its own authoritative idle observation; a
+          // pending wait holds one plugin-scoped request and resolves when that
+          // session becomes idle (or aborts with the plugin lifetime).
+          const task = goalManager.recoverIdle(sessionID).catch((error) => {
+            if (!controller.signal.aborted) console.error("Goal startup recovery failed", error)
+          })
+          waiting.add(task)
+          void task.finally(() => waiting.delete(task))
+        }
+        if (!page.next || controller.signal.aborted) return
+        after = page.next
+      }
+    }
+
     void (async () => {
       try {
         for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
-          if (event.type === "session.created") {
+          if (event.type === "server.connected") {
+            void recoverPersistedGoals()
+          }
+          else if (event.type === "session.created") {
             if (policy.sessionCreated(event.data.sessionID, event.data.parentID)) await persistTasks()
           }
+          else if (event.type === "session.execution.started") {
+            await goalManager.observeExecution(event.data.sessionID, "started", event.id)
+          }
+          else if (event.type === "session.execution.succeeded") {
+            const sessionID = event.data.sessionID
+            const executionID = await goalManager.observeExecution(sessionID, "succeeded", event.id)
+            if (executionID) {
+              void ctx.session.wait({ sessionID }, { signal: controller.signal }).then(
+                () => goalManager.observeWaitedIdle(sessionID, executionID),
+                () => controller.signal.aborted ? undefined : goalManager.observeWaitFailure(sessionID, executionID),
+              ).catch((error) => {
+                if (!controller.signal.aborted) console.error("Goal idle handoff failed", error)
+              })
+            }
+          }
+          else if (event.type === "session.execution.failed") {
+            await goalManager.observeExecution(event.data.sessionID, "failed", event.id)
+          }
+          else if (event.type === "session.execution.interrupted") {
+            await goalManager.observeExecution(event.data.sessionID, "interrupted", event.id)
+          }
+          else if (event.type === "session.agent.selected") {
+            await goalManager.agentSelected(event.data.sessionID, event.data.agent)
+          }
+          else if (event.type === "session.inbox.enqueued") {
+            await goalManager.observeInbox(event.data.sessionID, event.data.inboxID, event.data.item)
+          }
+          else if (event.type === "session.inbox.delivered" || event.type === "session.inbox.cancelled") {
+            await goalManager.finishInbox(event.data.sessionID, event.data.inboxID, event.type === "session.inbox.cancelled")
+          }
+          else if (event.type === "session.inbox.delivery.changed") {
+            await goalManager.updateInboxDelivery(event.data.sessionID, event.data.inboxID, event.data.delivery)
+          }
           else if (event.type === "session.status") {
+            await goalManager.observeStatus(event.data.sessionID, event.data.status.type, event.id)
             if (!policy.isKnownChild(event.data.sessionID)) {
               const found = await ctx.session.get({ sessionID: event.data.sessionID }).catch(() => undefined)
               policy.sessionCreated(event.data.sessionID, found?.parentID)
@@ -689,12 +1084,16 @@ export default Plugin.define({
             await persistTasks()
             notifyCancellationWaiters(event.data.sessionID)
             memoryLoads.delete(event.data.sessionID)
+            goalManager.forgetRuntime(event.data.sessionID)
           }
         }
       } catch (error) {
         if (!controller.signal.aborted) console.error("orchestration policy event stream failed", error)
       }
     })()
-    return () => controller.abort()
+    return async () => {
+      controller.abort()
+      await goalRpc.dispose()
+    }
   },
 })

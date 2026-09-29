@@ -22,8 +22,8 @@ Use this recovery only when all of the following are true:
    `platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/src/policy.ts`,
    and `platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/src/index.ts`.
 5. The timestamped pristine backup and append-only audit log are retained.
-6. After applying, the operator verifies plugin reload through the documented
-   [launcher procedure](opencode-launcher.md), confirms the runtime has loaded
+6. After applying, the operator verifies the plugin reload in a supported hand,
+   confirms the runtime has loaded
    the expected plugin, and runs the normal package, documentation, and
    repository checks.
 
@@ -123,5 +123,5 @@ This tool must never edit plugin storage, installed OpenCode binaries or
 distribution files, credentials, or unrelated repository paths. It does not
 write `.git` internals, deploy, restart, or alter plugin state. Never disable
 the orchestration plugin or edit its storage to escape a lockout. After
-recovery, reload and verify the plugin through the supported launcher path and
-complete the normal checks before resuming routine delegated work.
+recovery, reload and verify the plugin in the supported hand and complete the
+normal checks before resuming routine delegated work.

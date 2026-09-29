@@ -1,6 +1,6 @@
 # Skills
 
-Nineteen OpenCode skills. Complete source bundles live in `./<name>/` and are
+Twenty OpenCode skills. Complete source bundles live in `./<name>/` and are
 recursively deployed to the selected v2 config directory, defaulting to
 `~/.opencode-v2-pilot/config/skills/<name>/`, by
 `../scripts/setup-opencode.sh --apply` (idempotent and content-aware).
@@ -51,6 +51,8 @@ comma-separated tags; the category/tag index below is derived from each
 - `agent-orchestration` coordinates explicitly authorized, bounded subagents
   while keeping ownership, verification, and commit/push gates with the main
   agent.
+- `repo-onboarding` helps downstream repositories reuse the harness's deployed
+  OpenCode v2 skills, agents, and MCP stack without duplicating integrations.
 - `vscode-management` owns Microsoft VS Code package, CLI, settings, extension,
   workspace, profile, integrated-browser testing, GUI, and troubleshooting
   workflows.
@@ -74,6 +76,7 @@ comma-separated tags; the category/tag index below is derived from each
 | [`web-3d-asset-pipeline`](./web-3d-asset-pipeline/SKILL.md) | [`README.md`](./web-3d-asset-pipeline/README.md) | `files` | `3d,gltf,glb,assets,web` |
 | [`routine-automation`](./routine-automation/SKILL.md) | [`README.md`](./routine-automation/README.md) | `automation` | `automation,scheduling,scripts,idempotence` |
 | [`opencode-db-maintenance`](./opencode-db-maintenance/SKILL.md) | [`README.md`](./opencode-db-maintenance/README.md) | `maintenance` | `maintenance,sqlite,backup,cron` |
+| [`repo-onboarding`](./repo-onboarding/SKILL.md) | [`README.md`](./repo-onboarding/README.md) | `maintenance` | `onboarding,downstream,opencode,mcp,memory,integration` |
 | [`development-conventions`](./development-conventions/SKILL.md) | [`README.md`](./development-conventions/README.md) | `maintenance` | `development,conventions,source-editing,testing,documentation,operations` |
 | [`skill-maintenance`](./skill-maintenance/SKILL.md) | [`README.md`](./skill-maintenance/README.md) | `skills` | `skills,documentation,deployment,catalog` |
 | [`agent-orchestration`](./agent-orchestration/SKILL.md) | [`README.md`](./agent-orchestration/README.md) | `automation` | `agents,orchestration,delegation,verification,git-safety` |
@@ -458,6 +461,25 @@ admission. Use complete non-overlapping prompts, conservative async/background
 execution for independent work, independent verification, preserved dirty work,
 and separate explicit approval gates for commit and push. Subagent claims are
 never treated as evidence, and destructive Git actions are forbidden.
+
+### repo-onboarding
+
+Onboard downstream consumer repositories to OpenCode v2 using the canonical
+Open Rig checkout, reusing its deployed skills, commands, agents, and MCP
+wrappers while keeping consumer-specific behavior local.
+
+Use when a repository needs its provider/model and agent configuration checked,
+its MCP/memory setup reviewed, or its integration verified after migration.
+
+Example requests:
+
+- "Onboard this consumer repo to OpenCode v2; inspect before changing anything."
+- "Reuse the global harness tools and verify the consumer's model and MCP setup."
+- "Check the repo-local plugin boundary and keep live claims pending until host evidence exists."
+
+Requires: the actual Open Rig checkout path, an OpenCode v2 target, verified
+provider/model IDs, explicit write approval, target-scoped `--apply`, and a
+restart before claiming new skill behavior.
 
 ### vscode-management
 

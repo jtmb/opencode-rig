@@ -1,0 +1,379 @@
+{
+  "version": 3,
+  "source_sha256": "a801b44c2cc19b92fd52d17b05db3b99a63b3e9626b59553f3cbc9a48fc7baa6",
+  "capture_generator": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+    "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+  },
+  "render_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+    "sha256": "566e98fc5a8379641c66c8f09a1e303ebe55d15596f02eb0c9fc6d29d0da3814"
+  },
+  "native_capture_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+    "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+  },
+  "native_capture_run": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "argv": [
+      "/bin/bash",
+      "/home/brajam/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh",
+      "--",
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/native-capture-fixture.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-28T23:14:21.704Z",
+    "finished_at": "2026-09-28T23:14:26.822Z",
+    "started_monotonic_ns": "11834280291825",
+    "finished_monotonic_ns": "11839398378594",
+    "exit_code": 0,
+    "inputs": [
+      {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+        "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+        "sha256": "3c6c507594a5c7d1f38db901230a86274830e7cf20507cbf6679623fdc706c84"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+        "sha256": "2171a8d467d738360424cb9952526dc37d33a6b500bfa4775078e7ce139ac2ef"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+        "sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+        "sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+        "sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+        "sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+        "sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+        "sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+        "sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+        "sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+        "sha256": "27369397979248d96d861e6c7a5f0b26f521551284fae430ada81f71a807a8ec"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+        "sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+        "sha256": "4d43b03a51b17df017e7a3c3f3b4a8c5d51d1381fbefa131acae9d1a92bc33b8"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+        "sha256": "5b596b304fc1cef3060baf3dc0f5151d2006a61eaf34b26565c006bbb4fd7e49"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts",
+        "sha256": "a801b44c2cc19b92fd52d17b05db3b99a63b3e9626b59553f3cbc9a48fc7baa6"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+        "sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+        "sha256": "9e923ad7044eb9374121ee8c79ea82abc7da3040d8fdb04453483c2f3ad80ea0"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+        "sha256": "8e264491f59c1f4dc41e547ad9be73e557f398450ca3a000dbf13a9b8338542f"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+        "sha256": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+        "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+        "sha256": "566e98fc5a8379641c66c8f09a1e303ebe55d15596f02eb0c9fc6d29d0da3814"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+        "sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+        "sha256": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5"
+      }
+    ]
+  },
+  "native_capture_output": {
+    "path": "evidence/ui-acceptance/2026-09-28/v9/native-output/rig-tools-goal-handoff.json",
+    "sha256": "1fb9b26cdb62bde829a59e86dcb476f2e87c8446c09301f74eb37f2b16f872b8",
+    "encoding": "utf-8",
+    "format": "native-opentui-capture-v1"
+  },
+  "runtime": {
+    "id": "node-26.4.0-npm-11.17.0",
+    "name": "node",
+    "version": "26.4.0",
+    "identity": "node@26.4.0",
+    "provisioning": "external-checksum",
+    "executable": "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+    "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "package_manager": "npm",
+    "package_manager_version": "11.17.0",
+    "package_manager_identity": "npm@11.17.0",
+    "package_manager_executable": "/home/brajam/repos/opencode-rig/toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+    "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+  },
+  "renderer": {
+    "id": "opentui-0.5.11",
+    "name": "OpenTUI",
+    "version": "0.5.11",
+    "identity": "OpenTUI@0.5.11"
+  },
+  "observed_at": "2026-09-28T23:13:46.959Z",
+  "max_age_days": 1,
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "native_snapshots": [
+    {
+      "id": "rig-tools-goal-handoff-open-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-open-before.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-open-before.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-open-before.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "rig-tools-goal-handoff-open-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-open-after.txt",
+        "sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-open-after.spans.json",
+        "sha256": "5ea2dcf87827342a686b4224416adfec0550e9176a1ea3538a736595b3fb7765",
+        "semantic_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-open-after.state.json",
+        "sha256": "8c9e1e1127d3a0f4c72f95918264ef408f90938be0792b050bfbeb0a8a043853",
+        "semantic_sha256": "c368cc67b47dba478f561dbe99eec93e240fec97f23444f0863eeab45fe5e5b1",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "rig-tools-goal-handoff-interact-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-interact-before.txt",
+        "sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-interact-before.spans.json",
+        "sha256": "5ea2dcf87827342a686b4224416adfec0550e9176a1ea3538a736595b3fb7765",
+        "semantic_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-interact-before.state.json",
+        "sha256": "8c9e1e1127d3a0f4c72f95918264ef408f90938be0792b050bfbeb0a8a043853",
+        "semantic_sha256": "c368cc67b47dba478f561dbe99eec93e240fec97f23444f0863eeab45fe5e5b1",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "rig-tools-goal-handoff-interact-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-interact-after.txt",
+        "sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-interact-after.spans.json",
+        "sha256": "5ea2dcf87827342a686b4224416adfec0550e9176a1ea3538a736595b3fb7765",
+        "semantic_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-interact-after.state.json",
+        "sha256": "df8445b1ecbbb22efae5e0665b463cd3efe1df71c819e40a428eb4cd1587f2b4",
+        "semantic_sha256": "97609c12296ec94abafa5f84328de380b1853297c262851bdea1f981d62c5f1b",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "rig-tools-goal-handoff-after-click",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-after-click.txt",
+        "sha256": "fdfa63cd6a728a567c8d0edc7e51bae4f8553293473b00dacd61dc47626fa7c8",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-after-click.spans.json",
+        "sha256": "98db1893bb8d84f2b275131edf52d5de182f1f1604069d15ad232962a47aa77a",
+        "semantic_sha256": "05028516499e33f7472fbd37c6ee7916b11dfab9470ffb4b04b7348e349eaafb",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-after-click.state.json",
+        "sha256": "dc592004efabe013c5cb6af36b294a14a05bb42e9e59e577c9618c918d1f3224",
+        "semantic_sha256": "e2b12e6afebf39826318ab781de0b64e66f711cf6a2f2150a0cf36685f6c8e39",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "rig-tools-goal-handoff-close-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-close-after.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-close-after.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-close-after.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    }
+  ],
+  "native_frame": {
+    "snapshot_id": "rig-tools-goal-handoff-interact-after",
+    "character_output": {
+      "path": "evidence/ui-acceptance/2026-09-28/v9/characters/rig-tools-goal-handoff.txt",
+      "sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+      "encoding": "utf-8"
+    },
+    "semantic_spans": {
+      "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-goal-handoff/rig-tools-goal-handoff-interact-after.spans.json",
+      "sha256": "5ea2dcf87827342a686b4224416adfec0550e9176a1ea3538a736595b3fb7765",
+      "semantic_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+      "encoding": "utf-8",
+      "format": "opentui-captureSpans-v1"
+    },
+    "frame_sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+    "spans_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8"
+  },
+  "character_output": {
+    "path": "evidence/ui-acceptance/2026-09-28/v9/characters/rig-tools-goal-handoff.txt",
+    "sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+    "encoding": "utf-8"
+  },
+  "span_visualization": {
+    "path": "evidence/ui-acceptance/2026-09-28/v9/images/rig-tools-goal-handoff.png",
+    "sha256": "2fd391a568188b3efcea2903b463d1e24cbfc19fb909bbf73e19191e58e1ef5f",
+    "mime": "image/png",
+    "width": 840,
+    "height": 480,
+    "derived_from": {
+      "snapshot_id": "rig-tools-goal-handoff-interact-after",
+      "frame_sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+      "spans_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+      "renderer": "opentui-semantic-span-diagnostic-v1",
+      "cell_width": 6,
+      "cell_height": 8
+    }
+  },
+  "layout_assertions": [
+    {
+      "id": "visible_rows",
+      "operator": "<=",
+      "limit": 60
+    },
+    {
+      "id": "max_line_columns",
+      "operator": "<=",
+      "limit": 140
+    },
+    {
+      "id": "reachable_sections",
+      "operator": "==",
+      "limit": 3,
+      "targets": [
+        "Goal",
+        "Handoff: Manual",
+        "CAPTURE_FOOTER"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "phase": "test-setup",
+      "event_id": "rig-tools-goal-handoff-test-setup-001",
+      "record": "evidence/ui-acceptance/2026-09-28/v9/events/rig-tools-goal-handoff-test-setup.json",
+      "record_sha256": "02a478449c6dbaaf9ea0e78b061224b9881eb7d49fec9b99fa3404df1939aa9d"
+    },
+    {
+      "phase": "test-dispatch",
+      "event_id": "rig-tools-goal-handoff-test-dispatch-001",
+      "record": "evidence/ui-acceptance/2026-09-28/v9/events/rig-tools-goal-handoff-test-dispatch.json",
+      "record_sha256": "0a9fcf61cbd685b5ab62598200e576e35c2bffe4ed694d2c40f43679221ba56f"
+    },
+    {
+      "phase": "test-teardown",
+      "event_id": "rig-tools-goal-handoff-test-teardown-001",
+      "record": "evidence/ui-acceptance/2026-09-28/v9/events/rig-tools-goal-handoff-test-teardown.json",
+      "record_sha256": "ab65be97288801fae6c637cb7ed46c6f1de90eb3f7354ff54f2021a7bd374fe3"
+    }
+  ]
+}

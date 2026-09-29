@@ -10,7 +10,7 @@
   },
   "scripts": {
     "check": "npm run typecheck && npm test",
-    "test": "bash ../../scripts/run-bounded-command.sh -- node --experimental-ffi --experimental-strip-types --test test/*.test.ts",
+    "test": "bash ../../scripts/run-bounded-command.sh -- node --experimental-ffi --experimental-strip-types --import ./test/solid-resolve-hook.mjs --test test/*.test.ts",
     "typecheck": "bash ../../scripts/run-bounded-command.sh -- ../node_modules/.bin/tsc --noEmit"
   },
   "dependencies": {

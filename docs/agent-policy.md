@@ -47,7 +47,11 @@ Basic Memory. The lookup and reconciliation contract is detailed in
    cross-domain task.
 3. Begin every repository change, review, release, or correction with
    `task_declare`. The configured `orchestration-policy.options.maxConcurrent`
-   is the only child-concurrency admission gate and accepts `1..10`. The
+   is the hard child-concurrency ceiling and accepts `1..10`. The operator-only
+   Ctrl+P Open Rig workflow settings selects `parallel` (default, configured
+   capacity) or `single-subagent` (effective capacity one). This explicit
+   2026-09-28 operator choice supersedes the all-parallel-only admission rule;
+   it changes no other gates and existing admitted children drain normally. The
    host/cgroup `agent_memory_capacity` estimate is diagnostic only: its count,
    invalid or unavailable result, or absence must never reduce or block
    configured launch admission. Launch only asynchronous children using
@@ -68,10 +72,14 @@ Basic Memory. The lookup and reconciliation contract is detailed in
    first, then the task detail, with NO session IDs anywhere in it. The todo's
    leading task text must exactly match the child's `subagent({ description })`
    value shown in the Active Subagents sidebar panel—same wording, no drift—so
-   the operator can line the two up. Session IDs are parent-only tracking in
+   the operator can line the two up. The dispatch matcher accepts only Todo
+   content equal to the description or starting with `<description> —`
+   (space, em dash); other separators such as `:` fail with `must match exactly
+   one actionable todo`. Session IDs are parent-only tracking in
    the parent's plan-file child registry and follow-up records; they never
    appear in shared todo text. Dispatch the entire actionable todo batch in
-   parallel up to the configured `maxConcurrent` limit; the single parent
+    parallel up to the effective mode limit (configured `maxConcurrent` in
+    parallel mode, one in single-subagent mode); the single parent
    `in_progress` marker is bookkeeping and must not serialize that batch.
    Concurrent writers isolate work in separate checkouts or worktrees and
    integrate through reviewed merges; pass any shared contract verbatim to
@@ -153,6 +161,12 @@ read-only QA child rather than a forbidden parent run or shell workaround.
 
 - Prefer read-only checks. Setup and deployment writes require explicit
   `--apply`; desktop mutations require preview tokens.
+- Before sending an interactive client's exit/restart input, verify a supported
+  relaunch path for that same client and a way to confirm its restored state.
+  A console-buffer write, a service restart, or a temporarily observed new PID
+  does not prove that the foreground client is recoverable. Preserve the
+  operator's chosen window and monitor placement; do not refocus or move it
+  without an explicit interaction need and verified target.
 - Never edit, patch, replace, delete, or otherwise modify installed OpenCode
   binaries or distribution files. Extend OpenCode only through repository
   plugins; document unsupported API limits instead of patching OpenCode.
@@ -175,10 +189,12 @@ references before source, test, documentation, UI, or Open Rig changes.
 Run the relevant bounded package check and the
 [`canonical repository QA`](scripts/check-repository-qa.md). Visible UI claims
 also require fresh rendered and interaction evidence through the
-[`acceptance evidence gate`](scripts/check-acceptance-evidence.md). Restart the
-shared service after server-plugin changes using the documented
-[`launcher procedure`](scripts/opencode-launcher.md); a TUI restart alone does
-not reload server plugins.
+[`acceptance evidence gate`](scripts/check-acceptance-evidence.md). A TUI restart
+alone does not reload server plugins. Reloading them requires a selected-service
+restart through a supported identity-bound procedure while background turns are
+drained; no such safe procedure is currently documented, so read runtime state
+with the in-process runtime status tool and do not treat the launcher as a
+selected-service control plane.
 
 OpenCode Web claims additionally require the authenticated Windows-default-
 browser screenshot, accessible snapshot, startup/error review, and fresh
@@ -225,6 +241,11 @@ and delegated, independently verified children.
 OpenCode v2 exposes no final-answer hook or semantic intent classifier, so the
 plugin cannot force final-answer generation or veto plain final prose. Pending
 actionable Todos block explicit task completion, commit, and push operations
-instead. External programs likewise cannot be completely classified, so
+instead. Unbound actionable Todos with free effective capacity additionally block
+recognized parent implementation mutations, `goal_report(progress)` and automatic
+Goal continuation. Read-only inspection, dispatch, Todo coordination, follow-up,
+policy/roadmap repair and genuine blocker reports remain available. Invalid
+Todo/settings state fails closed; lowering the mode limit never cancels running
+or already admitted children. External programs likewise cannot be completely classified, so
 unsupported limits must remain explicit rather than being represented as
 complete prevention.

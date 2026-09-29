@@ -9,11 +9,25 @@ import type {
   StructuredCommandInput,
   WindowsActInput,
   WindowsAppsInput,
+  WindowsCaptureInput,
   WindowsFindInput,
 } from "./types.ts"
 import { parseOptions } from "./types.ts"
-import { WindowsUiManager } from "./windows-ui.ts"
+import { captureProvenanceText, type RetainedCapture, type WindowsRestoreInput, WindowsUiManager } from "./windows-ui.ts"
 import { detectWsl, systemProbes } from "./wsl-detect.ts"
+
+// Opt-in retention reuses the checked-in bounded visual saver rather than
+// duplicating its traversal/symlink/size handling. The dynamic import keeps the
+// Windows plugin loadable when only the Linux rig-tools tree is absent; a
+// missing saver or a refused path simply leaves the attachment unchanged.
+async function retainWindowsCapture(bytes: Buffer, savePath: string, projectDirectory: string): Promise<RetainedCapture | undefined> {
+  try {
+    const { retainScreenshot } = await import("../../../../../../../linux/ubuntu/computer-use/plugins-v2/rig-tools/src/vision.ts")
+    return await retainScreenshot(bytes, savePath, projectDirectory)
+  } catch {
+    return undefined
+  }
+}
 
 function toolAbortSignal(context: unknown): AbortSignal | undefined {
   if (!context || typeof context !== "object" || !("signal" in context)) return undefined
@@ -198,6 +212,71 @@ export default Plugin.define({
               agent: String(toolContext.agent),
               fingerprint: wsl.fingerprint,
             }, toolAbortSignal(toolContext)), null, 2),
+          }
+        },
+      })
+
+      editor.add({
+        name: "windows_restore",
+        options: { permission: "wsl_windows_act" },
+        description: "Preview or apply restoring the operator's exact minimized Windows console window without activating it. Preview is read-only and returns a single-use token bound to the caller, WSL state, executable, exact window identity, and saved normal placement. Apply re-finds exactly one unchanged window, requires identical process ID, window handle, exact title, class, process start time, and placement, and restores only a genuinely minimized window with ShowWindow(SW_SHOWNOACTIVATE). It never calls SW_RESTORE, SetForegroundWindow, SetWindowPos, or any input API, and fails closed on a hidden-but-not-minimized target.",
+        input: {
+          type: "object",
+          properties: {
+            processId: { type: "integer", minimum: 1, maximum: 2_147_483_647 },
+            windowHandle: { type: "string", minLength: 3, maxLength: 18 },
+            title: { type: "string", maxLength: 1_024 },
+            className: { type: "string", maxLength: 512 },
+            executable: { type: "string", enum: ["auto", "pwsh.exe", "powershell.exe"] },
+            apply: { type: "boolean" },
+            expectToken: { type: "string", minLength: 16, maxLength: 128 },
+          },
+          required: ["processId", "windowHandle", "title"],
+          additionalProperties: false,
+        },
+        async execute(raw, toolContext) {
+          const wsl = await detectWsl(systemProbes(location))
+          return {
+            content: JSON.stringify(await windowsUi.restore(raw as WindowsRestoreInput, {
+              sessionID: String(toolContext.sessionID),
+              agent: String(toolContext.agent),
+              fingerprint: wsl.fingerprint,
+            }, toolAbortSignal(toolContext)), null, 2),
+          }
+        },
+      })
+
+      editor.add({
+        name: "windows_capture",
+        description: "Capture a bounded PNG from the exact HWND of one explicitly selected Windows window identified by process ID, window handle, and title. It never focuses, moves, types into, or exits the window, never captures the foreground window, and fails closed on changed identity, occlusion, blank output, or unpainted pixels. The result reports the validated window provenance (windowId, processId, windowHandle, title, className, and bounds). Supply savePath to opt in to retaining the PNG beneath the invoking project directory with the checked-in bounded saver, which rejects traversal, symlinks, non-.png paths, and captures over 6 MiB, and returns the retained path, SHA-256, and dimensions. A retained PNG is raw identity-bound host evidence; it is not a check-acceptance-evidence.py rendered-visual record.",
+        input: {
+          type: "object",
+          properties: {
+            processId: { type: "integer", minimum: 1, maximum: 2_147_483_647 },
+            windowHandle: { type: "string", minLength: 3, maxLength: 18 },
+            title: { type: "string", maxLength: 1_024 },
+            className: { type: "string", maxLength: 512 },
+            executable: { type: "string", enum: ["auto", "pwsh.exe", "powershell.exe"] },
+            savePath: { type: "string", maxLength: 4_096 },
+          },
+          required: ["processId", "windowHandle", "title"],
+          additionalProperties: false,
+        },
+        async execute(raw, toolContext) {
+          const input = raw as WindowsCaptureInput
+          const capture = await windowsUi.capture(input, toolAbortSignal(toolContext))
+          const data = String(capture.data)
+          const saved = input.savePath === undefined
+            ? undefined
+            : await retainWindowsCapture(Buffer.from(data, "base64"), input.savePath, location)
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: captureProvenanceText(capture, saved, input.savePath !== undefined),
+              },
+              { type: "file" as const, uri: `data:image/png;base64,${data}`, mime: "image/png", name: "windows-window.png" },
+            ],
           }
         },
       })

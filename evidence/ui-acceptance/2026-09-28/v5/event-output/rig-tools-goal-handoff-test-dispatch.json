@@ -1,0 +1,62 @@
+{
+  "version": 3,
+  "capture_id": "rig-tools-goal-handoff",
+  "phase": "test-dispatch",
+  "event_id": "rig-tools-goal-handoff-test-dispatch-001",
+  "action": {
+    "type": "input",
+    "target": "goal-handoff",
+    "input": {
+      "mouse": {
+        "x": 8,
+        "y": 0
+      },
+      "keyboard": "Enter"
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click+pressEnter",
+    "target": "goal-handoff",
+    "input": {
+      "mouse": {
+        "x": 8,
+        "y": 0
+      },
+      "keyboard": "Enter"
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "8369984e-25b6-40d2-8f4c-5b3877b9da97",
+    "dispatch_id": "rig-tools-goal-handoff-test-dispatch-dispatch-001",
+    "transition_id": "rig-tools-goal-handoff-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "55429074956742",
+    "transition_monotonic_ns": "55429149266900"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-goal-handoff-interact-before",
+    "frame_sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+    "spans_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+    "state_sha256": "c368cc67b47dba478f561dbe99eec93e240fec97f23444f0863eeab45fe5e5b1"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-goal-handoff-interact-after",
+    "frame_sha256": "be09813a5c4588b20a7f500c66d662490ef5cf2151e7660024e9519285ebb1de",
+    "spans_sha256": "0ea038abab75a2dac1317a2356fda4d9dd70e1734ea0e0000302a2ba40f074b8",
+    "state_sha256": "97609c12296ec94abafa5f84328de380b1853297c262851bdea1f981d62c5f1b"
+  },
+  "result": {
+    "status": "passed",
+    "target": "goal-handoff",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": false,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "4aaa798b3901890dd0dbb5bbad568cf376b200566ceb67b98c91568ac4f39b7f",
+  "native_event_sha256": "d704f16fc1ffb83a189fcc5045129fc6aa04263f11df85dba09f01a15b918314"
+}

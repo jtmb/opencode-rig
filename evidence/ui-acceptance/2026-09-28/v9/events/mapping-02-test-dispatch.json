@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "mapping-02-test-dispatch-001",
+  "capture_id": "mapping-02",
+  "source_sha256": "3c6c507594a5c7d1f38db901230a86274830e7cf20507cbf6679623fdc706c84",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "e57745b8aec16923b4d7fb7c34dbe974253913fc61e802b9add8d08df679b824",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "click",
+    "target": "provider-usage-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "provider-usage-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "dispatch_id": "mapping-02-test-dispatch-dispatch-001",
+    "transition_id": "mapping-02-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "11836328580163",
+    "transition_monotonic_ns": "11836376193817"
+  },
+  "before": {
+    "snapshot_id": "mapping-02-interact-before",
+    "frame_sha256": "044753319c5ad98013a0482583875d796cd216f1277e98d5df96cddbed084aff",
+    "spans_sha256": "6d70e9265ef65606fe35fec863abab4d6396ad7325cdfa3c4ce51ce3e28cdeca",
+    "state_sha256": "3cb191def2928a9e5ce2be825bda706b78c72b0b4abcef431e138cc9c6658852"
+  },
+  "after": {
+    "snapshot_id": "mapping-02-interact-after",
+    "frame_sha256": "b8c8ec36709de93a79da8e18335926fd0f0ef5aa772e9c10fbe4c37b1d890465",
+    "spans_sha256": "1382cf9444cf10169ed09bea7f34aea08a957b07fec7e5bf06ed3f2d9dad0464",
+    "state_sha256": "6107d88460bba248f3f7a360e1e792352769d538b419ce5cce9a601ff3c03b30"
+  },
+  "result": {
+    "status": "passed",
+    "target": "provider-usage-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "3cd4510675c706a45b5e352285255a899c18ab71ae9bbf065340dbc2920e6741",
+  "output": "evidence/ui-acceptance/2026-09-28/v9/event-output/mapping-02-test-dispatch.json",
+  "output_sha256": "1af145c25286cd02e5e22da5089f2815f346a0c348f28b2cbbc0dc94d0eabffb",
+  "observed_at": "2026-09-28T23:13:46.959Z"
+}

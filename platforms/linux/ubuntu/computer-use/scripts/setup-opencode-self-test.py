@@ -335,7 +335,7 @@ with tempfile.TemporaryDirectory(prefix="opencode-setup-self-test-", dir=test_ro
     assert {Path(entry["package"]).name for entry in cli["plugins"]} == CLI_PLUGIN_NAMES
     assert cli["session"]["permissions"] == "prompt"
     assert cli["attention"]["sound"] is False
-    assert len(list((config / "skills").iterdir())) == 19
+    assert len(list((config / "skills").iterdir())) == 20
     assert sorted(path.name for path in (config / "commands").glob("*.md")) == ["deploy.md", "handoff.md", "promote-skills.md", "resume.md"]
 
     active_cli = root / "active-native/opencode/cli.json"

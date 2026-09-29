@@ -1,0 +1,63 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "rig-tools-hermes-hooks-panel-test-dispatch-001",
+  "capture_id": "rig-tools-hermes-hooks-panel",
+  "source_sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "e68c88281c4d77605a166bc76ed6df298a2adb9a9085eff944b1c14e6720141f",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "key",
+    "target": "hermes-hooks-refresh",
+    "input": "r"
+  },
+  "dispatch": {
+    "device": "keyboard",
+    "method": "pressKey",
+    "target": "hermes-hooks-refresh",
+    "input": "r"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "dispatch_id": "rig-tools-hermes-hooks-panel-test-dispatch-dispatch-001",
+    "transition_id": "rig-tools-hermes-hooks-panel-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "11838588322719",
+    "transition_monotonic_ns": "11838617138065"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-hermes-hooks-panel-interact-before",
+    "frame_sha256": "656f85b0b803c518e275ced1168c2e8574601bd6d3f9b2ec2f88f280deeaa7a7",
+    "spans_sha256": "1f849e8bc4146c3f81c12cf56103cb0c1e869da5173c038958c685734104fe2c",
+    "state_sha256": "b5e45806d92ece7986729d9fd85e850d5d2de96f7c371b7c4350b23e5778dbd0"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-hermes-hooks-panel-interact-after",
+    "frame_sha256": "656f85b0b803c518e275ced1168c2e8574601bd6d3f9b2ec2f88f280deeaa7a7",
+    "spans_sha256": "1f849e8bc4146c3f81c12cf56103cb0c1e869da5173c038958c685734104fe2c",
+    "state_sha256": "27281130d6c13a5d5eff55cfddfd7a8914b582848cae1e1a8d8cdbae491f47e0"
+  },
+  "result": {
+    "status": "passed",
+    "target": "hermes-hooks-refresh",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": false,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "b97adc50e672160cb1bfaabe73c95f908f722a82b2587a033be5be78701eb304",
+  "output": "evidence/ui-acceptance/2026-09-28/v9/event-output/rig-tools-hermes-hooks-panel-test-dispatch.json",
+  "output_sha256": "5aba295c4ab04d021c03d2c678e5490abc819e2a899df1874af27d0fc29106db",
+  "observed_at": "2026-09-28T23:13:46.959Z"
+}

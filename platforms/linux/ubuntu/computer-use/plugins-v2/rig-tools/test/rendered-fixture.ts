@@ -10,8 +10,11 @@ const { createSignal } = await import(import.meta.resolve("solid-js/dist/solid.j
   createSignal: <T>(value: T) => [() => T, (value: T | ((current: T) => T)) => T]
 }
 
-import { ActiveSubagentRow, ActiveSubagentsHeading } from "../src/active-subagent-row.ts"
+import { ActiveSubagentRow, ActiveSubagentsHeading, ManagedScreensSidebar } from "../src/active-subagent-row.ts"
+import { GoalFooterSummary, GoalHandoffControl, GoalSummary } from "../src/goal-handoff-control.ts"
 import { SubagentsHistory } from "../src/subagent-history-view.ts"
+import type { GoalStateSnapshot } from "../src/goal-state.ts"
+import { MAX_MANAGED_SCREEN_ROWS } from "../src/rpc.ts"
 import type { ActiveSubagentRowTheme, SubagentRow } from "../src/subagents.ts"
 import type { SubagentHistoryEventRow } from "../src/subagent-history.ts"
 
@@ -47,6 +50,10 @@ const fallbackTheme: ActiveSubagentRowTheme = {
 
 const RenderableActiveSubagentRow = ActiveSubagentRow as unknown as (props: Record<string, unknown>) => ReturnType<typeof jsx>
 const RenderableActiveSubagentsHeading = ActiveSubagentsHeading as unknown as (props: Record<string, unknown>) => ReturnType<typeof jsx>
+const RenderableGoalHandoffControl = GoalHandoffControl as unknown as (props: Record<string, unknown>) => ReturnType<typeof jsx>
+const RenderableGoalFooterSummary = GoalFooterSummary as unknown as (props: Record<string, unknown>) => ReturnType<typeof jsx>
+const RenderableGoalSummary = GoalSummary as unknown as (props: Record<string, unknown>) => ReturnType<typeof jsx>
+const RenderableManagedScreensSidebar = ManagedScreensSidebar as unknown as (props: Record<string, unknown>) => ReturnType<typeof jsx>
 const RENDER_ASSERTIONS_MARKER = "RIG_TOOLS_ACTIVE_SUBAGENT_RENDER_ASSERTIONS_EXECUTED"
 
 const row = (title: string): SubagentRow => ({
@@ -328,6 +335,255 @@ test("native heading click and keyboard toggle keep focus, count live, and body 
     assert.match(setup.captureCharFrame(), /- Active Subagents 2/)
     assert.match(setup.captureCharFrame(), /First running child/)
     assert.match(setup.captureCharFrame(), /Second running child/)
+  } finally {
+    setup?.renderer.destroy()
+  }
+})
+
+test("native Goal handoff control toggles by click and keyboard", async () => {
+  const [mode, setMode] = createSignal<"manual" | "auto">("manual")
+  let toggleCount = 0
+  let setup: TestRendererSetup | undefined
+  try {
+    setup = await testRender(() => jsx(RenderableGoalHandoffControl, {
+      get mode() { return mode() },
+      textColor: colors.subdued,
+      accentColor: colors.accent,
+      onToggle: () => {
+        toggleCount += 1
+        setMode((value) => value === "manual" ? "auto" : "manual")
+      },
+    }), { width: 32, height: 2 })
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /Handoff: Manual/)
+    const handoff = target(setup, "Handoff: Manual")
+    await setup.mockMouse.click(handoff.x, handoff.y)
+    await setup.flush()
+    assert.equal(toggleCount, 1)
+    assert.equal(setup.renderer.currentFocusedRenderable?.id, "opencode-rig.goal-handoff")
+    assert.match(setup.captureCharFrame(), /Handoff: Auto/)
+
+    await setup.mockInput.pressEnter()
+    await setup.flush()
+    assert.equal(toggleCount, 2)
+    assert.match(setup.captureCharFrame(), /Handoff: Manual/)
+  } finally {
+    setup?.renderer.destroy()
+  }
+})
+
+test("renders the sidebar Goal and shows a bounded footer preview only while hovered or focused", async () => {
+  const [previewEnabled, setPreviewEnabled] = createSignal(true)
+  const objective = `Repair ${Array.from({ length: 30 }, (_, index) => `segment-${index}`).join(" ")}`
+  const snapshot: GoalStateSnapshot = {
+    status: "ready",
+    goal: { status: "active", handoff: "manual", objective },
+  }
+  let setup: TestRendererSetup | undefined
+  try {
+    setup = await testRender(() => jsx("box", {
+      width: 72,
+      height: 8,
+      flexDirection: "column",
+      children: [
+        jsx(RenderableGoalFooterSummary, {
+          sessionID: "ses_current",
+          snapshot: () => snapshot,
+          get previewEnabled() { return previewEnabled() },
+          textColor: colors.subdued,
+          accentColor: colors.accent,
+        }),
+        jsx(RenderableGoalSummary, {
+          snapshot: () => snapshot,
+          textColor: colors.subdued,
+          accentColor: colors.accent,
+        }),
+        jsx("box", { id: "goal-preview-other-focus", width: 1, height: 1, focusable: true }),
+      ],
+    }), { width: 72, height: 8 })
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /Goal: active/)
+    assert.match(setup.captureCharFrame(), /Goal · active/)
+    assert.doesNotMatch(setup.captureCharFrame(), /Current Goal · active/)
+
+    await setup.mockMouse.moveTo(71, 7)
+    const footer = target(setup, "Goal: active")
+    await setup.mockMouse.moveTo(footer.x, footer.y)
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /Current Goal · active/)
+    assert.match(setup.captureCharFrame(), /segment-0/)
+    assert.doesNotMatch(setup.captureCharFrame(), /segment-29/)
+
+    setPreviewEnabled(false)
+    await setup.flush()
+    assert.doesNotMatch(setup.captureCharFrame(), /Current Goal · active/)
+    setPreviewEnabled(true)
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /Current Goal · active/)
+
+    await setup.mockMouse.moveTo(71, 7)
+    await setup.flush()
+    assert.doesNotMatch(setup.captureCharFrame(), /Current Goal · active/)
+
+    const summary = setup.renderer.root.findDescendantById("opencode-rig.goal-summary")
+    assert.ok(summary)
+    summary.focus()
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /Current Goal · active/)
+    setup.renderer.root.findDescendantById("goal-preview-other-focus")?.focus()
+    await setup.flush()
+    assert.doesNotMatch(setup.captureCharFrame(), /Current Goal · active/)
+  } finally {
+    setup?.renderer.destroy()
+  }
+})
+
+test("Goal summaries read refreshed state after the host evaluates slot props only once", async () => {
+  const [snapshot, setSnapshot] = createSignal<GoalStateSnapshot>({ status: "loading" })
+  const setup = await testRender(() => jsx("box", {
+    width: 72,
+    height: 6,
+    flexDirection: "column",
+    children: [
+      jsx(RenderableGoalFooterSummary, {
+        sessionID: "ses_current",
+        snapshot: () => snapshot(),
+        previewEnabled: false,
+        textColor: colors.subdued,
+        accentColor: colors.accent,
+      }),
+      jsx(RenderableGoalSummary, {
+        snapshot: () => snapshot(),
+        textColor: colors.subdued,
+        accentColor: colors.accent,
+      }),
+    ],
+  }), { width: 72, height: 6 })
+  try {
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /Goal: loading/)
+    setSnapshot({ status: "ready", goal: { status: "blocked", handoff: "auto", objective: "finish the roadmap" } })
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /Goal: blocked/)
+    assert.match(setup.captureCharFrame(), /Goal · blocked/)
+    assert.match(setup.captureCharFrame(), /Objective: finish the roadmap/)
+  } finally {
+    setup.renderer.destroy()
+  }
+})
+
+test("renders readable subagent history rows without session IDs or truncation", async () => {
+  const rows: SubagentHistoryEventRow[] = [
+    {
+      agent: "General",
+      model: "openai/gpt-6-luna#max",
+      title: "Repair the durable subagent history for every archived child session",
+      status: "idle",
+      at: "2026-09-22T10:05:00.000Z",
+      firstSeenAt: "2026-09-22T10:00:00.000Z",
+    },
+    {
+      agent: "Explore",
+      model: "openai/gpt-6-luna#max",
+      title: "Audit provider usage",
+      status: "running",
+      at: "2026-09-22T11:00:00.000Z",
+      firstSeenAt: "2026-09-22T11:00:00.000Z",
+    },
+  ]
+  const RenderableSubagentsHistory = SubagentsHistory as unknown as (props: Record<string, unknown>) => ReturnType<typeof jsx>
+  let setup: TestRendererSetup | undefined
+  try {
+    setup = await testRender(() => jsx(RenderableSubagentsHistory, {
+      rows,
+      page: 0,
+      hasMore: true,
+      truncated: false,
+      loaded: true,
+      textColor: colors.text,
+      subduedColor: colors.subdued,
+      accentColor: colors.accent,
+    }), { width: 40, height: 12 })
+    await setup.flush()
+    const frame = setup.captureCharFrame()
+    assert.match(frame, /History/)
+    assert.match(frame, /Repair the/)
+    assert.match(frame, /durable subagent history/)
+    assert.match(frame, /Audit provider/)
+    assert.match(frame, /history page 1 · more available/)
+    assert.doesNotMatch(frame, /ses_/)
+    assert.doesNotMatch(frame, /…/)
+    assert.ok(frame.replace(/\s/g, "").includes("Repairthedurablesubagenthistoryforeveryarchivedchildsession"), frame)
+  } finally {
+    setup?.renderer.destroy()
+  }
+})
+
+test("native Managed Screens subsection refreshes rows and toggles by click and keyboard", async () => {
+  const [screens, setScreens] = createSignal<Array<{ name: string; state: string }>>([])
+  const [collapsed, setCollapsed] = createSignal(false)
+  let toggleCount = 0
+  let setup: TestRendererSetup | undefined
+  try {
+    setup = await testRender(() => jsx(RenderableManagedScreensSidebar, {
+      collapsed,
+      screens,
+      message: () => "No managed Screens.",
+      textColor: () => colors.text,
+      subduedColor: () => colors.subdued,
+      accentColor: () => colors.accent,
+      onToggle: () => {
+        toggleCount += 1
+        setCollapsed((value) => !value)
+      },
+    }), { width: 44, height: 13 })
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /- Managed Screens 0/)
+    assert.match(setup.captureCharFrame(), /No managed Screens\./)
+
+    setScreens([{ name: "native-acceptance", state: "Detached" }])
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /- Managed Screens 1/)
+    assert.match(setup.captureCharFrame(), /native-acceptance · Detached/)
+    assert.doesNotMatch(setup.captureCharFrame(), /pid/i)
+
+    const heading = target(setup, "- Managed Screens")
+    await setup.mockMouse.click(heading.x, heading.y)
+    await setup.flush()
+    assert.equal(toggleCount, 1)
+    assert.equal(setup.renderer.currentFocusedRenderable?.id, "opencode-rig.managed-screens.heading")
+    assert.match(setup.captureCharFrame(), /\+ Managed Screens 1/)
+    assert.doesNotMatch(setup.captureCharFrame(), /native-acceptance/)
+
+    setScreens([
+      { name: "native-acceptance", state: "Detached" },
+      { name: "second-acceptance", state: "Attached" },
+    ])
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /\+ Managed Screens 2/)
+    assert.doesNotMatch(setup.captureCharFrame(), /second-acceptance/)
+
+    await setup.mockInput.pressEnter()
+    await setup.flush()
+    assert.equal(toggleCount, 2)
+    assert.match(setup.captureCharFrame(), /- Managed Screens 2/)
+    assert.match(setup.captureCharFrame(), /native-acceptance · Detached/)
+    assert.match(setup.captureCharFrame(), /second-acceptance · Attached/)
+
+    setScreens(Array.from({ length: MAX_MANAGED_SCREEN_ROWS + 1 }, (_, index) => ({
+      name: index === MAX_MANAGED_SCREEN_ROWS ? "overflow-screen" : `managed-${index}`,
+      state: "Detached",
+    })))
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), new RegExp(`- Managed Screens ${MAX_MANAGED_SCREEN_ROWS}`))
+    assert.match(setup.captureCharFrame(), new RegExp(`managed-${MAX_MANAGED_SCREEN_ROWS - 1} · Detached`))
+    assert.doesNotMatch(setup.captureCharFrame(), /overflow-screen/)
+
+    setScreens([])
+    await setup.flush()
+    assert.match(setup.captureCharFrame(), /- Managed Screens 0/)
+    assert.match(setup.captureCharFrame(), /No managed Screens\./)
+    assert.doesNotMatch(setup.captureCharFrame(), /native-acceptance|second-acceptance/)
   } finally {
     setup?.renderer.destroy()
   }

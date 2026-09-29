@@ -38,6 +38,22 @@ DOC_MARKERS = (
     "git ls-remote",
     "Without approval, do not run `git push`.",
 )
+# V2 applies agent rules after global rules; Build's wildcard allow requires
+# these management denies again at the end of its own rule list.
+MEMORY_MANAGEMENT_DENIES = (
+    "basic-memory_read_content",
+    "basic-memory_view_note",
+    "basic-memory_move_note",
+    "basic-memory_create_memory_project",
+    "basic-memory_delete_project",
+    "basic-memory_list_workspaces",
+    "basic-memory_schema_validate",
+    "basic-memory_schema_infer",
+    "basic-memory_schema_diff",
+    "basic-memory_search",
+    "basic-memory_fetch",
+)
+MEMORY_PROJECT_LISTING = "basic-memory_list_memory_projects"
 
 
 def missing(path: Path, root: Path, text: str, markers: tuple[str, ...]) -> list[str]:
@@ -137,6 +153,59 @@ def check_agent_gate_permissions(config: dict, label: str) -> list[str]:
     return failures
 
 
+def check_memory_management_permissions(
+    config: dict, label: str, *, allow_memory_project_listing: bool
+) -> list[str]:
+    """Require effective Basic Memory management denies, not just JSON presence."""
+    failures: list[str] = []
+    top_rules = config.get("permissions", [])
+    if not isinstance(top_rules, list) or any(
+        not isinstance(rule, dict) for rule in top_rules
+    ):
+        return [f"{label} permissions must be a list of rule objects"]
+    build_rules = permission_rules(config, "build")
+    wildcard_indexes = [
+        index
+        for index, rule in enumerate(build_rules)
+        if rule.get("action") == "*"
+        and rule.get("resource") == "*"
+        and rule.get("effect") == "allow"
+    ]
+    last_wildcard = max(wildcard_indexes) if wildcard_indexes else None
+
+    def deny_indexes(rules: list[dict], action: str) -> list[int]:
+        return [
+            index
+            for index, rule in enumerate(rules)
+            if rule.get("action") == action
+            and rule.get("resource") == "*"
+            and rule.get("effect") == "deny"
+        ]
+
+    def require_effective(action: str) -> None:
+        if not deny_indexes(top_rules, action):
+            failures.append(f"{label} must deny {action}/*")
+        build_indexes = deny_indexes(build_rules, action)
+        if not build_indexes:
+            failures.append(f"{label} agents.build must deny {action}/*")
+        elif last_wildcard is not None and max(build_indexes) < last_wildcard:
+            failures.append(
+                f"{label} agents.build {action}/* deny must follow its allow */* rule"
+            )
+
+    for action in MEMORY_MANAGEMENT_DENIES:
+        require_effective(action)
+
+    listing_denies = deny_indexes(top_rules, MEMORY_PROJECT_LISTING) + deny_indexes(
+        build_rules, MEMORY_PROJECT_LISTING
+    )
+    if allow_memory_project_listing and listing_denies:
+        failures.append(f"{label} must leave {MEMORY_PROJECT_LISTING} allowed for opt-in")
+    if not allow_memory_project_listing:
+        require_effective(MEMORY_PROJECT_LISTING)
+    return failures
+
+
 def check_root(root: Path) -> list[str]:
     failures: list[str] = []
     agents = root / "AGENTS.md"
@@ -168,6 +237,11 @@ def check_root(root: Path) -> list[str]:
             )
         )
         failures.extend(check_agent_gate_permissions(config_data, "opencode.json"))
+        failures.extend(
+            check_memory_management_permissions(
+                config_data, "opencode.json", allow_memory_project_listing=True
+            )
+        )
     except (OSError, json.JSONDecodeError, AttributeError) as exc:
         failures.append(f"opencode.json must configure agent gate denies ({exc})")
     example = root / "platforms/linux/ubuntu/computer-use/config/v2-opencode.example.jsonc"
@@ -184,6 +258,16 @@ def check_root(root: Path) -> list[str]:
                 )
             )
             failures.extend(check_agent_gate_permissions(example_data, str(example.relative_to(root))))
+            # The portable example keeps the closed cross-project default, so
+            # project discovery stays denied and must also be denied after
+            # Build's wildcard allow to remain effective.
+            failures.extend(
+                check_memory_management_permissions(
+                    example_data,
+                    str(example.relative_to(root)),
+                    allow_memory_project_listing=False,
+                )
+            )
     except (OSError, ValueError, json.JSONDecodeError, AttributeError) as exc:
         failures.append(f"{example.relative_to(root)} must be valid JSONC with agent gate denies ({exc})")
     return failures

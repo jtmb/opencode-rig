@@ -110,7 +110,10 @@ After runtime selection, the command runs in this order:
    `resource-monitor`. This includes `chatgpt-connector` and excludes the
    retired `integrated-browser` workspace;
 3. `bash -n` and ShellCheck error-severity checks for every script shell file
-   and `.githooks/pre-push`;
+   and `.githooks/pre-push`. The QA script resolves `shellcheck` from the
+   invoking `PATH`; when you run it with the pinned Node `PATH`, append the
+   directory where `shellcheck` is installed (for example `~/.local/bin`),
+   otherwise QA fails with `ShellCheck: missing command: shellcheck`;
 4. source compilation with Python's in-memory `compile()` for every Python
    file, using the current Python interpreter rather than a second `PATH`
    lookup;
@@ -134,10 +137,13 @@ After runtime selection, the command runs in this order:
    validation; and `git show --check` for `HEAD` plus unstaged and staged
    `git diff --check`.
 
-The `HEAD` check excludes only `wsl-session.md`, a checked-in historical
-terminal export whose existing whitespace cannot be repaired without rewriting
-the committed baseline. Unstaged and staged checks still cover edits to that
-file, and every other `HEAD` path remains checked.
+The `HEAD` check excludes `wsl-session.md`, a checked-in historical terminal
+export; unstaged and staged checks still cover edits to that file. All three
+checks exclude only generated native-capture character frames and snapshot
+`.txt` files under `evidence/ui-acceptance/*/v3/`, whose trailing cells are
+part of the rendered frame. Other source, documentation and evidence files
+remain checked. The self-test verifies these exclusions alongside staged and
+non-exempt `HEAD` whitespace failures.
 
 The package workspace list is checked against an exact curated allowlist, in
 addition to count, type, path, and uniqueness validation. The repository QA

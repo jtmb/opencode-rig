@@ -256,6 +256,7 @@ PY
 
 check_wsl_host_integration() {
   local status=0 ps_path server_config cli_config vision host_script rig_tools_index
+  local fallback_helper
   server_config="$WSL_CONFIG_DIR/opencode.jsonc"
   if [[ ! -f "$server_config" && -f "$WSL_CONFIG_DIR/opencode.json" ]]; then
     server_config="$WSL_CONFIG_DIR/opencode.json"
@@ -304,7 +305,11 @@ check_wsl_host_integration() {
      grep -Fq 'return decodeWindowsScreenshot' "$vision" &&
      grep -Fq 'windows.screenshot' "$host_script" &&
      grep -Fq 'windows.screenshot' "$WSL_INTEROP_ROOT/test/powershell-host.test.ts" &&
-     ! grep -Fq 'writeFile' "$vision"; then
+     fallback_helper="$(sed -n '/^async function captureWindowsScreenshot(/,/^}/p' "$vision")" &&
+     [[ -n "$fallback_helper" ]] &&
+     [[ "$fallback_helper" == "async function captureWindowsScreenshot("* ]] &&
+     [[ "$fallback_helper" == *$'\n}' ]] &&
+     [[ "$fallback_helper" != *writeFile* ]]; then
     ok "WSL2 vision_capture fallback is registered and remains in memory"
   else
     missing "WSL2 in-memory screenshot fallback wiring"

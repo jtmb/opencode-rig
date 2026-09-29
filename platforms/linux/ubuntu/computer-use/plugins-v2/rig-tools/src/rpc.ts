@@ -3,6 +3,20 @@ import { Rpc } from "@opencode/plugin"
 export type RigToolsCatalogInput = { query: string }
 export type RigToolsSessionContextInput = { sessionID: string; command: string }
 export type RigToolsOutput = { text: string }
+export type RigToolsManagedScreen = { name: string; state: string }
+export type RigToolsManagedScreensOutput = { sessions: RigToolsManagedScreen[] }
+
+export const MAX_MANAGED_SCREEN_ROWS = 8
+
+const managedScreenSchema = {
+  type: "object",
+  properties: {
+    name: { type: "string", maxLength: 64 },
+    state: { type: "string", maxLength: 64 },
+  },
+  required: ["name", "state"],
+  additionalProperties: false,
+} as const
 
 export const RigTools = Rpc.define({
   id: "opencode-rig.rig-tools",
@@ -38,6 +52,33 @@ export const RigTools = Rpc.define({
         additionalProperties: false,
       },
     },
+    managedScreens: {
+      input: {
+        type: "object",
+        properties: {},
+        additionalProperties: false,
+      },
+      output: {
+        type: "object",
+        properties: {
+          sessions: {
+            type: "array",
+            maxItems: MAX_MANAGED_SCREEN_ROWS,
+            items: managedScreenSchema,
+          },
+        },
+        required: ["sessions"],
+        additionalProperties: false,
+      },
+    },
   },
-  events: {},
+  events: {
+    managedScreensChanged: {
+      schema: {
+        type: "object",
+        properties: {},
+        additionalProperties: false,
+      },
+    },
+  },
 })

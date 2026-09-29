@@ -3,6 +3,7 @@ import type { JSX } from "@opentui/solid/jsx-runtime"
 import { jsx } from "@opentui/solid/jsx-runtime"
 
 import { activeSubagentRowStyle, subagentActivityLabel, type ActiveSubagentRowTheme, type SubagentRow } from "./subagents.ts"
+import { MAX_MANAGED_SCREEN_ROWS, type RigToolsManagedScreen } from "./rpc.ts"
 
 export type ActiveSubagentRowProps = {
   readonly row: SubagentRow
@@ -59,6 +60,71 @@ export function ActiveSubagentsHeading(props: {
         get children() { return ` ${props.count}` },
       }),
     ],
+  })
+}
+
+export function ManagedScreensSidebar(props: {
+  readonly collapsed: () => boolean
+  readonly screens: () => readonly RigToolsManagedScreen[]
+  readonly message: () => string
+  readonly textColor: () => ColorInput
+  readonly subduedColor: () => ColorInput
+  readonly accentColor: () => ColorInput
+  readonly onToggle: () => void
+}): JSX.Element {
+  const screens = () => props.screens().slice(0, MAX_MANAGED_SCREEN_ROWS)
+  const body = jsx("text", {
+    wrapMode: "word",
+    get fg() { return props.subduedColor() },
+    attributes: TextAttributes.DIM,
+    get children() {
+      if (props.collapsed()) return ""
+      const visible = screens()
+      return visible.length
+        ? visible.map((screen) => `${screen.name} · ${screen.state}`).join("\n")
+        : props.message()
+    },
+  })
+  const activate = (event: MouseEvent & { __rigHandled?: boolean }) => {
+    if (event.__rigHandled || event.button !== 0) return
+    event.__rigHandled = true
+    event.preventDefault()
+    event.stopPropagation()
+    event.currentTarget?.focus()
+    props.onToggle()
+  }
+
+  const heading = jsx("box", {
+    id: "opencode-rig.managed-screens.heading",
+    flexDirection: "row",
+    width: "100%",
+    focusable: true,
+    onMouseDown: activate,
+    onKeyDown: (event: KeyEvent) => {
+      if (event.name !== "return" && event.name !== "space") return
+      event.preventDefault()
+      event.stopPropagation()
+      props.onToggle()
+    },
+    children: [
+      jsx("text", {
+        get fg() { return props.textColor() },
+        children: jsx("b", { get children() { return `${props.collapsed() ? "+" : "-"} Managed Screens` } }),
+      }),
+      jsx("text", {
+        get fg() { return props.accentColor() },
+        attributes: TextAttributes.BOLD,
+        get children() { return ` ${screens().length}` },
+      }),
+    ],
+  })
+
+  return jsx("box", {
+    flexDirection: "column",
+    gap: 0,
+    marginTop: 1,
+    flexShrink: 0,
+    children: [heading, body],
   })
 }
 

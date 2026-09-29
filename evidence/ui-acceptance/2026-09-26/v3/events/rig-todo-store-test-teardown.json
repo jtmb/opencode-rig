@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-teardown",
+  "event_id": "rig-todo-store-test-teardown-001",
+  "capture_id": "rig-todo-store",
+  "source_sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "d85380478039dd0bcb52b21e41eb317eb9f67673c5ddf38134a4b97030e083da",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "teardown",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "96323af5-5507-4734-8d63-c2dd441823de",
+    "dispatch_id": "rig-todo-store-test-teardown-dispatch-001",
+    "transition_id": "rig-todo-store-test-teardown-transition-001",
+    "dispatch_monotonic_ns": "71813412318548",
+    "transition_monotonic_ns": "71813433527108"
+  },
+  "before": {
+    "snapshot_id": "rig-todo-store-interact-after",
+    "frame_sha256": "5326ccf2eacf3f4940e561b1297cc7063916e34e843e022a0f40fd93c770ea88",
+    "spans_sha256": "65ade76d77ba7ec53f9acc859499b290917f761f8c59657d0380a313a7dfcd97",
+    "state_sha256": "3cb191def2928a9e5ce2be825bda706b78c72b0b4abcef431e138cc9c6658852"
+  },
+  "after": {
+    "snapshot_id": "rig-todo-store-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "ad5b57d87a0dd0895b11e3b8673fc96d4c4644a49d02967b3627008cd0e43827",
+  "output": "evidence/ui-acceptance/2026-09-26/v3/event-output/rig-todo-store-test-teardown.json",
+  "output_sha256": "0d52808956fb177ba5fa1f154913f2780f4f4340e0a4b69ca0019a07a0d52b70",
+  "observed_at": "2026-09-26T17:38:10.730Z"
+}

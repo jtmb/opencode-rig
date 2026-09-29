@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "kind": "behavioral",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/presentation.test.ts",
+  "test_sha256": "5be38bb78974ae9584bac64e0165df3bea6f2ee1e93a2c2589ea49f794e7f8bf",
+  "source_sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-ffi\",\"--experimental-strip-types\",\"--test\",\"test/presentation.test.ts\"]",
+  "observed_at": "2026-09-27T10:04:05.550Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-27/v4/execution-output/file-manager-presentation-behavioral.txt",
+  "output_sha256": "71908f1f83943dd88a309cefa3ed090c43431e0e6b54b457ec7aa706181d8ddb",
+  "invocation": {
+    "run_id": "aaaafcd0-7f59-43d0-bab8-449654112e81",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/presentation.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager",
+    "started_at": "2026-09-27T10:04:04.954Z",
+    "finished_at": "2026-09-27T10:04:05.550Z",
+    "started_monotonic_ns": "2683170639833",
+    "finished_monotonic_ns": "2683766642613",
+    "exit_code": 0,
+    "source_sha256_before": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+    "source_sha256_after": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+    "test_sha256_before": "5be38bb78974ae9584bac64e0165df3bea6f2ee1e93a2c2589ea49f794e7f8bf",
+    "test_sha256_after": "5be38bb78974ae9584bac64e0165df3bea6f2ee1e93a2c2589ea49f794e7f8bf"
+  }
+}

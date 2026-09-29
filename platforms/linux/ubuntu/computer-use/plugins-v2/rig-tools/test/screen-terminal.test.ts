@@ -118,3 +118,50 @@ test("previews, binds, applies, and invalidates screen mutations", async () => {
   now += 60_001
   await assert.rejects(manager.invoke({ action: "stop", name: "existing", apply: true, expectToken: expired.expectToken }, "ses", "build"), /missing or expired/)
 })
+
+test("managed Screen sessions persist ownership and reconcile live name/PID identity", async () => {
+  const { backend, sessions } = fakeBackend()
+  let stored: unknown
+  const storage = {
+    read: async () => stored,
+    write: async (value: unknown) => { stored = structuredClone(value) },
+  }
+  const manager = createScreenManager(backend, Date.now, storage)
+  assert.deepEqual(await manager.managedSessions(), [])
+  const start = await manager.invoke({ action: "start", name: "managed", directory: process.cwd() }, "ses", "build")
+  await manager.invoke({
+    action: "start",
+    name: "managed",
+    directory: process.cwd(),
+    apply: true,
+    expectToken: start.expectToken,
+  }, "ses", "build")
+
+  assert.deepEqual(stored, [{ name: "managed", pid: 43 }])
+  assert.deepEqual(await manager.managedSessions(), [{ name: "managed", state: "Detached" }])
+  assert.deepEqual(await createScreenManager(backend, Date.now, storage).managedSessions(), [
+    { name: "managed", state: "Detached" },
+  ])
+
+  sessions.set("managed", { pid: 43, name: "managed", state: "Dead" })
+  assert.deepEqual(await manager.managedSessions(), [])
+  assert.deepEqual(stored, [])
+
+  const stop = await manager.invoke({ action: "stop", name: "managed" }, "ses", "build")
+  await manager.invoke({ action: "stop", name: "managed", apply: true, expectToken: stop.expectToken }, "ses", "build")
+  assert.deepEqual(await manager.managedSessions(), [])
+  assert.deepEqual(stored, [])
+
+  const restarted = await manager.invoke({ action: "start", name: "managed", directory: process.cwd() }, "ses", "build")
+  await manager.invoke({
+    action: "start",
+    name: "managed",
+    directory: process.cwd(),
+    apply: true,
+    expectToken: restarted.expectToken,
+  }, "ses", "build")
+  sessions.set("managed", { pid: 99, name: "managed", state: "Attached" })
+  assert.deepEqual(await manager.managedSessions(), [])
+  assert.deepEqual(stored, [])
+  assert.deepEqual(await manager.managedSessions(), [])
+})

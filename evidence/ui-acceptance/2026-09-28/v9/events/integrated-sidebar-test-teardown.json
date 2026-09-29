@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-teardown",
+  "event_id": "integrated-sidebar-test-teardown-001",
+  "capture_id": "integrated-sidebar",
+  "source_sha256": "ec064f2dac7a1bf22a03cb36639d421f568156dc413e002c0dfea343b2d27cc8",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "b0c9855ca3fb7a1d77fe97e9d20f1f9d948a1716b0fb6c9241f38261dfecd850",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "teardown",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "dispatch_id": "integrated-sidebar-test-teardown-dispatch-001",
+    "transition_id": "integrated-sidebar-test-teardown-transition-001",
+    "dispatch_monotonic_ns": "11837922734912",
+    "transition_monotonic_ns": "11837934264276"
+  },
+  "before": {
+    "snapshot_id": "integrated-sidebar-interact-after",
+    "frame_sha256": "fd30cf958424cc6937b54f3e20676ce9323fa744756c8e0093c600d6b5cfe9ad",
+    "spans_sha256": "8aacea05738ce14b32daf42730348bd5cbdb95297eaa479f6bdeec03fa3a83b9",
+    "state_sha256": "2a5ee7fafed309452d3e585c8e3642a310226d88887eaecfaeb15d65071fdec3"
+  },
+  "after": {
+    "snapshot_id": "integrated-sidebar-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "7a594edc0aa703747c3161e96cfd9ecfc9feddab91d870c0fe395cb92d7615cf",
+  "output": "evidence/ui-acceptance/2026-09-28/v9/event-output/integrated-sidebar-test-teardown.json",
+  "output_sha256": "d1ed6fd8c6fc24429888a59a4049ebf8ab24403562b02fa0249949442c97edae",
+  "observed_at": "2026-09-28T23:13:46.959Z"
+}

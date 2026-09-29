@@ -1,0 +1,11 @@
+✔ pipeline graph tracks concurrent lifecycle starts and closes correlated stages (1.500848ms)
+✔ pipeline graph exposes failed outcomes as errors without event content (0.305929ms)
+✔ the /hooks command opens the themed panel and rehydrates from server snapshots (5.412583ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 104.915253

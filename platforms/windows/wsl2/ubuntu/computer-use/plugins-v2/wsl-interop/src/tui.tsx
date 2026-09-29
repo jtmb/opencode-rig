@@ -4,7 +4,7 @@ import { createSignal } from "solid-js"
 
 import { loadCompatibilityPolicy, runtimeCompatibility } from "./compatibility.ts"
 import { WslInteropRpc, type WslInteropOutput } from "./rpc.ts"
-import { parseOptions } from "./types.ts"
+import { parseTuiOptions } from "./types.ts"
 
 function WslSidebar(props: { status: () => string }) {
   const context = usePlugin()
@@ -19,7 +19,7 @@ function WslSidebar(props: { status: () => string }) {
 export default Plugin.define({
   id: "opencode-rig.wsl2.interop.tui",
   async setup(context) {
-    const options = parseOptions(context.options)
+    const options = parseTuiOptions(context.options)
     if (!options.enabled) return () => undefined
     const compatibility = runtimeCompatibility(context.app.version, await loadCompatibilityPolicy())
     if (!compatibility.supported) {

@@ -51,12 +51,13 @@ target installation and fresh verification.
 
 ## Feature tour
 
-- **Desktop, browser, repository, and memory workflows:** 19 skills cover
+- **Desktop, browser, repository, and memory workflows:** 20 skills cover
   GNOME inspection and control, visible or explicitly headless Playwright,
   browser-game QA, GitHub operations, Blender and web 3D assets, durable task
   memory, bounded same-project session context, application setup,
   troubleshooting, files, automation, database maintenance, development
-  conventions, skill maintenance, agent orchestration, and VS Code.
+  conventions, skill maintenance, agent orchestration, VS Code, and downstream
+  repository onboarding against the shared OpenCode v2 harness.
 - **v2 Explorer:** the `file-manager` CLI plugin provides a docked tree,
   quick-open, tabs, viewer, and explicit-save editor. Its parser matrix has 21
   manifest-managed Tree-sitter languages (JSON/JSONC, YAML, TOML, Bash, Python,
@@ -257,7 +258,7 @@ operate one canonical component explicitly; each write still requires its own
 ./platforms/linux/ubuntu/computer-use/scripts/verify-opencode-v2.sh
 ```
 
-`setup-opencode.sh` deploys the 19 skills, opt-in ChatGPT agent, repository
+`setup-opencode.sh` deploys the 20 skills, opt-in ChatGPT agent, repository
 commands, v2 config, and managed parser assets. `deploy-plugins.sh` registers
 the thirteen packages from `config/v2-plugin-roles.json`, including the pinned
 official Ponytail package behind its local v2 adapter; `verify-opencode-v2.sh` checks the resulting
@@ -304,7 +305,7 @@ acceptance are not claimed complete merely because the package exists.
 - [Ubuntu computer-use guide](platforms/linux/ubuntu/computer-use/README.md)
 - [Ubuntu-on-WSL2 computer-use guide](platforms/windows/wsl2/ubuntu/computer-use/README.md)
 - [v2 plugin workspace](platforms/linux/ubuntu/computer-use/plugins-v2/README.md)
-- [19-skill catalog](platforms/linux/ubuntu/computer-use/skills/README.md)
+- [20-skill catalog](platforms/linux/ubuntu/computer-use/skills/README.md)
 
 Open Rig is intentionally modular: remove an individual plugin registration and
 restart OpenCode without removing the other skills, MCPs, or plugins. No root

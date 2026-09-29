@@ -1,0 +1,12 @@
+(node:2261499) ExperimentalWarning: FFI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native Goal slots keep the last ready Goal visible during refresh (257.930297ms)
+✔ keeps the footer handoff control on one unbroken line while the summary yields width (21.249773ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1262.48016

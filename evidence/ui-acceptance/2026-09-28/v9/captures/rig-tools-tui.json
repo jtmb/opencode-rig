@@ -1,0 +1,356 @@
+{
+  "version": 3,
+  "source_sha256": "8e264491f59c1f4dc41e547ad9be73e557f398450ca3a000dbf13a9b8338542f",
+  "capture_generator": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+    "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+  },
+  "render_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+    "sha256": "566e98fc5a8379641c66c8f09a1e303ebe55d15596f02eb0c9fc6d29d0da3814"
+  },
+  "native_capture_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+    "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+  },
+  "native_capture_run": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "argv": [
+      "/bin/bash",
+      "/home/brajam/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh",
+      "--",
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/native-capture-fixture.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-28T23:14:21.704Z",
+    "finished_at": "2026-09-28T23:14:26.822Z",
+    "started_monotonic_ns": "11834280291825",
+    "finished_monotonic_ns": "11839398378594",
+    "exit_code": 0,
+    "inputs": [
+      {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+        "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+        "sha256": "3c6c507594a5c7d1f38db901230a86274830e7cf20507cbf6679623fdc706c84"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+        "sha256": "2171a8d467d738360424cb9952526dc37d33a6b500bfa4775078e7ce139ac2ef"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+        "sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+        "sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+        "sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+        "sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+        "sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+        "sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+        "sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+        "sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+        "sha256": "27369397979248d96d861e6c7a5f0b26f521551284fae430ada81f71a807a8ec"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+        "sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+        "sha256": "4d43b03a51b17df017e7a3c3f3b4a8c5d51d1381fbefa131acae9d1a92bc33b8"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+        "sha256": "5b596b304fc1cef3060baf3dc0f5151d2006a61eaf34b26565c006bbb4fd7e49"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts",
+        "sha256": "a801b44c2cc19b92fd52d17b05db3b99a63b3e9626b59553f3cbc9a48fc7baa6"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+        "sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+        "sha256": "9e923ad7044eb9374121ee8c79ea82abc7da3040d8fdb04453483c2f3ad80ea0"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+        "sha256": "8e264491f59c1f4dc41e547ad9be73e557f398450ca3a000dbf13a9b8338542f"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+        "sha256": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+        "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+        "sha256": "566e98fc5a8379641c66c8f09a1e303ebe55d15596f02eb0c9fc6d29d0da3814"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+        "sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+        "sha256": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5"
+      }
+    ]
+  },
+  "native_capture_output": {
+    "path": "evidence/ui-acceptance/2026-09-28/v9/native-output/rig-tools-tui.json",
+    "sha256": "364335b6fd467c7cc8ecd940e55549533907ceb2d837f7c66143f491e79ff63e",
+    "encoding": "utf-8",
+    "format": "native-opentui-capture-v1"
+  },
+  "runtime": {
+    "id": "node-26.4.0-npm-11.17.0",
+    "name": "node",
+    "version": "26.4.0",
+    "identity": "node@26.4.0",
+    "provisioning": "external-checksum",
+    "executable": "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+    "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "package_manager": "npm",
+    "package_manager_version": "11.17.0",
+    "package_manager_identity": "npm@11.17.0",
+    "package_manager_executable": "/home/brajam/repos/opencode-rig/toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+    "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+  },
+  "renderer": {
+    "id": "opentui-0.5.11",
+    "name": "OpenTUI",
+    "version": "0.5.11",
+    "identity": "OpenTUI@0.5.11"
+  },
+  "observed_at": "2026-09-28T23:13:46.959Z",
+  "max_age_days": 1,
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "native_snapshots": [
+    {
+      "id": "rig-tools-tui-open-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-open-before.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-open-before.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-open-before.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "rig-tools-tui-open-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-open-after.txt",
+        "sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-open-after.spans.json",
+        "sha256": "3ab7500095017e635b1b73809273efae1d1472a17149866df824b3ca6b0fe48b",
+        "semantic_sha256": "439723459432bb545470d85d5583baa3806e0aa5450797bcabb7886bf02c833b",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-open-after.state.json",
+        "sha256": "db0e775412e62b982853cda8234e4fc9d0874944ab922dbd9b192e8662125c2d",
+        "semantic_sha256": "36ae06840db97ef1e1ab93ab95c06e58ee6eabe69477992a44227339467fef92",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "rig-tools-tui-interact-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-interact-before.txt",
+        "sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-interact-before.spans.json",
+        "sha256": "3ab7500095017e635b1b73809273efae1d1472a17149866df824b3ca6b0fe48b",
+        "semantic_sha256": "439723459432bb545470d85d5583baa3806e0aa5450797bcabb7886bf02c833b",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-interact-before.state.json",
+        "sha256": "db0e775412e62b982853cda8234e4fc9d0874944ab922dbd9b192e8662125c2d",
+        "semantic_sha256": "36ae06840db97ef1e1ab93ab95c06e58ee6eabe69477992a44227339467fef92",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "rig-tools-tui-interact-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-interact-after.txt",
+        "sha256": "445bbe2ea5349a59822ea2d52e6aec0c9b18edb65965e1632e774d481e1a9833",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-interact-after.spans.json",
+        "sha256": "52e872c876fd0fb0af89a2cfffc17fb5d4d462ab1a13fa698ad81c161e23cba7",
+        "semantic_sha256": "39e3dc32e79398dbfdf584645918e08828605e7c8359e7d472b5875c10fc1539",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-interact-after.state.json",
+        "sha256": "a7e4bf790adac49e062ee1c267806c6d8211988d70c4669c4fd4189acfc68478",
+        "semantic_sha256": "0e4466aa165406c82015080f34d6282cdaec9f33f79f4e10c631604765d6e8b0",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "rig-tools-tui-close-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-close-after.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-close-after.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-close-after.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    }
+  ],
+  "native_frame": {
+    "snapshot_id": "rig-tools-tui-interact-after",
+    "character_output": {
+      "path": "evidence/ui-acceptance/2026-09-28/v9/characters/rig-tools-tui.txt",
+      "sha256": "445bbe2ea5349a59822ea2d52e6aec0c9b18edb65965e1632e774d481e1a9833",
+      "encoding": "utf-8"
+    },
+    "semantic_spans": {
+      "path": "evidence/ui-acceptance/2026-09-28/v9/snapshots/rig-tools-tui/rig-tools-tui-interact-after.spans.json",
+      "sha256": "52e872c876fd0fb0af89a2cfffc17fb5d4d462ab1a13fa698ad81c161e23cba7",
+      "semantic_sha256": "39e3dc32e79398dbfdf584645918e08828605e7c8359e7d472b5875c10fc1539",
+      "encoding": "utf-8",
+      "format": "opentui-captureSpans-v1"
+    },
+    "frame_sha256": "445bbe2ea5349a59822ea2d52e6aec0c9b18edb65965e1632e774d481e1a9833",
+    "spans_sha256": "39e3dc32e79398dbfdf584645918e08828605e7c8359e7d472b5875c10fc1539"
+  },
+  "character_output": {
+    "path": "evidence/ui-acceptance/2026-09-28/v9/characters/rig-tools-tui.txt",
+    "sha256": "445bbe2ea5349a59822ea2d52e6aec0c9b18edb65965e1632e774d481e1a9833",
+    "encoding": "utf-8"
+  },
+  "span_visualization": {
+    "path": "evidence/ui-acceptance/2026-09-28/v9/images/rig-tools-tui.png",
+    "sha256": "d219e5dc8c525f68547c653320eecc0012f558db06863005edfa2b1f98ae8f24",
+    "mime": "image/png",
+    "width": 840,
+    "height": 480,
+    "derived_from": {
+      "snapshot_id": "rig-tools-tui-interact-after",
+      "frame_sha256": "445bbe2ea5349a59822ea2d52e6aec0c9b18edb65965e1632e774d481e1a9833",
+      "spans_sha256": "39e3dc32e79398dbfdf584645918e08828605e7c8359e7d472b5875c10fc1539",
+      "renderer": "opentui-semantic-span-diagnostic-v1",
+      "cell_width": 6,
+      "cell_height": 8
+    }
+  },
+  "layout_assertions": [
+    {
+      "id": "visible_rows",
+      "operator": "<=",
+      "limit": 60
+    },
+    {
+      "id": "max_line_columns",
+      "operator": "<=",
+      "limit": 140
+    },
+    {
+      "id": "reachable_sections",
+      "operator": "==",
+      "limit": 2,
+      "targets": [
+        "+ Active Subagents",
+        "CAPTURE_FOOTER"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "phase": "test-setup",
+      "event_id": "rig-tools-tui-test-setup-001",
+      "record": "evidence/ui-acceptance/2026-09-28/v9/events/rig-tools-tui-test-setup.json",
+      "record_sha256": "059efb8d0d457a512a2081425383eb8caaae2c4303d51e451949161f9ac7fd94"
+    },
+    {
+      "phase": "test-dispatch",
+      "event_id": "rig-tools-tui-test-dispatch-001",
+      "record": "evidence/ui-acceptance/2026-09-28/v9/events/rig-tools-tui-test-dispatch.json",
+      "record_sha256": "3abb3a96596939362c9920d430c87f809480077135327ca1753f4ad95db54b41"
+    },
+    {
+      "phase": "test-teardown",
+      "event_id": "rig-tools-tui-test-teardown-001",
+      "record": "evidence/ui-acceptance/2026-09-28/v9/events/rig-tools-tui-test-teardown.json",
+      "record_sha256": "bcaaf0d297ad47e1b6c56095c507a0333a6b15bd96b208b8287db0261c496841"
+    }
+  ]
+}

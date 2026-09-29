@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "kind": "interaction",
+  "tool_id": "rig-tools.vision_capture",
+  "capture_method": "wsl-interop.windows.screenshot",
+  "run_id": "d8e3ed26-1c6c-41ce-8343-bcd8b38dc015",
+  "captured_at": "2026-09-27T09:30:09.578Z",
+  "monotonic_ns": "630601675446",
+  "window": {
+    "identity_sha256": "219f2591316e98c29f67186e19cdc20f010f4f389148ca740226be1cf17b9e85",
+    "process": "wsl",
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 2576,
+      "height": 1408
+    }
+  },
+  "action": {
+    "tool_id": "screen_terminal",
+    "event": "stop managed Screen rig-host-ui-acceptance"
+  },
+  "result": {
+    "image": {
+      "path": "evidence/ui-acceptance/2026-09-27/v3/host/managed-screen-stop-after.png",
+      "sha256": "bccb2b9dde15a523304a8c14c5b4755c106591eafabd55ea7da0af1e785b8e1a",
+      "width": 2576,
+      "height": 1408
+    },
+    "rendered_visual_sha256": "53cb8f2e8617b44e9bbf1d66ba3a837b4772099a7fbd4e63e410cc8186dc8f4f"
+  }
+}

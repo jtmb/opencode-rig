@@ -55,14 +55,15 @@ test("renders the resolved model and variant before the child title", () => {
   assert.equal(formatSubagentRow(rows[2]!, 120), "General · openai/gpt-5.6-luna#max: Resolve placeholder")
 })
 
-test("filters other repositories and keeps narrow rows within the panel width", () => {
+test("includes same-project children from other worktrees but rejects foreign parents and projects", () => {
   const rows = resolveSubagentRows([
     { id: "ses_ok", parentID: "ses_parent", projectID: "project", title: "A", location: { directory: "/repo" } },
-    { id: "ses_other", parentID: "ses_parent", projectID: "other", title: "B", location: { directory: "/repo" } },
-    { id: "ses_outside", parentID: "ses_parent", projectID: "project", title: "C", location: { directory: "/other" } },
+    { id: "ses_worktree", parentID: "ses_parent", projectID: "project", title: "B", location: { directory: "/repo-worktree" } },
+    { id: "ses_other_project", parentID: "ses_parent", projectID: "other", title: "C", location: { directory: "/repo-worktree" } },
+    { id: "ses_other_parent", parentID: "ses_foreign", projectID: "project", title: "D", location: { directory: "/repo" } },
   ] as never, [], new Map(), parent)
 
-  assert.deepEqual(rows.map((row) => row.sessionID), ["ses_ok"])
+  assert.deepEqual(rows.map((row) => row.sessionID), ["ses_ok", "ses_worktree"])
   assert.ok(formatSubagentRow({ ...rows[0]!, model: "openai/gpt-5.6-luna#max" }, 24).length <= 24)
 })
 

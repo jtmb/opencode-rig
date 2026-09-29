@@ -29,7 +29,7 @@ pieces fit together?*
 | Document | Covers |
 |----------|--------|
 | [`plugins/README.md`](plugins/README.md) | Active v2 packages, server vs. CLI surfaces, registration, adaptive resource guards, and the common security model |
-| [`../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md) | Configurable hook enforcement for background-only, capacity-gated subagents |
+| [`../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/orchestration-policy/README.md) | Durable session Goals, evidence-gated Plan→Build handoff, and orchestration policy enforcement |
 | [`plugins/codex-fallback.md`](plugins/codex-fallback.md) | The active v2 server failover router: hooks, configuration precedence, proactive and reactive switching, cooldown state, and recovery |
 | [`../platforms/linux/ubuntu/computer-use/plugins-v2/chatgpt-connector/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/chatgpt-connector/README.md) | ChatGPT OAuth connector tools, session-private chat, MCP scope, and live-evidence limits |
 | [`plugins/provider-usage.md`](plugins/provider-usage.md) | Authoritative provider/integration/connection resolution, universal visibility and status rules, sanitized usage snapshots, adapters, and native sidebar rendering |
@@ -45,7 +45,7 @@ pieces fit together?*
 
 | Document | Covers |
 |----------|--------|
-| [`../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md) | v2 desktop/vision tools, repository gates, agent capacity, OpenCode API/runtime/recovery/TTY management, `/tools`, and bounded session-context retrieval |
+| [`../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md`](../platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/README.md) | `/goal` controls and prompt-footer Auto/Manual handoff, v2 desktop/vision tools, repository gates, runtime tools, and bounded session-context retrieval |
 
 ### Memory
 

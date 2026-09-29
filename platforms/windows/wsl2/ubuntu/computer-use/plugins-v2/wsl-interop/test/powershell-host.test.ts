@@ -29,7 +29,7 @@ test("rejects PATH candidates outside expected Windows installation roots", asyn
 test("PowerShell host exposes only fixed methods over standard input and output", async () => {
   const source = await readFile(new URL("../powershell/OpenRig.WindowsHost.ps1", import.meta.url), "utf8")
   for (const method of [
-    "status", "processes", "services", "path", "raw.parse", "windows.apps", "windows.find", "windows.act", "windows.screenshot",
+    "status", "processes", "services", "path", "raw.parse", "windows.apps", "windows.find", "windows.act", "windows.screenshot", "windows.capture", "windows.restore",
     "browser.open", "browser.windows", "browser.snapshot", "browser.screenshot", "browser.target", "browser.act",
   ]) {
     assert.match(source, new RegExp(`"${method.replace(".", "\\.")}"`, "u"))
@@ -66,5 +66,28 @@ test("PowerShell host exposes only fixed methods over standard input and output"
   assert.match(screenshot, /Assert-BrowserWindowUnoccluded/u)
   assert.match(screenshot, /Assert-BrowserCapturePixels/u)
   assert.doesNotMatch(screenshot, /SetForegroundWindow|CopyFromScreen/u)
+  const exactCapture = source.slice(source.indexOf("function Get-ExactWindowId"), source.indexOf("\nfunction Get-BrowserScreenshot"))
+  assert.match(exactCapture, /Get-WindowsCapture/u)
+  assert.match(exactCapture, /Assert-BrowserWindowUnoccluded/u)
+  assert.match(exactCapture, /Assert-BrowserCapturePixels/u)
+  assert.match(exactCapture, /PrintWindow/u)
+  assert.match(exactCapture, /DwmGetWindowAttribute/u)
+  assert.match(exactCapture, /processStartTimeTicks/u)
+  assert.doesNotMatch(exactCapture, /SetForegroundWindow|CopyFromScreen|SendInput|mouse_event/u)
   assert.doesNotMatch(source, /TcpListener|HttpListener|NamedPipeServerStream|Invoke-Expression/u)
+})
+
+test("occlusion rejection names a bounded occluder without any window title", async () => {
+  const source = await readFile(new URL("../powershell/OpenRig.WindowsHost.ps1", import.meta.url), "utf8")
+  const unoccluded = source.slice(source.indexOf("function Assert-BrowserWindowUnoccluded"), source.indexOf("\nfunction Get-BrowserCaptureProbeColor"))
+  assert.match(unoccluded, /occluded by another visible window/u)
+  assert.match(unoccluded, /throw \$occlusionError/u)
+  assert.match(unoccluded, /::ProcessId\(\$handle\)/u)
+  assert.match(unoccluded, /::ClassName\(\$handle\)/u)
+  assert.match(unoccluded, /hwnd=\$occluderHandle/u)
+  assert.match(unoccluded, /Substring\(0, 64\)/u)
+  assert.match(unoccluded, /Substring\(0, 256\)/u)
+  assert.match(unoccluded, /bounds=\(\$\(\$rectangle\.Left\)/u)
+  assert.doesNotMatch(unoccluded, /::Title\(/u)
+  assert.doesNotMatch(unoccluded, /Shell_TrayWnd|taskbar/iu)
 })

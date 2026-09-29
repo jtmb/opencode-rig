@@ -1,0 +1,159 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "integrated-sidebar-test-dispatch-001",
+  "capture_id": "integrated-sidebar",
+  "source_sha256": "ec064f2dac7a1bf22a03cb36639d421f568156dc413e002c0dfea343b2d27cc8",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "b0c9855ca3fb7a1d77fe97e9d20f1f9d948a1716b0fb6c9241f38261dfecd850",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "input",
+    "target": "integrated-sidebar:repository-session-subagents-source-provider",
+    "input": {
+      "pointer": [
+        {
+          "method": "moveTo",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "method": "moveTo",
+          "x": 0,
+          "y": 3
+        },
+        {
+          "method": "moveTo",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "method": "click",
+          "x": 1,
+          "y": 3
+        },
+        {
+          "method": "click",
+          "x": 3,
+          "y": 21
+        },
+        {
+          "method": "click",
+          "x": 1,
+          "y": 25
+        }
+      ],
+      "lifecycle": {
+        "type": "session.created",
+        "parentID": "ses_native_parent",
+        "sessionID": "ses_native_second"
+      },
+      "keyboard": [
+        {
+          "method": "pressEnter",
+          "target": "active-subagents-header"
+        },
+        {
+          "method": "pressEnter",
+          "target": "source-control-next"
+        }
+      ]
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "moveTo+click+session.created+pressEnter+click+pressEnter+click",
+    "target": "integrated-sidebar:repository-session-subagents-source-provider",
+    "input": {
+      "pointer": [
+        {
+          "method": "moveTo",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "method": "moveTo",
+          "x": 0,
+          "y": 3
+        },
+        {
+          "method": "moveTo",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "method": "click",
+          "x": 1,
+          "y": 3
+        },
+        {
+          "method": "click",
+          "x": 3,
+          "y": 21
+        },
+        {
+          "method": "click",
+          "x": 1,
+          "y": 25
+        }
+      ],
+      "lifecycle": {
+        "type": "session.created",
+        "parentID": "ses_native_parent",
+        "sessionID": "ses_native_second"
+      },
+      "keyboard": [
+        {
+          "method": "pressEnter",
+          "target": "active-subagents-header"
+        },
+        {
+          "method": "pressEnter",
+          "target": "source-control-next"
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "dispatch_id": "integrated-sidebar-test-dispatch-dispatch-001",
+    "transition_id": "integrated-sidebar-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "11837684426902",
+    "transition_monotonic_ns": "11837922722072"
+  },
+  "before": {
+    "snapshot_id": "integrated-sidebar-interact-before",
+    "frame_sha256": "ae709eb3d6c722ad6e3c764beeb2e4cfa23e769e8462b5eb12ea853ce64ebf09",
+    "spans_sha256": "5a81322ce7de360ce9b0be9ad0732bed8373e4b8d5b7289b1a53c0917731712e",
+    "state_sha256": "ccb2632d22ac9fa2252e50efc046a8f918dca05c4a0404ebdda70977ffca0d68"
+  },
+  "after": {
+    "snapshot_id": "integrated-sidebar-interact-after",
+    "frame_sha256": "fd30cf958424cc6937b54f3e20676ce9323fa744756c8e0093c600d6b5cfe9ad",
+    "spans_sha256": "8aacea05738ce14b32daf42730348bd5cbdb95297eaa479f6bdeec03fa3a83b9",
+    "state_sha256": "2a5ee7fafed309452d3e585c8e3642a310226d88887eaecfaeb15d65071fdec3"
+  },
+  "result": {
+    "status": "passed",
+    "target": "integrated-sidebar:repository-session-subagents-source-provider",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "c76f545fd18b63f734fba51ce6705d4c21ba5a799905bde77ae14f4ea454a273",
+  "output": "evidence/ui-acceptance/2026-09-28/v9/event-output/integrated-sidebar-test-dispatch.json",
+  "output_sha256": "33bf9d8002797e62e9e732e28c79ff9c21bcb9bea340503430bfe45f8361d9ce",
+  "observed_at": "2026-09-28T23:13:46.959Z"
+}

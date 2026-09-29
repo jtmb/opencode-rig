@@ -96,6 +96,16 @@ export interface WindowsActInput extends WindowsFindInput {
   expectToken?: string
 }
 
+export interface WindowsCaptureInput {
+  processId: number
+  windowHandle: string
+  title: string
+  className?: string
+  executable?: PowerShellExecutable
+  /** Opt in to retain the PNG beneath the invoking project directory. */
+  savePath?: string
+}
+
 export function parseOptions(value: unknown): WslInteropOptions {
   const source = strictObject(value, "options", ["enabled", "refreshMs", "powershell", "raw"])
   const powerShell = strictObject(source.powershell, "options.powershell", ["preferred", "timeoutMs", "maxOutputBytes"])
@@ -123,12 +133,27 @@ export function parseOptions(value: unknown): WslInteropOptions {
   }
 }
 
-function strictObject(value: unknown, label: string, allowed: string[]): Record<string, unknown> {
+export function parseTuiOptions(value: unknown): Pick<WslInteropOptions, "enabled" | "refreshMs"> {
+  const source: Record<string, unknown> = value === undefined
+    ? {}
+    : strictObject(value, "options", ["enabled", "refreshMs", "powershell", "raw"], [])
+  const serverOptions = Object.hasOwn(source, "powershell") || Object.hasOwn(source, "raw")
+    ? parseOptions(value)
+    : undefined
+  const enabled = serverOptions?.enabled ?? (Object.hasOwn(source, "enabled") ? source.enabled : true)
+  if (typeof enabled !== "boolean") throw new Error("options.enabled must be a boolean")
+  const refreshMs = serverOptions?.refreshMs ?? (Object.hasOwn(source, "refreshMs")
+    ? boundedInteger(source.refreshMs, "options.refreshMs", 1_000, 60_000)
+    : 5_000)
+  return { enabled, refreshMs }
+}
+
+function strictObject(value: unknown, label: string, allowed: string[], required = allowed): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object`)
   const source = value as Record<string, unknown>
   const unexpected = Object.keys(source).filter((key) => !allowed.includes(key))
   if (unexpected.length > 0) throw new Error(`${label} contains unsupported option: ${unexpected[0]}`)
-  for (const key of allowed) {
+  for (const key of required) {
     if (!(key in source)) throw new Error(`${label}.${key} is required`)
   }
   return source

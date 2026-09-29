@@ -10,6 +10,21 @@ import json
 from pathlib import Path
 
 
+MEMORY_ACTIONS = (
+    "basic-memory_read_content",
+    "basic-memory_view_note",
+    "basic-memory_move_note",
+    "basic-memory_create_memory_project",
+    "basic-memory_delete_project",
+    "basic-memory_list_workspaces",
+    "basic-memory_schema_validate",
+    "basic-memory_schema_infer",
+    "basic-memory_schema_diff",
+    "basic-memory_search",
+    "basic-memory_fetch",
+)
+MEMORY_PROJECT_LISTING = "basic-memory_list_memory_projects"
+
 AGENTS = """# AGENTS.md
 
 - [Agent policy](docs/agent-policy.md)
@@ -40,8 +55,15 @@ def main() -> int:
     checker = Path(__file__).resolve().parent / "check-git-safety-policy.py"
     with tempfile.TemporaryDirectory(prefix="git-safety-gate-") as tmp:
         root = Path(tmp)
-        def agent_config() -> dict:
+        def agent_config(*, include_listing: bool = False) -> dict:
             gates = [{"action": action, "resource": "*", "effect": "deny"} for action in ("repo_commit", "repo_push")]
+            memory_actions = MEMORY_ACTIONS + (
+                (MEMORY_PROJECT_LISTING,) if include_listing else ()
+            )
+            memory = [
+                {"action": action, "resource": "*", "effect": "deny"}
+                for action in memory_actions
+            ]
             permissions = [
                 {"action": "repo_commit", "resource": "*", "effect": "ask"},
                 {"action": "repo_push", "resource": "*", "effect": "ask"},
@@ -49,6 +71,7 @@ def main() -> int:
                 {"action": "shell", "resource": "git push *", "effect": "deny"},
                 {"action": "shell", "resource": "git -C * commit *", "effect": "deny"},
                 {"action": "shell", "resource": "git -C * push *", "effect": "deny"},
+                *memory,
             ]
             return {"permissions": permissions, "agents": {
                 "build": {"permissions": [
@@ -59,6 +82,7 @@ def main() -> int:
                     {"action": "shell", "resource": "git push *", "effect": "deny"},
                     {"action": "shell", "resource": "git -C * commit *", "effect": "deny"},
                     {"action": "shell", "resource": "git -C * push *", "effect": "deny"},
+                    *memory,
                 ]},
                 "plan": {"permissions": [{"action": "subagent", "resource": "*", "effect": "deny"}, {"action": "subagent", "resource": "explore", "effect": "allow"}, *gates]},
                 "explore": {"permissions": list(gates)},
@@ -72,7 +96,7 @@ def main() -> int:
         (root / "opencode.json").write_text(json.dumps(project_config), encoding="utf-8")
         example = root / "platforms/linux/ubuntu/computer-use/config/v2-opencode.example.jsonc"
         example.parent.mkdir(parents=True, exist_ok=True)
-        example_config = agent_config()
+        example_config = agent_config(include_listing=True)
         example.write_text(json.dumps(example_config), encoding="utf-8")
         (root / "AGENTS.md").write_text(AGENTS, encoding="utf-8")
         doc = root / "docs/scripts/git-safety-gates.md"
@@ -125,6 +149,75 @@ def main() -> int:
                 sys.stderr.write(rejected.stderr or rejected.stdout)
                 return 1
         (root / "opencode.json").write_text(json.dumps(project_config), encoding="utf-8")
+        top_only = json.loads(json.dumps(project_config))
+        top_only["agents"]["build"]["permissions"] = [
+            rule
+            for rule in top_only["agents"]["build"]["permissions"]
+            if rule.get("action") not in MEMORY_ACTIONS
+        ]
+        (root / "opencode.json").write_text(json.dumps(top_only), encoding="utf-8")
+        top_only_result = run(checker, root)
+        if top_only_result.returncode != 1 or "agents.build" not in top_only_result.stderr:
+            print("ERROR: top-level-only memory denies were accepted for Build", file=sys.stderr)
+            sys.stderr.write(top_only_result.stderr or top_only_result.stdout)
+            return 1
+        misplaced = json.loads(json.dumps(project_config))
+        build_rules = misplaced["agents"]["build"]["permissions"]
+        memory_rules = [rule for rule in build_rules if rule.get("action") in MEMORY_ACTIONS]
+        other_rules = [rule for rule in build_rules if rule.get("action") not in MEMORY_ACTIONS]
+        misplaced["agents"]["build"]["permissions"] = [*memory_rules, *other_rules]
+        (root / "opencode.json").write_text(json.dumps(misplaced), encoding="utf-8")
+        misplaced_result = run(checker, root)
+        if misplaced_result.returncode != 1 or "must follow its allow */*" not in misplaced_result.stderr:
+            print("ERROR: Build memory denies before allow */* were accepted", file=sys.stderr)
+            sys.stderr.write(misplaced_result.stderr or misplaced_result.stdout)
+            return 1
+        listing_denied = json.loads(json.dumps(project_config))
+        listing_denied["permissions"].append(
+            {"action": "basic-memory_list_memory_projects", "resource": "*", "effect": "deny"}
+        )
+        (root / "opencode.json").write_text(json.dumps(listing_denied), encoding="utf-8")
+        listing_result = run(checker, root)
+        if listing_result.returncode != 1 or "list_memory_projects" not in listing_result.stderr:
+            print("ERROR: denied opt-in project listing was accepted", file=sys.stderr)
+            sys.stderr.write(listing_result.stderr or listing_result.stdout)
+            return 1
+        (root / "opencode.json").write_text(json.dumps(project_config), encoding="utf-8")
+        example_top_only = agent_config(include_listing=True)
+        example_top_only["agents"]["build"]["permissions"] = [
+            rule
+            for rule in example_top_only["agents"]["build"]["permissions"]
+            if not str(rule.get("action", "")).startswith("basic-memory_")
+        ]
+        example.write_text(json.dumps(example_top_only), encoding="utf-8")
+        example_top_result = run(checker, root)
+        if example_top_result.returncode != 1 or "v2-opencode.example.jsonc agents.build" not in example_top_result.stderr:
+            print("ERROR: top-level-only memory denies were accepted for example Build", file=sys.stderr)
+            sys.stderr.write(example_top_result.stderr or example_top_result.stdout)
+            return 1
+        example_misplaced = agent_config(include_listing=True)
+        example_build_rules = example_misplaced["agents"]["build"]["permissions"]
+        example_memory_rules = [
+            rule
+            for rule in example_build_rules
+            if str(rule.get("action", "")).startswith("basic-memory_")
+        ]
+        example_other_rules = [
+            rule
+            for rule in example_build_rules
+            if not str(rule.get("action", "")).startswith("basic-memory_")
+        ]
+        example_misplaced["agents"]["build"]["permissions"] = [
+            *example_memory_rules,
+            *example_other_rules,
+        ]
+        example.write_text(json.dumps(example_misplaced), encoding="utf-8")
+        example_misplaced_result = run(checker, root)
+        if example_misplaced_result.returncode != 1 or "must follow its allow */*" not in example_misplaced_result.stderr:
+            print("ERROR: example Build memory denies before allow */* were accepted", file=sys.stderr)
+            sys.stderr.write(example_misplaced_result.stderr or example_misplaced_result.stdout)
+            return 1
+        example.write_text(json.dumps(example_config), encoding="utf-8")
         example.write_text(json.dumps({"agents": {name: {"permissions": []} for name in ("plan", "explore", "general")}}), encoding="utf-8")
         bad_example = run(checker, root)
         if bad_example.returncode != 1 or "v2-opencode.example.jsonc" not in bad_example.stderr:

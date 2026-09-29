@@ -48,6 +48,12 @@ Override the paths with environment variables:
   and rejects malformed input and duplicate object keys.
 - The deployed skill tree contains no symbolic links.
 
+The separate repository QA policy checker also validates that the portable
+`config/v2-opencode.example.jsonc` denies Basic Memory management tools both
+globally and after Build's `allow */*`; the example keeps project listing
+denied by default. This verifier's config checks alone do not prove those
+permissions are effective in a loaded profile.
+
 It exits non-zero if any check fails, printing `OK:` lines for each pass and
 `FAIL:` lines for each problem. A missing binary or config still runs the
 remaining checks so every problem appears in one pass. Because it is a

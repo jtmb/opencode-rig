@@ -11,6 +11,7 @@ import type { TestRendererSetup } from "@opentui/core/testing"
 import { jsx } from "@opentui/solid/jsx-runtime"
 
 import { ActiveSubagentRow, ActiveSubagentsHeading } from "../src/active-subagent-row.ts"
+import { GoalHandoffControl } from "../src/goal-handoff-control.ts"
 import type { SubagentRow } from "../src/subagents.ts"
 
 const { createSignal } = await import(import.meta.resolve("solid-js/dist/solid.js")) as {
@@ -690,6 +691,33 @@ async function capture(id: string) {
       }
     }
     preferred = ["- Active Subagents", "Native second child"]
+  } else if (id === "rig-tools-goal-handoff") {
+    const [mode, setMode] = createSignal<"manual" | "auto">("manual")
+    let toggles = 0
+    body = () => jsx(GoalHandoffControl as Component, {
+      get mode() { return mode() },
+      textColor: "#d8e1ee",
+      accentColor: "#bb9af7",
+      onToggle: () => {
+        toggles += 1
+        setMode((current) => current === "manual" ? "auto" : "manual")
+      },
+    })
+    state = () => ({ visible: visible(), mode: mode(), toggles })
+    interact = async (setup) => {
+      const handoff = targetLocation(normalizeFrame(setup.captureSpans()), "Handoff: Manual")
+      await setup.mockMouse.click(handoff.x + 1, handoff.y)
+      await flushes(setup)
+      assert.match(setup.captureCharFrame(), /Handoff: Auto/)
+      assert.equal(setup.renderer.currentFocusedRenderable?.id, "opencode-rig.goal-handoff")
+      retain(setup, `${id}-after-click`, state(setup))
+      await setup.mockInput.pressEnter()
+      await flushes(setup)
+      assert.match(setup.captureCharFrame(), /Handoff: Manual/)
+      assert.equal(toggles, 2)
+      return { device: "mouse", method: "click+pressEnter", target: "goal-handoff", input: { mouse: { x: handoff.x + 1, y: handoff.y }, keyboard: "Enter" } }
+    }
+    preferred = ["Goal", "Handoff: Manual", FOOTER]
   } else if (id === "rig-tools-tui") {
     body = () => withContext(ctx, () => jsx(loaded.ActiveSubagentsSidebar, { sessionID }))
     state = (setup) => ({ visible: visible(), collapsed: setup.captureCharFrame().includes("+ Active Subagents"), activeCount: dynamicChildren?.[0]().length ?? 0, dispatches: [...dispatches] })

@@ -30,7 +30,11 @@ MARKDOWN_LINK = re.compile(r"!?\[[^\]]*\]\((?:<([^>]+)>|([^\s)]+))(?:\s+[^)]*)?\
 SEMVER_PATTERN = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?")
 SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 IGNORED_DIRECTORIES = {".git", "node_modules", "__pycache__"}
-HEAD_WHITESPACE_EXCLUSIONS = ("wsl-session.md",)
+HEAD_WHITESPACE_EXCLUSIONS = (
+    "wsl-session.md",
+    ":(exclude,glob)evidence/ui-acceptance/**/v3/characters/*.txt",
+    ":(exclude,glob)evidence/ui-acceptance/**/v3/snapshots/**/*.txt",
+)
 QA_RUNTIME_CONFIG = ".opencode/rig-gates.json"
 MAX_RUNTIME_BYTES = 256 * 1024 * 1024
 # Package checks keep the declared Node/npm directory first on the child PATH.
@@ -521,10 +525,14 @@ def check_markdown_links(root: Path, *, deadline: float | None = None) -> int:
 
 def check_git_diff(root: Path, *, deadline: float | None = None) -> None:
     head_check = ["git", "show", "--check", "--format=", "HEAD", "--", "."]
-    head_check.extend(f":(exclude){path}" for path in HEAD_WHITESPACE_EXCLUSIONS)
+    head_check.extend(
+        path if path.startswith(":(") else f":(exclude){path}"
+        for path in HEAD_WHITESPACE_EXCLUSIONS
+    )
     run_command(head_check, root, deadline=deadline)
-    run_command(["git", "diff", "--check"], root, deadline=deadline)
-    run_command(["git", "diff", "--cached", "--check"], root, deadline=deadline)
+    frames = HEAD_WHITESPACE_EXCLUSIONS[1:]
+    run_command(["git", "diff", "--check", "--", ".", *frames], root, deadline=deadline)
+    run_command(["git", "diff", "--cached", "--check", "--", ".", *frames], root, deadline=deadline)
 
 
 def run_python(

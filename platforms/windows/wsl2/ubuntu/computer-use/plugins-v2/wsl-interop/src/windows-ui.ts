@@ -1,14 +1,21 @@
 import { PowerShellHostClient } from "./powershell-host.ts"
 import { RawTokenStore, type RawIntent } from "./token-store.ts"
 import type {
+  PowerShellExecutable,
   PowerShellOptions,
   RawOptions,
   WindowsActInput,
   WindowsAppsInput,
+  WindowsCaptureInput,
   WindowsFindInput,
   WslStatus,
 } from "./types.ts"
 import { assertWsl2Interop, detectWsl, systemProbes } from "./wsl-detect.ts"
+
+const MAX_CAPTURE_BYTES = 6 * 1024 * 1024
+const MAX_CAPTURE_OUTPUT_BYTES = 9 * 1024 * 1024
+const WINDOW_ID = /^[a-f0-9]{64}$/u
+const WINDOW_HANDLE = /^0x[0-9a-f]{1,16}$/iu
 
 export interface UiElementSnapshot {
   processId: number
@@ -68,6 +75,250 @@ export function validateWindowsAct(input: WindowsActInput): void {
   } else if (input.value !== undefined) {
     throw new Error("value is valid only for action=setValue")
   }
+}
+
+export type WindowsCaptureTransforms = {
+  processId: number
+  windowHandle: string
+  title: string
+  className?: string
+}
+
+export interface WindowsCapture {
+  windowId: string
+  processId: number
+  windowHandle: string
+  title: string
+  className: string
+  bounds: { x: number; y: number; width: number; height: number }
+  mimeType: "image/png"
+  data: string
+  bytes: number
+  width: number
+  height: number
+}
+
+export function validateWindowsCapture(input: WindowsCaptureInput): WindowsCaptureTransforms {
+  if (!Number.isInteger(input.processId) || input.processId < 1 || input.processId > 2_147_483_647) {
+    throw new Error("processId must be a positive Windows process ID")
+  }
+  if (typeof input.windowHandle !== "string" || !WINDOW_HANDLE.test(input.windowHandle)) {
+    throw new Error("windowHandle must be a Windows window handle such as 0x1234")
+  }
+  if (typeof input.title !== "string" || input.title.length > 1_024 || /[\0\r\n]/u.test(input.title)) {
+    throw new Error("title is invalid or exceeds 1024 characters")
+  }
+  const result: WindowsCaptureTransforms = {
+    processId: input.processId,
+    windowHandle: input.windowHandle.toLowerCase(),
+    title: input.title,
+  }
+  if (input.className !== undefined) {
+    if (typeof input.className !== "string" || input.className.length > 512 || /[\0\r\n]/u.test(input.className)) {
+      throw new Error("className is invalid or exceeds 512 characters")
+    }
+    result.className = input.className
+  }
+  return result
+}
+
+export function parseWindowsCapture(value: unknown, expected: WindowsCaptureTransforms): WindowsCapture {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Windows window capture host returned an invalid result")
+  const source = value as Record<string, unknown>
+  if (typeof source.windowId !== "string" || !WINDOW_ID.test(source.windowId)) throw new Error("Windows window capture identity is invalid")
+  const windowHandle = typeof source.windowHandle === "string" ? source.windowHandle : ""
+  const title = typeof source.title === "string" ? source.title : ""
+  const className = typeof source.className === "string" ? source.className : ""
+  if (
+    !Number.isInteger(source.processId) ||
+    Number(source.processId) !== expected.processId ||
+    windowHandle.toLowerCase() !== expected.windowHandle ||
+    title !== expected.title ||
+    (expected.className !== undefined && className !== expected.className)
+  ) {
+    throw new Error("Windows window capture does not match the selected window identity")
+  }
+  if (!WINDOW_HANDLE.test(windowHandle)) throw new Error("Windows window capture handle is invalid")
+  if (!source.bounds || typeof source.bounds !== "object" || Array.isArray(source.bounds)) throw new Error("Windows window capture bounds are invalid")
+  const bounds = source.bounds as Record<string, unknown>
+  const parsedBounds = {
+    x: boundedCoordinate(bounds.x, "x", true),
+    y: boundedCoordinate(bounds.y, "y", true),
+    width: boundedCoordinate(bounds.width, "width", false),
+    height: boundedCoordinate(bounds.height, "height", false),
+  }
+  if (source.mimeType !== "image/png" || typeof source.data !== "string") throw new Error("Windows window capture did not return a PNG")
+  if (!Number.isInteger(source.width) || Number(source.width) < 1 || Number(source.width) > 8_192) throw new Error("Windows window capture width is invalid")
+  if (!Number.isInteger(source.height) || Number(source.height) < 1 || Number(source.height) > 8_192) throw new Error("Windows window capture height is invalid")
+  if (Number(source.width) * Number(source.height) > 16_777_216) throw new Error("Windows window capture exceeds the pixel boundary")
+  if (!Number.isInteger(source.bytes) || Number(source.bytes) < 1 || Number(source.bytes) > MAX_CAPTURE_BYTES) {
+    throw new Error("Windows window capture exceeds the 6 MiB attachment boundary")
+  }
+  if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u.test(source.data)) {
+    throw new Error("Windows window capture data is not canonical base64")
+  }
+  const bytes = Buffer.from(source.data, "base64")
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+  if (
+    bytes.toString("base64") !== source.data ||
+    bytes.length !== source.bytes ||
+    bytes.length < 24 ||
+    !bytes.subarray(0, 8).equals(signature) ||
+    bytes.subarray(12, 16).toString("ascii") !== "IHDR" ||
+    bytes.readUInt32BE(16) !== source.width ||
+    bytes.readUInt32BE(20) !== source.height
+  ) {
+    throw new Error("Windows window capture PNG data is malformed or inconsistent")
+  }
+  return {
+    windowId: source.windowId,
+    processId: Number(source.processId),
+    windowHandle: windowHandle.toLowerCase(),
+    title,
+    className,
+    bounds: parsedBounds,
+    mimeType: "image/png",
+    data: source.data,
+    bytes: bytes.length,
+    width: Number(source.width),
+    height: Number(source.height),
+  }
+}
+
+export interface RetainedCapture {
+  path: string
+  sha256: string
+  dimensions: { width: number; height: number }
+}
+
+// Model-facing provenance for one exact-window capture. It reports the validated
+// host identity and, when requested, the checked-in bounded saver's retention
+// result, and it never claims acceptance-evidence validator support for a
+// capture method the checker does not accept.
+export function captureProvenanceText(
+  capture: WindowsCapture,
+  saved: RetainedCapture | undefined,
+  savePathSupplied: boolean,
+): string {
+  const window = {
+    windowId: capture.windowId,
+    processId: capture.processId,
+    windowHandle: capture.windowHandle,
+    title: capture.title,
+    className: capture.className,
+    bounds: capture.bounds,
+  }
+  const retention = saved
+    ? `Retained PNG: ${JSON.stringify(saved)}.`
+    : savePathSupplied
+      ? "Retention failed, so no file was written."
+      : "No file was retained because savePath was omitted."
+  return `Captured the exact selected Windows window (${capture.width}x${capture.height}, ${capture.bytes} bytes) without focusing, moving, or typing into it. Provenance: ${JSON.stringify(window)}. ${retention} Retained PNGs are raw identity-bound host evidence; check-acceptance-evidence.py does not accept windows_capture as a rendered-visual capture method.`
+}
+
+export interface WindowsRestoreInput {
+  processId: number
+  windowHandle: string
+  title: string
+  className?: string
+  executable?: PowerShellExecutable
+  apply?: boolean
+  expectToken?: string
+}
+
+export interface RestoreBounds {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export interface RestoreTarget {
+  windowId: string
+  processId: number
+  windowHandle: string
+  title: string
+  className: string
+  processStartTimeTicks: number
+  iconic: boolean
+  visible: boolean
+  bounds: RestoreBounds
+  normalBounds: RestoreBounds
+  showCmd: number
+}
+
+// Restore reuses the exact-window selection validation: process ID, HWND,
+// exact title, and optional exact class. The window identity is revalidated in
+// the host at apply time; the request is never trusted on its own.
+export function validateWindowsRestore(input: WindowsRestoreInput): WindowsCaptureTransforms {
+  return validateWindowsCapture(input)
+}
+
+function restoreBounds(value: unknown, label: string): RestoreBounds {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`Windows window restore ${label} is invalid`)
+  const source = value as Record<string, unknown>
+  return {
+    x: boundedCoordinate(source.x, "x", true),
+    y: boundedCoordinate(source.y, "y", true),
+    width: boundedCoordinate(source.width, "width", false),
+    height: boundedCoordinate(source.height, "height", false),
+  }
+}
+
+export function parseRestoreTarget(value: unknown, expected: WindowsCaptureTransforms): RestoreTarget {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Windows window restore host returned an invalid target")
+  const source = value as Record<string, unknown>
+  if (typeof source.windowId !== "string" || !WINDOW_ID.test(source.windowId)) throw new Error("Windows window restore identity is invalid")
+  if (!Number.isInteger(source.processId) || Number(source.processId) !== expected.processId) throw new Error("Windows window restore does not match the selected process identity")
+  if (typeof source.windowHandle !== "string" || source.windowHandle.toLowerCase() !== expected.windowHandle) throw new Error("Windows window restore does not match the selected window handle")
+  if (typeof source.title !== "string" || source.title !== expected.title) throw new Error("Windows window restore does not match the exact title")
+  if (typeof source.className !== "string" || (expected.className !== undefined && source.className !== expected.className)) {
+    throw new Error("Windows window restore does not match the exact class")
+  }
+  if (!Number.isInteger(source.processStartTimeTicks) || Number(source.processStartTimeTicks) < 1) throw new Error("Windows window restore process start time is invalid")
+  if (typeof source.iconic !== "boolean" || typeof source.visible !== "boolean") throw new Error("Windows window restore minimized state is invalid")
+  if (!Number.isInteger(source.showCmd) || Number(source.showCmd) < 0 || Number(source.showCmd) > 3) throw new Error("Windows window restore show state is invalid")
+  return {
+    windowId: source.windowId,
+    processId: Number(source.processId),
+    windowHandle: source.windowHandle.toLowerCase(),
+    title: source.title,
+    className: source.className,
+    processStartTimeTicks: Number(source.processStartTimeTicks),
+    iconic: source.iconic,
+    visible: source.visible,
+    bounds: restoreBounds(source.bounds, "bounds"),
+    normalBounds: restoreBounds(source.normalBounds, "normal placement"),
+    showCmd: Number(source.showCmd),
+  }
+}
+
+export function parseRestorePreview(value: unknown, expected: WindowsCaptureTransforms): RestoreTarget {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Windows window restore host returned an invalid preview")
+  const source = value as Record<string, unknown>
+  if (source.mode !== "preview") throw new Error("Windows window restore host did not return a preview")
+  const target = parseRestoreTarget(source.target, expected)
+  if (!target.iconic) {
+    throw new Error(`Windows window restore requires a genuinely minimized target (IsIconic=false, visible=${target.visible}); refusing to restore`)
+  }
+  return target
+}
+
+export function parseRestoreApply(value: unknown, expected: WindowsCaptureTransforms): { target: RestoreTarget; after: RestoreTarget } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Windows window restore host returned an invalid result")
+  const source = value as Record<string, unknown>
+  if (source.mode !== "apply" || source.restored !== true) throw new Error("Windows window restore host did not confirm an applied restore")
+  const target = parseRestoreTarget(source.target, expected)
+  const after = parseRestoreTarget(source.after, expected)
+  if (!target.iconic) throw new Error("Windows window restore did not target a genuinely minimized window")
+  if (after.iconic || !after.visible) throw new Error("Windows window restore did not leave the target visible and unminimized")
+  for (const field of ["windowId", "processId", "windowHandle", "title", "className", "processStartTimeTicks", "showCmd"] as const) {
+    if (target[field] !== after[field]) throw new Error("Windows window restore changed the target identity while applying")
+  }
+  for (const edge of ["x", "y", "width", "height"] as const) {
+    if (target.normalBounds[edge] !== after.normalBounds[edge]) throw new Error("Windows window restore changed the target normal placement while applying")
+  }
+  return { target, after }
 }
 
 function findParams(input: WindowsFindInput): Record<string, unknown> {
@@ -238,6 +489,68 @@ export class WindowsUiManager {
       executablePath: applied.executablePath,
       executableIdentity: applied.executableIdentity,
       result: applied.result,
+      untrusted: true,
+    }
+  }
+
+  async capture(input: WindowsCaptureInput, signal?: AbortSignal): Promise<WindowsCapture & { untrusted: true }> {
+    await this.#requireReady()
+    const validated = validateWindowsCapture(input)
+    const response = await this.#host.request(input.executable ?? this.#powershell.preferred, "windows.capture", validated, {
+      maxOutputBytes: MAX_CAPTURE_OUTPUT_BYTES,
+      signal,
+    })
+    return { ...parseWindowsCapture(response.result, validated), untrusted: true }
+  }
+
+  async restore(input: WindowsRestoreInput, caller: CallerState, signal?: AbortSignal): Promise<Record<string, unknown>> {
+    const wsl = await this.#requireReady()
+    if (wsl.fingerprint !== caller.fingerprint) throw new Error("WSL state changed before the Windows window restore")
+    const validated = validateWindowsRestore(input)
+    const selection: Record<string, unknown> = { ...validated }
+    const preview = await this.#host.request(input.executable ?? this.#powershell.preferred, "windows.restore", selection, { signal })
+    const target = parseRestorePreview(preview.result, validated)
+    const operation = { ...selection }
+    const intent: RawIntent = {
+      sessionID: caller.sessionID,
+      agent: caller.agent,
+      script: JSON.stringify({ operation, target }),
+      executable: preview.executablePath,
+      executableIdentity: preview.executableIdentity,
+      workingDirectory: this.#cwd,
+      fingerprint: caller.fingerprint,
+      timeoutMs: this.#powershell.timeoutMs,
+    }
+    if (!input.apply) {
+      if (input.expectToken) throw new Error("expectToken requires apply=true")
+      return {
+        action: "preview",
+        executable: preview.executable,
+        executablePath: preview.executablePath,
+        executableIdentity: preview.executableIdentity,
+        target,
+        warning: "Restore reveals a genuinely minimized window with ShowWindow(SW_SHOWNOACTIVATE); it never activates, focuses, moves, or types into the window and fails closed on any identity, placement, or minimized-state change.",
+        ...this.#tokens.preview(intent),
+      }
+    }
+    if (!input.expectToken) throw new Error("apply=true requires expectToken from the exact Windows window restore preview")
+    this.#tokens.consume(input.expectToken, intent)
+    const applied = await this.#host.requestExact(
+      preview.executable,
+      preview.executablePath,
+      preview.executableIdentity,
+      "windows.restore",
+      { ...operation, expectedTarget: target },
+      { signal },
+    )
+    const appliedResult = parseRestoreApply(applied.result, validated)
+    return {
+      action: "apply",
+      executable: applied.executable,
+      executablePath: applied.executablePath,
+      executableIdentity: applied.executableIdentity,
+      target: appliedResult.target,
+      after: appliedResult.after,
       untrusted: true,
     }
   }

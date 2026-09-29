@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "rig-todo-store-test-dispatch-001",
+  "capture_id": "rig-todo-store",
+  "source_sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "f734377a7fce42b7aa370d16dc643beb03e85b9fb2dd709a8a43815ae2e6a723",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "click",
+    "target": "todo-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "todo-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "8369984e-25b6-40d2-8f4c-5b3877b9da97",
+    "dispatch_id": "rig-todo-store-test-dispatch-dispatch-001",
+    "transition_id": "rig-todo-store-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "55428013540022",
+    "transition_monotonic_ns": "55428068715450"
+  },
+  "before": {
+    "snapshot_id": "rig-todo-store-interact-before",
+    "frame_sha256": "7749a37d44cca1cf807b47426f9a6589c3a85e3bed16df97ab702f63ed05ad19",
+    "spans_sha256": "83a23ec3042c7ecacea120cacd696f917494f698d8bc2a593fde294e280cf507",
+    "state_sha256": "6107d88460bba248f3f7a360e1e792352769d538b419ce5cce9a601ff3c03b30"
+  },
+  "after": {
+    "snapshot_id": "rig-todo-store-interact-after",
+    "frame_sha256": "5326ccf2eacf3f4940e561b1297cc7063916e34e843e022a0f40fd93c770ea88",
+    "spans_sha256": "65ade76d77ba7ec53f9acc859499b290917f761f8c59657d0380a313a7dfcd97",
+    "state_sha256": "3cb191def2928a9e5ce2be825bda706b78c72b0b4abcef431e138cc9c6658852"
+  },
+  "result": {
+    "status": "passed",
+    "target": "todo-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "57cca960569290a552c1084b343beb38dbedab8c5bb386f2e531eeb38fe5fc27",
+  "output": "evidence/ui-acceptance/2026-09-28/v5/event-output/rig-todo-store-test-dispatch.json",
+  "output_sha256": "48bef23423ba61012d631d52425c89c90ca2e7831e3f8e504623ced72fc493bf",
+  "observed_at": "2026-09-28T15:42:10.572Z"
+}

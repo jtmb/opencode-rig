@@ -107,6 +107,8 @@ The server plugin exposes:
   `wsl_browser_open` reports ShellExecute request acceptance only; verify
   navigation separately. Screenshots use the selected HWND without activating
   it and fail closed on changed identity, occlusion, or blank/unpainted pixels.
+  An occlusion rejection names the blocking window by process ID, HWND, class
+  name, and bounds in at most 256 characters; it never includes a window title.
 - The shared `vision_capture` tool delegates to the fixed
   `windows.screenshot` host method when it detects WSL2 and the native
   GNOME/ydotool backend is unavailable. The capture stays in memory, is bounded
@@ -114,6 +116,25 @@ The server plugin exposes:
 - `windows_act` — preview/apply UI Automation for focus, invoke, value, toggle,
   and selection patterns. Apply requires an unchanged exact target, a
   short-lived single-use token, and an OpenCode permission prompt.
+- `windows_capture` — read-only `PrintWindow` capture of one explicitly selected
+  window by process ID, HWND and exact title. It never focuses, moves or types
+  into the window; changed identity, occlusion and blank/unpainted pixels fail
+  closed. The result includes window identity and bounds. Optional `savePath`
+  retains a PNG under the invoking project directory through the bounded
+  visual saver (traversal and symlinks are rejected). A changing benign WinForms
+  probe establishes only that exact-HWND capture works for that fixture; it is
+  not console/TUI acceptance. The current acceptance-evidence validator does
+  not accept `windows_capture` as a rendered-visual/action pair.
+- `windows_restore` — preview/apply restore of one explicitly selected
+  minimized Windows console window by process ID, HWND, exact title, and
+  optional exact class. Preview is read-only and returns a single-use token.
+  Apply re-finds exactly one unchanged window, requires identical process ID,
+  HWND, title, class, process start time, and saved normal placement, restores
+  only a genuinely minimized window with the non-activating
+  `ShowWindow(SW_SHOWNOACTIVATE)`, and reports the before and after bounds. It
+  never calls `SW_RESTORE`, `SetForegroundWindow`, `SetWindowPos`, or any input
+  API, and fails closed on a hidden-but-not-minimized target. It shares the
+  `wsl_windows_act` permission.
 
 Raw PowerShell is not an operating-system sandbox. After explicit approval it
 can mutate the Windows host with the current user's rights. The tool blocks

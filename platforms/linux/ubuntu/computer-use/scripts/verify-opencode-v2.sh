@@ -143,10 +143,10 @@ except ValueError as error:
 skills_dir = os.path.join(config, "skills")
 try:
     skills = [name for name in os.listdir(skills_dir) if os.path.isdir(os.path.join(skills_dir, name))]
-    if len(skills) == 19:
-        ok(f"skills source has 19 entries")
+    if len(skills) == 20:
+        ok(f"skills source has 20 entries")
     else:
-        fail(f"skills source has {len(skills)} entries (expected 19)")
+        fail(f"skills source has {len(skills)} entries (expected 20)")
 except OSError:
     fail(f"skills source missing: {skills_dir}")
 

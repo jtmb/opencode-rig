@@ -231,6 +231,64 @@ namespace OpenRig {
     }
 }
 
+function Import-RestoreNative {
+    if (-not ("OpenRig.RestoreNative" -as [type])) {
+        Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+namespace OpenRig {
+    public static class RestoreNative {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Rect { public int Left; public int Top; public int Right; public int Bottom; }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Point { public int X; public int Y; }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WindowPlacement {
+            public int Length;
+            public int Flags;
+            public int ShowCmd;
+            public Point MinPosition;
+            public Point MaxPosition;
+            public Rect NormalPosition;
+        }
+        [DllImport("user32.dll")] public static extern bool IsWindow(IntPtr handle);
+        [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr handle);
+        [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr handle);
+        [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr handle, out Rect rectangle);
+        [DllImport("user32.dll")] public static extern bool GetWindowPlacement(IntPtr handle, ref WindowPlacement placement);
+        [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr handle, out uint processId);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowTextLength(IntPtr handle);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr handle, StringBuilder text, int maximum);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr handle, StringBuilder text, int maximum);
+        // ShowWindow is the only mutating import. Callers pass the non-activating
+        // SW_SHOWNOACTIVATE command (numeric 4); no reposition, focus, or input
+        // import exists in this type.
+        [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr handle, int command);
+        public static uint ProcessId(IntPtr handle) { uint value; GetWindowThreadProcessId(handle, out value); return value; }
+        public static string Title(IntPtr handle) {
+            int length = Math.Min(Math.Max(GetWindowTextLength(handle), 0), 1024);
+            var text = new StringBuilder(length + 1);
+            GetWindowText(handle, text, text.Capacity);
+            return text.ToString();
+        }
+        public static string ClassName(IntPtr handle) {
+            var text = new StringBuilder(513);
+            GetClassName(handle, text, text.Capacity);
+            return text.ToString();
+        }
+        public static WindowPlacement Placement(IntPtr handle) {
+            var placement = new WindowPlacement();
+            placement.Length = Marshal.SizeOf(typeof(WindowPlacement));
+            if (!GetWindowPlacement(handle, ref placement)) throw new InvalidOperationException("could not read the window placement");
+            return placement;
+        }
+    }
+}
+"@
+    }
+}
+
 function Get-BrowserScheme {
     param([object]$Value)
     if ($null -eq $Value) { return "https" }
@@ -529,19 +587,25 @@ function Assert-BrowserWindowUnoccluded {
     $visited = 0
     while ($handle -ne [IntPtr]::Zero) {
         $visited += 1
-        if ($visited -gt 512) { throw "could not verify Windows browser window z-order within the safety bound" }
+        if ($visited -gt 512) { throw "could not verify Windows window z-order within the safety bound" }
         if ([OpenRig.BrowserNative]::IsWindowVisible($handle) -and -not [OpenRig.BrowserNative]::IsIconic($handle)) {
             $cloaked = [uint32]0
             if ([OpenRig.BrowserNative]::DwmGetWindowAttribute($handle, [uint32]14, [ref]$cloaked, [uint32]4) -ne 0) {
-                throw "could not verify whether another Windows window occludes the selected browser"
+                throw "could not verify whether another Windows window occludes the selected window"
             }
             if ($cloaked -eq 0) {
                 $rectangle = New-Object OpenRig.BrowserNative+Rect
                 if (-not [OpenRig.BrowserNative]::GetWindowRect($handle, [ref]$rectangle)) {
-                    throw "could not verify whether another Windows window occludes the selected browser"
+                    throw "could not verify whether another Windows window occludes the selected window"
                 }
                 if ($rectangle.Left -lt $target.Right -and $rectangle.Right -gt $target.Left -and $rectangle.Top -lt $target.Bottom -and $rectangle.Bottom -gt $target.Top) {
-                    throw "selected Windows default-browser window is occluded by another visible window"
+                    $occluderClass = [string][OpenRig.BrowserNative]::ClassName($handle)
+                    if ($occluderClass.Length -gt 64) { $occluderClass = $occluderClass.Substring(0, 64) }
+                    $occluderHandle = "0x{0:X}" -f $handle.ToInt64()
+                    $occluderProcessId = [int][OpenRig.BrowserNative]::ProcessId($handle)
+                    $occlusionError = "selected Windows window is occluded by another visible window; occluder pid=$occluderProcessId hwnd=$occluderHandle class=$occluderClass bounds=($($rectangle.Left),$($rectangle.Top),$($rectangle.Right),$($rectangle.Bottom))"
+                    if ($occlusionError.Length -gt 256) { $occlusionError = $occlusionError.Substring(0, 256) }
+                    throw $occlusionError
                 }
             }
         }
@@ -579,6 +643,281 @@ function Assert-BrowserCapturePixels {
     }
 }
 
+function Add-CaptureProbeGrid {
+    param([System.Drawing.Graphics]$Graphics, [int]$Width, [int]$Height)
+    $grid = 32
+    $probeBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::Black)
+    try {
+        for ($sampleY = 0; $sampleY -lt $grid; $sampleY += 1) {
+            for ($sampleX = 0; $sampleX -lt $grid; $sampleX += 1) {
+                $x = [int][Math]::Floor((($sampleX + 0.5) * $Width) / $grid)
+                $y = [int][Math]::Floor((($sampleY + 0.5) * $Height) / $grid)
+                $probeBrush.Color = Get-BrowserCaptureProbeColor (($sampleY * $grid) + $sampleX)
+                $Graphics.FillRectangle($probeBrush, $x, $y, 1, 1)
+            }
+        }
+    } finally {
+        $probeBrush.Dispose()
+    }
+}
+
+function Get-ExactWindowId {
+    param([int]$ProcessId, [long]$ProcessStartTimeTicks, [string]$WindowHandle, [string]$ClassName, [string]$Title)
+    $identity = "$ProcessId`n$ProcessStartTimeTicks`n$WindowHandle`n$ClassName`n$Title"
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($identity)))).Replace("-", "").ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+}
+
+function Resolve-ExactWindow {
+    param([object]$Params)
+    Assert-BrowserParams -Params $Params -Method "windows.capture" -Allowed @("processId", "windowHandle", "title", "className") -Required @("processId", "windowHandle", "title")
+    $processIdProperty = $Params.PSObject.Properties["processId"]
+    if ($null -eq $processIdProperty -or ($processIdProperty.Value -isnot [int] -and $processIdProperty.Value -isnot [long])) {
+        throw "processId must be an integer"
+    }
+    $processId = Get-BoundedInteger $processIdProperty.Value 0 1 2147483647 "processId"
+    $windowHandleParam = Get-BrowserStringParam -Params $Params -Name "windowHandle" -Maximum 18 -Required $true
+    if ($windowHandleParam -cnotmatch '^0x[0-9a-fA-F]{1,16}$') { throw "windowHandle must be a Windows window handle such as 0x1234" }
+    $expectedTitle = Get-BrowserStringParam -Params $Params -Name "title" -Maximum 1024 -Required $true
+    $expectedClassName = Get-BrowserStringParam -Params $Params -Name "className" -Maximum 512
+    Import-BrowserNative
+    $handle = [IntPtr]::new([Convert]::ToInt64($windowHandleParam.Substring(2), 16))
+    if ($handle -eq [IntPtr]::Zero) { throw "windowHandle must not be the null window" }
+    if (-not [OpenRig.BrowserNative]::IsWindow($handle) -or -not [OpenRig.BrowserNative]::IsWindowVisible($handle) -or [OpenRig.BrowserNative]::IsIconic($handle)) {
+        throw "selected Windows window is not a visible non-minimized window"
+    }
+    if ([int][OpenRig.BrowserNative]::ProcessId($handle) -ne $processId) { throw "selected Windows window process identity changed" }
+    $rectangle = New-Object OpenRig.BrowserNative+Rect
+    if (-not [OpenRig.BrowserNative]::GetWindowRect($handle, [ref]$rectangle)) { throw "could not read the selected Windows window bounds" }
+    if ($rectangle.Right -le $rectangle.Left -or $rectangle.Bottom -le $rectangle.Top) { throw "selected Windows window has empty bounds" }
+    $cloaked = [uint32]0
+    if ([OpenRig.BrowserNative]::DwmGetWindowAttribute($handle, [uint32]14, [ref]$cloaked, [uint32]4) -ne 0 -or $cloaked -ne 0) {
+        throw "selected Windows window is cloaked or could not be verified"
+    }
+    $title = [string][OpenRig.BrowserNative]::Title($handle)
+    $className = [string][OpenRig.BrowserNative]::ClassName($handle)
+    if ($title -cne $expectedTitle) { throw "selected Windows window title changed" }
+    if ($null -ne $expectedClassName -and $className -cne $expectedClassName) { throw "selected Windows window class changed" }
+    $process = $null
+    try {
+        $process = [System.Diagnostics.Process]::GetProcessById($processId)
+        [void][IO.Path]::GetFullPath($process.MainModule.FileName)
+        $processStartTimeTicks = [long]$process.StartTime.ToUniversalTime().Ticks
+    } catch {
+        throw "could not verify the selected Windows window process identity"
+    } finally {
+        if ($null -ne $process) { $process.Dispose() }
+    }
+    $windowHandle = "0x{0:X}" -f $handle.ToInt64()
+    return [pscustomobject]@{
+        windowId = Get-ExactWindowId $processId $processStartTimeTicks $windowHandle $className $title
+        processId = $processId
+        windowHandle = $windowHandle
+        title = $title
+        className = $className
+        processStartTimeTicks = $processStartTimeTicks
+        handle = $handle
+        rectangle = $rectangle
+    }
+}
+
+function Get-WindowsCapture {
+    param([object]$Params)
+    $before = Resolve-ExactWindow $Params
+    Assert-BrowserWindowUnoccluded $before
+    $width = [int]($before.rectangle.Right - $before.rectangle.Left)
+    $height = [int]($before.rectangle.Bottom - $before.rectangle.Top)
+    if ($width -lt 32 -or $height -lt 32 -or $width -gt 8192 -or $height -gt 8192 -or ([long]$width * [long]$height) -gt 16777216) {
+        throw "selected Windows window capture exceeds the 8192-pixel edge or 16,777,216-pixel boundary"
+    }
+    Add-Type -AssemblyName System.Drawing
+    $bitmap = $null
+    $graphics = $null
+    $stream = $null
+    try {
+        $bitmap = New-Object System.Drawing.Bitmap($width, $height, [System.Drawing.Imaging.PixelFormat]::Format32bppRgb)
+        $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+        $graphics.Clear([System.Drawing.Color]::Black)
+        Add-CaptureProbeGrid -Graphics $graphics -Width $width -Height $height
+        $hdc = [IntPtr]::Zero
+        try {
+            $hdc = $graphics.GetHdc()
+            if ($hdc -eq [IntPtr]::Zero -or -not [OpenRig.BrowserNative]::PrintWindow($before.handle, $hdc, [uint32]2)) {
+                throw "PrintWindow could not render the selected Windows window"
+            }
+        } finally {
+            if ($hdc -ne [IntPtr]::Zero) { $graphics.ReleaseHdc($hdc) }
+        }
+        $after = Resolve-ExactWindow $Params
+        if (
+            $before.windowId -cne $after.windowId -or
+            $before.processId -ne $after.processId -or
+            $before.windowHandle -cne $after.windowHandle -or
+            $before.title -cne $after.title -or
+            $before.className -cne $after.className -or
+            [double]$before.rectangle.Left -ne [double]$after.rectangle.Left -or
+            [double]$before.rectangle.Top -ne [double]$after.rectangle.Top -or
+            [double]$before.rectangle.Right -ne [double]$after.rectangle.Right -or
+            [double]$before.rectangle.Bottom -ne [double]$after.rectangle.Bottom -or
+            [long]$before.processStartTimeTicks -ne [long]$after.processStartTimeTicks
+        ) {
+            throw "selected Windows window identity changed during capture"
+        }
+        Assert-BrowserWindowUnoccluded $after
+        Assert-BrowserCapturePixels $bitmap
+        $stream = New-Object System.IO.MemoryStream
+        $bitmap.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
+        $bytes = $stream.ToArray()
+        if ($bytes.Length -lt 1 -or $bytes.Length -gt 6291456) { throw "window capture exceeds the 6 MiB attachment boundary" }
+        return [ordered]@{
+            windowId = $before.windowId
+            processId = $before.processId
+            windowHandle = $before.windowHandle
+            title = $before.title
+            className = $before.className
+            bounds = [ordered]@{ x = $before.rectangle.Left; y = $before.rectangle.Top; width = $width; height = $height }
+            mimeType = "image/png"
+            data = [Convert]::ToBase64String($bytes)
+            bytes = $bytes.Length
+            width = $width
+            height = $height
+        }
+    } finally {
+        if ($null -ne $graphics) { $graphics.Dispose() }
+        if ($null -ne $bitmap) { $bitmap.Dispose() }
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
+}
+
+function Get-RestoreTarget {
+    param([object]$Params)
+    Assert-BrowserParams -Params $Params -Method "windows.restore" -Allowed @("processId", "windowHandle", "title", "className", "expectedTarget") -Required @("processId", "windowHandle", "title")
+    $processIdProperty = $Params.PSObject.Properties["processId"]
+    if ($null -eq $processIdProperty -or ($processIdProperty.Value -isnot [int] -and $processIdProperty.Value -isnot [long])) {
+        throw "processId must be an integer"
+    }
+    $processId = Get-BoundedInteger $processIdProperty.Value 0 1 2147483647 "processId"
+    $windowHandleParam = Get-BrowserStringParam -Params $Params -Name "windowHandle" -Maximum 18 -Required $true
+    if ($windowHandleParam -cnotmatch '^0x[0-9a-fA-F]{1,16}$') { throw "windowHandle must be a Windows window handle such as 0x1234" }
+    $expectedTitle = Get-BrowserStringParam -Params $Params -Name "title" -Maximum 1024 -Required $true
+    $expectedClassName = Get-BrowserStringParam -Params $Params -Name "className" -Maximum 512
+    Import-RestoreNative
+    $handle = [IntPtr]::new([Convert]::ToInt64($windowHandleParam.Substring(2), 16))
+    if ($handle -eq [IntPtr]::Zero) { throw "windowHandle must not be the null window" }
+    if (-not [OpenRig.RestoreNative]::IsWindow($handle)) { throw "selected Windows window handle is no longer a live window" }
+    if ([int][OpenRig.RestoreNative]::ProcessId($handle) -ne $processId) { throw "selected Windows window process ID changed" }
+    $title = [string][OpenRig.RestoreNative]::Title($handle)
+    $className = [string][OpenRig.RestoreNative]::ClassName($handle)
+    if ($title -cne $expectedTitle) { throw "selected Windows window title changed" }
+    if ($null -ne $expectedClassName -and $className -cne $expectedClassName) { throw "selected Windows window class changed" }
+    $rectangle = New-Object OpenRig.RestoreNative+Rect
+    if (-not [OpenRig.RestoreNative]::GetWindowRect($handle, [ref]$rectangle)) { throw "could not read the selected Windows window bounds" }
+    $placement = [OpenRig.RestoreNative]::Placement($handle)
+    $process = $null
+    try {
+        $process = [System.Diagnostics.Process]::GetProcessById($processId)
+        [void][IO.Path]::GetFullPath($process.MainModule.FileName)
+        $processStartTimeTicks = [long]$process.StartTime.ToUniversalTime().Ticks
+    } catch {
+        throw "could not verify the selected Windows window process identity"
+    } finally {
+        if ($null -ne $process) { $process.Dispose() }
+    }
+    $windowHandle = "0x{0:X}" -f $handle.ToInt64()
+    return [pscustomobject]@{
+        windowId = Get-ExactWindowId $processId $processStartTimeTicks $windowHandle $className $title
+        processId = $processId
+        windowHandle = $windowHandle
+        title = $title
+        className = $className
+        processStartTimeTicks = $processStartTimeTicks
+        iconic = [bool][OpenRig.RestoreNative]::IsIconic($handle)
+        visible = [bool][OpenRig.RestoreNative]::IsWindowVisible($handle)
+        bounds = [ordered]@{ x = $rectangle.Left; y = $rectangle.Top; width = [int]($rectangle.Right - $rectangle.Left); height = [int]($rectangle.Bottom - $rectangle.Top) }
+        normalBounds = [ordered]@{ x = $placement.NormalPosition.Left; y = $placement.NormalPosition.Top; width = [int]($placement.NormalPosition.Right - $placement.NormalPosition.Left); height = [int]($placement.NormalPosition.Bottom - $placement.NormalPosition.Top) }
+        showCmd = [int]$placement.ShowCmd
+        handle = $handle
+    }
+}
+
+function Get-RestoreTargetSummary {
+    param([object]$Target)
+    return [ordered]@{
+        windowId = $Target.windowId
+        processId = $Target.processId
+        windowHandle = $Target.windowHandle
+        title = $Target.title
+        className = $Target.className
+        processStartTimeTicks = $Target.processStartTimeTicks
+        iconic = $Target.iconic
+        visible = $Target.visible
+        bounds = $Target.bounds
+        normalBounds = $Target.normalBounds
+        showCmd = $Target.showCmd
+    }
+}
+
+function Assert-RestoreIdentity {
+    param([object]$Expected, [object]$Current)
+    if ($Expected -isnot [System.Management.Automation.PSCustomObject]) { throw "windows.restore expectedTarget must be a JSON object" }
+    Assert-BrowserParams -Params $Expected -Method "windows.restore expectedTarget" -Allowed @("windowId", "processId", "windowHandle", "title", "className", "processStartTimeTicks", "iconic", "visible", "bounds", "normalBounds", "showCmd") -Required @("windowId", "processId", "windowHandle", "title", "className", "processStartTimeTicks", "iconic", "visible", "bounds", "normalBounds", "showCmd")
+    if ([string]$Expected.windowId -cne [string]$Current.windowId) { throw "selected Windows window identity changed" }
+    if ([int]$Expected.processId -ne [int]$Current.processId) { throw "selected Windows window process ID changed" }
+    if ([string]$Expected.windowHandle -cne [string]$Current.windowHandle) { throw "selected Windows window handle changed" }
+    if ([string]$Expected.title -cne [string]$Current.title) { throw "selected Windows window title changed" }
+    if ([string]$Expected.className -cne [string]$Current.className) { throw "selected Windows window class changed" }
+    if ([long]$Expected.processStartTimeTicks -ne [long]$Current.processStartTimeTicks) { throw "selected Windows window process start time changed" }
+    if ([int]$Expected.showCmd -ne [int]$Current.showCmd) { throw "selected Windows window show state changed" }
+    foreach ($edge in @("x", "y", "width", "height")) {
+        if ([int]$Expected.bounds.$edge -ne [int]$Current.bounds.$edge) { throw "selected Windows window saved placement changed" }
+        if ([int]$Expected.normalBounds.$edge -ne [int]$Current.normalBounds.$edge) { throw "selected Windows window saved normal placement changed" }
+    }
+}
+
+function Invoke-WindowRestore {
+    param([object]$Params)
+    Assert-BrowserParams -Params $Params -Method "windows.restore" -Allowed @("processId", "windowHandle", "title", "className", "expectedTarget") -Required @("processId", "windowHandle", "title")
+    $before = Get-RestoreTarget $Params
+    $expectedProperty = $Params.PSObject.Properties["expectedTarget"]
+    if ($null -eq $expectedProperty) {
+        if (-not $before.iconic) {
+            throw "selected Windows window is not genuinely minimized (IsIconic=false, IsWindowVisible=$($before.visible)); refusing to restore a target that is not minimized"
+        }
+        return [ordered]@{ mode = "preview"; target = (Get-RestoreTargetSummary $before) }
+    }
+    $expected = $expectedProperty.Value
+    Assert-RestoreIdentity -Expected $expected -Current $before
+    if (-not $before.iconic) {
+        throw "selected Windows window is not genuinely minimized (IsIconic=false, IsWindowVisible=$($before.visible)); refusing to restore a target that is not minimized"
+    }
+    if (-not $before.visible) {
+        throw "selected Windows window is hidden but not minimized (IsIconic=false, IsWindowVisible=false); refusing to reveal an arbitrary hidden window"
+    }
+    # SW_SHOWNOACTIVATE (numeric 4) reveals the minimized window at its saved
+    # normal placement without activating it or moving focus. The restore path
+    # deliberately has no activating, foreground, z-order, or input call.
+    $SW_SHOWNOACTIVATE = 4
+    $previousState = [OpenRig.RestoreNative]::ShowWindow($before.handle, $SW_SHOWNOACTIVATE)
+    $after = Get-RestoreTarget $Params
+    Assert-RestoreIdentity -Expected $expected -Current $after
+    if ([bool]$after.iconic) { throw "selected Windows window is still minimized after a non-activating show" }
+    if (-not $after.visible) { throw "selected Windows window is not visible after a non-activating show" }
+    foreach ($edge in @("x", "y", "width", "height")) {
+        if ([int]$before.normalBounds.$edge -ne [int]$after.normalBounds.$edge) { throw "selected Windows window normal placement changed during restore" }
+    }
+    return [ordered]@{
+        mode = "apply"
+        target = (Get-RestoreTargetSummary $before)
+        after = (Get-RestoreTargetSummary $after)
+        restored = $true
+        showWindowResult = [int]$previousState
+    }
+}
+
 function Get-BrowserScreenshot {
     param([object]$Params)
     Assert-BrowserParams -Params $Params -Method "browser.screenshot" -Allowed @("scheme", "windowId") -Required @("windowId")
@@ -599,20 +938,7 @@ function Get-BrowserScreenshot {
         $bitmap = New-Object System.Drawing.Bitmap($width, $height, [System.Drawing.Imaging.PixelFormat]::Format32bppRgb)
         $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
         $graphics.Clear([System.Drawing.Color]::Black)
-        $grid = 32
-        $probeBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::Black)
-        try {
-            for ($sampleY = 0; $sampleY -lt $grid; $sampleY += 1) {
-                for ($sampleX = 0; $sampleX -lt $grid; $sampleX += 1) {
-                    $x = [int][Math]::Floor((($sampleX + 0.5) * $width) / $grid)
-                    $y = [int][Math]::Floor((($sampleY + 0.5) * $height) / $grid)
-                    $probeBrush.Color = Get-BrowserCaptureProbeColor (($sampleY * $grid) + $sampleX)
-                    $graphics.FillRectangle($probeBrush, $x, $y, 1, 1)
-                }
-            }
-        } finally {
-            $probeBrush.Dispose()
-        }
+        Add-CaptureProbeGrid -Graphics $graphics -Width $width -Height $height
         $hdc = [IntPtr]::Zero
         try {
             $hdc = $graphics.GetHdc()
@@ -1084,6 +1410,8 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
             "windows.find" { Write-RpcResult $requestId (Find-UiElements $params) }
             "windows.act" { Write-RpcResult $requestId (Invoke-UiAction $params) }
             "windows.screenshot" { Write-RpcResult $requestId (Get-WindowsScreenshot $params) }
+            "windows.capture" { Write-RpcResult $requestId (Get-WindowsCapture $params) }
+            "windows.restore" { Write-RpcResult $requestId (Invoke-WindowRestore $params) }
             "browser.open" { Write-RpcResult $requestId (Invoke-BrowserDefaultOpen $params) }
             "browser.windows" { Write-RpcResult $requestId (Get-BrowserWindowList $params) }
             "browser.snapshot" {

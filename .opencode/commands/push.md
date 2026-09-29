@@ -1,10 +1,7 @@
 ---
-description: Operator-only immediate push that bypasses the agent push gate
+description: Operator-only immediate push; runs in the evaluation shell with no agent action
 ---
 
-The operator invoked this override. The shell block below already ran in
-OpenCode's command-evaluation shell, outside the agent tool permission flow:
+!`cd "$(git rev-parse --show-toplevel)" && git push --no-verify origin HEAD`
 
-!`cd "$(git rev-parse --show-toplevel)" && git push --no-verify`
-
-Do not perform a push. Verify and report the resulting push state.
+No agent action required. Do not run tools, do not repeat the commit, and do not create tasks.

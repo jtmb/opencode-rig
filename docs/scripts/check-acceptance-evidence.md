@@ -124,8 +124,8 @@ and dimensions only.
 A visible `complete` or `limited` claim must cite the parsed record paths from
 one matching pair in `rendered_visual` and `interaction`. Without that pair, it
 must remain `planned`. Pending UI inventory mode remains structural and does
-not accept host evidence. The current manifest has no host capture records, so
-all visible claims remain planned; do not synthesize or reuse old artifacts.
+not accept host evidence. The current ready manifest contains one foreground
+managed-Screen stop pair; eight other visible claims remain planned.
 
 When multiple sources are mapped, the ready inventory also requires an
 integrated scenario covering at least two mapped sources. Its source-set digest
@@ -151,17 +151,20 @@ from another mapping or scenario.
 
 ## Current repository boundary
 
-`acceptance-evidence.json` has 13 claims. All nine user-visible claims remain
-`planned` with empty evidence, and `ui_acceptance` remains `pending`. The current
-reason records incomplete mapping coverage (including mapping 13), theme
-switching, pagination, supporting-source digests, and authentic live
-host-render/interaction proof. The retained span-derived PNGs and native
-test-renderer transitions do not satisfy those requirements.
-
-No fresh capture should be generated until its fixture emits the required run,
-phase, dispatch, transition, and monotonic-provenance fields and the source
-inventory is complete. Do not describe existing native test artifacts as live
-UI, screenshots, host interactions, or pixel acceptance.
+`acceptance-evidence.json` has 13 claims. Its UI inventory is `ready` after a
+2026-09-28 v9 generator run against the combined Goal, managed-Screen and
+cross-worktree Active Subagents source, including the corrected reactive Goal sidebar/refresh source:
+15 mappings, 30 focused receipts, and 16 native test captures under
+`evidence/ui-acceptance/2026-09-28/v9/`. The acceptance validator passes and
+canonical repository QA passed on this v9 source. The earlier
+2026-09-27 v4/v3 and 2026-09-26 artifacts remain historical. Foreground
+`vision_capture` PNGs in `evidence/ui-acceptance/2026-09-27/v3/host/` show the
+active WSL terminal's managed-Screen sidebar transition from one detached
+session to zero after an applied `screen_terminal` stop; the digest-bound
+render/interaction records validate. This supports only `sidebar-coexistence`
+as `limited`. Eight other user-visible claims remain `planned` with empty
+evidence. The validator binds declared provenance and image bytes, not capture
+origin; native span PNGs alone cannot establish foreground host acceptance.
 
 The copied-consumer self-test uses a disposable repository outside the Open Rig
 source tree. It exercises pending structural validation, valid execution and

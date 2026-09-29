@@ -1,0 +1,56 @@
+{
+  "version": 3,
+  "capture_id": "mapping-02",
+  "phase": "test-dispatch",
+  "event_id": "mapping-02-test-dispatch-001",
+  "action": {
+    "type": "click",
+    "target": "provider-usage-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "provider-usage-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "8369984e-25b6-40d2-8f4c-5b3877b9da97",
+    "dispatch_id": "mapping-02-test-dispatch-dispatch-001",
+    "transition_id": "mapping-02-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "55426317529820",
+    "transition_monotonic_ns": "55426368612767"
+  },
+  "before": {
+    "snapshot_id": "mapping-02-interact-before",
+    "frame_sha256": "044753319c5ad98013a0482583875d796cd216f1277e98d5df96cddbed084aff",
+    "spans_sha256": "6d70e9265ef65606fe35fec863abab4d6396ad7325cdfa3c4ce51ce3e28cdeca",
+    "state_sha256": "3cb191def2928a9e5ce2be825bda706b78c72b0b4abcef431e138cc9c6658852"
+  },
+  "after": {
+    "snapshot_id": "mapping-02-interact-after",
+    "frame_sha256": "b8c8ec36709de93a79da8e18335926fd0f0ef5aa772e9c10fbe4c37b1d890465",
+    "spans_sha256": "1382cf9444cf10169ed09bea7f34aea08a957b07fec7e5bf06ed3f2d9dad0464",
+    "state_sha256": "6107d88460bba248f3f7a360e1e792352769d538b419ce5cce9a601ff3c03b30"
+  },
+  "result": {
+    "status": "passed",
+    "target": "provider-usage-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "2eba9035c7e36d82c5d2504eedb90f48d9463684f14403c9fcf7ca78e5a07f92",
+  "native_event_sha256": "7230d71ddb578c4b31d8d25de94bd6a3fde17f60b0d914d830d46ccc10852af2"
+}

@@ -10,6 +10,7 @@ export type RepoLearningCompletionOutput = {
   receipted: number
   missingObligationIDs: string[]
   conflictObligationIDs: string[]
+  unresolvedConflictIDs: string[]
 }
 
 export const RepoLearning = Rpc.define({
@@ -48,8 +49,17 @@ export const RepoLearning = Rpc.define({
           receipted: { type: "integer", minimum: 0 },
           missingObligationIDs: { type: "array", items: { type: "string", maxLength: 80 }, maxItems: 200 },
           conflictObligationIDs: { type: "array", items: { type: "string", maxLength: 80 }, maxItems: 200 },
+          unresolvedConflictIDs: { type: "array", items: { type: "string", maxLength: 80 }, maxItems: 200 },
         },
-        required: ["enabled", "ready", "required", "receipted", "missingObligationIDs", "conflictObligationIDs"],
+        required: [
+          "enabled",
+          "ready",
+          "required",
+          "receipted",
+          "missingObligationIDs",
+          "conflictObligationIDs",
+          "unresolvedConflictIDs",
+        ],
         additionalProperties: false,
       },
     },

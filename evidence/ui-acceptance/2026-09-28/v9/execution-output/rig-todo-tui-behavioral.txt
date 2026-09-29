@@ -1,0 +1,15 @@
+✔ every displayed status keeps its complete content in the same row data (1.441926ms)
+✔ all statuses use one auto-height word-wrapped TodoRow path (0.389719ms)
+✔ Todo heading spans the panel and separates its accent count with flexible space (0.22712ms)
+✔ history summary reports exactly the omitted history rows (0.171139ms)
+✔ archived history rows reuse the readable word-wrapped row contract without ellipsis (0.21302ms)
+✔ history view is opt-in, paged, and keeps the current-work panel unchanged by default (0.18618ms)
+✔ fullscreen tasks registration is additive to the retained-history sidebar (0.14951ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.022637

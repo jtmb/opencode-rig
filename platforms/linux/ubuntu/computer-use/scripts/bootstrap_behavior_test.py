@@ -139,6 +139,7 @@ class Fixture:
             "python3",
             "pwd",
             "sha256sum",
+            "sed",
         ):
             _link_or_stub(self.bin, command)
         _write_platform_cat(self.bin)
@@ -384,6 +385,90 @@ def test_apply_failures_and_hash_guard() -> None:
         assert fixture.config.read_bytes() != fixture.config_bytes
 
 
+def test_wsl_screenshot_write_guard_is_scoped_to_fallback() -> None:
+    with fixtures() as fixture:
+        pilot = fixture.home / "wsl-pilot"
+        config = pilot / "config"
+        config.mkdir(parents=True)
+        (pilot / "xdg/opencode").mkdir(parents=True)
+        (config / "opencode.jsonc").write_text("{}", encoding="utf-8")
+        (pilot / "xdg/opencode/cli.json").write_text("{}", encoding="utf-8")
+
+        wsl = fixture.root / "platforms/windows/wsl2/ubuntu/computer-use"
+        scripts = wsl / "scripts"
+        scripts.mkdir(parents=True)
+        for name in ("setup-opencode.sh", "deploy-plugins.sh", "setup-mcps.sh", "verify-wsl2.sh"):
+            _write_delegate(scripts / name)
+        (scripts / "configure.py").write_text("#!/usr/bin/env python3\nraise SystemExit(0)\n", encoding="utf-8")
+
+        interop = wsl / "plugins-v2/wsl-interop"
+        for name in ("package.json", "server.ts", "tui.tsx", "powershell/OpenRig.WindowsHost.ps1", "test/powershell-host.test.ts"):
+            path = interop / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("windows.screenshot\n", encoding="utf-8")
+
+        rig_tools = fixture.root / "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src"
+        rig_tools.mkdir(parents=True)
+        (rig_tools / "index.ts").write_text('name: "vision_capture"\n', encoding="utf-8")
+        vision = rig_tools / "vision.ts"
+
+        def write_vision(helper_body: str) -> None:
+            vision.write_text(
+                "async function captureWindowsScreenshot(mode: CaptureMode): Promise<CaptureResult> {\n"
+                "  await client.request('auto', 'windows.screenshot')\n"
+                f"{helper_body}"
+                "}\n"
+                "export async function captureScreenshot(mode: CaptureMode): Promise<CaptureResult> {\n"
+                "  if (isWslKernel(release)) return captureWindowsScreenshot(mode)\n"
+                "}\n"
+                "async function retainScreenshot(bytes: Buffer): Promise<void> {\n"
+                "  await handle.writeFile(bytes)\n"
+                "}\n",
+                encoding="utf-8",
+            )
+
+        _link_or_stub(fixture.bin, "pwsh.exe")
+        environment = {
+            "BOOTSTRAP_TEST_KERNEL": "5.15.153.1-MICROSOFT-standard-WSL2",
+            "OPENCODE_WSL2_PILOT_DIR": str(pilot),
+            "OPENCODE_WSL2_CONFIG_DIR": str(config),
+        }
+        write_vision("  return decodeWindowsScreenshot(mode, response.result)\n")
+        retained = run_bootstrap(fixture, "--platform", "wsl2", "--verify-only", environment=environment)
+        assert_success(retained, "WSL fallback with explicit retention outside the helper")
+        assert "OK: WSL2 vision_capture fallback is registered and remains in memory" in retained.stdout
+        assert_no_journals(fixture)
+
+        vision.write_text(
+            "export async function captureScreenshot(mode: CaptureMode): Promise<CaptureResult> {\n"
+            "  await client.request('auto', 'windows.screenshot')\n"
+            "  if (isWslKernel(release)) return captureWindowsScreenshot(mode)\n"
+            "  return decodeWindowsScreenshot(mode, response.result)\n"
+            "}\n",
+            encoding="utf-8",
+        )
+        missing_helper = run_bootstrap(fixture, "--platform", "wsl2", "--verify-only", environment=environment)
+        assert missing_helper.returncode == 1
+        assert "MISSING/FAILED: WSL2 in-memory screenshot fallback wiring" in output(missing_helper)
+        assert_no_journals(fixture)
+
+        write_vision("  await output.writeFile(bytes)\n  return decodeWindowsScreenshot(mode, response.result)\n")
+        writing_fallback = run_bootstrap(fixture, "--platform", "wsl2", "--verify-only", environment=environment)
+        assert writing_fallback.returncode == 1
+        assert "MISSING/FAILED: WSL2 in-memory screenshot fallback wiring" in output(writing_fallback)
+        assert_no_journals(fixture)
+
+        write_vision("  return decodeWindowsScreenshot(mode, response.result)\n")
+        sed = fixture.bin / "sed"
+        sed.unlink()
+        sed.write_text("#!/bin/sh\nexit 42\n", encoding="utf-8")
+        sed.chmod(0o755)
+        failed_extraction = run_bootstrap(fixture, "--platform", "wsl2", "--verify-only", environment=environment)
+        assert failed_extraction.returncode == 1
+        assert "MISSING/FAILED: WSL2 in-memory screenshot fallback wiring" in output(failed_extraction)
+        assert_no_journals(fixture)
+
+
 def main() -> int:
     tests = (
         test_help_default_verify_and_dry_run,
@@ -391,6 +476,7 @@ def main() -> int:
         test_verify_failure_and_prerequisite_exit_codes,
         test_apply_journal_and_config_preservation,
         test_apply_failures_and_hash_guard,
+        test_wsl_screenshot_write_guard_is_scoped_to_fallback,
     )
     for test in tests:
         test()

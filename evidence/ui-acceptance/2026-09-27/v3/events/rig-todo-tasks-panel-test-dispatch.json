@@ -1,0 +1,63 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "rig-todo-tasks-panel-test-dispatch-001",
+  "capture_id": "rig-todo-tasks-panel",
+  "source_sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4d43b03a51b17df017e7a3c3f3b4a8c5d51d1381fbefa131acae9d1a92bc33b8",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "98c698d3f2867ce8998184bae6ed5923631f34911daa22ce4441a721ef196e2d",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "key",
+    "target": "todo-kanban-next-column",
+    "input": "right"
+  },
+  "dispatch": {
+    "device": "keyboard",
+    "method": "pressArrow",
+    "target": "todo-kanban-next-column",
+    "input": "right"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "9f99ef6f-8a3b-44b3-bc93-0dab33d9edc4",
+    "dispatch_id": "rig-todo-tasks-panel-test-dispatch-dispatch-001",
+    "transition_id": "rig-todo-tasks-panel-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "4700149793788",
+    "transition_monotonic_ns": "4700183480981"
+  },
+  "before": {
+    "snapshot_id": "rig-todo-tasks-panel-interact-before",
+    "frame_sha256": "86da6ca22b7b844009306a94ca61365d4c01b7494fa05fbacf72c21c2822c3ce",
+    "spans_sha256": "98e542787ddc2fe95700189399f74bb997b2130b06d1ae44f2100cb8c4e297cd",
+    "state_sha256": "1cd40fe339ef8931b30ccdf81a7f593a866dabf452f178fa1e26710525e89dfa"
+  },
+  "after": {
+    "snapshot_id": "rig-todo-tasks-panel-interact-after",
+    "frame_sha256": "1eeb36a2a0f1dca8f381fb5d4fcf53d984b09e27c3f54cdcc474525c40ff6751",
+    "spans_sha256": "7cd7e9b6bffdf463acbc00962f551bdc39de8a1da00ca1f48e548c496a93bc02",
+    "state_sha256": "ea4886a9e1ed9c2ac42e1899705d6b64f1d0cbd8fe54b6e28f6c802882fa78c9"
+  },
+  "result": {
+    "status": "passed",
+    "target": "todo-kanban-next-column",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "4d2cdb4f2e7337d809c8223d57bd83aa65c2b0053509afea83102c26c82630ce",
+  "output": "evidence/ui-acceptance/2026-09-27/v3/event-output/rig-todo-tasks-panel-test-dispatch.json",
+  "output_sha256": "b9aeaa8c1d86bd67ca90d843440040d0447f9855d633c65c7168705b699d9612",
+  "observed_at": "2026-09-27T07:18:12.633Z"
+}

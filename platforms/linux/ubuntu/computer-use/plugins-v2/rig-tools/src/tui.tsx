@@ -5,14 +5,19 @@ import { TextAttributes, type BoxRenderable } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 
+import { GoalRpc, type GoalRpcCommandOutput, type GoalRpcStateOutput } from "../../orchestration-policy/src/goal-rpc.ts"
 import { toolCatalogQuery } from "./tool-catalog.ts"
-import { RigTools, type RigToolsOutput } from "./rpc.ts"
+import { MAX_MANAGED_SCREEN_ROWS, RigTools, type RigToolsManagedScreen, type RigToolsManagedScreensOutput, type RigToolsOutput } from "./rpc.ts"
 import { HermesHooksPanel, HERMES_HOOKS_PANEL_NAME } from "./hermes-hooks-panel.tsx"
-import { ActiveSubagentRow, ActiveSubagentsHeading } from "./active-subagent-row.ts"
+import { ActiveSubagentRow, ActiveSubagentsHeading, ManagedScreensSidebar } from "./active-subagent-row.ts"
 import { SubagentsHistory } from "./subagent-history-view.ts"
 import { formatSubagentHistoryPage, querySubagentHistory, querySubagentHistoryEvents, recordSubagentObservations, subagentHistoryRoot, type SubagentHistoryEventRow } from "./subagent-history.ts"
 import { sidebarPalette } from "./palette.ts"
 import { activeSubagentRows, formatSubagentRow, MAX_SUBAGENT_ROWS, nextSubagentIndex, resolveSubagentRows, subagentAnimationsEnabled, subagentStatus, type SubagentStatus } from "./subagents.ts"
+import { GoalHandoffControl, GoalFooterSummary, GoalSummary } from "./goal-handoff-control.ts"
+import { createGoalStateFeed, type GoalStateSnapshot } from "./goal-state.ts"
+import { DEFAULT_GOAL_UI_PREFERENCES, goalUIPreferenceEnabled, showGoalSettingsPalette, type GoalUIPreferences } from "./goal-ui-settings.ts"
+import { createRefreshQueue } from "./refresh-queue.ts"
 
 export const SUBAGENTS_PANEL_NAME = "opencode-rig.rig-tools.subagents"
 
@@ -21,6 +26,61 @@ const HISTORY_PAGE_SIZE = 8
 function currentSessionID(context: Context): string | undefined {
   const route = context.ui.router.current()
   return route.type === "session" ? route.sessionID : undefined
+}
+
+function GoalHandoffFooter(props: {
+  sessionID?: string
+  settings: GoalUIPreferences
+  snapshotFor: (sessionID: string) => GoalStateSnapshot
+  busyFor: (sessionID: string) => boolean
+  refresh: (sessionID: string) => Promise<void>
+  toggle: (sessionID: string) => Promise<void>
+}) {
+  const context = usePlugin()
+  createEffect(() => {
+    const sessionID = props.sessionID
+    if (sessionID) void props.refresh(sessionID)
+  })
+  const handoffMode = () => {
+    const snapshot = props.snapshotFor(props.sessionID!)
+    return snapshot.status === "ready" ? snapshot.goal.handoff : undefined
+  }
+  return (
+    <Show when={props.sessionID}>
+      <box flexDirection="row" gap={1}>
+        <Show when={goalUIPreferenceEnabled(props.settings, "footerGoal")}>
+          <GoalFooterSummary
+            sessionID={props.sessionID!}
+            snapshot={() => props.snapshotFor(props.sessionID!)}
+            previewEnabled={goalUIPreferenceEnabled(props.settings, "hoverPreview")}
+            textColor={context.theme.text.subdued}
+            accentColor={context.theme.hue.accent[200]}
+          />
+        </Show>
+        <GoalHandoffControl
+          mode={handoffMode()}
+          busy={props.busyFor(props.sessionID!)}
+          textColor={context.theme.text.subdued}
+          accentColor={context.theme.hue.accent[200]}
+          onToggle={() => {
+            void props.toggle(props.sessionID!).catch(() =>
+              context.ui.toast.show({ message: "The Goal handoff could not be changed.", variant: "error" }),
+            )
+          }}
+        />
+      </box>
+    </Show>
+  )
+}
+
+function GoalSidebar(props: {
+  sessionID: string
+  snapshotFor: (sessionID: string) => GoalStateSnapshot
+  refresh: (sessionID: string) => Promise<void>
+}) {
+  const context = usePlugin()
+  createEffect(() => void props.refresh(props.sessionID))
+  return <GoalSummary snapshot={() => props.snapshotFor(props.sessionID)} textColor={context.theme.text.subdued} accentColor={context.theme.hue.accent[200]} />
 }
 
 async function showCommandOutput(
@@ -61,7 +121,6 @@ function createSubagentFeed(context: Context, sessionID: () => string) {
         context.client.session.list({
           parentID: parent.id,
           project: parent.projectID,
-          directory: parent.location.directory,
           order: "desc",
           limit: MAX_SUBAGENT_ROWS,
         }, requestOptions),
@@ -355,7 +414,66 @@ export default Plugin.define({
   id: "opencode-rig.rig-tools",
   setup(context) {
     const rpc = context.client.rpc(RigTools)
+    const goalRpc = context.client.rpc(GoalRpc)
     const rpcOptions = { location: context.location }
+    const goalLocation = context.location ?? context.data.location.default()
+    const [managedScreensCollapsed, setManagedScreensCollapsed] = createSignal(false)
+    const [managedScreens, setManagedScreens] = createSignal<readonly RigToolsManagedScreen[]>([])
+    const [managedScreenMessage, setManagedScreenMessage] = createSignal("Loading managed Screens…")
+    let disposed = false
+    const managedScreenRefresh = createRefreshQueue(async () => {
+      if (disposed) return
+      try {
+        const result = await rpc.managedScreens({}, rpcOptions) as RigToolsManagedScreensOutput
+        const rows = result.sessions.slice(0, MAX_MANAGED_SCREEN_ROWS)
+        if (disposed) return
+        setManagedScreens(rows)
+        setManagedScreenMessage(rows.length ? "" : "No managed Screens.")
+      } catch {
+        if (disposed) return
+        setManagedScreens([])
+        setManagedScreenMessage("Unable to read managed Screens.")
+      }
+    })
+    const stopManagedScreensChanged = rpc.events.on("managedScreensChanged", () => void managedScreenRefresh.refresh())
+    void managedScreenRefresh.refresh()
+    const [goalUIPreferences, updateGoalUIPreferences] = context.storage.store("goal-ui-settings", {
+      initial: { ...DEFAULT_GOAL_UI_PREFERENCES },
+    })
+    const goalStateFeed = createGoalStateFeed(
+      async (sessionID) => await goalRpc.state({ sessionID }, { location: goalLocation }) as GoalRpcStateOutput,
+      () => currentSessionID(context),
+      (onUpdated) => goalRpc.events.on("updated", (event) => {
+        const sessionID = (event.data as { sessionID?: unknown }).sessionID
+        if (typeof sessionID === "string" && (!goalLocation || event.location.directory === goalLocation.directory)) void onUpdated(sessionID)
+      }),
+    )
+    const handoffMode = (sessionID: string) => {
+      const snapshot = goalStateFeed.forSession(sessionID)
+      return snapshot.status === "ready" ? snapshot.goal.handoff : undefined
+    }
+    const [handoffBusy, setHandoffBusy] = createSignal<Record<string, boolean>>({})
+    const toggleHandoff = async (sessionID: string) => {
+      if (handoffBusy()[sessionID]) return
+      setHandoffBusy((current) => ({ ...current, [sessionID]: true }))
+      try {
+        await goalRpc.toggleHandoff({ sessionID }, rpcOptions)
+        await goalStateFeed.refresh(sessionID)
+      } finally {
+        setHandoffBusy((current) => ({ ...current, [sessionID]: false }))
+      }
+    }
+    const stopGoalFooter = context.ui.slot({
+      append: "prompt.footer.status",
+      render: (input) => <GoalHandoffFooter
+        sessionID={input.sessionID}
+        settings={goalUIPreferences}
+        snapshotFor={goalStateFeed.forSession}
+        busyFor={(sessionID) => handoffBusy()[sessionID] ?? false}
+        refresh={goalStateFeed.refresh}
+        toggle={toggleHandoff}
+      />,
+    })
     const stopPanel = context.ui.slot({
       append: "session.panel",
       render: (panel) => panel.name === SUBAGENTS_PANEL_NAME ? <SubagentsPanel panel={panel} /> : null,
@@ -366,7 +484,24 @@ export default Plugin.define({
     })
     const stopSidebar = context.ui.slot({
       after: "sidebar.content",
-      render: ({ sessionID }) => <ActiveSubagentsSidebar sessionID={sessionID} />,
+      render: ({ sessionID }) => <>
+        <ActiveSubagentsSidebar sessionID={sessionID} />
+        <ManagedScreensSidebar
+          collapsed={managedScreensCollapsed}
+          screens={managedScreens}
+          message={managedScreenMessage}
+          textColor={() => context.theme.text.default}
+          subduedColor={() => context.theme.text.subdued}
+          accentColor={() => context.theme.hue.accent[200]}
+          onToggle={() => setManagedScreensCollapsed((value) => !value)}
+        />
+      </>,
+    })
+    const stopGoalSidebar = context.ui.slot({
+      after: "sidebar.content",
+      render: ({ sessionID }) => goalUIPreferenceEnabled(goalUIPreferences, "sidebarGoal")
+        ? <GoalSidebar sessionID={sessionID} snapshotFor={goalStateFeed.forSession} refresh={goalStateFeed.refresh} />
+        : null,
     })
     const stopKeymap = context.ui.slot({
       append: "app",
@@ -374,6 +509,46 @@ export default Plugin.define({
         context.keymap.layer(() => ({
           mode: "global",
           commands: [
+            {
+              id: "opencode-rig.goal",
+              title: "View or control Goal",
+              description: "Start, inspect, pause, resume, or clear this session's durable Goal. Use /goal build to start a ready Plan explicitly.",
+              group: "Open Rig",
+              palette: true,
+              slash: { name: "goal", arguments: true },
+              run: (input) => void showCommandOutput(context, "Goal", async () => {
+                const sessionID = currentSessionID(context)
+                if (!sessionID) return "This command requires an active session."
+                const result = await goalRpc.command({
+                  sessionID,
+                  command: input ?? "",
+                }, rpcOptions) as GoalRpcCommandOutput
+                await goalStateFeed.refresh(sessionID)
+                if (result.cancelInboxID) {
+                  try {
+                    await context.client.session.inbox.cancel({ sessionID, inboxID: result.cancelInboxID })
+                  } catch {
+                    return `${result.text}\nThe queued prompt could not be cancelled; its Goal marker is invalidated.`
+                  }
+                }
+                return result.text
+              }),
+            },
+            {
+              id: "opencode-rig.settings",
+              title: "Open Rig workflow settings",
+              description: "Configure Goal display and session handoff, or workflow enforcements; never starts a model turn.",
+              group: "Open Rig",
+              palette: true,
+              run: () => void showGoalSettingsPalette(context, {
+                settings: goalUIPreferences,
+                updateSettings: updateGoalUIPreferences,
+                currentSessionID: () => currentSessionID(context),
+                handoffMode,
+                refreshGoal: goalStateFeed.refresh,
+                toggleHandoff,
+              }),
+            },
             {
               id: "opencode-rig.tools",
               title: "Open Rig tools",
@@ -444,10 +619,16 @@ export default Plugin.define({
       },
     })
     return () => {
+      disposed = true
+      managedScreenRefresh.dispose()
+      stopManagedScreensChanged()
       stopPanel()
       stopHermesPanel()
       stopSidebar()
+      stopGoalSidebar()
       stopKeymap()
+      stopGoalFooter()
+      goalStateFeed.dispose()
     }
   },
 })

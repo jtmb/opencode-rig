@@ -1,0 +1,78 @@
+{
+  "version": 3,
+  "capture_id": "rig-tools-subagents",
+  "phase": "test-dispatch",
+  "event_id": "rig-tools-subagents-test-dispatch-001",
+  "action": {
+    "type": "input",
+    "target": "active-subagents-header",
+    "input": {
+      "mouse": {
+        "method": "click",
+        "x": 1,
+        "y": 1
+      },
+      "lifecycle": {
+        "type": "session.created",
+        "parentID": "ses_native_parent",
+        "sessionID": "ses_native_second"
+      },
+      "keyboard": {
+        "method": "pressEnter"
+      }
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click+session.created+pressEnter",
+    "target": "active-subagents-header",
+    "input": {
+      "mouse": {
+        "method": "click",
+        "x": 1,
+        "y": 1
+      },
+      "lifecycle": {
+        "type": "session.created",
+        "parentID": "ses_native_parent",
+        "sessionID": "ses_native_second"
+      },
+      "keyboard": {
+        "method": "pressEnter"
+      }
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "6f8d7b42-6376-4e80-9377-668cff8933f1",
+    "dispatch_id": "rig-tools-subagents-test-dispatch-dispatch-001",
+    "transition_id": "rig-tools-subagents-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "1269708465111",
+    "transition_monotonic_ns": "1269796077738"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-subagents-interact-before",
+    "frame_sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+    "spans_sha256": "439723459432bb545470d85d5583baa3806e0aa5450797bcabb7886bf02c833b",
+    "state_sha256": "6a4e3fefc2ba5d89cb70e728e514af36c66d0654762d1d9837ea2491cc4013af"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-subagents-interact-after",
+    "frame_sha256": "9c228ad7dab9aee5749899a9a9dc20c55a9b3dc88dc435b1bf50ce6919099722",
+    "spans_sha256": "3e76da1ff193b2f93d78c87d86d80a7b64e6f25efbcc6ce3a6b624d1d928dfa7",
+    "state_sha256": "45fbed7fb2aef1b239edd3b05a94f6fb5cfd9de759075b15027156cfca662815"
+  },
+  "result": {
+    "status": "passed",
+    "target": "active-subagents-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "988c9716cd2dceca6a23ac6b6c9732f56d182e2df1fb88fed0abb4c41d7610b5",
+  "native_event_sha256": "2f35ebaa749a8a22d572fab5fb8159563bf2e7ba6d92e46526beba99c3884893"
+}

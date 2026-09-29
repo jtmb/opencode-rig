@@ -22,6 +22,14 @@ test("uses additive native-preserving sidebar placement", async () => {
   assert.doesNotMatch(source, /McpStatus|\.mcp\.server|createActiveChildren/u)
 })
 
+test("uses CLI-safe options for the read-only status surface", async () => {
+  const source = await readFile(new URL("src/tui.tsx", root), "utf8")
+  assert.match(source, /parseTuiOptions\(context\.options\)/u)
+  assert.match(source, /if \(!options\.enabled\) return/u)
+  assert.match(source, /rpc\.status\(\{\}, rpcOptions\)/u)
+  assert.doesNotMatch(source, /powershell_raw|permission\.rules/u)
+})
+
 test("RPC wire schemas avoid unsupported pattern keywords", async () => {
   const source = await readFile(new URL("src/rpc.ts", root), "utf8")
   assert.doesNotMatch(source, /\bpattern\s*:/u)
@@ -29,11 +37,24 @@ test("RPC wire schemas avoid unsupported pattern keywords", async () => {
 
 test("registers structured PowerShell and Windows app-control tools", async () => {
   const source = await readFile(new URL("src/index.ts", root), "utf8")
-  for (const tool of ["wsl_status", "powershell_status", "powershell_command", "powershell_raw", "windows_apps", "windows_find", "windows_act"]) {
+  for (const tool of ["wsl_status", "powershell_status", "powershell_command", "powershell_raw", "windows_apps", "windows_find", "windows_act", "windows_restore"]) {
     assert.match(source, new RegExp(`name:\\s*["']${tool}["']`, "u"))
   }
   assert.match(source, /permission:\s*["']wsl_powershell_raw["']/u)
   assert.match(source, /permission:\s*["']wsl_windows_act["']/u)
+})
+
+test("registers the non-activating exact-window restore tool", async () => {
+  const source = await readFile(new URL("src/index.ts", root), "utf8")
+  const start = source.indexOf('name: "windows_restore"')
+  const end = source.indexOf('name: "windows_capture"')
+  assert.ok(start >= 0 && end > start, "windows_restore must be registered before windows_capture")
+  const restore = source.slice(start, end)
+  assert.match(restore, /ShowWindow\(SW_SHOWNOACTIVATE\)/u)
+  assert.match(restore, /never calls SW_RESTORE, SetForegroundWindow, SetWindowPos, or any input API/u)
+  assert.match(restore, /hidden-but-not-minimized/u)
+  assert.match(restore, /expectToken/u)
+  assert.match(source, /WindowsRestoreInput/u)
 })
 
 test("registers default-browser UI Automation tools with required action data", async () => {

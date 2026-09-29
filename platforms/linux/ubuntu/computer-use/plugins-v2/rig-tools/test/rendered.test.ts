@@ -28,6 +28,8 @@ test("rendered active-subagent checks run in an isolated OpenTUI subprocess", ()
   assert.equal(probe.stderr, marker)
 
   const rendered = runIsolated([
+    "--import",
+    "./test/solid-resolve-hook.mjs",
     "--experimental-strip-types",
     "--test",
     "test/rendered-fixture.ts",
@@ -42,4 +44,7 @@ test("rendered active-subagent checks run in an isolated OpenTUI subprocess", ()
   assert.match(rendered.stdout, /RIG_TOOLS_ACTIVE_SUBAGENT_RENDER_ASSERTIONS_EXECUTED/)
   assert.match(rendered.stdout, /renders focused and unfocused rows/)
   assert.match(rendered.stdout, /native heading click and keyboard toggle keep focus, count live, and body refreshable while collapsed/)
+  assert.match(rendered.stdout, /native Goal handoff control toggles by click and keyboard/)
+  assert.match(rendered.stdout, /renders the sidebar Goal and shows a bounded footer preview only while hovered or focused/)
+  assert.match(rendered.stdout, /native Managed Screens subsection refreshes rows and toggles by click and keyboard/)
 })

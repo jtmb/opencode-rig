@@ -37,7 +37,7 @@ Options:
   --verify-only            Check only (default)
   -h, --help               Show this help
 
-The script recursively deploys the 19 skill bundles from this checkout, the
+The script recursively deploys the 20 skill bundles from this checkout, the
 opt-in ChatGPT agent, and four global commands, seeds opencode.jsonc and cli.json only when missing, installs
 the exact locked plugin dependencies and managed Explorer parser assets when
 needed. Apply runs verify-opencode-v2.sh; prepare defers that health check for
@@ -114,6 +114,7 @@ REQUIRED_SKILLS=(
   game-playtest
   github-operations
   opencode-db-maintenance
+  repo-onboarding
   routine-automation
   session-context
   skill-maintenance

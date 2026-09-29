@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "mapping-05-test-dispatch-001",
+  "capture_id": "mapping-05",
+  "source_sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "dab95d7649a9ba21a3969bc90fa9f0a4af444ee2b44d2f0cf16fd35fb56f56f3",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "click",
+    "target": "explorer-tree-row:presentation-preview-file-1.tsx",
+    "input": {
+      "x": 6,
+      "y": 1
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "explorer-tree-row:presentation-preview-file-1.tsx",
+    "input": {
+      "x": 6,
+      "y": 1
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "96323af5-5507-4734-8d63-c2dd441823de",
+    "dispatch_id": "mapping-05-test-dispatch-dispatch-001",
+    "transition_id": "mapping-05-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "71812214145235",
+    "transition_monotonic_ns": "71812254509618"
+  },
+  "before": {
+    "snapshot_id": "mapping-05-interact-before",
+    "frame_sha256": "4f621b3adfdf6dc9e74ee5c1ce8c6ae7e33ec5de9508662e2d4c1d3b861bd9a4",
+    "spans_sha256": "4aa2a7c7acc06968507fa9fc7a0f7e8c73fa3a7c3a70aec387eb52f9d2e60537",
+    "state_sha256": "eaa8953c73731571af1cc0b775fc74b62da438a83f0cb8951bcec81c3c29b2f2"
+  },
+  "after": {
+    "snapshot_id": "mapping-05-interact-after",
+    "frame_sha256": "bcd34d3119a7605d9717d7b575038e956c6155b062621edcab5a4cbedd1da8e7",
+    "spans_sha256": "5971c891a833e0345f50cc90ce124dd3a2f8f2b5e514ede83d7b9374a22dff9e",
+    "state_sha256": "8b3b4818aed706fb7e4cf144d65fdb28d8f544270d7baa3ca01afa404b71e0a4"
+  },
+  "result": {
+    "status": "passed",
+    "target": "explorer-tree-row:presentation-preview-file-1.tsx",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "f62e2bb522889237e741420f4c4f2901e8a64b92a9666970a3c7d0f5b61818c5",
+  "output": "evidence/ui-acceptance/2026-09-26/v3/event-output/mapping-05-test-dispatch.json",
+  "output_sha256": "a5608285fa8485420f829317a15cb5a897c5b693c69e83562d6152221c668b7b",
+  "observed_at": "2026-09-26T17:38:10.730Z"
+}

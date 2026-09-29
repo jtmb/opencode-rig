@@ -4,10 +4,10 @@ The active OpenCode v2 plugin workspace contains twelve modular packages:
 
 | Package | Role | Surface |
 |---|---|---|
-| [`orchestration-policy`](orchestration-policy/README.md) | server | hook-enforced orchestration, configured-only concurrency admission, policy-index, binary-protection, and project-memory gates, with bounded read-only Git status/log probes |
+| [`orchestration-policy`](orchestration-policy/README.md) | server | durable session Goals with fail-closed pre-restart Auto handoff, bounded Auto self-resume of plugin-set transient blockers, evidence-gated Plan→Build, per-hook operator workflow settings, configured-only admission with bounded restored-child idle reconciliation, and policy-index, binary-protection, and project-memory gates |
 | [`git-tool`](git-tool/README.md) | server | bounded read-only diffs through OpenCode's native VCS API |
 | [`repo-learning`](repo-learning/README.md) | server + CLI | opt-in structured observation and read-only review |
-| `rig-tools` | server + CLI | bounded desktop, repository, one-to-ten capacity evaluation, OpenCode API/recovery runtime tools, GNU Screen acceptance, cross-session tools, CLI dialogs, additive active-child sidebar, `/subagents`, and fullscreen Hermes `/hooks` panel |
+| `rig-tools` | server + CLI | durable `/goal` controls, configurable footer/sidebar summaries with hover/focus preview, per-session Auto/Manual handoff, one Ctrl+P workflow-settings entry, bounded desktop/repository/runtime tools, additive active-child and managed-Screen sidebar, `/subagents`, and fullscreen Hermes `/hooks` panel |
 | `rig-todo` | server + CLI | Todo tools, retained sidebar history, and fullscreen `/tasks` Kanban |
 | `codex-fallback` | server | provider fallback routing |
 | [`chatgpt-connector`](chatgpt-connector/README.md) | server | ChatGPT image, search, and session-private chat tools through active OpenAI OAuth |

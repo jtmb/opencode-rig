@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "rig-tools-tui-test-dispatch-001",
+  "capture_id": "rig-tools-tui",
+  "source_sha256": "91cabb70086ca7c71e48c53647600585243e7bf24fb44310589db4e86ecbd16b",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "de9484bcfd4eee7c2a4a6e3f8b1d90d475c6f79f93b2453a52741f1c602822e5",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "a730fd91ec38e9f0e03323b1c180e9eea2ac58ce4e754745c70f93391d67a21c",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "click",
+    "target": "active-subagents-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "dispatch": {
+    "device": "mouse",
+    "method": "click",
+    "target": "active-subagents-header",
+    "input": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "96323af5-5507-4734-8d63-c2dd441823de",
+    "dispatch_id": "rig-tools-tui-test-dispatch-dispatch-001",
+    "transition_id": "rig-tools-tui-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "71814256944588",
+    "transition_monotonic_ns": "71814296046304"
+  },
+  "before": {
+    "snapshot_id": "rig-tools-tui-interact-before",
+    "frame_sha256": "7b786d1f7e306fa0629cc566c388958894476cd6ca000d5417ec39a513c92be2",
+    "spans_sha256": "439723459432bb545470d85d5583baa3806e0aa5450797bcabb7886bf02c833b",
+    "state_sha256": "36ae06840db97ef1e1ab93ab95c06e58ee6eabe69477992a44227339467fef92"
+  },
+  "after": {
+    "snapshot_id": "rig-tools-tui-interact-after",
+    "frame_sha256": "445bbe2ea5349a59822ea2d52e6aec0c9b18edb65965e1632e774d481e1a9833",
+    "spans_sha256": "39e3dc32e79398dbfdf584645918e08828605e7c8359e7d472b5875c10fc1539",
+    "state_sha256": "0e4466aa165406c82015080f34d6282cdaec9f33f79f4e10c631604765d6e8b0"
+  },
+  "result": {
+    "status": "passed",
+    "target": "active-subagents-header",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "8c6ba02df3d069c8959b66ac8b94b821b5b86584d6c4b2fe526dea1cea71f4ad",
+  "output": "evidence/ui-acceptance/2026-09-26/v3/event-output/rig-tools-tui-test-dispatch.json",
+  "output_sha256": "bca40a2baec3a3e4ec07400aba7eced9d8f68112ae1ee164acc20286a5a68e8b",
+  "observed_at": "2026-09-26T17:38:10.730Z"
+}

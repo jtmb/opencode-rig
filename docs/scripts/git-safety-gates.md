@@ -9,6 +9,14 @@ deny raw shell `git commit`/`git push` forms (including `git -C ...`). The CLI
 must use `session.permissions: "prompt"`; `autoaccept` would bypass the intended
 user-facing gate. The policy checker and its negative self-test validate this
 combined ordering instead of checking the commit/push rules in isolation.
+The same checker also verifies Basic Memory management-tool denies in both
+project-wide permissions and Build's later agent rules for `opencode.json` and
+the portable `v2-opencode.example.jsonc`: Build's `allow */*` would otherwise
+override a top-level deny. Its self-test rejects missing or misordered denies.
+The opted-in project keeps bounded `list_memory_projects` discovery allowed,
+while the portable example denies it as the closed default and documents the
+opt-in by removal;
+see [Memory](../memory.md) for the separate cross-project opt-in.
 
 ## Commit gate
 
@@ -55,19 +63,23 @@ python3 platforms/linux/ubuntu/computer-use/scripts/check-git-safety-policy-self
 ## Operator override commands
 
 The project-local [`/commit` command](../../.opencode/commands/commit.md) is an
-operator-only immediate commit override. Its fixed shell block stages all
-changes accepted by `git add -A`, including unrelated working-tree changes, and
-commits them using a UTC timestamped message with `--no-verify`; it squashes
-nothing. The
+operator-only immediate commit override. Its command body contains no task for
+the agent: the fixed shell block stages all changes accepted by `git add -A`,
+including unrelated working-tree changes, and commits them using a UTC
+timestamped message with `--no-verify`; it squashes nothing. The
 [`/push` command](../../.opencode/commands/push.md) immediately runs
-`git push --no-verify` using Git's configured push destination and ref. It does
-not stage or commit changes, and it squashes nothing.
+`git push --no-verify origin HEAD`, targeting the explicit `origin HEAD`
+destination and ref. It does not stage or commit changes, and it squashes
+nothing. Both bodies end with a single line stating that no agent action is
+required.
 
 OpenCode v2 evaluates each `!` shell block in the command-evaluation shell,
-outside the agent tool permission flow by design. Invoking each command is the
-operator's explicit decision for that operation; `--no-verify` skips Git hooks
-but is not itself authorization. Commit and push remain separate operator
-decisions: `/commit` never pushes, and `/push` never commits.
+outside the agent tool permission flow by design. The shell block runs before
+the prompt is submitted, so the Git action occurs even if the follow-up turn
+fails. Invoking each command is the operator's explicit decision for that
+operation; `--no-verify` skips Git hooks but is not itself authorization.
+Commit and push remain separate operator decisions: `/commit` never pushes, and
+`/push` never commits.
 
 Agents must never suggest, invoke, or rely on these commands as a substitute for
 the normal gated flow. After an operator invokes one, the agent should verify

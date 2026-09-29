@@ -1,0 +1,63 @@
+{
+  "version": 3,
+  "phase": "test-dispatch",
+  "event_id": "active-subagent-row-exemplar-test-dispatch-001",
+  "capture_id": "active-subagent-row-exemplar",
+  "source_sha256": "5b596b304fc1cef3060baf3dc0f5151d2006a61eaf34b26565c006bbb4fd7e49",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "566e98fc5a8379641c66c8f09a1e303ebe55d15596f02eb0c9fc6d29d0da3814",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "9c82a6cb85cbdb64e05aee014c5d4c7236fe1a36e4e27fcb7a5d847e6a9724df",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "key",
+    "target": "active-subagent-row:selection",
+    "input": "down"
+  },
+  "dispatch": {
+    "device": "keyboard",
+    "method": "pressArrow",
+    "target": "active-subagent-row:selection",
+    "input": "down"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "4b8ac5b1-b7b9-4d38-ad0f-f858fcbfe244",
+    "dispatch_id": "active-subagent-row-exemplar-test-dispatch-dispatch-001",
+    "transition_id": "active-subagent-row-exemplar-test-dispatch-transition-001",
+    "dispatch_monotonic_ns": "11835521280222",
+    "transition_monotonic_ns": "11835551483135"
+  },
+  "before": {
+    "snapshot_id": "active-subagent-row-exemplar-interact-before",
+    "frame_sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+    "spans_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+    "state_sha256": "b848bccb02d2a42444b327927d34c31d71dceb16e6856ae3f242f88e19e0d293"
+  },
+  "after": {
+    "snapshot_id": "active-subagent-row-exemplar-interact-after",
+    "frame_sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+    "spans_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+    "state_sha256": "c029c7b861f700e54fd120317ed947db494ce725d303af1d88774518b234a4ef"
+  },
+  "result": {
+    "status": "passed",
+    "target": "active-subagent-row:selection",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": true,
+      "frame_changed": false,
+      "spans_changed": false,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "03645bf3c350c3c1e8d9b6a6ffe1018c19c2073d439efb17d355db3a66ae2d5a",
+  "output": "evidence/ui-acceptance/2026-09-28/v9/event-output/active-subagent-row-exemplar-test-dispatch.json",
+  "output_sha256": "3e926c5569932adfbbd0e6dea652072edae7b24fd3e9258bdcc78e4d6b814daf",
+  "observed_at": "2026-09-28T23:13:46.959Z"
+}

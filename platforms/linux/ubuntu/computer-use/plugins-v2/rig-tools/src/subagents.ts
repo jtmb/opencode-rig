@@ -75,7 +75,7 @@ export function activeSubagentRowStyle(theme: ActiveSubagentRowTheme, focused: b
   }
 }
 
-type ParentSession = Pick<SessionInfo, "id" | "projectID" | "location">
+type ParentSession = Pick<SessionInfo, "id" | "projectID">
 
 function display(value: string, maximum = MAX_DISPLAY_CHARS): string {
   return Array.from(value.replace(/[\u0000-\u001f\u007f]/g, " ")).slice(0, maximum).join("") || "(untitled)"
@@ -100,8 +100,7 @@ export function resolveSubagentRows(
   const children = sessions
     .filter((session) =>
       session.parentID === parent.id &&
-      session.projectID === parent.projectID &&
-      session.location.directory === parent.location.directory,
+      session.projectID === parent.projectID,
     )
     .slice(0, MAX_SUBAGENT_ROWS)
   const neededAgents = new Set(children.map((session) => session.agent).filter((agent): agent is string => agent !== undefined))

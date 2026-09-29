@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "capture_id": "mapping-04",
+  "phase": "test-setup",
+  "event_id": "mapping-04-test-setup-001",
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "8369984e-25b6-40d2-8f4c-5b3877b9da97",
+    "dispatch_id": "mapping-04-test-setup-dispatch-001",
+    "transition_id": "mapping-04-test-setup-transition-001",
+    "dispatch_monotonic_ns": "55427161887928",
+    "transition_monotonic_ns": "55427262483522"
+  },
+  "before": {
+    "snapshot_id": "mapping-04-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "mapping-04-open-after",
+    "frame_sha256": "c843a4715f0ae9088a0d2af42fd7f4b03a00691508c4e85c290f5388430a955f",
+    "spans_sha256": "ea8282bd2c95e570fa48650d7a1858f685a79d591a8fe27ed00bab7e89ee0260",
+    "state_sha256": "ca8e2ac24ae3ed6e33085d5cdbca9cd8fb7f8c45ae10845303312bd490547a1b"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "76c943321804fc6649ee7df54fb78568d9e81570b7a2df740342245297c25afd",
+  "native_event_sha256": "9dedb5eda3a6847db56f3d94bb06b361af58c97ff8e28de9b998bf8f67a5ef11"
+}

@@ -1,0 +1,357 @@
+{
+  "version": 3,
+  "source_sha256": "5b596b304fc1cef3060baf3dc0f5151d2006a61eaf34b26565c006bbb4fd7e49",
+  "capture_generator": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+    "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+  },
+  "render_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+    "sha256": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3"
+  },
+  "native_capture_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+    "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+  },
+  "native_capture_run": {
+    "scope": "native-test-renderer",
+    "run_id": "951bccfc-0faa-41e0-adb7-a263261a4bef",
+    "argv": [
+      "/bin/bash",
+      "/home/brajam/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh",
+      "--",
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/native-capture-fixture.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-27T10:04:30.358Z",
+    "finished_at": "2026-09-27T10:04:35.268Z",
+    "started_monotonic_ns": "2708574444175",
+    "finished_monotonic_ns": "2713484292842",
+    "exit_code": 0,
+    "inputs": [
+      {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+        "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+        "sha256": "3c6c507594a5c7d1f38db901230a86274830e7cf20507cbf6679623fdc706c84"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+        "sha256": "2171a8d467d738360424cb9952526dc37d33a6b500bfa4775078e7ce139ac2ef"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+        "sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+        "sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+        "sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+        "sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+        "sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+        "sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+        "sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+        "sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+        "sha256": "27369397979248d96d861e6c7a5f0b26f521551284fae430ada81f71a807a8ec"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+        "sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+        "sha256": "4d43b03a51b17df017e7a3c3f3b4a8c5d51d1381fbefa131acae9d1a92bc33b8"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+        "sha256": "5b596b304fc1cef3060baf3dc0f5151d2006a61eaf34b26565c006bbb4fd7e49"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts",
+        "sha256": "71bb2cf3172be930b0491c4675fad4c205f5bcfe1c3c731ead84d8ef4bacdb05"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+        "sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+        "sha256": "38f50adc2fe85e321622435e3e935217712318b40091148d8064d29731ef7a0d"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+        "sha256": "177a3a513635f80a7a85a1bc6b6faf8b3a1160f3536291ac542cdd97998b8ea0"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+        "sha256": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+        "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+        "sha256": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+        "sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+        "sha256": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5"
+      }
+    ]
+  },
+  "native_capture_output": {
+    "path": "evidence/ui-acceptance/2026-09-27/v4/native-output/active-subagent-row-exemplar.json",
+    "sha256": "60823eb4efccf28ab5358daea7b984f1aa95fa6638660bb0771988c5b7879ab1",
+    "encoding": "utf-8",
+    "format": "native-opentui-capture-v1"
+  },
+  "runtime": {
+    "id": "node-26.4.0-npm-11.17.0",
+    "name": "node",
+    "version": "26.4.0",
+    "identity": "node@26.4.0",
+    "provisioning": "external-checksum",
+    "executable": "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+    "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "package_manager": "npm",
+    "package_manager_version": "11.17.0",
+    "package_manager_identity": "npm@11.17.0",
+    "package_manager_executable": "/home/brajam/repos/opencode-rig/toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+    "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+  },
+  "renderer": {
+    "id": "opentui-0.5.11",
+    "name": "OpenTUI",
+    "version": "0.5.11",
+    "identity": "OpenTUI@0.5.11"
+  },
+  "observed_at": "2026-09-27T10:03:57.625Z",
+  "max_age_days": 1,
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "native_snapshots": [
+    {
+      "id": "active-subagent-row-exemplar-open-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-before.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-before.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-before.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "active-subagent-row-exemplar-open-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-after.txt",
+        "sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-after.spans.json",
+        "sha256": "21fd77ada67abf2a7de23f53d3b6bbe777495715c55cf09f14056c33ff340a30",
+        "semantic_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-open-after.state.json",
+        "sha256": "d4f3d0643643818389a51c48a8b628d492e38f18cbac76fbf4e62cde95e1d558",
+        "semantic_sha256": "b848bccb02d2a42444b327927d34c31d71dceb16e6856ae3f242f88e19e0d293",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "active-subagent-row-exemplar-interact-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-before.txt",
+        "sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-before.spans.json",
+        "sha256": "21fd77ada67abf2a7de23f53d3b6bbe777495715c55cf09f14056c33ff340a30",
+        "semantic_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-before.state.json",
+        "sha256": "d4f3d0643643818389a51c48a8b628d492e38f18cbac76fbf4e62cde95e1d558",
+        "semantic_sha256": "b848bccb02d2a42444b327927d34c31d71dceb16e6856ae3f242f88e19e0d293",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "active-subagent-row-exemplar-interact-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-after.txt",
+        "sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-after.spans.json",
+        "sha256": "21fd77ada67abf2a7de23f53d3b6bbe777495715c55cf09f14056c33ff340a30",
+        "semantic_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-after.state.json",
+        "sha256": "a707e4b450187e9ab5483b4614ee9cc701ee9ab1ab10c66d8660262b1dc06681",
+        "semantic_sha256": "c029c7b861f700e54fd120317ed947db494ce725d303af1d88774518b234a4ef",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "active-subagent-row-exemplar-close-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-close-after.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-close-after.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-close-after.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    }
+  ],
+  "native_frame": {
+    "snapshot_id": "active-subagent-row-exemplar-interact-after",
+    "character_output": {
+      "path": "evidence/ui-acceptance/2026-09-27/v4/characters/active-subagent-row-exemplar.txt",
+      "sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+      "encoding": "utf-8"
+    },
+    "semantic_spans": {
+      "path": "evidence/ui-acceptance/2026-09-27/v4/snapshots/active-subagent-row-exemplar/active-subagent-row-exemplar-interact-after.spans.json",
+      "sha256": "21fd77ada67abf2a7de23f53d3b6bbe777495715c55cf09f14056c33ff340a30",
+      "semantic_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+      "encoding": "utf-8",
+      "format": "opentui-captureSpans-v1"
+    },
+    "frame_sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+    "spans_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710"
+  },
+  "character_output": {
+    "path": "evidence/ui-acceptance/2026-09-27/v4/characters/active-subagent-row-exemplar.txt",
+    "sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+    "encoding": "utf-8"
+  },
+  "span_visualization": {
+    "path": "evidence/ui-acceptance/2026-09-27/v4/images/active-subagent-row-exemplar.png",
+    "sha256": "18ae7254f9fb21d0032a3d1e50089abfa4e17d283931259edcfbb09d5f7cf1d9",
+    "mime": "image/png",
+    "width": 840,
+    "height": 480,
+    "derived_from": {
+      "snapshot_id": "active-subagent-row-exemplar-interact-after",
+      "frame_sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+      "spans_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+      "renderer": "opentui-semantic-span-diagnostic-v1",
+      "cell_width": 6,
+      "cell_height": 8
+    }
+  },
+  "layout_assertions": [
+    {
+      "id": "visible_rows",
+      "operator": "<=",
+      "limit": 60
+    },
+    {
+      "id": "max_line_columns",
+      "operator": "<=",
+      "limit": 140
+    },
+    {
+      "id": "reachable_sections",
+      "operator": "==",
+      "limit": 3,
+      "targets": [
+        "- Active Subagents",
+        "Subagents sidebar capture",
+        "CAPTURE_FOOTER"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "phase": "test-setup",
+      "event_id": "active-subagent-row-exemplar-test-setup-001",
+      "record": "evidence/ui-acceptance/2026-09-27/v4/events/active-subagent-row-exemplar-test-setup.json",
+      "record_sha256": "afe57a74ca1a6b8fa16e756a8b810837032e91dbe68b415fc346f41ebcf7ef22"
+    },
+    {
+      "phase": "test-dispatch",
+      "event_id": "active-subagent-row-exemplar-test-dispatch-001",
+      "record": "evidence/ui-acceptance/2026-09-27/v4/events/active-subagent-row-exemplar-test-dispatch.json",
+      "record_sha256": "6d9ae8605a84080eef3c6bfc185aeed42a3222521d268ecc34d8a8370f2eaf8d"
+    },
+    {
+      "phase": "test-teardown",
+      "event_id": "active-subagent-row-exemplar-test-teardown-001",
+      "record": "evidence/ui-acceptance/2026-09-27/v4/events/active-subagent-row-exemplar-test-teardown.json",
+      "record_sha256": "edf666de17c93bfea62cd32d7d95c101d17855e4a2e62ff7038384baeab54b35"
+    }
+  ]
+}

@@ -1,6 +1,3 @@
-import { mkdir, rename, rm, writeFile } from "node:fs/promises"
-import path from "node:path"
-
 import { Plugin } from "@opencode/plugin"
 
 import {
@@ -13,9 +10,16 @@ import {
   todoArchiveRoot,
   type TodoArchiveQuery,
 } from "./archive.ts"
-import { normalizeTodoIdentity, type TodoIdentity } from "./identity.ts"
+import { assignTodoIds, normalizeTodoIdentity, type IdentifiedTodo, type TodoIdentity } from "./identity.ts"
+import {
+  confirmTodoSnapshotBindings,
+  readTodoDispatchSnapshot,
+  removeTodoDispatchSnapshot,
+  withTodoWriterLease,
+  writeTodoDispatchSnapshot,
+  type TodoDispatchBinding,
+} from "./dispatch.ts"
 import { createTodoRecorder } from "./recording.ts"
-import { serializeTodoState, todoStatePath } from "./state.ts"
 import { enforceSingleInProgress, normalizeTodos, summarize, type TodoItem } from "./store.ts"
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -42,22 +46,37 @@ export default Plugin.define({
       await ctx.storage.set(identityKeyFor(sessionID), identity as unknown as Parameters<typeof ctx.storage.set>[1])
     }
 
-    // Mirror the authoritative storage into a small JSON file so the CLI
-    // sidebar panel can render it without a server RPC channel.
-    const mirrorTodos = async (sessionID: string, todos: readonly TodoItem[]): Promise<void> => {
-      try {
-        const target = todoStatePath(sessionID)
-        await mkdir(path.dirname(target), { recursive: true })
-        const temporary = `${target}.${process.pid}.tmp`
-        await writeFile(temporary, serializeTodoState(todos), "utf8")
-        await rename(temporary, target)
-      } catch {
-        // The panel is a convenience; ctx.storage stays authoritative.
-      }
+    const mirrorTodos = async (
+      sessionID: string,
+      todos: readonly IdentifiedTodo[],
+      identity: TodoIdentity,
+      bindings: readonly TodoDispatchBinding[],
+    ): Promise<void> => {
+      await writeTodoDispatchSnapshot(sessionID, {
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        items: todos,
+        identity,
+        bindings,
+      })
+      confirmTodoSnapshotBindings(sessionID, todos)
     }
 
-    const removeMirror = async (sessionID: string): Promise<void> => {
-      await rm(todoStatePath(sessionID), { force: true }).catch(() => undefined)
+    const mirrorCurrentTodos = async (sessionID: string, todos: readonly TodoItem[]) => {
+      const previousIdentity = await readIdentity(sessionID)
+      const previous = await readTodoDispatchSnapshot(sessionID)
+      const assigned = assignTodoIds(previous?.identity ?? previousIdentity, todos, sessionID)
+      if (previous?.identity && !sameTodos(previous.items, assigned.todos)) {
+        throw new Error("todoread refused: durable Todo mirror and stored list disagree")
+      }
+      const bindings = reconcileBindings(previous?.bindings ?? [], assigned.todos)
+      try {
+        await writeIdentity(sessionID, assigned.identity)
+        await mirrorTodos(sessionID, assigned.todos, assigned.identity, bindings)
+      } catch (error) {
+        await writeIdentity(sessionID, previousIdentity).catch(() => undefined)
+        throw error
+      }
     }
 
     // Archive first, then accept the list: a failed archive append refuses the
@@ -69,6 +88,8 @@ export default Plugin.define({
       writeTodos,
       readIdentity,
       writeIdentity,
+      withWriterLease: withTodoWriterLease,
+      readSnapshot: readTodoDispatchSnapshot,
       mirrorTodos,
       appendTransitions: appendTodoTransitions,
       archiveRoot: () => todoArchiveRoot(),
@@ -119,7 +140,7 @@ export default Plugin.define({
         async execute(_raw, context) {
           const sessionID = String(context.sessionID)
           const todos = await readTodos(sessionID)
-          await mirrorTodos(sessionID, todos)
+          await withTodoWriterLease(sessionID, () => mirrorCurrentTodos(sessionID, todos))
           return { content: summarize(todos) }
         },
       })
@@ -201,9 +222,12 @@ export default Plugin.define({
           if (sessionID) {
             // The archive deliberately survives: only session-scoped storage and
             // the sidebar mirror are removed.
-            await ctx.storage.remove(keyFor(sessionID)).catch(() => undefined)
-            await ctx.storage.remove(identityKeyFor(sessionID)).catch(() => undefined)
-            await removeMirror(sessionID)
+            await withTodoWriterLease(sessionID, async () => {
+              await ctx.storage.remove(keyFor(sessionID)).catch(() => undefined)
+              await ctx.storage.remove(identityKeyFor(sessionID)).catch(() => undefined)
+              await removeTodoDispatchSnapshot(sessionID)
+              confirmTodoSnapshotBindings(sessionID, [])
+            })
           }
         }
       } catch {
@@ -214,3 +238,23 @@ export default Plugin.define({
     return () => controller.abort()
   },
 })
+
+function sameTodos(snapshot: readonly { id?: string; content: string; status: TodoItem["status"]; priority?: TodoItem["priority"] }[],
+  identified: readonly IdentifiedTodo[]) {
+  return snapshot.length === identified.length && snapshot.every((item, index) => {
+    const next = identified[index]!
+    return item.id === next.id && item.content === next.content && item.status === next.status && item.priority === next.priority
+  })
+}
+
+function reconcileBindings(bindings: readonly TodoDispatchBinding[], todos: readonly IdentifiedTodo[]) {
+  const next: TodoDispatchBinding[] = []
+  for (const binding of bindings) {
+    const item = todos.find((todo) => todo.id === binding.todoID)
+    if (!item || item.content !== binding.description && !item.content.startsWith(`${binding.description} —`)) {
+      throw new Error("todoread refused: a reserved Todo cannot be removed or renamed")
+    }
+    if (item.status !== "completed" && item.status !== "cancelled") next.push(binding)
+  }
+  return next
+}

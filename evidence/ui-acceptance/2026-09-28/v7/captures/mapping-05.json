@@ -1,0 +1,357 @@
+{
+  "version": 3,
+  "source_sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1",
+  "capture_generator": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+    "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+  },
+  "render_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+    "sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213"
+  },
+  "native_capture_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+    "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+  },
+  "native_capture_run": {
+    "scope": "native-test-renderer",
+    "run_id": "ca670d89-f3c3-437b-bd7b-91ccfa8cc01d",
+    "argv": [
+      "/bin/bash",
+      "/home/brajam/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh",
+      "--",
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/native-capture-fixture.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-28T19:20:22.844Z",
+    "finished_at": "2026-09-28T19:20:27.960Z",
+    "started_monotonic_ns": "68484891339505",
+    "finished_monotonic_ns": "68490007005366",
+    "exit_code": 0,
+    "inputs": [
+      {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+        "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+        "sha256": "3c6c507594a5c7d1f38db901230a86274830e7cf20507cbf6679623fdc706c84"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+        "sha256": "2171a8d467d738360424cb9952526dc37d33a6b500bfa4775078e7ce139ac2ef"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+        "sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+        "sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+        "sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+        "sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+        "sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+        "sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+        "sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+        "sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+        "sha256": "27369397979248d96d861e6c7a5f0b26f521551284fae430ada81f71a807a8ec"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+        "sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+        "sha256": "4d43b03a51b17df017e7a3c3f3b4a8c5d51d1381fbefa131acae9d1a92bc33b8"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+        "sha256": "5b596b304fc1cef3060baf3dc0f5151d2006a61eaf34b26565c006bbb4fd7e49"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts",
+        "sha256": "cceba416df4017a5cb7ee8ab87be2e14d2e24959de4e219dacb78d9b880463b2"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+        "sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+        "sha256": "9e923ad7044eb9374121ee8c79ea82abc7da3040d8fdb04453483c2f3ad80ea0"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+        "sha256": "ca296e9afef602f78376aa179b10357f3dac277170e9013847ec2f3472198350"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+        "sha256": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+        "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+        "sha256": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+        "sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+        "sha256": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5"
+      }
+    ]
+  },
+  "native_capture_output": {
+    "path": "evidence/ui-acceptance/2026-09-28/v7/native-output/mapping-05.json",
+    "sha256": "27e53a9891fd3f1077e560b3b7aacac75e0c045e67cc708a9c59b7bb4c64f878",
+    "encoding": "utf-8",
+    "format": "native-opentui-capture-v1"
+  },
+  "runtime": {
+    "id": "node-26.4.0-npm-11.17.0",
+    "name": "node",
+    "version": "26.4.0",
+    "identity": "node@26.4.0",
+    "provisioning": "external-checksum",
+    "executable": "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+    "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "package_manager": "npm",
+    "package_manager_version": "11.17.0",
+    "package_manager_identity": "npm@11.17.0",
+    "package_manager_executable": "/home/brajam/repos/opencode-rig/toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+    "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+  },
+  "renderer": {
+    "id": "opentui-0.5.11",
+    "name": "OpenTUI",
+    "version": "0.5.11",
+    "identity": "OpenTUI@0.5.11"
+  },
+  "observed_at": "2026-09-28T19:19:35.459Z",
+  "max_age_days": 1,
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "native_snapshots": [
+    {
+      "id": "mapping-05-open-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-open-before.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-open-before.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-open-before.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "mapping-05-open-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-open-after.txt",
+        "sha256": "4f621b3adfdf6dc9e74ee5c1ce8c6ae7e33ec5de9508662e2d4c1d3b861bd9a4",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-open-after.spans.json",
+        "sha256": "43c5b546124f94537d81a5c9490e86b4ce66c14d3a9c5163b1bc61713010bff2",
+        "semantic_sha256": "4aa2a7c7acc06968507fa9fc7a0f7e8c73fa3a7c3a70aec387eb52f9d2e60537",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-open-after.state.json",
+        "sha256": "62018e18e46e5332bd87b7d2e96d6c25df476c3524ff19de11fcc53a75eccfcb",
+        "semantic_sha256": "eaa8953c73731571af1cc0b775fc74b62da438a83f0cb8951bcec81c3c29b2f2",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "mapping-05-interact-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-interact-before.txt",
+        "sha256": "4f621b3adfdf6dc9e74ee5c1ce8c6ae7e33ec5de9508662e2d4c1d3b861bd9a4",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-interact-before.spans.json",
+        "sha256": "43c5b546124f94537d81a5c9490e86b4ce66c14d3a9c5163b1bc61713010bff2",
+        "semantic_sha256": "4aa2a7c7acc06968507fa9fc7a0f7e8c73fa3a7c3a70aec387eb52f9d2e60537",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-interact-before.state.json",
+        "sha256": "62018e18e46e5332bd87b7d2e96d6c25df476c3524ff19de11fcc53a75eccfcb",
+        "semantic_sha256": "eaa8953c73731571af1cc0b775fc74b62da438a83f0cb8951bcec81c3c29b2f2",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "mapping-05-interact-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-interact-after.txt",
+        "sha256": "bcd34d3119a7605d9717d7b575038e956c6155b062621edcab5a4cbedd1da8e7",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-interact-after.spans.json",
+        "sha256": "fe067fd4baa528194a8fec92c2d66c2e368434b8be67182a97af2b2236d2ee1e",
+        "semantic_sha256": "5971c891a833e0345f50cc90ce124dd3a2f8f2b5e514ede83d7b9374a22dff9e",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-interact-after.state.json",
+        "sha256": "5db1a7bd66b9015915a6d00016110efbd72b1a0a93554caacfdefb423df387cf",
+        "semantic_sha256": "8b3b4818aed706fb7e4cf144d65fdb28d8f544270d7baa3ca01afa404b71e0a4",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "mapping-05-close-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-close-after.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-close-after.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-close-after.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    }
+  ],
+  "native_frame": {
+    "snapshot_id": "mapping-05-interact-after",
+    "character_output": {
+      "path": "evidence/ui-acceptance/2026-09-28/v7/characters/mapping-05.txt",
+      "sha256": "bcd34d3119a7605d9717d7b575038e956c6155b062621edcab5a4cbedd1da8e7",
+      "encoding": "utf-8"
+    },
+    "semantic_spans": {
+      "path": "evidence/ui-acceptance/2026-09-28/v7/snapshots/mapping-05/mapping-05-interact-after.spans.json",
+      "sha256": "fe067fd4baa528194a8fec92c2d66c2e368434b8be67182a97af2b2236d2ee1e",
+      "semantic_sha256": "5971c891a833e0345f50cc90ce124dd3a2f8f2b5e514ede83d7b9374a22dff9e",
+      "encoding": "utf-8",
+      "format": "opentui-captureSpans-v1"
+    },
+    "frame_sha256": "bcd34d3119a7605d9717d7b575038e956c6155b062621edcab5a4cbedd1da8e7",
+    "spans_sha256": "5971c891a833e0345f50cc90ce124dd3a2f8f2b5e514ede83d7b9374a22dff9e"
+  },
+  "character_output": {
+    "path": "evidence/ui-acceptance/2026-09-28/v7/characters/mapping-05.txt",
+    "sha256": "bcd34d3119a7605d9717d7b575038e956c6155b062621edcab5a4cbedd1da8e7",
+    "encoding": "utf-8"
+  },
+  "span_visualization": {
+    "path": "evidence/ui-acceptance/2026-09-28/v7/images/mapping-05.png",
+    "sha256": "1b63806c08a85f16b0e930a09f54652815f8537456a5b3118a166428b845c8fd",
+    "mime": "image/png",
+    "width": 840,
+    "height": 480,
+    "derived_from": {
+      "snapshot_id": "mapping-05-interact-after",
+      "frame_sha256": "bcd34d3119a7605d9717d7b575038e956c6155b062621edcab5a4cbedd1da8e7",
+      "spans_sha256": "5971c891a833e0345f50cc90ce124dd3a2f8f2b5e514ede83d7b9374a22dff9e",
+      "renderer": "opentui-semantic-span-diagnostic-v1",
+      "cell_width": 6,
+      "cell_height": 8
+    }
+  },
+  "layout_assertions": [
+    {
+      "id": "visible_rows",
+      "operator": "<=",
+      "limit": 60
+    },
+    {
+      "id": "max_line_columns",
+      "operator": "<=",
+      "limit": 140
+    },
+    {
+      "id": "reachable_sections",
+      "operator": "==",
+      "limit": 3,
+      "targets": [
+        "presentation-preview-file-0.tsx",
+        "presentation-preview-file-1.tsx",
+        "CAPTURE_FOOTER"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "phase": "test-setup",
+      "event_id": "mapping-05-test-setup-001",
+      "record": "evidence/ui-acceptance/2026-09-28/v7/events/mapping-05-test-setup.json",
+      "record_sha256": "3e7d5fdfac712d7d7e665f5bf53e8bc3f02701c2f5655bb8eccc1a6bcde41800"
+    },
+    {
+      "phase": "test-dispatch",
+      "event_id": "mapping-05-test-dispatch-001",
+      "record": "evidence/ui-acceptance/2026-09-28/v7/events/mapping-05-test-dispatch.json",
+      "record_sha256": "38fcb321bb389b1d42ba4f0ee75d109ad235655d7f5456da712aa5644bbaa803"
+    },
+    {
+      "phase": "test-teardown",
+      "event_id": "mapping-05-test-teardown-001",
+      "record": "evidence/ui-acceptance/2026-09-28/v7/events/mapping-05-test-teardown.json",
+      "record_sha256": "e4c30d6981c0671d219fa305b2df3baa84a21de6e1fdfab88d47c5afeaf54175"
+    }
+  ]
+}

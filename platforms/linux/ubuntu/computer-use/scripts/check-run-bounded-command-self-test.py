@@ -311,6 +311,7 @@ def main() -> int:
             "case \"$mode\" in\n"
             "  malformed-child) child=424242; children=\"$child\"; /bin/mkdir -p \"$BOUNDED_COMMAND_PROC_ROOT/$child/task/$child\"; : > \"$BOUNDED_COMMAND_PROC_ROOT/$child/task/$child/children\"; printf 'Name: malformed-child\\n' > \"$BOUNDED_COMMAND_PROC_ROOT/$child/status\"; printf '%s\\n' \"$child (bad child) S $$ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 12345\" > \"$BOUNDED_COMMAND_PROC_ROOT/$child/stat\" ;;\n"
             "  disappearing-child) children=\"424243\" ;;\n"
+            "  vanishing-child) child=424245; children=\"$child\"; /bin/mkdir -p \"$BOUNDED_COMMAND_PROC_ROOT/$child/task/$child\"; : > \"$BOUNDED_COMMAND_PROC_ROOT/$child/task/$child/children\"; printf 'Name: vanishing\\nPPid: $$\\n' > \"$BOUNDED_COMMAND_PROC_ROOT/$child/status\" ;;\n"
             "  overbound) for ((i=0; i<513; i++)); do children=\"$children $((420000+i))\"; done ;;\n"
             "  reuse) child=424244; children=\"$child\"; /bin/mkdir -p \"$BOUNDED_COMMAND_PROC_ROOT/$child/task/$child\"; : > \"$BOUNDED_COMMAND_PROC_ROOT/$child/task/$child/children\"; printf 'Name: reuse\\nPPid: $$\\nVmRSS: 1 kB\\n' > \"$BOUNDED_COMMAND_PROC_ROOT/$child/status\"; printf '%s\\n' \"$child (reuse) S $$ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 11111\" > \"$BOUNDED_COMMAND_PROC_ROOT/$child/stat\"; (sleep 1; printf '%s\\n' \"$child (reuse) S $$ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 22222\" > \"$BOUNDED_COMMAND_PROC_ROOT/$child/stat\") & ;;\n"
             "esac\n"
@@ -355,6 +356,7 @@ def main() -> int:
         for mode, expected, label in (
             ("malformed-child", 125, "malformed child"),
             ("disappearing-child", 0, "disappearing child"),
+            ("vanishing-child", 0, "vanishing child"),
             ("overbound", 125, "over-bound tree"),
             ("reuse", 125, "PID reuse"),
             ("wrong-pgrp", 124, "wrong process group"),
@@ -366,6 +368,13 @@ def main() -> int:
             )
             if synthetic.returncode != expected:
                 print(f"ERROR: {label} synthetic tree returned {synthetic.returncode}", file=sys.stderr)
+                print(synthetic.stderr, file=sys.stderr, end="")
+                return 1
+            # A descendant whose /proc entry partially vanishes mid-sample must
+            # be treated as gone (skip), not fail the runner, and must not leak
+            # a /proc redirection error.
+            if mode == "vanishing-child" and ("No such file" in synthetic.stderr or "/stat" in synthetic.stderr):
+                print("ERROR: vanishing child produced sampler stderr noise", file=sys.stderr)
                 print(synthetic.stderr, file=sys.stderr, end="")
                 return 1
 

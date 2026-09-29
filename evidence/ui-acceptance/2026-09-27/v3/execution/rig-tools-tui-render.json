@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "kind": "render",
+  "test": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+  "test_sha256": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3",
+  "source_sha256": "177a3a513635f80a7a85a1bc6b6faf8b3a1160f3536291ac542cdd97998b8ea0",
+  "result": "passed",
+  "exit_code": 0,
+  "runner": "capture-generator.mjs",
+  "command": "[\"/home/brajam/repos/opencode-rig/toolchains/node/bin/node\",\"--experimental-ffi\",\"--experimental-strip-types\",\"--test\",\"test/rendered.test.ts\"]",
+  "observed_at": "2026-09-27T07:16:56.204Z",
+  "max_age_days": 1,
+  "output": "evidence/ui-acceptance/2026-09-27/v3/execution-output/rig-tools-tui-render.txt",
+  "output_sha256": "efef5d995521c7276338990146d5d0787fda17c7bef3a502966dac6c4034efc6",
+  "invocation": {
+    "run_id": "57448ce2-3caf-44f4-97c7-20384c92ac68",
+    "argv": [
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/rendered.test.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-27T07:16:54.474Z",
+    "finished_at": "2026-09-27T07:16:56.204Z",
+    "started_monotonic_ns": "4618607831932",
+    "finished_monotonic_ns": "4620338494111",
+    "exit_code": 0,
+    "source_sha256_before": "177a3a513635f80a7a85a1bc6b6faf8b3a1160f3536291ac542cdd97998b8ea0",
+    "source_sha256_after": "177a3a513635f80a7a85a1bc6b6faf8b3a1160f3536291ac542cdd97998b8ea0",
+    "test_sha256_before": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3",
+    "test_sha256_after": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3"
+  }
+}

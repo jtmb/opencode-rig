@@ -18,8 +18,9 @@ deletion confirmation.
 
 ## Tools
 
-The server exposes 21 tools; a v2 `permissions` deny list hides 12 of them,
-leaving the nine core tools:
+The server exposes 21 tools; the selected project's effective permissions deny
+11 management tools, leaving the nine core note tools plus
+`basic-memory_list_memory_projects`:
 
 | Tool | Use |
 |------|-----|
@@ -33,8 +34,40 @@ leaving the nine core tools:
 | `list_directory` | Browse the note tree |
 | `basic_memory_diagnostics` | Version and configuration diagnostics |
 
-The hidden tools are the schema tools, project/workspace management,
-`move_note`, `view_note`, `read_content`, and the compatibility `search`/`fetch`.
+The selected project and the separate pilot profile deny schema tools,
+workspace listing, project creation and deletion, `move_note`, `view_note`,
+`read_content`, and compatibility `search`/`fetch`. Build's `allow */*` comes
+after project-wide rules, so its own management denies must follow that wildcard
+to be effective. The selected project allows `basic-memory_list_memory_projects`
+for bounded discovery; the opt-in does not enable cross-project access by itself.
+
+## Cross-project access
+
+`OPENCODE_MEMORY_CROSS_PROJECT` controls the actual Basic Memory server scope:
+
+- Unset, empty, or `false` (the default) starts `basic-memory mcp --project
+  <project>`, restricting the server to `BASIC_MEMORY_PROJECT` (default
+  `computer-assistant`).
+- Exactly lowercase `true` omits `--project`, allowing the MCP server to route
+  to other existing projects. `BASIC_MEMORY_DEFAULT_PROJECT` still points at
+  the configured default, so requests without `project` or `project_id` stay on
+  that project.
+- Any other value is malformed and aborts startup with an error; it never
+  enables cross-project mode.
+
+In cross-project mode, choose a project with a tool's `project` or `project_id`
+field. `search_notes` can search every accessible project only when explicitly
+called with `search_all_projects: true`; a specific project selector takes
+precedence. The project-list tool is allowed in the opted-in machine config to
+find existing project names and IDs. Project IDs disambiguate projects across
+workspaces, so `basic-memory_list_workspaces` is not needed and remains denied.
+The project-list permission is static in OpenCode; the environment variable
+gates Basic Memory's server scope, not tool visibility. Project creation and
+deletion, note moves, raw-content/view tools, schema tools, and compatibility
+`search`/`fetch` remain denied. Access is limited to projects available to the
+local Basic Memory configuration and its credentials; the switch neither
+creates projects nor changes the automatic `computer-assistant`
+rule-reconciliation binding below.
 
 ## Using it
 
@@ -79,7 +112,7 @@ deadlock.
 
 - Bounded launcher check:
   `platforms/linux/ubuntu/computer-use/scripts/basic-memory-mcp.sh --verify-only`
-  prints the binary, project, limiter, and memory/swap budget.
+  prints the binary, project scope, limiter, and memory/swap budget.
 - Connection: `opencode mcp list` reports `basic-memory connected`.
 - Version pin: `0.23.2`, verified by
   [`setup-computer-assistant.sh --verify-only`](scripts/setup-computer-assistant.md).

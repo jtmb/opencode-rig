@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "phase": "test-setup",
+  "event_id": "active-subagent-row-exemplar-test-setup-001",
+  "capture_id": "active-subagent-row-exemplar",
+  "source_sha256": "5b596b304fc1cef3060baf3dc0f5151d2006a61eaf34b26565c006bbb4fd7e49",
+  "capture_generator_sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657",
+  "render_test_sha256": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3",
+  "native_capture_test_sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a",
+  "native_capture_output_sha256": "60823eb4efccf28ab5358daea7b984f1aa95fa6638660bb0771988c5b7879ab1",
+  "runtime_id": "node-26.4.0-npm-11.17.0",
+  "renderer_id": "opentui-0.5.11",
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "action": {
+    "type": "setup",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "mount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "951bccfc-0faa-41e0-adb7-a263261a4bef",
+    "dispatch_id": "active-subagent-row-exemplar-test-setup-dispatch-001",
+    "transition_id": "active-subagent-row-exemplar-test-setup-transition-001",
+    "dispatch_monotonic_ns": "2709611034226",
+    "transition_monotonic_ns": "2709731968474"
+  },
+  "before": {
+    "snapshot_id": "active-subagent-row-exemplar-open-before",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "after": {
+    "snapshot_id": "active-subagent-row-exemplar-open-after",
+    "frame_sha256": "ae844da8525ffadeb6810b0177da163a5a2a9ae84895045b144a2e1acdc429f9",
+    "spans_sha256": "2873874175633c0798968a35a0bff710bbb2354f9e9781c6687f4351d79db710",
+    "state_sha256": "b848bccb02d2a42444b327927d34c31d71dceb16e6856ae3f242f88e19e0d293"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": false,
+      "visibility_after": true,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_event_sha256": "556d7e4edf923ca31672d60cc3a20615508c1f2bf95812f3567997f4a47a5293",
+  "output": "evidence/ui-acceptance/2026-09-27/v4/event-output/active-subagent-row-exemplar-test-setup.json",
+  "output_sha256": "e3c39d2826288a56903d894aa29687684649667c7f773ad35ac4b265920cd4be",
+  "observed_at": "2026-09-27T10:03:57.625Z"
+}

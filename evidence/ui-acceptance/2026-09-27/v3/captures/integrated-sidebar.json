@@ -1,0 +1,428 @@
+{
+  "version": 3,
+  "source_sha256": "ec064f2dac7a1bf22a03cb36639d421f568156dc413e002c0dfea343b2d27cc8",
+  "capture_generator": {
+    "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+    "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+  },
+  "render_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+    "sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213"
+  },
+  "native_capture_test": {
+    "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+    "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+  },
+  "native_capture_run": {
+    "scope": "native-test-renderer",
+    "run_id": "9f99ef6f-8a3b-44b3-bc93-0dab33d9edc4",
+    "argv": [
+      "/bin/bash",
+      "/home/brajam/repos/opencode-rig/platforms/linux/ubuntu/computer-use/scripts/run-bounded-command.sh",
+      "--",
+      "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+      "--experimental-ffi",
+      "--experimental-strip-types",
+      "--test",
+      "test/native-capture-fixture.ts"
+    ],
+    "cwd": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools",
+    "started_at": "2026-09-27T07:18:12.641Z",
+    "finished_at": "2026-09-27T07:18:17.769Z",
+    "started_monotonic_ns": "4696775329433",
+    "finished_monotonic_ns": "4701902926113",
+    "exit_code": 0,
+    "inputs": [
+      {
+        "path": "evidence/ui-acceptance/2026-09-22/v3/generators/capture-generator.mjs",
+        "sha256": "49bb3db9ed1e54cac0477ee71464d4adc07f39cd26d32d4d323796bccf769657"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/providers.ts",
+        "sha256": "3c6c507594a5c7d1f38db901230a86274830e7cf20507cbf6679623fdc706c84"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/state.ts",
+        "sha256": "2171a8d467d738360424cb9952526dc37d33a6b500bfa4775078e7ce139ac2ef"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/src/tui.tsx",
+        "sha256": "85c26884bc9e72f452a933a19bdb9311ab452b4fca183976c518bc87501aee25"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/codex-usage/test/rendered.test.ts",
+        "sha256": "202e380f5399ea9686b6b6a5cfd111a846059514d5186fb0115fda5f65b58cfd"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/presentation.ts",
+        "sha256": "c600c52aca889221e0e727c70b87875f93427c3107e4b07f5e523c9e6227c6b1"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/theme.ts",
+        "sha256": "fd58e11a2d163fdb88fc064237ea4fd3db563eace999fd69250e5028854e7d72"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/src/tui.tsx",
+        "sha256": "2ced3fb7043955b0e5d31de86b0a627adadab6e58f422d8adc54bfbeec32fc4e"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/file-manager/test/rendered.test.ts",
+        "sha256": "4bdb9ec9848d2eee79196b135af66ad5f73fe9f5070e97b02c9f28cfd1d18213"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/store.ts",
+        "sha256": "b9b90d891966e054016a7b4d1329cb99875b52fc7bfeebd54ce4713b8fc12226"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tasks-panel.tsx",
+        "sha256": "f2207fd49d643868fc249d950bcb8dc0da69335cfcab62228569efed30e23990"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/src/tui.tsx",
+        "sha256": "27369397979248d96d861e6c7a5f0b26f521551284fae430ada81f71a807a8ec"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/rendered.test.ts",
+        "sha256": "ea474800ca1d87e965e2eea5fd041cf63285cbc1736460586518251864f48307"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-todo/test/tasks-rendered-fixture.ts",
+        "sha256": "4d43b03a51b17df017e7a3c3f3b4a8c5d51d1381fbefa131acae9d1a92bc33b8"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/active-subagent-row.ts",
+        "sha256": "5b596b304fc1cef3060baf3dc0f5151d2006a61eaf34b26565c006bbb4fd7e49"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/goal-handoff-control.ts",
+        "sha256": "96b5ff09d6564fc5d3797fc35559fc9532f1c7ad55d56d67a7ee567c759ffe71"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/hermes-hooks-panel.tsx",
+        "sha256": "3793092b3b67c1e266e420493cc3ee5923ea38cffe07a6c621a05a10ab50aa7f"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/subagents.ts",
+        "sha256": "38f50adc2fe85e321622435e3e935217712318b40091148d8064d29731ef7a0d"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/src/tui.tsx",
+        "sha256": "177a3a513635f80a7a85a1bc6b6faf8b3a1160f3536291ac542cdd97998b8ea0"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/hermes-hooks-panel-rendered.test.ts",
+        "sha256": "58785db760167a55052e0c8a3ca11e088f71200dd038eb18a6a2a072dcdea2bb"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/native-capture-fixture.ts",
+        "sha256": "cf79d480047ce97b6191ff9c19dca65f4f2daf955fee4845873224b3b934df7a"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/rig-tools/test/rendered.test.ts",
+        "sha256": "88eb838d83da6ed53659fdbf376bbd18bcec67fab0829b1ce91b7a9d223bf6f3"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/src/tui.tsx",
+        "sha256": "8f2da5f3f6fb32cb86820c909fd3c40620fa91b06e6bb300e2b6720d1f46e996"
+      },
+      {
+        "path": "platforms/linux/ubuntu/computer-use/plugins-v2/source-control/test/rendered.test.ts",
+        "sha256": "4e27abbe34c9ad79412877d8d724baf1f2b6b7b1a8f24a21c7964fb723ee73a5"
+      }
+    ]
+  },
+  "native_capture_output": {
+    "path": "evidence/ui-acceptance/2026-09-27/v3/native-output/integrated-sidebar.json",
+    "sha256": "a8f709b5340a938ee3165d65ae12ab3bc587436001ee3ad57a1d4be741528c45",
+    "encoding": "utf-8",
+    "format": "native-opentui-capture-v1"
+  },
+  "runtime": {
+    "id": "node-26.4.0-npm-11.17.0",
+    "name": "node",
+    "version": "26.4.0",
+    "identity": "node@26.4.0",
+    "provisioning": "external-checksum",
+    "executable": "/home/brajam/repos/opencode-rig/toolchains/node/bin/node",
+    "executable_sha256": "4cfdaeec2e3689e4728b4bc98932a9147a3f98162bdc7955c03c0d7fa3b8aa94",
+    "package_manager": "npm",
+    "package_manager_version": "11.17.0",
+    "package_manager_identity": "npm@11.17.0",
+    "package_manager_executable": "/home/brajam/repos/opencode-rig/toolchains/node/lib/node_modules/npm/bin/npm-cli.js",
+    "package_manager_executable_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+  },
+  "renderer": {
+    "id": "opentui-0.5.11",
+    "name": "OpenTUI",
+    "version": "0.5.11",
+    "identity": "OpenTUI@0.5.11"
+  },
+  "observed_at": "2026-09-27T07:18:12.633Z",
+  "max_age_days": 1,
+  "viewport": {
+    "columns": 140,
+    "rows": 60
+  },
+  "native_snapshots": [
+    {
+      "id": "integrated-sidebar-open-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-open-before.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-open-before.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-open-before.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-open-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-open-after.txt",
+        "sha256": "daead726a8cddff1bb65b4bc90d1ba90a95a2249d67cbf32e03ecf68d2e67a80",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-open-after.spans.json",
+        "sha256": "33bf61cd0423374798cc381c40cf541d33964de387601b11260325a3c5246861",
+        "semantic_sha256": "95b0094db5daecf439901ae1d4210c138246d94b31036707b216a20b5628a28c",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-open-after.state.json",
+        "sha256": "65b289e646ea051a538542a2b8b0c48866b117fe8009b80db548f3d690d315f4",
+        "semantic_sha256": "ccb2632d22ac9fa2252e50efc046a8f918dca05c4a0404ebdda70977ffca0d68",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-interact-before",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-before.txt",
+        "sha256": "daead726a8cddff1bb65b4bc90d1ba90a95a2249d67cbf32e03ecf68d2e67a80",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-before.spans.json",
+        "sha256": "33bf61cd0423374798cc381c40cf541d33964de387601b11260325a3c5246861",
+        "semantic_sha256": "95b0094db5daecf439901ae1d4210c138246d94b31036707b216a20b5628a28c",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-before.state.json",
+        "sha256": "65b289e646ea051a538542a2b8b0c48866b117fe8009b80db548f3d690d315f4",
+        "semantic_sha256": "ccb2632d22ac9fa2252e50efc046a8f918dca05c4a0404ebdda70977ffca0d68",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-interact-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.txt",
+        "sha256": "6ce6670b7d9923d359632d2044d4b4256c53bc3e3a08b59eae2bcedacfb1fa08",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.spans.json",
+        "sha256": "43c956e45e00cb7221a0b0ae4f9786547f81c9f17242c72720dfbe8bdb32af89",
+        "semantic_sha256": "0ea758cdc62834e657be7a36b22266d152beef2ba79f439c38c2c2ed6efe53e7",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.state.json",
+        "sha256": "0cbb084c2c048ca861d2fedebb51eb1c766687e74851a81d9ea9c641c177b844",
+        "semantic_sha256": "2a5ee7fafed309452d3e585c8e3642a310226d88887eaecfaeb15d65071fdec3",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-repository-session-hover",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-repository-session-hover.txt",
+        "sha256": "daead726a8cddff1bb65b4bc90d1ba90a95a2249d67cbf32e03ecf68d2e67a80",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-repository-session-hover.spans.json",
+        "sha256": "722c558cf97293a56003d86fb6c461db28a875269eb27f9999a09d457b3d3771",
+        "semantic_sha256": "7847b832dd6f029038e1ae17d7fe71420e35edbb382b15534a10a3648d90ee57",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-repository-session-hover.state.json",
+        "sha256": "65b289e646ea051a538542a2b8b0c48866b117fe8009b80db548f3d690d315f4",
+        "semantic_sha256": "ccb2632d22ac9fa2252e50efc046a8f918dca05c4a0404ebdda70977ffca0d68",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-subagents-collapsed",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed.txt",
+        "sha256": "56a204a28c05f27b9740b6fabdda09d5561faa33e9e6edc72698840614d5c169",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed.spans.json",
+        "sha256": "b77c3db6868ef081fb15081f8b7a60827acc1fbd8d853cf07578423ef5e8c865",
+        "semantic_sha256": "e0f27135e12f957508c4853426178ae451559d412f625af14d42c5d8d90f18b2",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed.state.json",
+        "sha256": "79bb107c2903d3b2f0175e1c9255ae77e1bba5ba0fd10094af0f5c51800801d6",
+        "semantic_sha256": "1b9c592da1bf3bd880e6a07611a254eba7674138d128049cf66cf4d8cf2bfb7a",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-subagents-collapsed-live-count",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed-live-count.txt",
+        "sha256": "1efb96c6781032f4de52371e3bed8249b77005fe11e2945b025611d2ef526f1b",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed-live-count.spans.json",
+        "sha256": "f7dbf269db63ef03a502c5cb3aed34e3d623c94a0855d400f22ad689bfc47c92",
+        "semantic_sha256": "06963fe19ceff7ca7afc57d104c3ea39035085825c41f256e5e448ca4d578997",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-subagents-collapsed-live-count.state.json",
+        "sha256": "87af47140830d96c77b49ba20a2d68f445ef04a4e3422e5804e25483a032530d",
+        "semantic_sha256": "6cc804213ba91a2ae561e6a68b4ab6ed29bc8ff9a11649fef902c4c41b4f0420",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    },
+    {
+      "id": "integrated-sidebar-close-after",
+      "frame": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-close-after.txt",
+        "sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+        "encoding": "utf-8"
+      },
+      "semantic_spans": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-close-after.spans.json",
+        "sha256": "84d45cc9f8a59f1f196e69ad148cb67a87d519b20fd13302011a77326db9f6da",
+        "semantic_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+        "encoding": "utf-8",
+        "format": "opentui-captureSpans-v1"
+      },
+      "state": {
+        "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-close-after.state.json",
+        "sha256": "17346772f9458752386b650548ca03b870f6ef36a95e0e8b9ae6930724884e92",
+        "semantic_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927",
+        "encoding": "utf-8",
+        "format": "native-state-v1"
+      }
+    }
+  ],
+  "native_frame": {
+    "snapshot_id": "integrated-sidebar-interact-after",
+    "character_output": {
+      "path": "evidence/ui-acceptance/2026-09-27/v3/characters/integrated-sidebar.txt",
+      "sha256": "6ce6670b7d9923d359632d2044d4b4256c53bc3e3a08b59eae2bcedacfb1fa08",
+      "encoding": "utf-8"
+    },
+    "semantic_spans": {
+      "path": "evidence/ui-acceptance/2026-09-27/v3/snapshots/integrated-sidebar/integrated-sidebar-interact-after.spans.json",
+      "sha256": "43c956e45e00cb7221a0b0ae4f9786547f81c9f17242c72720dfbe8bdb32af89",
+      "semantic_sha256": "0ea758cdc62834e657be7a36b22266d152beef2ba79f439c38c2c2ed6efe53e7",
+      "encoding": "utf-8",
+      "format": "opentui-captureSpans-v1"
+    },
+    "frame_sha256": "6ce6670b7d9923d359632d2044d4b4256c53bc3e3a08b59eae2bcedacfb1fa08",
+    "spans_sha256": "0ea758cdc62834e657be7a36b22266d152beef2ba79f439c38c2c2ed6efe53e7"
+  },
+  "character_output": {
+    "path": "evidence/ui-acceptance/2026-09-27/v3/characters/integrated-sidebar.txt",
+    "sha256": "6ce6670b7d9923d359632d2044d4b4256c53bc3e3a08b59eae2bcedacfb1fa08",
+    "encoding": "utf-8"
+  },
+  "span_visualization": {
+    "path": "evidence/ui-acceptance/2026-09-27/v3/images/integrated-sidebar.png",
+    "sha256": "3cf01bf351ed3776b27a8b8a2617ca1b191c9364cb1963fdeb29445f61bf1805",
+    "mime": "image/png",
+    "width": 840,
+    "height": 480,
+    "derived_from": {
+      "snapshot_id": "integrated-sidebar-interact-after",
+      "frame_sha256": "6ce6670b7d9923d359632d2044d4b4256c53bc3e3a08b59eae2bcedacfb1fa08",
+      "spans_sha256": "0ea758cdc62834e657be7a36b22266d152beef2ba79f439c38c2c2ed6efe53e7",
+      "renderer": "opentui-semantic-span-diagnostic-v1",
+      "cell_width": 6,
+      "cell_height": 8
+    }
+  },
+  "layout_assertions": [
+    {
+      "id": "visible_rows",
+      "operator": "<=",
+      "limit": 60
+    },
+    {
+      "id": "max_line_columns",
+      "operator": "<=",
+      "limit": 140
+    },
+    {
+      "id": "reachable_sections",
+      "operator": "==",
+      "limit": 8,
+      "targets": [
+        "ses_native_parent",
+        "- Active Subagents",
+        "- Todo",
+        "- Source Control",
+        "- Provider Usage",
+        "OpenAI",
+        "28%",
+        "CAPTURE_FOOTER"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "phase": "test-setup",
+      "event_id": "integrated-sidebar-test-setup-001",
+      "record": "evidence/ui-acceptance/2026-09-27/v3/events/integrated-sidebar-test-setup.json",
+      "record_sha256": "6b0426c948e3ea824c6e6fa005490a537585ff96a4672674e19938be6bf08740"
+    },
+    {
+      "phase": "test-dispatch",
+      "event_id": "integrated-sidebar-test-dispatch-001",
+      "record": "evidence/ui-acceptance/2026-09-27/v3/events/integrated-sidebar-test-dispatch.json",
+      "record_sha256": "ff2ea0c38910eb30f9d79b833d4275c9580335d06df34684686741da4f659d31"
+    },
+    {
+      "phase": "test-teardown",
+      "event_id": "integrated-sidebar-test-teardown-001",
+      "record": "evidence/ui-acceptance/2026-09-27/v3/events/integrated-sidebar-test-teardown.json",
+      "record_sha256": "125d75f64d0eadff1e4c4c4d2c9821f607aba0c3113b696411ccf0474085f59b"
+    }
+  ]
+}

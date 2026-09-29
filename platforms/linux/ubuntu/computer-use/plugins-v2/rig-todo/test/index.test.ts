@@ -6,7 +6,7 @@ import test from "node:test"
 
 import plugin from "../src/index.ts"
 
-const SESSION = "ses_history_tool"
+const SESSION = "ses_historytool"
 
 interface RegisteredTool {
   readonly name: string

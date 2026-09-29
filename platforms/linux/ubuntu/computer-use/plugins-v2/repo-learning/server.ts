@@ -1,32 +1,62 @@
 import { Plugin } from "@opencode/plugin"
 
 import {
+  addVerifiedConflictDecision,
   addReflectionObligation,
   addVerifiedReceipt,
   buildUntrustedReflectionContext,
   checkTaskCompletionReceipts,
   createReflectionState,
   createRepositoryKey,
+  formatReflectionConflictDecisionResult,
   formatReflectionResult,
   formatUnverifiedReflectionResult,
+  isPureGovernanceCodeModeCall,
   loadReflectionState,
+  outstandingReflectionConflicts,
   outstandingObligations as outstandingReflectionObligations,
+  prepareReflectionConflictDecision,
   prepareReflection,
   pruneReflectionState,
   reflectionStorageKey,
+  REFLECTION_CONFLICT_TOOL_NAME,
   REFLECTION_TOOL_NAME,
   serializeReflectionState,
   isLearningOrGovernanceTool,
+  type ReflectionBoundary,
   type ReflectionExecutionIdentity,
   type ReflectionState,
 } from "./src/reflection.ts"
 import { resolveRepoLearningOptions } from "./src/config.ts"
-import { createRecorder, toObservedEvent } from "./src/recorder.ts"
+import { createRecorder, toObservedEvent, type ObservedEvent } from "./src/recorder.ts"
 import { RepoLearning, type RepoLearningCompletionInput, type RepoLearningInput } from "./src/rpc.ts"
 import { loadStoredState, serializeState, type LearnState } from "./src/storage-state.ts"
 
 const STATE_KEY = "repo-learning/observe"
 const MAX_PENDING_REFLECTION_EXECUTIONS = 128
+const MAX_PENDING_CODE_MODE_STARTS = 128
+const MAX_PENDING_CODE_MODE_ID_LENGTH = 128
+
+function toolEventCallID(data: Record<string, unknown>): string | undefined {
+  if (typeof data.callID === "string") return data.callID
+  return typeof data.id === "string" ? data.id : undefined
+}
+
+function codeModeStartIdentity(value: unknown): { sessionID: string; toolCallID: string } | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return undefined
+  const event = value as Record<string, unknown>
+  if (event.type !== "session.tool.input.started") return undefined
+  const data = typeof event.data === "object" && event.data !== null && !Array.isArray(event.data)
+    ? event.data as Record<string, unknown>
+    : undefined
+  if (data?.name !== "execute" || typeof data.sessionID !== "string") return undefined
+  const toolCallID = toolEventCallID(data)
+  if (
+    toolCallID === undefined || data.sessionID.length > MAX_PENDING_CODE_MODE_ID_LENGTH ||
+    toolCallID.length > MAX_PENDING_CODE_MODE_ID_LENGTH
+  ) return undefined
+  return { sessionID: data.sessionID, toolCallID }
+}
 
 export function initialPluginState(value: unknown, nowMs = Date.now()): LearnState {
   return loadStoredState(value, nowMs).state
@@ -55,9 +85,18 @@ export function idleSessionID(value: unknown): string | undefined {
     : undefined
 }
 
-export function reflectionBoundary(value: unknown): { sessionID: string; boundary: "idle" } | undefined {
-  const sessionID = idleSessionID(value)
-  return sessionID === undefined ? undefined : { sessionID, boundary: "idle" }
+export function reflectionBoundary(
+  value: unknown,
+): { sessionID: string; boundary: ReflectionBoundary } | undefined {
+  const sessionID = eventSessionID(value)
+  if (!sessionID) return undefined
+  const type = (value as Record<string, unknown>).type
+  if (
+    type === "session.execution.succeeded" || type === "session.execution.failed" ||
+    type === "session.execution.interrupted"
+  ) return { sessionID, boundary: "task-boundary" }
+  const idleID = idleSessionID(value)
+  return idleID === undefined ? undefined : { sessionID: idleID, boundary: "idle" }
 }
 
 export async function eventBelongsToProject(
@@ -179,11 +218,30 @@ export async function setupRepoLearningServer(ctx: RepoLearningServerContext) {
 
   const pendingReflectionExecutions = new Map<string, {
     identity: ReflectionExecutionIdentity
-    receiptID: string
+    resultID: string
+    kind: "receipt" | "conflict-decision"
   }>()
 
   const learningGovernanceToolCalls = new Map<string, Set<string>>()
   const learningGovernanceExecutions = new Set<string>()
+  const pendingCodeModeStarts = new Map<string, { sessionID: string; observed: ObservedEvent }>()
+  const codeModeExecutionKey = (sessionID: string, toolCallID: string): string => JSON.stringify([sessionID, toolCallID])
+
+  const flushPendingCodeModeStarts = (sessionID: string): void => {
+    for (const [key, pending] of pendingCodeModeStarts) {
+      if (pending.sessionID !== sessionID) continue
+      pendingCodeModeStarts.delete(key)
+      recorder.recordEvent(pending.observed)
+    }
+  }
+
+  const markLearningGovernanceToolCall = (sessionID: string, toolCallID?: string) => {
+    learningGovernanceExecutions.add(sessionID)
+    if (toolCallID === undefined) return
+    const calls = learningGovernanceToolCalls.get(sessionID) ?? new Set<string>()
+    calls.add(toolCallID)
+    learningGovernanceToolCalls.set(sessionID, calls)
+  }
 
   const isLearningOrGovernanceEvent = (value: unknown): boolean => {
     if (typeof value !== "object" || value === null || Array.isArray(value)) return false
@@ -194,20 +252,15 @@ export async function setupRepoLearningServer(ctx: RepoLearningServerContext) {
     if (!data) return false
 
     const sessionID = data.sessionID
-    const toolCallID = data.id
+    const toolCallID = toolEventCallID(data)
     if (event.type === "session.tool.input.started" && isLearningOrGovernanceTool(data.name)) {
       if (typeof sessionID === "string") {
-        learningGovernanceExecutions.add(sessionID)
-        if (typeof toolCallID === "string") {
-          const calls = learningGovernanceToolCalls.get(sessionID) ?? new Set<string>()
-          calls.add(toolCallID)
-          learningGovernanceToolCalls.set(sessionID, calls)
-        }
+        markLearningGovernanceToolCall(sessionID, toolCallID)
       }
       return true
     }
 
-    if (typeof sessionID === "string" && typeof toolCallID === "string") {
+    if (typeof sessionID === "string" && toolCallID !== undefined) {
       const calls = learningGovernanceToolCalls.get(sessionID)
       if (calls?.has(toolCallID)) {
         if (event.type === "session.tool.success" || event.type === "session.tool.failed") {
@@ -290,6 +343,7 @@ export async function setupRepoLearningServer(ctx: RepoLearningServerContext) {
         receipted: 0,
         missingObligationIDs: [],
         conflictObligationIDs: [],
+        unresolvedConflictIDs: [],
       }
     }
     return await enqueueStorageWrite(async () => {
@@ -346,44 +400,100 @@ export async function setupRepoLearningServer(ctx: RepoLearningServerContext) {
           return { content: formatUnverifiedReflectionResult(prepared) }
         },
       })
+      editor.add({
+        name: REFLECTION_CONFLICT_TOOL_NAME,
+        description:
+          "Resolve one bounded repository-learning proposal conflict by selecting a listed proposal digest or rejecting all proposals. Decisions are attributed, immutable, and never apply changes.",
+        input: {
+          type: "object",
+          properties: {
+            conflictID: { type: "string", minLength: 1, maxLength: 80 },
+            conflictDigest: { type: "string", minLength: 64, maxLength: 64 },
+            selectedProposalDigest: {
+              anyOf: [
+                { type: "string", minLength: 64, maxLength: 64 },
+                { type: "null" },
+              ],
+            },
+            rationale: { type: "string", minLength: 1, maxLength: 1024 },
+          },
+          required: ["conflictID", "conflictDigest", "selectedProposalDigest", "rationale"],
+          additionalProperties: false,
+        },
+        execute: async (input, context) => {
+          await storageWriteQueue
+          const prepared = prepareReflectionConflictDecision(reflectionState, input, identityFrom(context), Date.now())
+          return { content: formatReflectionConflictDecisionResult(prepared) }
+        },
+      })
     }))
 
     registrations.push(await ctx.session.hook("context", async (event) => {
       if (!await sessionBelongsToRepository(event.sessionID)) return
-      if (!Object.prototype.hasOwnProperty.call(event.tools, REFLECTION_TOOL_NAME)) return
+      const hasCodeMode = Object.prototype.hasOwnProperty.call(event.tools, "execute")
+      const hasReflectionTool = hasCodeMode || Object.prototype.hasOwnProperty.call(event.tools, REFLECTION_TOOL_NAME)
+      const hasConflictTool = hasCodeMode || Object.prototype.hasOwnProperty.call(event.tools, REFLECTION_CONFLICT_TOOL_NAME)
+      if (!hasReflectionTool && !hasConflictTool) return
       let obligations: ReturnType<typeof outstandingReflectionObligations> = []
+      let conflicts: ReturnType<typeof outstandingReflectionConflicts> = []
       try {
-        obligations = await enqueueStorageWrite(async () => {
-          if (!reflectionStorageHealthy) return []
-          if (!await persistReflectionState(pruneReflectionState(reflectionState))) return []
-          return outstandingReflectionObligations(reflectionState, event.sessionID)
+        const visible = await enqueueStorageWrite(async (): Promise<[
+          ReturnType<typeof outstandingReflectionObligations>,
+          ReturnType<typeof outstandingReflectionConflicts>,
+        ]> => {
+          if (!reflectionStorageHealthy) return [[], []]
+          if (!await persistReflectionState(pruneReflectionState(reflectionState))) return [[], []]
+          return [
+            hasReflectionTool ? outstandingReflectionObligations(reflectionState, event.sessionID) : [],
+            hasConflictTool ? outstandingReflectionConflicts(reflectionState, event.sessionID) : [],
+          ]
         })
+        obligations = visible[0]
+        conflicts = visible[1]
       } catch {
         reflectionStorageHealthy = false
         console.warn("[repo-learning] reflection context could not be refreshed")
         return
       }
-      if (obligations.length === 0) return
-      event.system.push({ type: "text", text: buildUntrustedReflectionContext(obligations) })
+      if (obligations.length === 0 && conflicts.length === 0) return
+      event.system.push({ type: "text", text: buildUntrustedReflectionContext(obligations, conflicts) })
     }))
 
     registrations.push(await ctx.tool.hook("execute.before", async (event) => {
-      if (event.tool !== REFLECTION_TOOL_NAME) return
       const identity = identityFrom(event)
+      if (event.tool === "execute") {
+        const input = typeof event.input === "object" && event.input !== null && !Array.isArray(event.input)
+          ? event.input as Record<string, unknown>
+          : undefined
+        if (!identity || !await sessionBelongsToRepository(identity.sessionID)) return
+        const key = codeModeExecutionKey(identity.sessionID, identity.toolCallID)
+        const pending = pendingCodeModeStarts.get(key)
+        pendingCodeModeStarts.delete(key)
+        if (isPureGovernanceCodeModeCall(input?.code)) markLearningGovernanceToolCall(identity.sessionID, identity.toolCallID)
+        else if (pending) recorder.recordEvent(pending.observed)
+        return
+      }
+      if (event.tool !== REFLECTION_TOOL_NAME && event.tool !== REFLECTION_CONFLICT_TOOL_NAME) return
       if (!identity || !await sessionBelongsToRepository(identity.sessionID)) return
       await enqueueStorageWrite(async () => {
         if (!reflectionStorageHealthy) return
         if (!await persistReflectionState(pruneReflectionState(reflectionState))) return
-        const prepared = prepareReflection(reflectionState, event.input, identity, Date.now())
-        if (!prepared.accepted) return
         const key = executionKey(identity)
         if (!pendingReflectionExecutions.has(key) && pendingReflectionExecutions.size >= MAX_PENDING_REFLECTION_EXECUTIONS) return
-        pendingReflectionExecutions.set(key, { identity, receiptID: prepared.receipt.id })
+        if (event.tool === REFLECTION_TOOL_NAME) {
+          const prepared = prepareReflection(reflectionState, event.input, identity, Date.now())
+          if (!prepared.accepted) return
+          pendingReflectionExecutions.set(key, { identity, kind: "receipt", resultID: prepared.receipt.id })
+          return
+        }
+        const prepared = prepareReflectionConflictDecision(reflectionState, event.input, identity, Date.now())
+        if (!prepared.accepted) return
+        pendingReflectionExecutions.set(key, { identity, kind: "conflict-decision", resultID: prepared.decision.id })
       })
     }))
 
     registrations.push(await ctx.tool.hook("execute.after", async (event) => {
-      if (event.tool !== REFLECTION_TOOL_NAME) return
+      if (event.tool !== REFLECTION_TOOL_NAME && event.tool !== REFLECTION_CONFLICT_TOOL_NAME) return
       const identity = identityFrom(event)
       if (!identity) return
       const key = executionKey(identity)
@@ -396,16 +506,29 @@ export async function setupRepoLearningServer(ctx: RepoLearningServerContext) {
         const verified = await enqueueStorageWrite(async () => {
           if (!reflectionStorageHealthy) return undefined
           if (!await persistReflectionState(pruneReflectionState(reflectionState))) return undefined
-          const prepared = prepareReflection(reflectionState, event.input, identity, Date.now())
-          if (!prepared.accepted || prepared.receipt.id !== pending.receiptID) return undefined
-          const next = addVerifiedReceipt(reflectionState, prepared.receipt)
+          if (pending.kind === "receipt") {
+            if (event.tool !== REFLECTION_TOOL_NAME) return undefined
+            const prepared = prepareReflection(reflectionState, event.input, identity, Date.now())
+            if (!prepared.accepted || prepared.receipt.id !== pending.resultID) return undefined
+            const next = addVerifiedReceipt(reflectionState, prepared.receipt)
+            if (!next.added || !await persistReflectionState(next.state)) return undefined
+            return { kind: "receipt" as const, prepared }
+          }
+          if (event.tool !== REFLECTION_CONFLICT_TOOL_NAME) return undefined
+          const prepared = prepareReflectionConflictDecision(reflectionState, event.input, identity, Date.now())
+          if (!prepared.accepted || prepared.decision.id !== pending.resultID) return undefined
+          const next = addVerifiedConflictDecision(reflectionState, prepared.decision)
           if (!next.added || !await persistReflectionState(next.state)) return undefined
-          return prepared
+          return { kind: "conflict-decision" as const, prepared }
         })
-        if (verified) event.result = { ...event.result, content: formatReflectionResult(verified) }
+        if (verified?.kind === "receipt") {
+          event.result = { ...event.result, content: formatReflectionResult(verified.prepared) }
+        } else if (verified?.kind === "conflict-decision") {
+          event.result = { ...event.result, content: formatReflectionConflictDecisionResult(verified.prepared, true) }
+        }
       } catch {
         reflectionStorageHealthy = false
-        console.warn("[repo-learning] verified reflection receipt could not be persisted")
+        console.warn("[repo-learning] verified reflection result could not be persisted")
       }
     }))
   }
@@ -417,11 +540,24 @@ export async function setupRepoLearningServer(ctx: RepoLearningServerContext) {
       try {
         for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
           if (!await eventBelongsToProject(event, target, (id) => ctx.session.get({ sessionID: id }))) continue
+          const boundary = reflectionBoundary(event)
+          if (boundary) flushPendingCodeModeStarts(boundary.sessionID)
           if (!isLearningOrGovernanceEvent(event)) {
             const observed = toObservedEvent(event)
-            if (observed !== undefined) recorder.recordEvent(observed)
+            if (observed !== undefined) {
+              const start = codeModeStartIdentity(event)
+              if (start === undefined) recorder.recordEvent(observed)
+              else {
+                const key = codeModeExecutionKey(start.sessionID, start.toolCallID)
+                if (pendingCodeModeStarts.size < MAX_PENDING_CODE_MODE_STARTS || pendingCodeModeStarts.has(key)) {
+                  pendingCodeModeStarts.set(key, { sessionID: start.sessionID, observed })
+                } else {
+                  // ponytail: over-cap starts are recorded; add per-session queues if real concurrency exceeds this cap.
+                  recorder.recordEvent(observed)
+                }
+              }
+            }
           }
-          const boundary = reflectionBoundary(event)
           if (!boundary) continue
           clearLearningGovernanceEvents(boundary.sessionID)
           const episode = recorder.flushSession(boundary.sessionID)

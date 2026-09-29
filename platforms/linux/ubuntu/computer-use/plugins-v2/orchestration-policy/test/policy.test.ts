@@ -27,9 +27,20 @@ import {
   type MemorySnapshot,
   type TaskKind,
 } from "../src/policy.ts"
+import { DEFAULT_ENFORCEMENTS } from "../src/settings.ts"
+import type { RepoLearningCompletionOutput } from "../../repo-learning/src/rpc.ts"
 
 const DEFAULT_DESCRIPTION = "Run the requested child task"
 const REPOSITORY_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../../../../..")
+const readyRepoLearningPreflight = async (_sessionID: string): Promise<RepoLearningCompletionOutput> => ({
+  enabled: true,
+  ready: true,
+  required: 0,
+  receipted: 0,
+  missingObligationIDs: [],
+  conflictObligationIDs: [],
+  unresolvedConflictIDs: [],
+})
 
 const syntheticTodoState = async (_parentSessionID: string, description?: string) => JSON.stringify({
   items: description ? [{ content: description, status: "pending" }] : [],
@@ -64,6 +75,7 @@ function configuredPolicy(
   maxConcurrent = 3,
   options: Record<string, unknown> = {},
   environment?: NodeJS.ProcessEnv,
+  repoLearningPreflight = readyRepoLearningPreflight,
 ) {
   return createOrchestrationPolicy({
     maxConcurrent,
@@ -72,6 +84,7 @@ function configuredPolicy(
     capacityDiagnostic,
     resolveAgentModel: async () => "project/provider-model#default",
     readTodoState: syntheticTodoState,
+    repoLearningPreflight,
     ...(environment ? { environment } : {}),
   })
 }
@@ -123,6 +136,67 @@ async function acceptChild(controller: ReturnType<typeof policy>, id = "accepted
 
 const installedPath = ["/home/test/.local", "opt", "opencode"].join("/")
 
+test("parent progress requires dispatch with free capacity but blocker reporting and reads remain available", async () => {
+  const controller = createOrchestrationPolicy({ maxConcurrent: 10 }, {
+    capacityDiagnostic: async () => ({}),
+    repoLearningPreflight: readyRepoLearningPreflight,
+    resolveAgentModel: async () => "fixture/model",
+    readTodoState: async () => JSON.stringify({ items: [{ content: DEFAULT_DESCRIPTION, status: "pending" }], updatedAt: "now" }),
+  })
+  const progress = { tool: "goal_report", id: "progress", sessionID: "ses_parent", input: { status: "progress", evidence: "planning done" } }
+  await assert.rejects(controller.before(progress), /call task_declare/)
+  controller.declareTask("ses_parent", { kind: "change" })
+  await assert.rejects(controller.before(progress), /dispatch required.*1.*10/i)
+  await controller.before({ ...progress, input: { status: "blocked", evidence: "operator input required" } })
+  await controller.before({ ...progress, tool: "read", input: { path: "README.md" } })
+  await controller.before(event("dispatch"))
+})
+
+test("single-subagent mode drains running and pending children without cancelling or stranding admission", async () => {
+  const controller = declaredPolicy(10, "change", 10)
+  const first = await launch(controller, "first")
+  await controller.before(event("pending"))
+  controller.setEnforcementSettings({ status: "valid", enforcements: { ...DEFAULT_ENFORCEMENTS }, orchestrationMode: "single-subagent" })
+  await assert.rejects(controller.before(event("third")), /limit reached.*2\/1/)
+  controller.after({ ...event("pending"), status: "completed", result: { sessionID: "ses_pending" } })
+  for (const child of [first, "ses_pending"]) {
+    controller.sessionStatus(child, "idle")
+    controller.reviewFollowup("ses_parent", { sessionID: child, outcome: "accepted", verification: "Independently verified child" })
+    controller.acknowledgeFollowup("ses_parent", child, "accepted")
+  }
+  await controller.before(event("next"))
+  await assert.rejects(controller.before(event("overflow")), /limit reached.*1\/1/)
+  controller.setEnforcementSettings({ status: "valid", enforcements: { ...DEFAULT_ENFORCEMENTS }, orchestrationMode: "parallel" })
+  await controller.before(event("parallel"))
+})
+
+test("dispatch gate respects full capacity and follow-up, fails closed on bad Todo/settings, and exempts workers", async () => {
+  let text = JSON.stringify({ items: [{ content: DEFAULT_DESCRIPTION, status: "pending" }], updatedAt: "now" })
+  const controller = createOrchestrationPolicy({ maxConcurrent: 1 }, {
+    capacityDiagnostic: async () => ({}), repoLearningPreflight: readyRepoLearningPreflight,
+    resolveAgentModel: async () => "fixture/model", readTodoState: async () => text,
+  })
+  controller.declareTask("ses_parent", { kind: "change" })
+  const progress = { tool: "goal_report", id: "progress", sessionID: "ses_parent", input: { status: "progress" } }
+  controller.setEnforcementSettings({ status: "valid", enforcements: { ...DEFAULT_ENFORCEMENTS, parentDelegationOnly: false } })
+  await assert.rejects(controller.before({ ...progress, tool: "patch", input: { patchText: "*** Begin Patch\n*** Add File: src/fix.ts\n+fix\n*** End Patch" } }), /Todo dispatch required/)
+  const child = await launch(controller, "capacity")
+  await controller.before(progress)
+  await controller.before({ ...progress, sessionID: child })
+  text = "invalid JSON"
+  await assert.rejects(controller.before(progress), /Todo state is unavailable or invalid/)
+  text = JSON.stringify({ items: [], updatedAt: "now" })
+  controller.sessionStatus(child, "idle")
+  await assert.rejects(controller.before(progress), /follow-up required/)
+  controller.reviewFollowup("ses_parent", { sessionID: child, outcome: "accepted", verification: "Independently reviewed" })
+  controller.acknowledgeFollowup("ses_parent", child, "accepted")
+  await controller.before(progress)
+  controller.setEnforcementSettings({ status: "valid", enforcements: { ...DEFAULT_ENFORCEMENTS }, orchestrationMode: "unlimited" } as never)
+  assert.equal(controller.enforcementState().status, "invalid")
+  await assert.rejects(controller.before(progress), /invalid operator workflow settings/)
+  await assert.rejects(controller.before(event("invalid-mode")), /invalid operator workflow settings/)
+})
+
 function memoryPolicy(interval = 10) {
   return createOrchestrationPolicy({
     reconciliationIntervalTurns: interval,
@@ -134,6 +208,7 @@ function memoryPolicy(interval = 10) {
     capacityDiagnostic: async () => ({ approvedCount: 3 }),
     resolveAgentModel: async () => "project/provider-model#default",
     readTodoState: syntheticTodoState,
+    repoLearningPreflight: readyRepoLearningPreflight,
   })
 }
 
@@ -158,6 +233,7 @@ async function realTodoPolicy(
     },
     resolveAgentModel: async () => "project/provider-model#default",
     todoRoot: root,
+    repoLearningPreflight: readyRepoLearningPreflight,
     ...(todoStatePath ? { todoStatePath } : {}),
   })
   controller.declareTask("ses_parent", { kind: "change" })
@@ -170,7 +246,35 @@ function acceptancePolicy(projectRoot: string, readTodoState = syntheticTodoStat
     resolveAgentModel: async () => "project/provider-model#default",
     readTodoState,
     projectRoot,
+    repoLearningPreflight: readyRepoLearningPreflight,
   })
+}
+
+function repoLearningPreflightPolicy(
+  repoLearningPreflight: (sessionID: string) => Promise<RepoLearningCompletionOutput>,
+) {
+  const controller = configuredPolicy(async () => ({ approvedCount: 3 }), 3, {}, undefined, repoLearningPreflight)
+  controller.setEnforcementSettings({
+    enforcements: { ...DEFAULT_ENFORCEMENTS, parentDelegationOnly: false },
+    status: "valid",
+  })
+  controller.declareTask("ses_parent", { kind: "change" })
+  return controller
+}
+
+function blockedRepoLearningPreflight(
+  overrides: Partial<RepoLearningCompletionOutput> = {},
+): RepoLearningCompletionOutput {
+  return {
+    enabled: true,
+    ready: false,
+    required: 1,
+    receipted: 0,
+    missingObligationIDs: ["obl_123"],
+    conflictObligationIDs: [],
+    unresolvedConflictIDs: [],
+    ...overrides,
+  }
 }
 
 function acceptanceManifest(claims: readonly Record<string, unknown>[]) {
@@ -379,6 +483,9 @@ test("validates the hard cap and ignores legacy identity options", () => {
   assert.equal(parseOrchestrationPolicyOptions({}).maxConcurrent, 10)
   assert.equal(parseOrchestrationPolicyOptions({}).delegationOnly, true)
   assert.equal(parseOrchestrationPolicyOptions({ backgroundOnly: false }).delegationOnly, true)
+  assert.match(parseOrchestrationPolicyOptions({ backgroundOnly: false }).configurationErrors.join(" "), /use the operator-only Ctrl\+P Open Rig workflow settings entry/)
+  assert.equal(parseOrchestrationPolicyOptions({ enabled: false }).enabled, true)
+  assert.match(parseOrchestrationPolicyOptions({ enabled: false }).configurationErrors.join(" "), /cannot disable orchestration safety hooks/)
   assert.equal(parseOrchestrationPolicyOptions({ delegationOnly: false }).delegationOnly, true)
   assert.match(parseOrchestrationPolicyOptions({ delegationOnly: false }).configurationErrors.join(" "), /not configurable/)
   for (let maxConcurrent = 1; maxConcurrent <= 10; maxConcurrent += 1) {
@@ -853,7 +960,7 @@ test("allows only the exact declared environment opt-out and keeps malformed set
     }, { OPEN_RIG_ALLOW_PARENT_WORK: value })
     assert.equal(invalid.options.delegationOnly, true)
     assert.match(invalid.options.configurationErrors.join(" "), /must be unset or equal exactly/)
-    assert.match(invalid.instructions("ses_parent"), /PARENT DELEGATION CONFIGURATION INVALID/)
+    assert.match(invalid.instructions("ses_parent"), /ORCHESTRATION CONFIGURATION ERRORS/)
     const childID = await launch(invalid, `invalid-override-${index}`, "ses_parent", `ses_invalidoverride${index}`)
     await invalid.before({
       tool: "patch",
@@ -868,8 +975,12 @@ test("allows only the exact declared environment opt-out and keeps malformed set
   }
 })
 
-test("backgroundOnly false changes only child launch mode, never parent delegation", async () => {
-  const controller = declaredPolicy(3, "change", 3, { backgroundOnly: false })
+test("backgroundChildrenOnly OFF changes child launch mode, never parent delegation", async () => {
+  const controller = declaredPolicy()
+  controller.setEnforcementSettings({
+    enforcements: { ...DEFAULT_ENFORCEMENTS, backgroundChildrenOnly: false },
+    status: "valid",
+  })
   const launchEvent = event("foreground-child", { background: false })
   await controller.before(launchEvent)
   const childID = "ses_foregroundchild"
@@ -893,6 +1004,220 @@ test("backgroundOnly false changes only child launch mode, never parent delegati
   )
 })
 
+test("requireTaskDeclare OFF permits a mutation without changing the other enforcement settings", async () => {
+  const enabled = policy()
+  await assert.rejects(enabled.before({
+    tool: "patch",
+    id: "task-required",
+    sessionID: "ses_parent",
+    input: { patchText: "*** Update File: README.md" },
+  }), /call task_declare/)
+
+  const disabled = policy()
+  disabled.setEnforcementSettings({
+    enforcements: { ...DEFAULT_ENFORCEMENTS, requireTaskDeclare: false },
+    status: "valid",
+  })
+  await assert.doesNotReject(disabled.before({
+    tool: "patch",
+    id: "task-not-required",
+    sessionID: "ses_parent",
+    input: { patchText: "*** Update File: README.md" },
+  }))
+
+  disabled.setEnforcementSettings({
+    enforcements: { ...DEFAULT_ENFORCEMENTS, ...Object.fromEntries(Object.keys(DEFAULT_ENFORCEMENTS).map((name) => [name, false])) },
+    status: "invalid",
+  })
+  assert.deepEqual(disabled.enforcementState().enforcements, DEFAULT_ENFORCEMENTS)
+})
+
+test("strictShellClassification OFF permits bounded read-only utilities without a task", async () => {
+  const enabled = policy()
+  await assert.rejects(enabled.before({
+    tool: "shell",
+    id: "strict-ls",
+    sessionID: "ses_parent",
+    input: { command: "ls -R -F" },
+  }), /call task_declare/)
+
+  const disabled = policy()
+  disabled.setEnforcementSettings({
+    enforcements: { ...DEFAULT_ENFORCEMENTS, strictShellClassification: false },
+    status: "valid",
+  })
+  assert.equal(toolMayMutate("shell", { command: "ls -R -F" }, [], false), false)
+  await assert.doesNotReject(disabled.before({
+    tool: "shell",
+    id: "relaxed-ls",
+    sessionID: "ses_parent",
+    input: { command: "ls -R -F" },
+  }))
+  assert.equal(toolMayMutate("shell", { command: "ls -R; touch marker" }, [], false), true)
+})
+
+test("parentDelegationOnly OFF releases parent implementation after declaration and respects the env opt-out", async () => {
+  const enabled = declaredPolicy()
+  await assert.rejects(enabled.before({
+    tool: "patch",
+    id: "parent-delegation-on",
+    sessionID: "ses_parent",
+    input: { patchText: "*** Update File: README.md" },
+  }), /direct background child is required/)
+
+  const disabled = declaredPolicy()
+  disabled.setEnforcementSettings({
+    enforcements: { ...DEFAULT_ENFORCEMENTS, parentDelegationOnly: false },
+    status: "valid",
+  })
+  await assert.doesNotReject(disabled.before({
+    tool: "patch",
+    id: "parent-delegation-off",
+    sessionID: "ses_parent",
+    input: { patchText: "*** Update File: README.md" },
+  }))
+
+  const legacyOptOut = declaredPolicy(3, "change", 3, {
+    parentImplementationOptOutEnv: "OPEN_RIG_ALLOW_PARENT_WORK",
+  }, { OPEN_RIG_ALLOW_PARENT_WORK: "true" })
+  await assert.doesNotReject(legacyOptOut.before({
+    tool: "patch",
+    id: "legacy-parent-opt-out",
+    sessionID: "ses_parent",
+    input: { patchText: "*** Update File: README.md" },
+  }))
+})
+
+test("correctionLedgers OFF removes only the correction acknowledgement requirement", async () => {
+  const enabled = declaredPolicy(3, "correction")
+  enabled.setEnforcementSettings({
+    enforcements: { ...DEFAULT_ENFORCEMENTS, correctionLedgers: false },
+    status: "valid",
+  })
+  const enabledChild = await launch(enabled, "ledger-on", "ses_parent", "ses_ledgeron")
+  enabled.setEnforcementSettings({ enforcements: DEFAULT_ENFORCEMENTS, status: "valid" })
+  await assert.rejects(enabled.before({
+    tool: "patch",
+    id: "ledger-required",
+    sessionID: enabledChild,
+    input: { patchText: "*** Update File: README.md" },
+  }), /correction ledger acknowledgement is incomplete/)
+
+  const disabled = declaredPolicy(3, "correction")
+  disabled.setEnforcementSettings({
+    enforcements: { ...DEFAULT_ENFORCEMENTS, correctionLedgers: false },
+    status: "valid",
+  })
+  const disabledChild = await launch(disabled, "ledger-off", "ses_parent", "ses_ledgeroff")
+  await assert.doesNotReject(disabled.before({
+    tool: "patch",
+    id: "ledger-not-required",
+    sessionID: disabledChild,
+    input: { patchText: "*** Update File: README.md" },
+  }))
+})
+
+test("requires every correction ledger before reserving a direct launch", async () => {
+  const ledgers = ["roadmap", "todo", "memory"] as const
+  for (const missing of ledgers) {
+    let capacityCalls = 0
+    const controller = configuredPolicy(async () => {
+      capacityCalls += 1
+      return { approvedCount: 3 }
+    })
+    controller.declareTask("ses_parent", { kind: "correction" })
+    const launchEvent = event(`missing-${missing}`)
+
+    for (const ledger of ledgers) {
+      if (ledger !== missing) {
+        controller.acknowledgeCorrection("ses_parent", {
+          ledger,
+          status: "no_write",
+          evidence: `${ledger} is acknowledged for the direct-launch test.`,
+        })
+      }
+    }
+
+    await assert.rejects(controller.before(launchEvent), /correction ledger acknowledgement is incomplete/)
+    assert.equal(capacityCalls, 0)
+    assert.deepEqual(controller.state(), { pending: 0, active: 0, known: 0 })
+    assert.deepEqual(controller.taskState("ses_parent")?.children, [])
+
+    controller.acknowledgeCorrection("ses_parent", {
+      ledger: missing,
+      status: "no_write",
+      evidence: `${missing} is acknowledged for the direct-launch test.`,
+    })
+    await controller.before(launchEvent)
+    assert.equal(capacityCalls, 1)
+    assert.deepEqual(controller.state(), { pending: 1, active: 0, known: 0 })
+  }
+})
+
+test("memoryReconciliation OFF disables both the due gate and snapshot injection", async () => {
+  const enabled = memoryPolicy()
+  assert.equal(enabled.needsMemorySnapshot("ses_parent"), true)
+  await assert.rejects(enabled.before({
+    tool: "patch",
+    id: "memory-required",
+    sessionID: "ses_parent",
+    input: { patchText: "*** Update File: README.md" },
+  }), /rule reconciliation is due/)
+
+  const disabled = memoryPolicy()
+  disabled.declareTask("ses_parent", { kind: "change" })
+  disabled.setEnforcementSettings({
+    enforcements: {
+      ...DEFAULT_ENFORCEMENTS,
+      memoryReconciliation: false,
+      parentDelegationOnly: false,
+    },
+    status: "valid",
+  })
+  assert.equal(disabled.needsMemorySnapshot("ses_parent"), false)
+  await assert.doesNotReject(disabled.before({
+    tool: "patch",
+    id: "memory-not-required",
+    sessionID: "ses_parent",
+    input: { patchText: "*** Update File: README.md" },
+  }))
+  assert.doesNotMatch(disabled.instructions("ses_parent"), /RULE RECONCILIATION REQUIRED/)
+  assert.match(disabled.instructions("ses_parent"), /memoryReconciliation: OFF/)
+})
+
+test("workflow settings cannot disable protected paths, policy-index integrity, or separate commit gates", async () => {
+  const protectedPath = "/home/test/.local/opt/opencode"
+  const controller = configuredPolicy(async () => ({ approvedCount: 3 }), 3, {
+    enforceAgentIndex: true,
+    protectedPaths: [protectedPath],
+  })
+  controller.setEnforcementSettings({
+    enforcements: Object.fromEntries(Object.keys(DEFAULT_ENFORCEMENTS).map((name) => [name, false])) as typeof DEFAULT_ENFORCEMENTS,
+    status: "valid",
+  })
+  await assert.rejects(controller.before({
+    tool: "patch",
+    id: "protected-path-stays-fixed",
+    sessionID: "ses_parent",
+    input: { path: `${protectedPath}/opencode` },
+  }), /installed OpenCode path is immutable/)
+
+  controller.setIndexErrors(["invalid policy index"])
+  await assert.rejects(controller.before({
+    tool: "patch",
+    id: "policy-index-stays-fixed",
+    sessionID: "ses_parent",
+    input: { patchText: "*** Update File: README.md" },
+  }), /AGENTS.md policy index is invalid/)
+  controller.setIndexErrors([])
+  await assert.rejects(controller.before({
+    tool: "execute",
+    id: "github-commit-gate-stays-fixed",
+    sessionID: "ses_parent",
+    input: { code: "return tools.github.create_branch({})" },
+  }), /separate repo_commit or repo_push approval gates/)
+})
+
 test("Code Mode nested mutations and release-task commit tools cannot bypass parent delegation", async () => {
   const controller = declaredPolicy(3, "release")
   await acceptChild(controller, "release-child")
@@ -913,7 +1238,9 @@ test("Code Mode nested mutations and release-task commit tools cannot bypass par
     assert.equal(toolMayMutate("execute", { code }), true)
     await assert.rejects(
       controller.before({ tool: "execute", id: `nested-mutation-${index}`, sessionID: "ses_parent", input: { code } }),
-      /parent implementation blocked: delegation-only/,
+      [5, 6, 8, 9].includes(index)
+        ? /separate repo_commit or repo_push approval gates/
+        : /parent implementation blocked: delegation-only/,
     )
   }
   await assert.doesNotReject(controller.before({
@@ -1849,12 +2176,13 @@ test("a globally loaded policy passes namespaced agents and arbitrary resolved m
       assert.equal(requestedAgents, 10)
       return { approvedCount: 10 }
     },
-    resolveAgentModel: async (agent) => {
-      resolvedAgents.push(agent)
-      return "ingenium/provider-model#fast"
-    },
-    readTodoState: syntheticTodoState,
-  })
+      resolveAgentModel: async (agent) => {
+        resolvedAgents.push(agent)
+        return "ingenium/provider-model#fast"
+      },
+      readTodoState: syntheticTodoState,
+      repoLearningPreflight: readyRepoLearningPreflight,
+    })
   controller.declareTask("ses_parent", { kind: "change" })
 
   for (const [id, agent] of [
@@ -1886,6 +2214,7 @@ test("global loading does not activate Open Rig policy-repair exceptions", async
     capacityDiagnostic: async () => ({ approvedCount: 10 }),
     resolveAgentModel: async () => "project/provider-model#default",
     readTodoState: syntheticTodoState,
+    repoLearningPreflight: readyRepoLearningPreflight,
   })
   controller.declareTask("ses_parent", { kind: "change" })
   for (const [id, patchText] of [
@@ -2014,6 +2343,94 @@ test("requires one actionable leading description match and ignores completed hi
   assert.equal(history.state().pending, 1)
 })
 
+test("gates completion, commit, and push on validated repo-learning preflight results", async () => {
+  const malformed = {
+    enabled: true,
+    ready: true,
+    required: 1,
+    receipted: 0,
+    missingObligationIDs: [],
+    conflictObligationIDs: [],
+    unresolvedConflictIDs: [],
+  }
+  const cases: {
+    name: string
+    result: (sessionID: string) => Promise<RepoLearningCompletionOutput>
+    reason: RegExp
+  }[] = [
+    {
+      name: "unavailable",
+      result: async () => { throw new Error("untrusted RPC detail") },
+      reason: /repo-learning preflight unavailable/,
+    },
+    {
+      name: "malformed",
+      result: async () => malformed,
+      reason: /repo-learning preflight returned invalid state/,
+    },
+    {
+      name: "missing-receipt",
+      result: async () => blockedRepoLearningPreflight(),
+      reason: /1 missing reflection receipt\(s\)/,
+    },
+    {
+      name: "unresolved-conflict",
+      result: async () => blockedRepoLearningPreflight({
+        receipted: 1,
+        missingObligationIDs: [],
+        conflictObligationIDs: ["obl_123"],
+        unresolvedConflictIDs: ["conf_123"],
+      }),
+      reason: /1 unresolved proposal conflict\(s\)/,
+    },
+  ]
+  const operations = [
+    { tool: "task_complete", input: { verification: "Verified task" } },
+    { tool: "repo_commit", input: {} },
+    { tool: "repo_push", input: {} },
+    { tool: "execute", input: { code: 'return tools["task_complete"]({ verification: "Verified task" })' } },
+    { tool: "execute", input: { code: "return tools.repo_commit({})" } },
+    { tool: "execute", input: { code: 'return tools["repo_push"]({})' } },
+  ]
+
+  for (const scenario of cases) {
+    const sessions: string[] = []
+    const controller = repoLearningPreflightPolicy(async (sessionID) => {
+      sessions.push(sessionID)
+      return scenario.result(sessionID)
+    })
+    await acceptChild(controller, `repo-preflight-${scenario.name}`)
+    for (const [index, operation] of operations.entries()) {
+      await assert.rejects(controller.before({
+        ...operation,
+        id: `repo-preflight-${scenario.name}-${index}`,
+        sessionID: "ses_parent",
+      }), scenario.reason)
+    }
+    await assert.rejects(
+      controller.completeTask("ses_parent", { verification: "Verified task" }),
+      scenario.reason,
+    )
+    assert.deepEqual(sessions, Array(operations.length + 1).fill("ses_parent"))
+  }
+
+  const sessions: string[] = []
+  const ready = repoLearningPreflightPolicy(async (sessionID) => {
+    sessions.push(sessionID)
+    return readyRepoLearningPreflight(sessionID)
+  })
+  await acceptChild(ready, "repo-preflight-ready")
+  for (const [index, operation] of operations.entries()) {
+    await assert.doesNotReject(ready.before({
+      ...operation,
+      id: `repo-preflight-ready-${index}`,
+      sessionID: "ses_parent",
+    }))
+  }
+  assert.equal((await ready.completeTask("ses_parent", { verification: "Verified task" })).kind, "change")
+  assert.deepEqual(sessions, Array(operations.length + 1).fill("ses_parent"))
+})
+
 test("blocks task completion on pending or in-progress Todos and injects one bounded reminder", async () => {
   const makeController = async (todoState: string | undefined, unreadable = false) => {
     const controller = createOrchestrationPolicy({}, {
@@ -2024,6 +2441,7 @@ test("blocks task completion on pending or in-progress Todos and injects one bou
         if (unreadable) throw new Error("private underlying read error")
         return todoState
       },
+      repoLearningPreflight: readyRepoLearningPreflight,
     })
     controller.declareTask("ses_parent", { kind: "change" })
     await acceptChild(controller)
@@ -2101,6 +2519,7 @@ test("allows task completion when the on-disk Todo state file is genuinely absen
     capacityDiagnostic: async () => ({ approvedCount: 3 }),
     resolveAgentModel: async () => "project/provider-model#default",
     todoRoot: root,
+    repoLearningPreflight: readyRepoLearningPreflight,
   })
   controller.restoreTaskState([{
     parentID: "ses_parent",
@@ -2393,6 +2812,7 @@ test("reserves configured launch slots while resolving concurrent children", asy
       return "project/provider-model#default"
     },
     readTodoState: syntheticTodoState,
+    repoLearningPreflight: readyRepoLearningPreflight,
   })
   controller.declareTask("ses_parent", { kind: "change" })
   const launches = ["concurrent-one", "concurrent-two", "concurrent-three"].map((id) =>
@@ -2551,8 +2971,9 @@ test("blocks parent completion and commit while a direct launch is reserving or 
       await gate
       return { approvedCount: 3 }
     },
-      resolveAgentModel: async () => "project/provider-model#default",
+    resolveAgentModel: async () => "project/provider-model#default",
     readTodoState: syntheticTodoState,
+    repoLearningPreflight: readyRepoLearningPreflight,
   })
   controller.declareTask("ses_parent", { kind: "change" })
   const launch = controller.before(event("in-flight"))
@@ -2636,7 +3057,12 @@ test("allows non-correction worker mutation and gates correction workers on ledg
   })
 
   const correction = declaredPolicy(3, "correction")
+  correction.setEnforcementSettings({
+    enforcements: { ...DEFAULT_ENFORCEMENTS, correctionLedgers: false },
+    status: "valid",
+  })
   const correctionChild = await launch(correction, "correction-worker", "ses_parent", "ses_correctionworker")
+  correction.setEnforcementSettings({ enforcements: DEFAULT_ENFORCEMENTS, status: "valid" })
   const workerMutation = {
     tool: "patch",
     id: "correction-worker-mutation",

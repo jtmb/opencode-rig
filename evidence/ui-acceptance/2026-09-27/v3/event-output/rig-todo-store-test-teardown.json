@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "capture_id": "rig-todo-store",
+  "phase": "test-teardown",
+  "event_id": "rig-todo-store-test-teardown-001",
+  "action": {
+    "type": "teardown",
+    "target": "capture-surface"
+  },
+  "dispatch": {
+    "device": "lifecycle",
+    "method": "unmount",
+    "target": "capture-surface"
+  },
+  "provenance": {
+    "scope": "native-test-renderer",
+    "run_id": "9f99ef6f-8a3b-44b3-bc93-0dab33d9edc4",
+    "dispatch_id": "rig-todo-store-test-teardown-dispatch-001",
+    "transition_id": "rig-todo-store-test-teardown-transition-001",
+    "dispatch_monotonic_ns": "4699975310770",
+    "transition_monotonic_ns": "4699996970833"
+  },
+  "before": {
+    "snapshot_id": "rig-todo-store-interact-after",
+    "frame_sha256": "5326ccf2eacf3f4940e561b1297cc7063916e34e843e022a0f40fd93c770ea88",
+    "spans_sha256": "65ade76d77ba7ec53f9acc859499b290917f761f8c59657d0380a313a7dfcd97",
+    "state_sha256": "3cb191def2928a9e5ce2be825bda706b78c72b0b4abcef431e138cc9c6658852"
+  },
+  "after": {
+    "snapshot_id": "rig-todo-store-close-after",
+    "frame_sha256": "44c65d87128b64ff7a90765e451c54bb527cfc45c9956913756c317a03f332d9",
+    "spans_sha256": "ccacce15c2bc5f238d79e3dbb20a3a54a0660dcbdebc71501d4716c1fd706d49",
+    "state_sha256": "92761e1f6fc9f784fbaef745e2d18bf3a0a380df37fbc834601a33dff1f3a927"
+  },
+  "result": {
+    "status": "passed",
+    "target": "capture-surface",
+    "observed": {
+      "visibility_before": true,
+      "visibility_after": false,
+      "frame_changed": true,
+      "spans_changed": true,
+      "state_changed": true
+    }
+  },
+  "native_capture_output_sha256": "6d36a6d535e254bc83b765dd7379c99e60589b72ee1049660529d846c8446dcc",
+  "native_event_sha256": "a0e734e67a28ec53ec11df370d053cf1b4ca65640ce6c33013df2b039daefc3a"
+}
