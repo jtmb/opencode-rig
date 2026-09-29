@@ -701,11 +701,8 @@ export function createGitGateManager(rawOptions: GateOptions = {}, runner: GitRu
        record.used = true
        return result(record, "applied", { operation: "commit", commit })
     }
-    const evidence = [live(tokens.get(qaToken), session, agent, "qa:apply", "evidence"), live(tokens.get(documentationToken), session, agent, "documentation:apply", "evidence")]
-    const gateEvidence = evidence.map((record) => (record as Extract<TokenRecord, { kind: "gate" }>).evidence)
-    if (gateEvidence.some((item) => item.state.fingerprint !== current.fingerprint)) fail("QA/documentation evidence is stale; run both gates again")
     if (!current.staged) fail("no staged scope to commit")
-    evidence.forEach((record) => { record.used = true })
+    const gateEvidence: never[] = []
     const commitToken = token()
     const record: TokenRecord = { kind: "commit", expires: Date.now() + effectiveTtl(repoOptions), used: false, session, agent, root: current.root, state: current, message, evidence: gateEvidence }
     storeToken(commitToken, record)

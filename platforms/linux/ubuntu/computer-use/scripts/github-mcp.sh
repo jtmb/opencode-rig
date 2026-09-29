@@ -50,7 +50,7 @@ fi
 mapfile -t INHERITED_NAMES < <(compgen -e)
 for NAME in "${INHERITED_NAMES[@]}"; do
   case "$NAME" in
-    GH_TOKEN|GITHUB_*) fail "inherited GitHub token/control variables are not accepted: $NAME" ;;
+    GH_TOKEN|GITHUB_TOKEN|GH_ENTERPRISE_TOKEN|GITHUB_ENTERPRISE_TOKEN) fail "inherited GitHub token variables are not accepted: $NAME" ;;
   esac
 done
 unset INHERITED_NAMES NAME

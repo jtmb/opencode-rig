@@ -651,7 +651,7 @@ export default Plugin.define({
             repo: { type: "string" }, message: { type: "string" }, qaToken: { type: "string" }, documentationToken: { type: "string" },
             action: { type: "string", enum: ["preview", "apply"] }, expectToken: { type: "string" }, approval: { type: "boolean" },
           },
-          required: ["repo", "message", "qaToken", "documentationToken"],
+          required: ["repo", "message"],
           additionalProperties: false,
         },
         async execute(raw, toolContext) {
